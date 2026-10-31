@@ -140,23 +140,23 @@ fn removing_random_clock_stops_ticks_and_invalid_bounds_are_rejected() {
 }
 
 #[test]
-fn lightning_bug_click_is_a_short_existing_square_envelope_vca_patch() {
+fn lightning_bug_burst_uses_existing_square_envelope_vca_for_300ms() {
     let (mut engine, mut renderer) = Engine::offline(EngineConfig::default()).unwrap();
     for (id, kind) in [
         (
             1,
             ModuleKind::RandomClock {
                 seed: 42,
-                min_interval_s: 0.125,
-                max_interval_s: 0.125,
+                min_interval_s: 0.5,
+                max_interval_s: 0.5,
             },
         ),
         (2, ModuleKind::SquareVco { freq_hz: 2200. }),
         (
             3,
             ModuleKind::Envelope {
-                attack_s: 0.0005,
-                decay_s: 0.004,
+                attack_s: 0.015,
+                decay_s: 0.285,
             },
         ),
         (4, ModuleKind::Vca { gain: 0.12 }),
@@ -197,12 +197,16 @@ fn lightning_bug_click_is_a_short_existing_square_envelope_vca_patch() {
         .iter()
         .map(|frame| frame[0])
         .collect();
-    assert!(samples[..6000].iter().all(|sample| *sample == 0.));
-    assert!(samples[6000..6400].iter().any(|sample| sample.abs() > 0.01));
+    assert!(samples[..24000].iter().all(|sample| *sample == 0.));
     assert!(
-        samples[7000..12000]
+        samples[24480..28800]
             .iter()
-            .all(|sample| sample.abs() < 1e-5)
+            .any(|sample| sample.abs() > 0.01)
+    );
+    assert!(
+        samples[38400..48000]
+            .iter()
+            .all(|sample| sample.abs() < 0.0002)
     );
     let mut events = Vec::new();
     engine.drain_events(&mut events);
@@ -210,7 +214,7 @@ fn lightning_bug_click_is_a_short_existing_square_envelope_vca_patch() {
         events[0],
         Event::ClockTick {
             module: ModuleId(1),
-            sample_time: 6000
+            sample_time: 24000
         }
     );
 }

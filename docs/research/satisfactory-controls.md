@@ -10,9 +10,10 @@ The table records keyboard/mouse defaults, not controller bindings.
 
 | Action | Satisfactory default | stubby-music decision |
 | --- | --- | --- |
-| Move | WASD | Implemented |
-| Sprint | Left Shift | Implemented as faster inspection movement |
-| Jump / crouch | Space / C | Ascend/descend in current inspection camera; grounded controller later |
+| Move | WASD | Grounded movement relative to heading |
+| Look | Mouse X/Y | Free look, no mouse button required |
+| Sprint | Left Shift | Hold to sprint |
+| Jump / crouch | Space / C | Grounded jump / hold to crouch |
 | Use / collect | E | Implemented; hold to collect successive nearby bugs |
 | Build menu | Q | Reserved; build system not implemented |
 | Dismantle | F | Reserved; dismantling not implemented |
@@ -34,5 +35,7 @@ future mechanic; do not accidentally make one bug yield every frame.
 
 Recipe-book knowledge survives consuming material. O is the codex-like entry
 point; it should not compete with B's flashlight role. E must never double as
-camera ascent. The inspection camera still uses RMB to look and Space/C for
-height; this is a development camera, not yet a Satisfactory-like grounded player.
+camera ascent. The player starts standing on the mudflat. Mouse look is captured during play;
+Escape or focus loss releases the cursor, and left-click recaptures it. Looking
+up/down never changes walking height. Terrain support bridges small cracks;
+machine collision and sprint-slide momentum are future work.

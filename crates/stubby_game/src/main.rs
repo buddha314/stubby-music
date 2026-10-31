@@ -21,7 +21,9 @@ fn main() {
                 })
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: format!("Stubby • mudflat / seed {seed} • WASD + right mouse"),
+                        title: format!(
+                            "Stubby • mudflat / seed {seed} • WASD • mouse look • E collect"
+                        ),
                         resolution: (1440, 900).into(),
                         ..default()
                     }),

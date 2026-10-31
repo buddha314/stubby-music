@@ -1,4 +1,7 @@
 //! Item quantities, resource yields and atomic recipes. No Bevy or audio dependency.
+mod source;
+pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
+
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -47,6 +50,8 @@ pub struct RecipeDefinition {
 pub struct CatalogDefinition {
     pub items: Vec<ItemDefinition>,
     pub resources: Vec<ResourceDefinition>,
+    #[serde(default)]
+    pub mines: Vec<MineDefinition>,
     pub recipes: Vec<RecipeDefinition>,
 }
 
@@ -58,6 +63,10 @@ pub enum RecipeError {
     UnknownRecipe(String),
     #[error("unknown resource: {0}")]
     UnknownResource(String),
+    #[error("unknown resource source: {0}")]
+    UnknownSource(String),
+    #[error("mine requires production, not finite collection: {0}")]
+    MineRequiresProduction(String),
     #[error("resource instance already collected: {0}")]
     AlreadyCollected(String),
     #[error("need {needed} {item}; have {available}")]
@@ -122,6 +131,7 @@ impl RecipeBook {
 pub struct Catalog {
     items: BTreeMap<String, ItemDefinition>,
     resources: BTreeMap<String, ResourceDefinition>,
+    mines: BTreeMap<String, MineDefinition>,
     recipes: BTreeMap<String, RecipeDefinition>,
 }
 fn insert_unique<T>(map: &mut BTreeMap<String, T>, id: &str, value: T) -> Result<(), RecipeError> {
@@ -163,6 +173,7 @@ impl Catalog {
         let mut catalog = Self {
             items: BTreeMap::new(),
             resources: BTreeMap::new(),
+            mines: BTreeMap::new(),
             recipes: BTreeMap::new(),
         };
         for item in definition.items {
@@ -171,6 +182,29 @@ impl Catalog {
         for resource in definition.resources {
             catalog.validate_stacks(&resource.yields)?;
             insert_unique(&mut catalog.resources, &resource.id.clone(), resource)?;
+        }
+        for mine in definition.mines {
+            if catalog.resources.contains_key(&mine.id) {
+                return Err(RecipeError::InvalidCatalog(format!(
+                    "source ID reused as a mine: {}",
+                    mine.id
+                )));
+            }
+            if !catalog.resources.contains_key(&mine.produces_resource) {
+                return Err(RecipeError::InvalidCatalog(format!(
+                    "unknown mine output resource {}",
+                    mine.produces_resource
+                )));
+            }
+            for (index, factor) in mine.productivity_factors.iter().enumerate() {
+                if mine.productivity_factors[..index].contains(factor) {
+                    return Err(RecipeError::InvalidCatalog(format!(
+                        "duplicate productivity factor in {}",
+                        mine.id
+                    )));
+                }
+            }
+            insert_unique(&mut catalog.mines, &mine.id.clone(), mine)?;
         }
         for recipe in definition.recipes {
             catalog.validate_stacks(&recipe.inputs)?;
@@ -200,6 +234,54 @@ impl Catalog {
     }
     pub fn resource(&self, id: &str) -> Option<&ResourceDefinition> {
         self.resources.get(id)
+    }
+    pub fn mine(&self, id: &str) -> Option<&MineDefinition> {
+        self.mines.get(id)
+    }
+    pub fn mines(&self) -> impl Iterator<Item = &MineDefinition> {
+        self.mines.values()
+    }
+    /// Create a validated object without spawning anything or granting inventory.
+    pub fn source(&self, definition: &str, instance: &str) -> Result<SourceObject, RecipeError> {
+        if self.resources.contains_key(definition) {
+            Ok(SourceObject::Exhaustible {
+                resource: definition.into(),
+                instance: instance.into(),
+                collected: false,
+            })
+        } else if self.mines.contains_key(definition) {
+            Ok(SourceObject::InfiniteMine {
+                mine: definition.into(),
+                instance: instance.into(),
+            })
+        } else {
+            Err(RecipeError::UnknownSource(definition.into()))
+        }
+    }
+    /// Finite collection is never a shortcut for infinite mine production.
+    pub fn harvest_source(
+        &self,
+        source: &mut SourceObject,
+        inventory: &mut Inventory,
+        ledger: &mut HarvestLedger,
+    ) -> Result<Vec<Stack>, RecipeError> {
+        match source {
+            SourceObject::Exhaustible {
+                resource,
+                instance,
+                collected,
+            } => {
+                if *collected {
+                    return Err(RecipeError::AlreadyCollected(instance.clone()));
+                }
+                let yields = self.harvest(resource, instance, inventory, ledger)?;
+                *collected = true;
+                Ok(yields)
+            }
+            SourceObject::InfiniteMine { mine, .. } => {
+                Err(RecipeError::MineRequiresProduction(mine.clone()))
+            }
+        }
     }
     pub fn recipes(&self) -> impl Iterator<Item = &RecipeDefinition> {
         self.recipes.values()
@@ -289,6 +371,84 @@ mod tests {
             "recipes":[{"id":"test_recipe","name":"Test only","inputs":[{"item":"square_wave","quantity":1},{"item":"square_wave","quantity":1}],"outputs":[{"item":"test_module","quantity":1}]}]
         }"#).unwrap()
     }
+    #[test]
+    fn finite_and_infinite_source_objects_preserve_distinct_lifecycles() {
+        let catalog =
+            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let mut bug = catalog.source("lightning_bug", "spawn-1").unwrap();
+        let mut tree = catalog.source("scrub_oak", "tree-1").unwrap();
+        assert_eq!(bug.kind(), SourceKind::Exhaustible);
+        assert_eq!(tree.kind(), SourceKind::InfiniteMine);
+        let original_tree = tree.clone();
+        let mut inventory = Inventory::default();
+        let mut ledger = HarvestLedger::default();
+        catalog
+            .harvest_source(&mut bug, &mut inventory, &mut ledger)
+            .unwrap();
+        assert_eq!(inventory.quantity("square_wave"), 2);
+        assert!(matches!(
+            catalog.harvest_source(&mut bug, &mut inventory, &mut ledger),
+            Err(RecipeError::AlreadyCollected(_))
+        ));
+        for _ in 0..3 {
+            assert!(matches!(
+                catalog.harvest_source(&mut tree, &mut inventory, &mut ledger),
+                Err(RecipeError::MineRequiresProduction(_))
+            ));
+        }
+        assert_eq!(tree, original_tree);
+        assert!(!ledger.collected("tree-1"));
+        assert_eq!(inventory.quantity("square_wave"), 2);
+        for object in [bug, tree] {
+            let json = serde_json::to_string(&object).unwrap();
+            assert_eq!(serde_json::from_str::<SourceObject>(&json).unwrap(), object);
+        }
+        let mine = catalog.mine("scrub_oak").unwrap();
+        assert_eq!(mine.produces_resource, "lightning_bug");
+        assert_eq!(
+            mine.productivity_factors,
+            vec![
+                ProductivityFactor::WaterQuality,
+                ProductivityFactor::LightQuality
+            ]
+        );
+    }
+    #[test]
+    fn mine_validation_rejects_unknown_outputs_duplicate_factors_and_reused_source_ids() {
+        let shipped: CatalogDefinition =
+            serde_json::from_str(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let mut bad = shipped.clone();
+        bad.mines[0].produces_resource = "square_wave".into(); // item is not a resource
+        assert!(Catalog::new(bad).is_err());
+        let mut bad = shipped.clone();
+        bad.mines[0]
+            .productivity_factors
+            .push(ProductivityFactor::WaterQuality);
+        assert!(Catalog::new(bad).is_err());
+        let mut bad = shipped.clone();
+        bad.mines.push(bad.mines[0].clone());
+        assert!(Catalog::new(bad).is_err());
+        let mut bad = shipped;
+        bad.mines[0].id = "lightning_bug".into();
+        assert!(Catalog::new(bad).is_err());
+    }
+    #[test]
+    fn failed_object_harvest_does_not_exhaust_the_resource() {
+        let catalog = Catalog::new(fixture()).unwrap();
+        let mut object = catalog.source("lightning_bug", "bug-1").unwrap();
+        let before = object.clone();
+        let mut inventory = Inventory::default();
+        inventory.add("square_wave", u32::MAX).unwrap();
+        let mut ledger = HarvestLedger::default();
+        assert!(
+            catalog
+                .harvest_source(&mut object, &mut inventory, &mut ledger)
+                .is_err()
+        );
+        assert_eq!(object, before);
+        assert!(!ledger.collected("bug-1"));
+    }
+
     #[test]
     fn harvest_once_then_craft_aggregates_duplicate_inputs() {
         let catalog = Catalog::new(fixture()).unwrap();
@@ -397,7 +557,7 @@ mod tests {
             catalog.resource("lightning_bug").unwrap().yields,
             vec![Stack {
                 item: "square_wave".into(),
-                quantity: 1
+                quantity: 2
             }]
         );
     }

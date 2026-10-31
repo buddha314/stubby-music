@@ -7,7 +7,7 @@ emitted. The flash attacks in 15 ms and decays to zero over a total of 180 ms.
 - Source: `assets-src/blender/lightning_bug.blend` (metres, isolated asset scene).
 - Runtime: `assets/models/lightning_bug.glb`, with a `white_flash` scale animation.
 - Profile: `asset.json`. The game embeds this profile at build time.
-- Preview: `preview.png` shows the flash at its peak; scrub frames 1–12 in Blender
+- Preview: `preview.png` shows the flash at its peak; scrub frames 1–19 in Blender
   to see it collapse to invisibility at 60 FPS.
 
 Rebuild from the repository root:
@@ -24,7 +24,7 @@ Or export an edited source:
 
 The opening includes three lightning bugs, each with its own RandomClock (IDs 1–3). `stubby_audio` runs
 its seeded `RandomClock` on the audio callback, selects each interval in
-0.65–2.4 seconds using a seed derived from the world seed and bug ID, and emits sample-stamped `ClockTick` events. Its gate drives a short click through existing
+0.65–2.4 seconds using a seed derived from the world seed and bug ID, and emits sample-stamped `ClockTick` events. Its gate drives a square burst through existing
 square-VCO, envelope and VCA modules, rather than being sent directly to output. The first flash follows a resting interval.
 
 The game broadcasts `SamplePulse` messages and exposes `PulseBus::level`; other
@@ -49,7 +49,7 @@ shows the flashes; the edit viewport remains the static ground proxy.
 ## Resource yield
 
 Lightning bugs provide the `square_wave` recipe ingredient. Approach within
-3 metres and press E to recover one pattern from that world instance. The
+3 metres and press E to recover two square-wave items from that world instance. The
 inventory counter updates; that instance cannot yield again. This does not alter
 the bug's flash or automatically create an audible oscillator. Resource and
 recipe definitions live in `assets/recipes/catalog.json`.
@@ -59,3 +59,16 @@ using the existing fundsp-backed oscillator and Firewheel graph modules. Gain
 falls to zero at 3 metres, so the initial spawn remains silent. In the recipe
 book this resource is **Square wave**, reusable for VCO, LFO and gate roles; it
 is not a prebuilt oscillator module.
+
+Bugs hover 1–3 m above the terrain. A soft shadow directly beneath each bug
+pulses with its audio-clock flash, helping the player judge ground distance.
+Within 3 m along the ground (ignoring hover height), the HUD shows `[E] Collect lightning bug` below the sunflower reticle.
+The prompt persists between flashes and disappears when collected or out of reach.
+
+Collection removes the bug, its ground pulse, light, and click voice. Other bugs
+continue pulsing independently; depleted locations no longer advertise a pickup.
+
+World flashes and square bursts now last about 0.3 seconds (15ms attack, 285ms
+audio decay). Collection plays one additional listener-level confirmation using
+the same waveform patch, then stays silent. Square wave itself is in development.
+Research and balance rationale: `docs/research/firebug-audio-and-yields.md`.

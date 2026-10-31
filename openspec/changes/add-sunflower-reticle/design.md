@@ -1,0 +1,2 @@
+## Approach
+Use a 28 logical pixel ImageNode centered by a full-viewport flex container. Twelve outlined petals surround an open center ring. Dark edging gives contrast on bright mud and ivory remains visible on dark silhouettes. SVG source and supersampled PNG are reproducibly generated with Pillow. Use embedded texture bytes so the Jackdaw adapter shares the exact asset without another symlink. The reticle is decorative and does not alter collection targeting.

@@ -20,7 +20,7 @@ def build():
     scene.unit_settings.system = "METRIC"
     scene.unit_settings.scale_length = 1.0
     scene.render.fps = 60
-    scene.frame_start, scene.frame_end = 1, 12
+    scene.frame_start, scene.frame_end = 1, 19
     collection = bpy.data.collections.new("STUBBY_LightningBug")
     scene.collection.children.link(collection)
     material = bpy.data.materials.new("LightningBug_WhiteEmission")
@@ -80,7 +80,7 @@ def build():
             mesh = bpy.data.meshes.new("LightningBug_LegMesh")
             mesh.from_pydata(vertices, [], faces)
             own(bpy.data.objects.new("LightningBug_Leg", mesh))
-    for frame, value in [(1, 1.0), (2, 0.98), (5, 0.64), (9, 0.15), (12, 0.0)]:
+    for frame, value in [(1, 1.0), (2, 0.98), (7, 0.64), (14, 0.15), (19, 0.0)]:
         root.scale = (value,) * 3
         root.keyframe_insert(data_path="scale", frame=frame, group="White flash")
     root.animation_data.action.name = "white_flash"

@@ -1,0 +1,2 @@
+## Approach
+Replace the fly camera with a player component storing feet height and vertical velocity. Follow the existing analytic mudflat height with 3.5cm clearance over plate rims; small cracks are walkable. Gravity and jump run in bounded substeps. Move horizontally relative to yaw, independent of pitch. This is terrain support only; machine collision and slide momentum belong to later changes. Use MouseMotion messages so Jackdaw injected input works too. CursorOptions propagates through the existing PIE bridge.
