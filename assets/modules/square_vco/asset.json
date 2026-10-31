@@ -2,12 +2,14 @@
   "id": "square_vco",
   "model": "models/square_vco.glb#Scene0",
   "module_kind": "SquareVco",
+  "waveform": "square",
   "scale": "eurorack_3u_8hp_x10",
   "size_metres": {
     "width": 0.4064,
     "height": 1.375,
     "depth": 0.32
   },
+  "silhouette": "square_crown",
   "ports": [
     {
       "node": "Port_voct",
@@ -42,6 +44,5 @@
     "upright": true,
     "max_tilt_degrees": 15.0,
     "max_sink_metres": 0.25
-  },
-  "silhouette": "square_wave_crown"
+  }
 }
