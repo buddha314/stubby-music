@@ -1,0 +1,97 @@
+{
+  "id": "mudpit_burbler",
+  "model": "models/mudpit_burbler.glb#Scene0",
+  "kind": "mine",
+  "mine": "mudpit_burbler",
+  "produces": "clock",
+  "size_metres": {
+    "width": 6.3,
+    "depth": 6.3,
+    "height": 0.3
+  },
+  "params": {
+    "bpm": {
+      "min": 40.0,
+      "max": 180.0,
+      "default": 90.0,
+      "note": "set per instance from the world seed"
+    }
+  },
+  "configure": {
+    "screen": "eurorack_hud",
+    "places": [
+      {
+        "place": "clock",
+        "hp": 8,
+        "fixed": true
+      },
+      {
+        "place": "vco",
+        "hp": 8,
+        "fixed": false
+      },
+      {
+        "place": "volume",
+        "hp": 4,
+        "fixed": false
+      }
+    ]
+  },
+  "lights": {
+    "Burbler_Glow": {
+      "rest": 0.15,
+      "peak": 1.0,
+      "attack_s": 0.04,
+      "decay_s": 0.45
+    },
+    "Burbler_WispBell": {
+      "rest": 0.0,
+      "peak": 1.0,
+      "attack_s": 0.1,
+      "decay_s": 1.8
+    },
+    "Burbler_WispCore": {
+      "rest": 0.0,
+      "peak": 1.0,
+      "attack_s": 0.05,
+      "decay_s": 1.6
+    },
+    "Burbler_Mote": {
+      "rest": 0.35,
+      "peak": 1.0,
+      "attack_s": 0.2,
+      "decay_s": 0.8
+    },
+    "Burbler_OutletHalo": {
+      "rest": 0.0,
+      "peak": 1.0,
+      "attack_s": 0.05,
+      "decay_s": 0.5,
+      "note": "0 until connected; then breathes at the BPM"
+    }
+  },
+  "nodes": [
+    "Bubble_0",
+    "Bubble_1",
+    "Bubble_2",
+    "Bubble_3",
+    "Bubble_4",
+    "Burbler_Root",
+    "Interact",
+    "Mote_0",
+    "Mote_1",
+    "Mote_2",
+    "Mote_3",
+    "Mote_4",
+    "Mote_5",
+    "Mote_6",
+    "Mote_7",
+    "Outlet_0",
+    "Outlet_0_Halo",
+    "Steam_0",
+    "Steam_1",
+    "Wisp_0",
+    "Wisp_1",
+    "Wisp_2"
+  ]
+}

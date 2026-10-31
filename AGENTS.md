@@ -15,6 +15,7 @@ the player is building.
 and animals by singing or playing music to them. Where life grows, light quality
 rises and the bleak desert blooms (see *Look and feel*). **Streams are staff music**:
 they deliver music to plants and animals as nutrients, the world's own patch cables.
+They start as raw mud from burblers (below) and are cleaned up by other constructors.
 Music is how the world gets better; it is never just decoration.
 
 ### Resources and recipes: the builder-game model
@@ -265,6 +266,27 @@ mine definition and editor `MineNode` exist; production rates, quality simulatio
 spawn loops and tree visuals remain deferred in
 `openspec/changes/add-scrub-oak-production/`. Keep mines separate from E pickup
 queries. The domain chain is scrub oak mine → finite bug → square-wave items.
+
+### The mudpit burbler: a clock mine you configure
+
+A **mudpit burbler** is a gurgling hot spring of mud that **bubbles at a BPM**: it is
+the game's clock source. It is a resource node in the Satisfactory sense, the
+equivalent of an iron ore node, so the player does not pick it up.
+
+- **Configure, Satisfactory-style:** E at the burbler opens a **HUD showing a basic
+  Eurorack**; Escape closes it. Nothing is built in the world. The rack has three
+  places: the **clock** (built in, provided by the burbler; it cannot be removed), a
+  **VCO** slot, and a **volume knob**, which stands in for a full VCA. The voice is the
+  minimal patch: the burbler's clock triggers the VCO and the volume knob sets its level.
+- **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
+  **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
+  mud is **raw**: muddy on purpose, like ore. Other constructors clean it up later.
+- **Reeds are the conveyor belt segments** that streams run along (not yet designed).
+- **Connections halo.** When something is connected to an outlet, the outlet lights a
+  soft halo, as Satisfactory highlights a connected port.
+- Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the
+  burbler, the HUD rack's modules and, later, streams and reeds; game logic (Codex)
+  builds the interaction, the HUD, the patch, streams and production.
 
 ### Shared Jackdaw development fork
 

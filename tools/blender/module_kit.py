@@ -265,11 +265,13 @@ class ModuleKit:
 
     # ------------------------------------------------------------ output
 
-    def finish(self, profile, aim=(0, 0, 0.66), camera_location=(1.05, -2.15, 1.25), before_render=None):
+    def finish(self, profile, aim=(0, 0, 0.66), camera_location=(1.05, -2.15, 1.25), before_render=None,
+               profile_dir="modules"):
         """Preview lighting and camera, then save the .blend, export the .glb, write
         asset.json, and render preview.png and preview_far.png (about 12 m away).
         `before_render` runs after export, to stage the preview without changing the
-        exported model (e.g. showing one reading on a display)."""
+        exported model (e.g. showing one reading on a display). `profile_dir` is the folder
+        under assets/ for the profile and previews: "modules", or "machines" for mines."""
         scene = self.scene
         world = bpy.data.worlds.new(f"{self.kind}_PreviewWorld")
         world.use_nodes = True
@@ -298,7 +300,7 @@ class ModuleKit:
 
         source = PROJECT / f"assets-src/blender/{self.asset_id}.blend"
         model = PROJECT / f"assets/models/{self.asset_id}.glb"
-        preview = PROJECT / f"assets/modules/{self.asset_id}/preview.png"
+        preview = PROJECT / f"assets/{profile_dir}/{self.asset_id}/preview.png"
         source.parent.mkdir(parents=True, exist_ok=True)
         if bpy.app.background:
             if bpy.context.window:
