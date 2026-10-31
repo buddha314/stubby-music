@@ -42,4 +42,5 @@
 - [x] 5.3 Verify a fresh game outputs digital silence (`a_fresh_game_is_silent`)
 - [x] 5.4 Stall test: the engine keeps rendering through a 200 ms game-thread stall (`engine_keeps_running_while_the_game_thread_stalls`)
 - [ ] 5.5 Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
+  Also run with `--module-demo` to check that the clock module's light flashes on the beat you hear (`add-module-asset-binding` 2.5).
   Blocked on: the `add-lightning-bug-pulse` branch updating from `main` (it overlaps the audio wiring in six files). Then rebuild the Jackdaw game and play "Desert opening + audio demo".
