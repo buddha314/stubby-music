@@ -23,6 +23,13 @@ pub enum ModuleKind {
     Clock { bpm: f32 },
     /// Constant CV source. Output `"out"`, parameter `"value"`.
     Constant { value: f32 },
+    /// Attack/decay envelope. Input `"gate"`: each rising edge starts a linear attack
+    /// to 1.0, then an exponential decay. Output `"out"` (0..1). Parameters `"attack"`
+    /// (seconds to peak) and `"decay"` (seconds from peak to -60 dB).
+    Envelope { attack_s: f32, decay_s: f32 },
+    /// Voltage-controlled amplifier: `out = in * max(cv, 0) * gain`. Inputs `"in"`
+    /// and `"cv"`, output `"out"`, parameter `"gain"`. With no CV it is closed.
+    Vca { gain: f32 },
 }
 
 /// One named port on one module.

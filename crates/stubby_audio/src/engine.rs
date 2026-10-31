@@ -6,7 +6,8 @@
 //! published by [`Engine::flush`]. Events come back over one `rtrb` ring per clock.
 
 use crate::modules::{
-    ClockConfig, ClockNode, ConstantNode, EventMailbox, VcoConfig, VcoNode, Waveform,
+    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, VcaNode, VcoConfig, VcoNode,
+    Waveform,
 };
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
 use audioadapter_buffers::direct::InterleavedSlice;
@@ -52,6 +53,8 @@ enum NodeState {
     Vco(VcoNode),
     Clock(ClockNode),
     Constant(ConstantNode),
+    Envelope(EnvelopeNode),
+    Vca(VcaNode),
 }
 
 struct Module {
@@ -192,6 +195,29 @@ impl Engine {
                     new.diff(old, PathBuilder::default(), &mut queue);
                     *old = new;
                 }
+                (NodeState::Envelope(old), "attack" | "decay") => {
+                    let new = if param == "attack" {
+                        EnvelopeNode {
+                            attack: value,
+                            ..*old
+                        }
+                    } else {
+                        EnvelopeNode {
+                            decay: value,
+                            ..*old
+                        }
+                    };
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
+                (NodeState::Vca(old), "gain") => {
+                    let new = VcaNode {
+                        gain: value,
+                        ..*old
+                    };
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
                 _ => {}
             }
         }
@@ -297,6 +323,20 @@ impl Engine {
                 let state = ConstantNode { value };
                 (self.cx.add_node(state, None), NodeState::Constant(state))
             }
+            ModuleKind::Envelope { attack_s, decay_s } => {
+                let state = EnvelopeNode {
+                    attack: attack_s,
+                    decay: decay_s,
+                };
+                (self.cx.add_node(state, None), NodeState::Envelope(state))
+            }
+            ModuleKind::Vca { gain } => {
+                let state = VcaNode {
+                    gain,
+                    enabled: true,
+                };
+                (self.cx.add_node(state, None), NodeState::Vca(state))
+            }
         };
         let node = node.map_err(|e| EngineError::Graph(e.to_string()))?;
         self.modules.insert(id, Module { kind, node, state });
@@ -311,27 +351,35 @@ impl Engine {
             .modules
             .remove(&id)
             .ok_or(EngineError::UnknownModule(id))?;
-        match module.state {
+        // Sound sources fade out now and are deleted once the fade has finished.
+        // Gates and CV switch instantly (see `SourceFade`).
+        let mut queue = self.cx.event_queue(module.node);
+        let fading = match module.state {
             NodeState::Vco(old) => {
-                // Fade out now; delete the node once the fade has finished.
-                let new = VcoNode {
+                VcoNode {
                     enabled: false,
                     ..old
-                };
-                new.diff(
-                    &old,
-                    PathBuilder::default(),
-                    &mut self.cx.event_queue(module.node),
-                );
-                let sample_rate = self.sample_rate().unwrap_or(48_000) as f64;
-                let after = self.cx.audio_clock().samples.0.max(0) as u64
-                    + (RETIRE_SECONDS * sample_rate) as u64;
-                self.retiring.push((module.node, after));
+                }
+                .diff(&old, PathBuilder::default(), &mut queue);
+                true
             }
-            // Gates and CV switch instantly (see `SourceFade`).
-            NodeState::Clock(_) | NodeState::Constant(_) => {
-                let _ = self.cx.remove_node(module.node);
+            NodeState::Vca(old) => {
+                VcaNode {
+                    enabled: false,
+                    ..old
+                }
+                .diff(&old, PathBuilder::default(), &mut queue);
+                true
             }
+            NodeState::Clock(_) | NodeState::Constant(_) | NodeState::Envelope(_) => false,
+        };
+        if fading {
+            let sample_rate = self.sample_rate().unwrap_or(48_000) as f64;
+            let after = self.cx.audio_clock().samples.0.max(0) as u64
+                + (RETIRE_SECONDS * sample_rate) as u64;
+            self.retiring.push((module.node, after));
+        } else {
+            let _ = self.cx.remove_node(module.node);
         }
         // Firewheel removes a node's edges with it; our tables forget them now, since
         // the module no longer exists as far as the game is concerned.

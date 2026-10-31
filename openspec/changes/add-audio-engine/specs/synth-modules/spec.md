@@ -55,6 +55,34 @@ V/oct input and output as the Sine VCO.
 - **WHEN** a Square VCO at 220 Hz is rendered offline
 - **THEN** its fundamental is 220 Hz (±0.1 Hz), its RMS is above 0.85 of its peak, and no sample exceeds 1.25
 
+### Requirement: Envelope module
+The game SHALL provide an attack/decay Envelope with a gate input and one output
+from 0 to 1. Each rising gate edge SHALL start a linear attack to 1 from the current
+level, so a retrigger never jumps. An exponential decay SHALL follow, reaching -60 dB
+after the decay time. The attack and decay times SHALL be parameters.
+
+#### Scenario: Shape
+- **WHEN** a 2 ms / 200 ms envelope is gated
+- **THEN** it reaches 1.0 (±0.02) after 2 ms and 0.001 (±20%) a further 200 ms later
+
+#### Scenario: Retrigger
+- **WHEN** the gate rises again before the decay has finished
+- **THEN** the output climbs from its current level with no step larger than one attack increment
+
+### Requirement: VCA module
+The game SHALL provide a VCA whose output is its audio input times its CV (negative
+CV treated as 0) times a gain parameter. With no CV cabled it SHALL be closed. Gain
+changes SHALL be smoothed so they do not zipper. As an audio source, it SHALL fade
+on add and remove.
+
+#### Scenario: Scaling
+- **WHEN** a full-scale sine passes through a VCA with CV 0.5 and gain 0.5
+- **THEN** the output peaks at 0.25
+
+#### Scenario: Clock blip
+- **WHEN** a Clock gates an Envelope that drives a VCA on an oscillator
+- **THEN** a blip sounds starting at each tick's sample, with a click-free onset, and dies away before the next tick
+
 ### Requirement: Clock module
 The game SHALL provide a Clock with a tempo parameter (BPM), a gate output, and a
 phase output (0..1 ramp per beat). Each beat SHALL emit a timestamped tick event to
