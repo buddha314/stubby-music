@@ -63,6 +63,14 @@ Realtime plumbing:
    open: the protocol is already serialisable-shaped. Revisit only if audio crashes
    start taking down the game.
 
+## Spike result (2026-10-31)
+
+The spike ran, and the recommendation above changed. **Firewheel for the engine,
+fundsp for the DSP.** The measured comparison, the reasoning, and a Firewheel bug the
+spike uncovered are in `openspec/changes/add-audio-engine/design.md` (D4). The harness
+is in `spikes/` (its own Cargo workspace); from there, `cargo run --release -p
+spike_fundsp` and `-p spike_firewheel` reproduce the tables.
+
 ## Shape of the system
 
 ```

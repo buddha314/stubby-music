@@ -1,0 +1,10 @@
+[package]
+name = "spike_firewheel"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+audioadapter-buffers = "5"
+firewheel = "0.14.0"
+fundsp = "0.23.0"
+spike_common = { version = "0.1.0", path = "../spike_common" }
