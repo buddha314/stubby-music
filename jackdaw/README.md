@@ -41,6 +41,10 @@ streams the desert view; Stop restores authoring. The shared Jackdaw regression
 and all 23 PIE projection tests pass. The game workspace tests and both game
 and adapter Clippy checks pass.
 
+The lightning bug models are shared through `assets/models`, a symlink into the
+main runtime asset folder. Play compiles the shared pulse code and uses the
+standalone `stubby_audio` crate through its own public API. The edit viewport's
+floor proxy does not animate the creatures; Play does.
 Audio: Play runs the game's audio engine too. The run configuration
 "Desert opening + audio demo" starts a test patch (the opening's square wave plus an
 audible clock); in either configuration F8 toggles it. Click into the Play panel

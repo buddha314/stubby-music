@@ -1,0 +1,27 @@
+{
+  "id": "lightning_bug",
+  "model": "models/lightning_bug.glb#Scene0",
+  "preview_animation": "white_flash",
+  "colour_linear": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "flash_seconds": 0.18,
+  "attack_seconds": 0.015,
+  "light_lumens": 250.0,
+  "light_range_metres": 3.0,
+  "clock": {
+    "min_interval_seconds": 0.65,
+    "max_interval_seconds": 2.4
+  },
+  "click": {
+    "freq_hz": 2200.0,
+    "attack_seconds": 0.0005,
+    "decay_seconds": 0.004,
+    "gain": 0.12,
+    "hearing_radius_metres": 3.0
+  },
+  "resource": "lightning_bug",
+  "recipe_book_item": "square_wave"
+}

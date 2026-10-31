@@ -28,6 +28,6 @@ rustc-ice-*.txt
 jackdaw/target/
 jackdaw/assets/generated/
 
-# Blender backups and the export scripts' bytecode
-*.blend1
+# Blender backup saves and Python bytecode
+*.blend[0-9]*
 __pycache__/

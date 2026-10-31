@@ -1107,6 +1107,7 @@ dependencies = [
  "bevy_render",
  "bevy_shader",
  "bevy_shape",
+ "bevy_sprite_render",
  "bevy_transform",
  "bevy_utils 0.20.1",
  "bytemuck",
@@ -1267,6 +1268,8 @@ dependencies = [
  "bevy_time",
  "bevy_transform",
  "bevy_ui",
+ "bevy_ui_render",
+ "bevy_ui_widgets",
  "bevy_utils 0.20.1",
  "bevy_window",
  "bevy_winit",
@@ -5740,9 +5743,20 @@ dependencies = [
  "gltf",
  "half",
  "png",
+ "serde",
  "serde_json",
  "stubby_audio",
+ "stubby_recipes",
  "tempfile",
+]
+
+[[package]]
+name = "stubby_recipes"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

@@ -9,12 +9,15 @@
 
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
+pub mod clock;
 mod engine;
 mod modules;
 mod protocol;
+mod random_clock;
 pub mod signal;
 mod thread;
 
+pub use clock::{PeriodicClock, PulseClock, RandomClock};
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
 pub use modules::ParamSpec;
 pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
