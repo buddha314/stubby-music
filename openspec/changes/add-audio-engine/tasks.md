@@ -32,7 +32,7 @@
 - [x] 4.3 Test fan-out and rejection of a second cable to one input
 - [x] 4.4 Constant CV module and master-output bus
 - [x] 4.5 Envelope and VCA modules; `play` example patches clock → envelope → VCA so the clock is audible
-- [ ] 4.6 Listen to the clock blips in `--example play`
+- [x] 4.6 Listen to the clock blips in `--example play`: heard on `breq` (2026-10-31), clean and on the beat
 
 ## 5. Bevy integration
 
