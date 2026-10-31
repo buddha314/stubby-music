@@ -23,6 +23,22 @@ frequency; gates and triggers SHALL be high when above 0.5.
 - **WHEN** a Sine VCO with base frequency 261.63 Hz receives pitch CV of 1.0
 - **THEN** it oscillates at 523.25 Hz (±0.1 Hz)
 
+### Requirement: Master output
+A reserved output module SHALL have one input that accepts any number of cables,
+and SHALL send their sum to both speakers.
+
+#### Scenario: Mono source reaches both speakers
+- **WHEN** a Sine VCO's output is cabled to the master output
+- **THEN** the left and right channels are identical
+
+### Requirement: Constant module
+The game SHALL provide a Constant module with a value parameter and one output
+carrying that value, for use as a fixed CV source.
+
+#### Scenario: Fixed pitch offset
+- **WHEN** a Constant of 1.0 is cabled to a Sine VCO's V/oct input
+- **THEN** the sine sounds one octave above its base frequency
+
 ### Requirement: Sine VCO module
 The game SHALL provide a Sine VCO with a frequency parameter, a V/oct pitch input,
 and a sine audio output.
@@ -30,6 +46,14 @@ and a sine audio output.
 #### Scenario: Pure tone
 - **WHEN** a Sine VCO at 440 Hz is rendered offline for one second at 48 kHz
 - **THEN** the dominant spectral peak is at 440 Hz and peak amplitude is 1.0 (±0.01)
+
+### Requirement: Square VCO module
+The game SHALL provide a band-limited Square VCO with the same frequency parameter,
+V/oct input and output as the Sine VCO.
+
+#### Scenario: Square tone
+- **WHEN** a Square VCO at 220 Hz is rendered offline
+- **THEN** its fundamental is 220 Hz (±0.1 Hz), its RMS is above 0.85 of its peak, and no sample exceeds 1.25
 
 ### Requirement: Clock module
 The game SHALL provide a Clock with a tempo parameter (BPM), a gate output, and a

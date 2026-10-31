@@ -23,7 +23,7 @@ dense) and rise with discoveries. Changes SHALL ease over several seconds and ne
 hard-cut.
 
 #### Scenario: Mood rises on discovery
-- **WHEN** the player discovers the Sine VCO
+- **WHEN** the player discovers the Square VCO
 - **THEN** `Mood` increases and saturation and warmth ease upward over at least 3 seconds
 
 ### Requirement: Visual style

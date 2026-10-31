@@ -31,13 +31,13 @@ thread, and despawned beyond a radius, with no seams between neighbouring chunks
 - **THEN** their shared edge vertices have identical positions and normals
 
 ### Requirement: Placement of discoverables
-Generation SHALL place the Sine VCO within a bounded distance of spawn and the Clock
+Generation SHALL place the Square VCO within a bounded distance of spawn and the Clock
 further out, at seed-determined positions guaranteed to be reachable on foot.
 
-#### Scenario: Sine placement
+#### Scenario: Square placement
 - **WHEN** a world is generated with any seed
-- **THEN** the Sine VCO lies between 40 m and 120 m from spawn
+- **THEN** the Square VCO lies between 40 m and 120 m from spawn, outside its 35 m hearing radius
 
 #### Scenario: Clock placement
 - **WHEN** a world is generated with any seed
-- **THEN** the Clock lies farther from spawn than the Sine VCO, and within 300 m
+- **THEN** the Clock lies farther from spawn than the Square VCO, and within 300 m

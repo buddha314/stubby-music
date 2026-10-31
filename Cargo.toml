@@ -19,3 +19,7 @@ bevy = { version = "0.15", default-features = false, features = [
     "png",
     "x11",
 ] }
+
+[workspace]
+members = [".", "crates/stubby_audio"]
+exclude = ["spikes"]

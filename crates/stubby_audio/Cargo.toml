@@ -1,0 +1,20 @@
+[package]
+name = "stubby_audio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+audioadapter-buffers = "5"
+firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing"] }
+fundsp = "0.23.0"
+rtrb = "0.4.1"
+thiserror = "2"
+
+[dev-dependencies]
+assert_no_alloc = { version = "1.1.2", default-features = false, features = ["warn_debug", "warn_release"] }
+
+# The audio thread must never panic: a panic there kills sound for the session.
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
