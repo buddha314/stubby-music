@@ -11,6 +11,7 @@ bevy = { version = "~0.20.1", default-features = false, features = ["3d"] }
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
+stubby_audio = { version = "0.1.0", path = "../stubby_audio" }
 
 [dev-dependencies]
 gltf = "~1.4"

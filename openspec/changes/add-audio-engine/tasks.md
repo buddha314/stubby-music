@@ -36,8 +36,9 @@
 
 ## 5. Bevy integration
 
-- [ ] 5.0 Decide how Bevy holds the non-`Send` engine (D8, Open Questions)
-- [ ] 5.1 `AudioPlugin` inserting `EngineHandle` as a `Resource` and draining events into Bevy messages each frame
-- [ ] 5.2 Sample-time → display-time mapping from `SyncPoint`
-- [ ] 5.3 Verify a fresh game outputs digital silence
-- [ ] 5.4 Stall-test: block the main thread for 200 ms and confirm no underrun
+- [x] 5.0 Decide how Bevy holds the non-`Send` engine: a control thread behind a `Send` handle (D9)
+- [x] 5.1 `SynthAudioPlugin` inserting the `Synth` resource (an `AudioThread`), turning ticks into `ClockTick` messages each frame and committing in `Last`; also wired into the Jackdaw adapter
+- [x] 5.2 Sample-time → wall-time mapping: each `ClockTick` carries `at`, predicted from an audio-clock snapshot
+- [x] 5.3 Verify a fresh game outputs digital silence (`a_fresh_game_is_silent`)
+- [x] 5.4 Stall test: the engine keeps rendering through a 200 ms game-thread stall (`engine_keeps_running_while_the_game_thread_stalls`)
+- [ ] 5.5 Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play

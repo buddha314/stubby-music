@@ -40,3 +40,8 @@ components; the floor loads in the edit viewport; embedded Play connects and
 streams the desert view; Stop restores authoring. The shared Jackdaw regression
 and all 23 PIE projection tests pass. The game workspace tests and both game
 and adapter Clippy checks pass.
+
+Audio: Play runs the game's audio engine too. The run configuration
+"Desert opening + audio demo" starts a test patch (the opening's square wave plus an
+audible clock); in either configuration F8 toggles it. Click into the Play panel
+first, so keys reach the game rather than the editor.

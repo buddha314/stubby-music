@@ -5741,6 +5741,7 @@ dependencies = [
  "half",
  "png",
  "serde_json",
+ "stubby_audio",
  "tempfile",
 ]
 
