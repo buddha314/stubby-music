@@ -19,7 +19,13 @@ complete voice: a clock, a VCO and a volume control.
 - **Mud streams** flow from the burbler's outlet and pulse at its BPM: the stream is
   the played sequence, laid out in space. Raw mud stays muddy; other constructors
   clean it. **Reeds** will be the conveyor-belt segments (a later change).
-- **Connection halo**: the outlet lights a soft halo while something is connected.
+- **Port highlighting**: an upright halo arch over the burbler's mouth lights while a
+  stream is being extended from it, as in Satisfactory; a holographic preview of the
+  planned stream is its own asset.
+- **Shape**: an organically round mud pool with a ~1 m stream leaving it between
+  banked sides. Each bubble carries a baked one-beat burble clip.
+- **Muddy to clear**: as cleaning processes are identified, stream water goes from
+  muddy to clear.
 - **Assets** (art): the burbler (`mudpit_burbler`); the HUD rack's clock panel and
   volume module. The earlier rack-beside-the-pit version is kept as a concept,
   `mudpit_burbler_rig`, not used by the game.

@@ -2,8 +2,9 @@
 
 Two assets:
 
-- `pit` -> mudpit_burbler: the burbler itself. A natural hot spring of mud that
-  bubbles at its BPM; every burble is a beat. The player configures it through a
+- `pit` -> mudpit_burbler: the burbler itself. An organically round pool of mud,
+  gurgling at its BPM (every burble is a beat), with a stream about 1 m wide leaving
+  it between banked sides. The player configures it through a
   Eurorack HUD (game-side UI), so nothing is built in the world.
 - `rig` -> mudpit_burbler_rig: a concept kept for later. The same pit with a rack
   beside it, built from crude parts (sand, rusted iron, weathered wood) lashed to
@@ -15,11 +16,12 @@ the mud. The models ship at rest; the game animates the named nodes from the
 burbler's clock ticks.
 
   Bubble_<n>           extras: division (bursts on every beat / division)
+  Bubble_<n>_Burble    (pit) glTF animation: one beat, burst at 0 s; play at BPM/60/division
   Bubble_<n>_Ripple    (pit) a ring the game spreads outward from each burst
   Wisp_<n>             extras: rise_m, life_s (rises from a burst and fades)
   Steam_<n>            (pit) extras: rise_m, life_s (drifts up, slow)
-  Outlet_<n>           (pit) extras: stream, pulse. Where a mud stream leaves the pit; +X along the flow
-  Outlet_<n>_Halo      (pit) lit only while something is connected (Burbler_OutletHalo)
+  Outlet_<n>           (pit) extras: stream, pulse. Where the stream leaves the mouth; +X along the flow
+  Outlet_<n>_Halo      (pit) an upright arch over the mouth: the snap point while building a stream
   Mote_<n>             drifts; brightness breathes with the beat
   Interact             extras: action = configure (opens the Eurorack HUD)
   Lantern_<n>, Conduit_Bead_<n>, Slot_<place>   (rig only)
@@ -40,9 +42,24 @@ from module_kit import HEIGHT, HP, PROJECT, ModuleKit, run  # noqa: E402
 
 POOL_RADIUS = 1.15
 POOL_Z = 0.12
-SPRING_SCALE = 1.4  # the pit's pool is this much wider than the rig's
-SPRING_POOL_Z = 0.05
-OUTLET_ANGLE = math.radians(-50)  # where the mud stream leaves the pit (toward the approach)
+# The burbler is an organically round pool of mud that bubbles at its BPM, with a
+# stream about 1 m wide leaving it between banked sides. Pool and channel are one
+# landform: the banks follow a smooth union of the two. Banks are built up from the
+# ground, not cut into it, so the asset sits on any terrain.
+POOL_CENTRE = (0.0, 1.15)
+POOL_R = 1.35             # pool radius before its organic wobble
+CHANNEL_HALF_WIDTH = 0.5  # the stream: 1 m of mud between the banks
+STREAM_MOUTH_Y = -2.3     # where the banks run out and the player's stream carries on
+BANK_WIDTH = 0.38         # inner slope, mud edge to crest
+BANK_HEIGHT = 0.36        # crest height above the ground
+BANK_SKIRT = 0.7          # outer slope, crest down to the ground
+STREAM_MUD_Z = 0.07       # mud surface height
+# (x, y, radius, division) in the pool: the big one bursts on the beat, the rest subdivide it.
+STREAM_BUBBLES = [(0.1, 1.3, 0.26, 1), (-0.6, 1.65, 0.13, 2), (0.6, 0.8, 0.11, 2),
+                  (-0.45, 0.55, 0.09, 4), (0.5, 1.9, 0.08, 4)]
+STREAM_WISPS = [(0.1, 1.25, 0.75, 0.15), (-0.45, 1.6, 1.3, 0.11), (0.35, 0.9, 1.85, 0.09)]
+BEAT_FRAMES = 24          # one beat at 24 fps: each bubble's clip lasts 1 s at speed 1
+
 RACK_HP = {"clock": 8, "vco": 8, "volume": 4}
 RACK_WIDTH = sum(RACK_HP.values()) * HP
 RACK_BASE = 0.30  # module base height in the rack
@@ -212,35 +229,60 @@ class Burbler(ModuleKit):
                 self.ribbon(f"VeinHalo{i}_{k}", [(x, y, z + 0.003 * (k + 1)) for x, y, z in pts], width,
                             self.halo, taper=True)
 
-    def bubbles(self, scale=1.0, pool_z=POOL_Z, ripples=False):
+    def bubbles(self, pool_z=POOL_Z, ripples=False, layout=None):
         # (x, y, radius, division): the big one bursts on the beat, the rest subdivide it.
-        for i, (x, y, r, division) in enumerate([(0.25, 0.20, 0.24, 1), (-0.45, 0.35, 0.12, 2),
-                                                  (0.05, -0.55, 0.10, 2), (-0.35, -0.30, 0.08, 4),
-                                                  (0.62, -0.18, 0.07, 4)]):
-            r *= scale ** 0.5
-            node = self.node(f"Bubble_{i}", (x * scale, y * scale, pool_z), division=division)
+        for i, (x, y, r, division) in enumerate(layout or [(0.25, 0.20, 0.24, 1), (-0.45, 0.35, 0.12, 2),
+                                                           (0.05, -0.55, 0.10, 2), (-0.35, -0.30, 0.08, 4),
+                                                           (0.62, -0.18, 0.07, 4)]):
+            node = self.node(f"Bubble_{i}", (x, y, pool_z), division=division)
+            parts = {}
             if ripples:
                 # A raised wet ring that catches the light; the game spreads it from the burst.
                 def ring(bm, r=r * 1.5):
                     tube = 0.012
                     self.lathe(bm, [(r + tube * math.cos(a), tube * math.sin(a))
                                     for a in (k / 8 * 2 * math.pi for k in range(9))], steps=32)
-                self.mesh_obj(f"Bubble_{i}_Ripple", ring, self.wet, (0, 0, 0.03), node)
+                parts["ripple"] = self.mesh_obj(f"Bubble_{i}_Ripple", ring, self.wet, (0, 0, 0.03), node)
 
             def dome(bm, r=r):
                 bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -1e-4], context="VERTS")
                 for v in bm.verts:
                     v.co.z *= 0.8
-            self.sphere(f"Bubble_{i}_Dome", r, self.wet, parent=node, segments=16, rings=8, shape=dome)
+            parts["dome"] = self.sphere(f"Bubble_{i}_Dome", r, self.wet, parent=node, segments=16, rings=8,
+                                        shape=dome)
             # Lit from inside the mud: a soft glow pooled around the bubble's foot.
             for k, scale in enumerate((1.25, 1.6)):
-                self.mesh_obj(f"Bubble_{i}_Glow{k}", lambda bm, r=r * scale: bmesh.ops.create_circle(
+                parts[f"glow{k}"] = self.mesh_obj(f"Bubble_{i}_Glow{k}", lambda bm, r=r * scale: bmesh.ops.create_circle(
                     bm, cap_ends=True, segments=32, radius=r), self.halo, (0, 0, 0.012 + 0.003 * k), node)
+            if ripples:
+                self.burble(f"Bubble_{i}_Burble", parts)
 
-    def wisps(self, scale=1.0):
-        for i, (x, y, z, r) in enumerate([(0.30, 0.25, 0.75, 0.15), (-0.40, 0.45, 1.30, 0.11),
-                                           (0.10, -0.10, 1.85, 0.09)]):
-            node = self.node(f"Wisp_{i}", (x * scale, y * scale, z), rise_m=2.2, life_s=1.8)
+    # One beat of a bubble, frame 0 = the burst, on the clock tick. The game plays the
+    # clip looping at speed BPM / 60 / division. Scale keys per part.
+    BURBLE_KEYS = {
+        "dome": [(0, (1.12, 1.12, 0.5)), (1, (0.02, 0.02, 0.02)), (4, (0.1, 0.1, 0.06)),
+                 (20, (0.9, 0.9, 0.85)), (BEAT_FRAMES, (1.0, 1.0, 1.0))],
+        "ripple": [(0, (0.35, 0.35, 1.0)), (16, (1.7, 1.7, 0.25)), (17, (0.0, 0.0, 0.0)),
+                   (BEAT_FRAMES, (0.0, 0.0, 0.0))],
+        "glow0": [(0, (1.4, 1.4, 1.0)), (6, (0.8, 0.8, 1.0)), (BEAT_FRAMES, (1.0, 1.0, 1.0))],
+        "glow1": [(0, (1.5, 1.5, 1.0)), (8, (0.75, 0.75, 1.0)), (BEAT_FRAMES, (1.0, 1.0, 1.0))],
+    }
+
+    def burble(self, name, parts):
+        """Bake one bubble's beat into a single action shared by its parts, so it exports
+        as one glTF animation named `name`."""
+        action = bpy.data.actions.new(name)
+        for key, obj in parts.items():
+            obj.animation_data_create()
+            obj.animation_data.action = action
+            for frame, scale in self.BURBLE_KEYS[key]:
+                obj.scale = scale
+                obj.keyframe_insert("scale", frame=frame)
+
+    def wisps(self, layout=None):
+        for i, (x, y, z, r) in enumerate(layout or [(0.30, 0.25, 0.75, 0.15), (-0.40, 0.45, 1.30, 0.11),
+                                                    (0.10, -0.10, 1.85, 0.09)]):
+            node = self.node(f"Wisp_{i}", (x, y, z), rise_m=2.2, life_s=1.8)
 
             def bell(bm, r=r):
                 bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -1e-4], context="VERTS")
@@ -260,112 +302,147 @@ class Burbler(ModuleKit):
                 self.ribbon(f"Wisp_{i}_Tendril{k}", pts, r * 0.16, self.wisp_bell, up=(0, 1, 0),
                             parent=node, taper=True)
 
-    def motes(self, scale=1.0):
+    def motes(self, scale=(1.0, 1.0), offset=(0.0, 0.0)):
         for i in range(8):
             angle = self.rng.uniform(0, 2 * math.pi)
-            r = self.rng.uniform(0.4, 2.4) * scale
-            self.glow_point(f"Mote_{i}", (r * math.cos(angle), r * math.sin(angle), self.rng.uniform(0.45, 2.3)),
+            r = self.rng.uniform(0.4, 2.4)
+            at = (offset[0] + r * math.cos(angle) * scale[0], offset[1] + r * math.sin(angle) * scale[1])
+            self.glow_point(f"Mote_{i}", (*at, self.rng.uniform(0.45, 2.3)),
                             0.014, 0.055, self.mote, self.mote_halo)
 
     # ------------------------------------------------------------ the hot spring
 
     @staticmethod
-    def notch(v, depth):
-        """Lower geometry near the outlet, so the rim has a gap for the stream."""
-        d = (math.atan2(v.co.y, v.co.x) - OUTLET_ANGLE + math.pi) % (2 * math.pi) - math.pi
-        v.co.z *= 1 - depth * math.exp(-(d / 0.2) ** 2)
+    def smooth(t):
+        t = min(max(t, 0.0), 1.0)
+        return t * t * (3 - 2 * t)
 
-    def spring(self):
-        """A mud pot: a wide, low pool of wet mud in a pale mineral apron that steps
-        down in small terraces, spattered with mud thrown out by the bubbles."""
-        z = SPRING_POOL_Z
-        R = POOL_RADIUS * SPRING_SCALE
+    def pool_radius(self, angle):
+        """The pool's organic edge: round, but never a circle."""
+        n = noise.noise(Vector((math.cos(angle) * 1.3, math.sin(angle) * 1.3, 2.0)))
+        return POOL_R * (1 + 0.1 * n + 0.03 * math.sin(3 * angle + 1.0))
 
-        def inner(bm):
-            self.lathe(bm, [(R - 0.05, z - 0.02), (R + 0.12, 0.14), (R + 0.35, 0.2), (R + 0.55, 0.15)])
-            for v in bm.verts:
-                angle = math.atan2(v.co.y, v.co.x)
-                n = noise.noise(Vector((math.cos(angle) * 1.4, math.sin(angle) * 1.4, 0.7)))
-                v.co.x *= 1 + 0.06 * n
-                v.co.y *= 1 + 0.06 * n
-                if v.co.z > 0.02:
-                    v.co.z *= 1 + 0.35 * noise.noise(v.co * 2.6)
-                self.notch(v, 0.8)
-        self.mesh_obj("Rim", inner, self.mud)
+    def channel_half_width(self, y):
+        return CHANNEL_HALF_WIDTH * (1 + 0.08 * noise.noise(Vector((y * 0.9, 3.3, 0.0))))  # banks wander
 
-        def apron(bm):
-            self.lathe(bm, [(R + 0.5, 0.15), (R + 0.75, 0.12), (R + 0.8, 0.08), (R + 1.1, 0.07),
-                            (R + 1.15, 0.03), (R + 1.55, 0.0)], steps=72)
-            for v in bm.verts:
-                angle = math.atan2(v.co.y, v.co.x)
-                n = noise.noise(Vector((math.cos(angle) * 2.1, math.sin(angle) * 2.1, 1.9)))
-                v.co.x *= 1 + 0.09 * n
-                v.co.y *= 1 + 0.09 * n
-                if v.co.z > 0.01:  # uneven terraces, not a turned plate
-                    v.co.z *= 1 + 0.6 * noise.noise(v.co * 3.1)
-                self.notch(v, 0.85)
-        self.mesh_obj("Apron", apron, self.sinter)
+    def bank_distance(self, x, y):
+        """Signed distance outward from the mud's edge: negative in the mud, positive
+        across the banks. A smooth union of the round pool and the stream channel."""
+        cx, cy = POOL_CENTRE
+        pool = math.hypot(x - cx, y - cy) - self.pool_radius(math.atan2(y - cy, x - cx))
+        channel = abs(x) - self.channel_half_width(y) if y < cy else 99.0
+        k = 0.3
+        return -k * math.log(math.exp(-pool / k) + math.exp(-channel / k))
 
-        def pool(bm):
-            self.lathe(bm, [(R * t, z) for t in (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)])
-            for v in bm.verts:  # slow swells where the mud is about to burble
-                v.co.z += 0.03 * noise.noise(v.co * 1.4 + Vector((5, 5, 0)))
-        self.mesh_obj("Pool", pool, self.wet)
+    def bank_height(self, x, y):
+        s = self.bank_distance(x, y)
+        if s <= 0:
+            return 0.0
+        if s < BANK_WIDTH:
+            h = self.smooth(s / BANK_WIDTH)
+        else:
+            h = 1 - self.smooth((s - BANK_WIDTH) / BANK_SKIRT)
+        h *= BANK_HEIGHT * (1 + 0.25 * noise.noise(Vector((x * 2.3, y * 1.7, 0.5))))
+        # The banks run out at the mouth, where the player's stream takes over.
+        return h * self.smooth((y - STREAM_MOUTH_Y + 0.15) / 0.75)
 
-        self.outlet(R, z)
+    def channel(self):
+        """The stream bed: banked earthen sides and the mud between them."""
+        x0, x1 = -2.6, 2.6
+        y0, y1 = STREAM_MOUTH_Y - 0.4, POOL_CENTRE[1] + POOL_R + 1.4
+        nx, ny = 38, 48
 
-        # Mud thrown out onto the rim by earlier bursts.
+        def grid(bm, height, keep):
+            verts = [[bm.verts.new((x0 + (x1 - x0) * i / nx, y0 + (y1 - y0) * j / ny, 0.0))
+                      for i in range(nx + 1)] for j in range(ny + 1)]
+            for row in verts:
+                for v in row:
+                    v.co.z = height(v.co.x, v.co.y)
+            for j in range(ny):
+                for i in range(nx):
+                    quad = (verts[j][i], verts[j][i + 1], verts[j + 1][i + 1], verts[j + 1][i])
+                    if keep(quad):
+                        bm.faces.new(quad)
+            bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+
+        def banks(bm):
+            # Keep only the raised bank and its foot under the mud's edge; drop flat ground.
+            grid(bm, lambda x, y: self.bank_height(x, y),
+                 lambda q: any(v.co.z > 0.004 for v in q)
+                 and not all(self.bank_distance(v.co.x, v.co.y) < -0.12 for v in q))
+        self.mesh_obj("Banks", banks, self.mud)
+
+        def mud(bm):  # the mud fill, gently swelling, flowing out past the mouth
+            grid(bm, lambda x, y: STREAM_MUD_Z + 0.02 * noise.noise(Vector((x * 1.6, y * 1.2, 7.0))),
+                 # Runs on under the banks' inner slope, so its grid edge is hidden.
+                 lambda q: any(self.bank_distance(v.co.x, v.co.y) < 0.1 for v in q))
+        self.mesh_obj("Mud", mud, self.wet)
+
+        # Mud thrown up onto the banks around the pool by the bubbles.
+        cx, cy = POOL_CENTRE
         for i in range(14):
-            angle = self.rng.uniform(0, 2 * math.pi)
-            r = self.rng.uniform(R + 0.05, R + 0.6)
-            size = self.rng.uniform(0.04, 0.11)
-            blob = self.sphere(f"Spatter{i}", size, self.wet, (r * math.cos(angle), r * math.sin(angle), 0.15),
-                               segments=10, rings=5)
-            blob.scale = (self.rng.uniform(1.0, 1.8), 1.0, 0.3)
+            angle = self.rng.uniform(-0.2 * math.pi, 1.2 * math.pi)  # not across the stream's mouth
+            r = self.pool_radius(angle) + self.rng.uniform(0.08, 0.4)
+            x, y = cx + r * math.cos(angle), cy + r * math.sin(angle)
+            blob = self.sphere(f"Spatter{i}", self.rng.uniform(0.04, 0.1), self.wet,
+                               (x, y, self.bank_height(x, y) + 0.01), segments=10, rings=5)
+            blob.scale = (1.0, self.rng.uniform(1.0, 1.8), 0.3)
             blob.rotation_euler.z = angle
 
-    def outlet(self, R, z):
-        """Where the burbler's mud stream leaves the pit. The stream itself is laid by
-        the player and pulses at the BPM; this is its source: a gap in the rim, a
-        tongue of wet mud spilling through it, and the `Outlet_0` node (+X along the
-        flow) that the game starts the stream from."""
-        out = Vector((math.cos(OUTLET_ANGLE), math.sin(OUTLET_ANGLE), 0))
-        side = Vector((-out.y, out.x, 0))
-        start_r, end_r = R - 0.3, R + 1.7
+    def stream_veins(self):
+        """Amber veins that swirl in the pool and are drawn out down the stream: the
+        beat's path out of the pit."""
+        cx, cy = POOL_CENTRE
+        entrance = Vector((0.0, cy - POOL_R * 0.85))
+        for i in range(3):
+            angle = self.rng.uniform(0.2 * math.pi, 0.8 * math.pi) + i * 0.6
+            start = Vector((cx, cy)) + Vector((math.cos(angle), math.sin(angle))) * self.rng.uniform(0.4, 0.8)
+            bend = Vector((cx, cy)) + Vector((math.cos(angle - 1.4), math.sin(angle - 1.4))) * 0.9
+            phase = self.rng.uniform(0, 2 * math.pi)
+            pts = []
+            for k in range(14):  # swirl toward the channel's entrance (quadratic Bezier)
+                t = k / 14
+                p = start.lerp(bend, t).lerp(bend.lerp(entrance, t), t)
+                pts.append((p.x, p.y, STREAM_MUD_Z + 0.035))
+            for k in range(20):  # then down the stream, wandering within its banks
+                t = k / 19
+                y = entrance.y + t * (STREAM_MOUTH_Y - 0.3 - entrance.y)
+                w = self.channel_half_width(y) * 0.75
+                pts.append((max(-w, min(w, 0.15 * math.sin(phase + t * 7))), y, STREAM_MUD_Z + 0.035))
+            self.ribbon(f"Vein{i}", pts, 0.008, self.glow, taper=True)
+            self.ribbon(f"VeinHalo{i}", [(x, y, z + 0.003) for x, y, z in pts], 0.06, self.halo, taper=True)
 
-        # Raw mud, not a channel: a lumpy tongue that spreads into a lobe where it stops.
-        def tongue(bm):
-            rows = []
-            for k in range(18):
-                t = k / 17
-                centre = out * (start_r + t * (end_r - start_r)) + side * 0.08 * math.sin(t * 4.5)
-                half = 0.28 + 0.25 * t ** 2 + 0.2 * math.sin(math.pi * min(t * 1.15, 1.0)) * t
-                row = []
-                for j in range(7):
-                    u = j / 6 * 2 - 1
-                    p = centre + side * u * half * (1 + 0.15 * noise.noise(centre * 3 + Vector((u, 0, 0))))
-                    h = z + 0.02 - 0.035 * t + 0.035 * (1 - u * u) + 0.02 * noise.noise(p * 4.0)
-                    row.append(bm.verts.new((p.x, p.y, max(h, 0.005))))
-                rows.append(row)
-            for a, b in zip(rows, rows[1:]):
-                for j in range(6):
-                    bm.faces.new((a[j], a[j + 1], b[j + 1], b[j]))
-        self.mesh_obj("Outlet_Spill", tongue, self.flow)
+    def arch(self, name, radius, tube, mat, parent, segments=40):
+        """An upright half-ring across the stream, in the node's YZ plane."""
+        def fill(bm):
+            rings = []
+            for i in range(segments + 1):
+                phi = math.pi * i / segments
+                centre = Vector((0, radius * math.cos(phi), radius * math.sin(phi)))
+                normal = Vector((0, math.cos(phi), math.sin(phi)))
+                rings.append([bm.verts.new(centre + tube * (normal * math.cos(a) + Vector((1, 0, 0)) * math.sin(a)))
+                              for a in (k / 8 * 2 * math.pi for k in range(8))])
+            for ra, rb in zip(rings, rings[1:]):
+                for k in range(8):
+                    bm.faces.new((ra[k], ra[(k + 1) % 8], rb[(k + 1) % 8], rb[k]))
+        return self.mesh_obj(name, fill, mat, parent=parent)
 
-        node = self.node("Outlet_0", tuple(out * end_r), stream="mud", pulse="bpm")
-        node.rotation_euler.z = OUTLET_ANGLE
-        halo = self.node("Outlet_0_Halo", (0, 0, 0.06), parent=node, connected_only=True)
-        for k, (radius, tube, mat) in enumerate([(0.42, 0.012, self.glow), (0.42, 0.05, self.outlet_halo),
-                                                 (0.42, 0.11, self.outlet_halo)]):
-            def ring(bm, radius=radius, tube=tube):
-                self.lathe(bm, [(radius + tube * math.cos(a), tube * math.sin(a))
-                                for a in (i / 8 * 2 * math.pi for i in range(9))], steps=40)
-            self.mesh_obj(f"Outlet_0_Ring{k}", ring, mat, parent=halo)
+    def mouth(self):
+        """Where the stream leaves the burbler: `Outlet_0` (+X along the flow), with an
+        upright halo arch over the mouth. The arch is the snap point: it lights while the
+        player is extending a stream from here, as a generator's port does when you drag a
+        conveyor from it in Satisfactory, and stays softly lit once connected."""
+        node = self.node("Outlet_0", (0.0, STREAM_MOUTH_Y - 0.3, STREAM_MUD_Z), stream="mud", pulse="bpm")
+        node.rotation_euler.z = -math.pi / 2
+        halo = self.node("Outlet_0_Halo", (0, 0, 0), parent=node, role="port_highlight")
+        radius = self.channel_half_width(STREAM_MOUTH_Y) + 0.12
+        for k, (tube, mat) in enumerate([(0.008, self.glow), (0.03, self.outlet_halo), (0.07, self.outlet_halo)]):
+            self.arch(f"Outlet_0_Arch{k}", radius, tube, mat, halo)
 
-    def steam_plumes(self, scale=1.0):
+    def steam_plumes(self, layout):
         """Slow, pale steam: not luminous, it catches the light around it."""
-        for i, (x, y, z) in enumerate([(0.3, 0.35, 0.5), (-0.55, 0.45, 0.9)]):
-            node = self.node(f"Steam_{i}", (x * scale, y * scale, z), rise_m=3.0, life_s=4.5)
+        for i, (x, y, z) in enumerate(layout):
+            node = self.node(f"Steam_{i}", (x, y, z), rise_m=3.0, life_s=4.5)
             for k in range(4):  # faint, overlapping puffs widening as they rise
                 puff = self.sphere(f"Steam_{i}_Puff{k}", 0.22 + 0.06 * k, self.steam,
                                    (self.rng.uniform(-0.15, 0.15) * (1 + k * 0.4),
@@ -514,24 +591,36 @@ class Burbler(ModuleKit):
                 "Burbler_WispBell": {"rest": 0.0, "peak": 1.0, "attack_s": 0.1, "decay_s": 1.8},
                 "Burbler_WispCore": {"rest": 0.0, "peak": 1.0, "attack_s": 0.05, "decay_s": 1.6},
                 "Burbler_Mote": {"rest": 0.35, "peak": 1.0, "attack_s": 0.2, "decay_s": 0.8},
-                "Burbler_OutletHalo": {"rest": 0.0, "peak": 1.0, "attack_s": 0.05, "decay_s": 0.5,
-                                       "note": "0 until connected; then breathes at the BPM"},
+                "Burbler_OutletHalo": {"rest": 0.0, "peak": 1.0, "connected": 0.4, "attack_s": 0.05,
+                                       "decay_s": 0.5,
+                                       "note": "0 normally; peak while a stream is being extended from "
+                                               "here (the snap point); 'connected' once attached, "
+                                               "breathing at the BPM"},
             },
             "nodes": nodes,
+            "animations": {a.name: {"seconds": BEAT_FRAMES / 24, "loop": True, "burst_at_seconds": 0.0,
+                                    "speed": "bpm / 60 / division (the bubble node's extras)"}
+                           for a in bpy.data.actions if a.name.endswith("_Burble")},
         }
 
-    def build_spring(self):
-        self.size = {"width": 6.3, "depth": 6.3, "height": 0.3}
-        self.spring()
-        self.veins(SPRING_SCALE, SPRING_POOL_Z)
-        self.bubbles(SPRING_SCALE, SPRING_POOL_Z, ripples=True)
-        self.wisps(SPRING_SCALE)
-        self.steam_plumes(SPRING_SCALE)
-        self.motes(SPRING_SCALE)
-        self.node("Interact", (0.0, -POOL_RADIUS * SPRING_SCALE - 0.6, 0.5), action="configure",
-                  prompt="Configure")
-        return self.finish(self.profile(), aim=(0.7, -0.8, 0.5), camera_location=(1.0, -10.2, 4.6),
-                           before_render=lambda: self.stage_preview(), profile_dir="machines")
+    def build_stream(self):
+        self.size = {"width": 5.0, "depth": 6.6, "height": BANK_HEIGHT}
+        self.channel()
+        self.stream_veins()
+        self.bubbles(STREAM_MUD_Z, ripples=True, layout=STREAM_BUBBLES)
+        self.wisps(STREAM_WISPS)
+        self.steam_plumes([(0.15, 1.4, 0.5), (-0.4, 1.0, 0.9)])
+        self.motes(scale=(0.9, 1.1), offset=(0.0, 0.7))
+        self.mouth()
+        self.node("Interact", (-1.75, 0.7, 0.6), action="configure", prompt="Configure")
+        # Rest pose (and preview): every bubble most of the way through its swell.
+        self.scene.render.fps = 24
+        self.scene.frame_start, self.scene.frame_end = 0, BEAT_FRAMES
+        self.scene.frame_set(20)
+        # Looking up the stream from beyond its mouth: the stream runs up the frame.
+        return self.finish(self.profile(), aim=(0.0, 0.5, 0.1), camera_location=(1.0, -7.0, 5.0),
+                           before_render=lambda: self.stage_preview(resolution=(900, 1200)),
+                           profile_dir="machines")
 
     def build_rig(self):
         self.size = {"width": 5.2, "depth": 4.4, "height": 2.4}
@@ -547,7 +636,7 @@ class Burbler(ModuleKit):
                                {"Slot_clock": "clock_lamp", "Slot_vco": "square_vco"}),
                            profile_dir="machines")
 
-    def stage_preview(self, slots=None):
+    def stage_preview(self, slots=None, resolution=(1280, 800)):
         """Not exported: ground, light, bloom, and stand-in modules in any slots."""
         ground = self.box("PreviewGround", (40, 40, 0.02), (0, 0, -0.011), self.mud)
         ground.hide_select = True
@@ -569,7 +658,7 @@ class Burbler(ModuleKit):
         key.data.size = 3.0
         key.location = (-3.0, -4.5, 4.5)
         key.rotation_euler = (Vector((0.5, 0, 0.6)) - key.location).to_track_quat("-Z", "Y").to_euler()
-        self.scene.render.resolution_x, self.scene.render.resolution_y = 1280, 800
+        self.scene.render.resolution_x, self.scene.render.resolution_y = resolution
         # Bloom, as the game's camera will have; without it halos read as flat shapes.
         tree = bpy.data.node_groups.new("Burbler_PreviewBloom", "CompositorNodeTree")
         tree.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
@@ -585,5 +674,5 @@ class Burbler(ModuleKit):
 
 
 if __name__ == "__main__":
-    print(run({"pit": lambda: Burbler("mudpit_burbler").build_spring(),
+    print(run({"pit": lambda: Burbler("mudpit_burbler").build_stream(),
                "rig": lambda: Burbler("mudpit_burbler_rig").build_rig()}, __file__))

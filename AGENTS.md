@@ -269,8 +269,10 @@ queries. The domain chain is scrub oak mine → finite bug → square-wave items
 
 ### The mudpit burbler: a clock mine you configure
 
-A **mudpit burbler** is a gurgling hot spring of mud that **bubbles at a BPM**: it is
-the game's clock source. It is a resource node in the Satisfactory sense, the
+A **mudpit burbler** is a gurgling spring of mud that **bubbles at a BPM**: it is
+the game's clock source. It is an **organically round pool** of mud, and a stream
+about 1 m wide leaves it between banked sides. Its bubbles burble on the beat (baked
+one-beat glTF clips the game plays at the BPM). It is a resource node in the Satisfactory sense, the
 equivalent of an iron ore node, so the player does not pick it up.
 
 - **Configure, Satisfactory-style:** E at the burbler opens a **HUD showing a basic
@@ -280,10 +282,16 @@ equivalent of an iron ore node, so the player does not pick it up.
   minimal patch: the burbler's clock triggers the VCO and the volume knob sets its level.
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
-  mud is **raw**: muddy on purpose, like ore. Other constructors clean it up later.
+  mud is **raw**: muddy on purpose, like ore. As other processes are identified,
+  constructors clean it, and the stream's water goes **from muddy to clear**.
 - **Reeds are the conveyor belt segments** that streams run along (not yet designed).
-- **Connections halo.** When something is connected to an outlet, the outlet lights a
-  soft halo, as Satisfactory highlights a connected port.
+- **Port highlighting.** The burbler's mouth carries an upright halo arch, its stream
+  port. When the player extends a stream from it, the arch lights to show the
+  connection point, as a generator's port does when you drag a conveyor from it in
+  Satisfactory; it stays softly lit once connected.
+- **Stream hologram.** While extending, the planned stream shows as a holographic
+  preview, like a Satisfactory conveyor before it is built. That is its own asset,
+  separate from the burbler.
 - Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the
   burbler, the HUD rack's modules and, later, streams and reeds; game logic (Codex)
   builds the interaction, the HUD, the patch, streams and production.

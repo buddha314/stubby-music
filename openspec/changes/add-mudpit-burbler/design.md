@@ -26,23 +26,36 @@ so the beat can be seen from a distance.
 screen over the game; nothing appears beside the pit. The HUD shows a basic Eurorack
 built from the same module assets as everywhere else.
 
+**A round pool with its stream.** The burbler is an organically round pool of mud,
+and the stream it feeds leaves it as a channel about 1 m wide between raised, banked
+sides; pool and channel are one landform (a smooth union of the two), built up from
+the ground so it sits on any terrain. The port is at the stream's mouth.
+
+**Bubbles carry baked clips.** Each bubble has one glTF animation,
+`Bubble_<n>_Burble`, a single beat (1 s at speed 1) with the burst at time 0: the
+dome swells, bursts, and its ripple and glow spread. The game loops it at speed
+BPM / 60 / division and phase-locks it to the clock ticks, so the art owns the shape of
+a burble and the game owns its timing.
+
 **Streams are the sequence in space.** A mud stream from the outlet pulses at the
 burbler's BPM; following a stream is following the music. Streams run along reeds,
-the conveyor-belt segments (a later change). Raw mud is muddy by design; cleaning is
-a later constructor's job, which gives the bleak-to-bloomed arc a production chain.
+the conveyor-belt segments (a later change). Extending one works like dragging a
+conveyor from a generator: the port arch highlights and a hologram shows the plan. Raw mud is muddy by design; cleaning is
+a later constructor's job, taking the water from muddy to clear in stages as processes
+are identified, which gives the bleak-to-bloomed arc a production chain.
 
 **The asset exposes, the game animates.** The model ships at rest. Named nodes carry
 glTF extras for what the game drives:
 
 | Node | Driven by the game |
 | ---- | ------------------ |
-| `Bubble_<n>` (extras: `division`) | swell and burst on every beat ÷ `division` |
-| `Bubble_<n>_Ripple` | spread outward and fade after each burst |
+| `Bubble_<n>` (extras: `division`) | burst on every beat ÷ `division` |
+| `Bubble_<n>_Burble` (animation) | play looping at BPM / 60 / division, burst (time 0) on the tick |
 | `Wisp_<n>` (extras: `rise_m`, `life_s`) | rise from a burst and fade, like a jellyfish drifting up |
 | `Steam_<n>` (extras: `rise_m`, `life_s`) | drift up slowly |
 | `Mote_<n>` | wander slowly; brightness breathes with the beat |
-| `Outlet_0` (extras: `stream`, `pulse`) | where a mud stream starts; +X points along the flow |
-| `Outlet_0_Halo` (extras: `connected_only`) | lit only while something is connected; breathes at the BPM |
+| `Outlet_0` (extras: `stream`, `pulse`) | the stream port at the mouth; +X points along the flow |
+| `Outlet_0_Halo` | the upright port arch: peak while a stream is being extended from here (port highlighting), `connected` level and breathing at the BPM once attached, dark otherwise |
 | `Interact` (extras: `action: configure`) | where E opens the configuration HUD |
 
 Luminous materials are separate and stably named (`Burbler_Glow`, `Burbler_GlowHalo`,

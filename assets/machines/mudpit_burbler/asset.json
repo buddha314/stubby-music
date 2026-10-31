@@ -5,9 +5,9 @@
   "mine": "mudpit_burbler",
   "produces": "clock",
   "size_metres": {
-    "width": 6.3,
-    "depth": 6.3,
-    "height": 0.3
+    "width": 5.0,
+    "depth": 6.6,
+    "height": 0.36
   },
   "params": {
     "bpm": {
@@ -65,9 +65,10 @@
     "Burbler_OutletHalo": {
       "rest": 0.0,
       "peak": 1.0,
+      "connected": 0.4,
       "attack_s": 0.05,
       "decay_s": 0.5,
-      "note": "0 until connected; then breathes at the BPM"
+      "note": "0 normally; peak while a stream is being extended from here (the snap point); 'connected' once attached, breathing at the BPM"
     }
   },
   "nodes": [
@@ -93,5 +94,37 @@
     "Wisp_0",
     "Wisp_1",
     "Wisp_2"
-  ]
+  ],
+  "animations": {
+    "Bubble_0_Burble": {
+      "seconds": 1.0,
+      "loop": true,
+      "burst_at_seconds": 0.0,
+      "speed": "bpm / 60 / division (the bubble node's extras)"
+    },
+    "Bubble_1_Burble": {
+      "seconds": 1.0,
+      "loop": true,
+      "burst_at_seconds": 0.0,
+      "speed": "bpm / 60 / division (the bubble node's extras)"
+    },
+    "Bubble_2_Burble": {
+      "seconds": 1.0,
+      "loop": true,
+      "burst_at_seconds": 0.0,
+      "speed": "bpm / 60 / division (the bubble node's extras)"
+    },
+    "Bubble_3_Burble": {
+      "seconds": 1.0,
+      "loop": true,
+      "burst_at_seconds": 0.0,
+      "speed": "bpm / 60 / division (the bubble node's extras)"
+    },
+    "Bubble_4_Burble": {
+      "seconds": 1.0,
+      "loop": true,
+      "burst_at_seconds": 0.0,
+      "speed": "bpm / 60 / division (the bubble node's extras)"
+    }
+  }
 }
