@@ -28,6 +28,7 @@
 - [ ] 4.3 Square emission: spatialized, audible only within 35 m, follows camera yaw; visual ripple as fallback; discovery adds it to the patch without a gap
 - [ ] 4.4 Clock gating (not collectable before the square) and cue toward the square
 - [ ] 4.5 Clock light driven by audio tick display-time prediction; verify ≤10 ms offset
+  Progress: the clock module's light flashes are scheduled from each tick's predicted instant (`add-module-asset-binding`, PR #17). Open: the ≤10 ms on-screen measurement (`add-module-asset-binding` 2.4).
 - [ ] 4.6 Mood increases on each discovery
 
 ## 5. Initial visual scene increment

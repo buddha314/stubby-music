@@ -219,11 +219,13 @@ Several agents work in this repo at once. To avoid stepping on each other:
   worktree builds in its own `target/`, even though the first build is slower.
 - **Engine module IDs are picked by hand, so keep to your range:** bug clocks 1–3,
   bug voices 100–199, module showcase 8000–8999, audio demo 9000–9999, collection cues
-  10 000 and up. A duplicate `ModuleId` makes the engine reject the module.
+  10 000 and up. A duplicate `ModuleId` makes the engine reject the module. A shared
+  allocator replaces these ranges (`add-module-asset-binding` 2.1).
 - **Current owners (2026-10-31, after reconciling):** nothing is claimed. Done: the
   Blender module assets (desert-opening 1.3, 1.4) and the lightning-bug pulse. Ready to
-  start: `add-rack-and-spatial-audio` (begin with task 0.1, the host decision) and
-  desert-opening placement (2.5). Update this line when you claim work.
+  start: `add-rack-and-spatial-audio` (begin with task 0.1, the host decision),
+  desert-opening placement (2.5), and the module ID allocator
+  (`add-module-asset-binding` 2.1). Update this line when you claim work.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
 
