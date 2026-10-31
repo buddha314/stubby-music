@@ -238,3 +238,12 @@ mine definition and editor `MineNode` exist; production rates, quality simulatio
 spawn loops and tree visuals remain deferred in
 `openspec/changes/add-scrub-oak-production/`. Keep mines separate from E pickup
 queries. The domain chain is scrub oak mine → finite bug → square-wave items.
+
+### Shared Jackdaw development fork
+
+Use the shared editor source checkout `/home/buddha/src/jackdaw`, not a per-game
+copy. Its development `origin` is **https://github.com/buddha314/jackdaw.git**.
+Keep **https://github.com/jbuehler23/jackdaw.git** as `upstream` for reference and
+selective integration. Develop and publish fixes to the buddha314 fork; do not
+wait for upstream acceptance before using them locally or in this game. Preserve
+this remote convention when fetching, opening PRs, or configuring new checkouts.
