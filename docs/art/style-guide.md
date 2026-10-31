@@ -20,11 +20,12 @@ art decision serves that causal chain, which the player should be able to *see*:
 > music played → carried by streams → life grows → light quality rises → the world blooms
 
 **Streams are staff music.** They deliver music to plants and animals as nutrients.
-Draw them as a musical staff: five parallel lines running along the water, with notes
-carried downstream on them, glowing in the stream's colour and moving in time with the
-music they carry. They are nature's patch cables, and should rhyme with the module
-cables: a dry, broken staff in the bleak desert; full, flowing and luminous where
-bloomed.
+They begin as **mud** flowing from a burbler (a gurgling hot-spring mud pot that
+bubbles at a BPM) and **pulse at that BPM**, so a stream is the played sequence laid
+out in space. Raw streams are **muddy on purpose**, like ore; constructors clean them
+up, and a cleaned stream can become clearer, brighter and more staff-like (five lines,
+notes carried downstream). Reeds are their conveyor-belt segments. A connected port
+lights a soft halo, as in Satisfactory.
 
 So growth reads as a response to sound: flora and fauna that are being played to
 should visibly react (sway, pulse, open, glow in time) before they bloom. Bloom
@@ -87,6 +88,8 @@ been made once (2026-10-31, `accents[0]`).
 | Bloomed | Ground `#29361c`, accents Cyan `#33ffd9`, Magenta `#ff4dd9`, Green `#8cd933`, lunar sky `#421a5c` |
 | Module materials | Case `#3c3d3f`, Faceplate `#adadaa`, Patch `#454548`, Print `#212121`, Print inverted `#e7e5dd`, Brass `#c4aa76`, Knob `#272729` |
 | Signal (emissive) | Amber `#ffb350`, Clock flash `#ffce89`, Segment `#ff9945`, Bug `#ffffff` |
+| Crude | Sand `#8c7656`, Rust iron `#5e3a22`, Weathered wood `#5a4a3a` |
+| High-tech | Titanium `#b8bcc2`, Graphene `#1a1c1f` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
 the only signal colour.
@@ -112,7 +115,44 @@ Every module states what it is three times. Check all three in its previews.
 `preview_far.png` (12 m) is the test. If the shape is not obvious there, it is not
 done.
 
-## Materials
+## Materials: crude meets high-tech
+
+Machines are built from **very crude materials joined to very high-tech ones**, as if
+salvage and cutting-edge parts were lashed together by someone making do. Every
+machine uses both registers, and the join should show: a titanium rail strapped to a
+rough wooden post with rusted iron, a graphene plate sitting on sandbags.
+
+| Crude | Look | High-tech | Look |
+| ----- | ---- | --------- | ---- |
+| Sand (sandbags, packed earth) | matte, warm grey-tan | Titanium | cool, pale grey, satin metal |
+| Iron | rusted, rough, dark brown-orange | Graphene | near-black, glassy, faint sheen |
+| Wood | weathered, grey-brown, rough-hewn | | |
+
+Crude parts carry the weight (posts, footings, straps); high-tech parts do the
+precise work (rails, probes, panels). Luminescent accents sit on top of both.
+
+## Luminescence: jellyfish and fairies, not LEDs
+
+Living light in this world is **soft, organic and alive**: jellyfish, fairies,
+plankton in a wave. It is never a hard point or a crisp rectangle.
+
+- **Soft edges.** A bright core inside a larger, faint, translucent halo shell. Glow
+  falls off; it does not stop at an edge.
+- **Organic shapes.** Bells, teardrops, threads, veins, drifting motes. Not discs,
+  squares or segments.
+- **It breathes.** Light swells and fades with an envelope (the module profiles'
+  rest and peak), and it drifts: wisps rise, motes wander.
+- **Colour.** Signal light stays amber, but warm and fairy-like rather than LED
+  orange. Bloomed flora and creatures use the accent palette.
+- **In glTF:** emissive plus alpha blending (a bright opaque core inside
+  `alpha` 0.2–0.4 shells). No Blender-only glow tricks; the game's bloom does the
+  rest.
+
+The first modules (VCOs, clock) predate this rule: their LEDs and segment display are
+LED-like. Read them as legacy; they migrate as they are touched (`add-art-direction`
+2.8). The clock display may stay segmented, because a number has to be read.
+
+## Material rules
 
 - glTF metallic-roughness only. No Blender-only nodes, no procedural textures that do
   not export.
@@ -157,7 +197,8 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 ## Budgets
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
-364.
+364, the mudpit burbler 14.1k (the rig concept 14.7k). Nested halo shells are the
+expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
 | ----- | --------- | --------- |
@@ -179,6 +220,13 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — The burbler is a natural hot-spring mud pot (no in-world rack);
+  configuring it opens a Eurorack HUD. Mud streams leave it through an outlet that
+  halos when connected; raw mud stays muddy. The rack version is kept as a concept,
+  `mudpit_burbler_rig`.
+- **2026-10-31** — Mudpit burbler (clock mine). Materials blend crude (sand, iron,
+  wood) with high-tech (titanium, graphene); luminescence is jellyfish- and
+  fairy-like, not LED. Existing module LEDs marked legacy.
 - **2026-10-31** — First version. Lighting keys for 2 moods × 4 times; style sheet
   render; palette. The bleak-to-bloomed blend is **light quality**, a local field of
   10 m cells driven mostly by plant and animal density, replacing the earlier single
