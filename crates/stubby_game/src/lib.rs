@@ -7,6 +7,7 @@ pub mod export;
 pub mod pulse;
 pub mod resources;
 mod sky;
+pub mod synth_modules;
 mod terrain;
 
 use bevy::{
@@ -27,6 +28,7 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
+            synth_modules::SynthModulesPlugin::default(),
         ))
         .insert_resource(WorldSeed(self.seed))
         .add_systems(Startup, setup)
