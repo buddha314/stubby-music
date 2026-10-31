@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Use the local editor and matching CLI, never the stale installed jd.
+# Use the shared source editor and matching CLI, never the stale installed jd.
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="${JACKDAW_SOURCE:-/home/buddha/src/jackdaw}"
