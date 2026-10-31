@@ -11,6 +11,12 @@ builder** (Satisfactory-style discovery, placement, and throughput). The factory
 the patch: machines are modules, conveyors are cables, and the music is the output
 the player is building.
 
+**Theme: the music of nature brings light to the world.** The player grows plants
+and animals by singing or playing music to them. Where life grows, light quality
+rises and the bleak desert blooms (see *Look and feel*). **Streams are staff music**:
+they deliver music to plants and animals as nutrients, the world's own patch cables.
+Music is how the world gets better; it is never just decoration.
+
 ### Resources and recipes: the builder-game model
 
 - Treat this as a factory builder: discovering a waveform resource is akin to
@@ -63,9 +69,14 @@ Escape or focus loss releases the cursor, and left click recaptures it.
 
 - Full 3D, stylised: **Satisfactory meets Inside**. Industrial scale and readable
   machines, but with Inside's muted palette, fog, silhouettes, and dread.
-- **Moody at first, gradually more cheerful.** A single progression value drives
-  palette saturation, colour temperature, fog density, and storm intensity as the
-  player builds out their patch. Never hard-cut between moods.
+- **Bleak and hazy at first, magically colourful where life returns.** The desert
+  opens bleak: hazy, desaturated, brown-grey. Music played to plants and animals
+  grows them, and where life grows the world blooms into solarpunk by day and
+  lunarpunk by night. The blend is local, not global: **light quality**, a field of
+  10 m cells whose value follows game conditions (mostly the density of plants and
+  animals). Time of day is global. Lighting for every
+  combination is art-authored in `assets/lighting/lighting_keys.json`; see
+  `docs/art/style-guide.md`. Never hard-cut between looks.
 - The environment is **procedurally generated** from a seed. The same seed always
   produces the same world.
 
@@ -221,11 +232,16 @@ Several agents work in this repo at once. To avoid stepping on each other:
   bug voices 100–199, module showcase 8000–8999, audio demo 9000–9999, collection cues
   10 000 and up. A duplicate `ModuleId` makes the engine reject the module. A shared
   allocator replaces these ranges (`add-module-asset-binding` 2.1).
-- **Current owners (2026-10-31, after reconciling):** nothing is claimed. Done: the
-  Blender module assets (desert-opening 1.3, 1.4) and the lightning-bug pulse. Ready to
-  start: `add-rack-and-spatial-audio` (begin with task 0.1, the host decision),
-  desert-opening placement (2.5), and the module ID allocator
-  (`add-module-asset-binding` 2.1). Update this line when you claim work.
+- **Current owners (2026-10-31):** the work is split by discipline.
+  - **Claude:** Blender assets and the art style guide — everything under
+    `tools/blender/`, `assets-src/blender/`, `assets/models/`, `assets/modules/`,
+    `assets/lighting/` and `docs/art/`, and the `add-art-direction` change.
+  - **Codex:** services and game logic — `crates/`, including the day/night cycle and
+    light-quality field (desert-opening 3.4–3.7), placement (2.5), the module ID
+    allocator (`add-module-asset-binding` 2.1) and `add-rack-and-spatial-audio`.
+  - Art hands over data and models, not code: when an asset needs game support, write
+    it as a task in the owning change rather than editing the crate.
+  Update this line when you claim work.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
 
