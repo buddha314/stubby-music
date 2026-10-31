@@ -11,7 +11,7 @@
 - [x] 2.3 Compare: add/remove modules while playing (clicks?), 200-module commit cost, tick timing precision, DSP coverage
 - [x] 2.4 Record the decision in `design.md` (D4, Open Questions) and update AGENTS.md stack table
 - [ ] 2.5 Listen to both `-- live` runs on real hardware and note any audible clicks
-- [ ] 2.6 Report the Firewheel silent-channel bug upstream
+- [x] 2.6 Report the Firewheel silent-channel bug upstream (BillyDM/Firewheel#145)
 
 ## 3. Engine core
 
