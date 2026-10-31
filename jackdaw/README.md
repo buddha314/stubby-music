@@ -40,3 +40,8 @@ components; the floor loads in the edit viewport; embedded Play connects and
 streams the desert view; Stop restores authoring. The shared Jackdaw regression
 and all 23 PIE projection tests pass. The game workspace tests and both game
 and adapter Clippy checks pass.
+
+The lightning bug models are shared through `assets/models`, a symlink into the
+main runtime asset folder. Play compiles the shared pulse code and uses the
+standalone `stubby_audio` crate through its own public API. The edit viewport's
+floor proxy does not animate the creatures; Play does.

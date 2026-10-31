@@ -1,7 +1,10 @@
 #[cfg(all(feature = "dev", not(debug_assertions)))]
 compile_error!("The dev feature enables dynamic linking; omit it for release builds.");
 
+pub mod controls;
 pub mod export;
+pub mod pulse;
+pub mod resources;
 mod sky;
 mod terrain;
 
@@ -20,9 +23,13 @@ pub struct DesertPlugin {
 }
 impl Plugin for DesertPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WorldSeed(self.seed))
-            .add_systems(Startup, setup)
-            .add_systems(Update, (fly, capture_preview));
+        app.add_plugins((
+            pulse::LightningBugPlugin { seed: self.seed },
+            resources::ResourceRecipesPlugin,
+        ))
+        .insert_resource(WorldSeed(self.seed))
+        .add_systems(Startup, setup)
+        .add_systems(Update, (fly, capture_preview));
     }
 }
 
@@ -191,6 +198,7 @@ fn setup(
             ..default()
         },
         Camera3d::default(),
+        bevy::post_process::bloom::Bloom::NATURAL,
         Exposure { ev100: 10.5 },
         Transform::from_xyz(0., 1.65, 6.).looking_at(Vec3::new(-9., -4.5, -30.), Vec3::Y),
         Skybox {
@@ -232,8 +240,8 @@ fn fly(
         (KeyCode::KeyS, *t.back()),
         (KeyCode::KeyA, *t.left()),
         (KeyCode::KeyD, *t.right()),
-        (KeyCode::KeyE, Vec3::Y),
-        (KeyCode::KeyQ, Vec3::NEG_Y),
+        (controls::INSPECT_ASCEND, Vec3::Y),
+        (controls::INSPECT_DESCEND, Vec3::NEG_Y),
     ] {
         if keys.pressed(key) {
             direction += axis;

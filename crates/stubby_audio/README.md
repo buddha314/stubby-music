@@ -55,3 +55,15 @@ its only user and its API is still changing. Engine and game changes then land
 together. It is kept ready to split: it depends on nothing else in the workspace, and
 CI builds and tests it on its own. If it gains a second user or gets published, extract
 it with history using `git subtree split --prefix crates/stubby_audio`.
+
+`ModuleKind::RandomClock { seed, min_interval_s, max_interval_s }` emits seeded,
+sample-accurate `ClockTick` events after an initial resting interval and exposes a
+5 ms `gate` trigger. Bounds must be finite and ordered within 0.01–60 seconds.
+They are fixed for the module lifetime. Leave its gate unpatched for a silent
+visual pulse source; use its event timestamps to synchronize followers.
+
+Both clock sources implement the public `PulseClock` trait. `PeriodicClock`
+preserves phase when tempo changes; `RandomClock` owns a seeded interval stream.
+The audio processors call `advance()` once per sample and publish events on true.
+Each lightning bug has a distinct random-clock instance; followers can select a
+clock ID explicitly when they should synchronize.

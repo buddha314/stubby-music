@@ -8,7 +8,7 @@ Run the visual scene:
 cargo run -p stubby_game -- --seed=42
 ```
 
-WASD moves, hold right mouse to look, Q/E lowers/raises the inspection camera,
+WASD moves, hold right mouse to look, Space/C raises/lowers the inspection camera,
 and Shift moves faster. The camera starts at eye height. Use another seed to
 regenerate the mud plates, fine crack texture, and mountain silhouettes.
 For faster development linking use `--features dev`; omit it in release builds.
@@ -30,9 +30,22 @@ To save a preview after shader warmup, append
 Open the level in the shared Jackdaw editor with `tools/jackdaw.sh open`.
 First-time setup and Play instructions are in [jackdaw/README.md](jackdaw/README.md).
 
-The audio engine is `crates/stubby_audio`. It has no Bevy dependency, and the game
-does not use it yet. To hear it on the default output device:
+The audio engine is `crates/stubby_audio`. It has no Bevy dependency and runs the lightning bugs’ clocks and short click
+patches. To hear it on the default output device:
 
 ```sh
 cargo run --release -p stubby_audio --example play
 ```
+
+The first creature asset is the [lightning bug](assets/creatures/lightning_bug/README.md).
+Each bug in the opening owns a seeded random audio clock and emits
+white flashes independently, remaining invisible and silent between pulses. Nearby
+clicks use the existing square VCO, envelope and VCA; spawn is outside hearing
+range. An audio output device is required for the live clock.
+
+Lightning bugs are also resource nodes: approach within 3 metres and press E to
+recover a square-wave recipe ingredient. The [recipe foundation](crates/stubby_recipes/README.md)
+provides validated data definitions, inventory, one-time resource yields and
+atomic crafting. Press O for the recipe book: Square wave is a raw building block
+for VCO, LFO and gate uses. Other waveform resources and production combinations
+will be authored later.

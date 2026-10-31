@@ -21,6 +21,14 @@ pub enum ModuleKind {
     /// Clock. Outputs `"gate"` (high for the first half of each beat) and `"phase"`
     /// (0..1 ramp per beat), parameter `"bpm"`. Emits [`Event::ClockTick`] per beat.
     Clock { bpm: f32 },
+    /// Seeded random clock. Output `"gate"` is a 5 ms trigger; each interval is
+    /// chosen in [min_interval_s, max_interval_s]. Emits ClockTick after an
+    /// initial resting interval. Bounds are immutable; replace the module to change them.
+    RandomClock {
+        seed: u64,
+        min_interval_s: f32,
+        max_interval_s: f32,
+    },
     /// Constant CV source. Output `"out"`, parameter `"value"`.
     Constant { value: f32 },
     /// Attack/decay envelope. Input `"gate"`: each rising edge starts a linear attack

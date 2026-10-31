@@ -11,14 +11,50 @@ builder** (Satisfactory-style discovery, placement, and throughput). The factory
 the patch: machines are modules, conveyors are cables, and the music is the output
 the player is building.
 
+### Resources and recipes: the builder-game model
+
+- Treat this as a factory builder: discovering a waveform resource is akin to
+  finding and mining coal in a builder game. World assets are resource nodes;
+  recipes combine their yields into modular-synthesis constructions.
+- The **lightning bug is a resource node**. It flashes white and makes a brief
+  audio-rate click. Its harvested yield and recipe-book entry are **Square wave**,
+  not a finished VCO, LFO or clock module.
+- A square-wave building block can be used for **VCO**, **LFO** and **gate** roles.
+  These are uses of the same primitive, not unrelated item types. All signals
+  remain audio-rate `f32`; an LFO is a low-frequency use of an oscillator.
+- Other waveform primitives will be found through **other world assets**. Do not
+  invent those sources or assume a first machine recipe before it is designed.
+- Keep resource yields, discovered recipe-book entries, inventories and recipe
+  definitions data-driven. A collected pattern may later be consumed by recipes;
+  learning it must not disappear from the recipe book when inventory reaches zero.
+- Every lightning bug owns an independent seeded random clock. Use the shared
+  `PulseClock` interface (`PeriodicClock`, `RandomClock`); other assets synchronize
+  only by explicitly following the same clock ID. Preserve the flash appearance.
+- Reuse **Firewheel** for graph/device/scheduling and existing **fundsp** DSP units
+  and module wrappers. Compose the bug click from the existing square VCO,
+  envelope and VCA. Do not hand-write replacement DSP when the installed crates
+  already provide it. Small game-specific timing, metadata and recipe glue are
+  appropriate; they are separate from DSP.
+
+### Interaction controls
+
+Follow Satisfactory's interaction conventions where applicable (research:
+`docs/research/satisfactory-controls.md`). Use **E** for use/interact/collection;
+holding E may collect successive nearby pickups without duplicating an instance.
+Use **O** for the recipe book/codex. Reserve **Q** for build, **F** for dismantle,
+**Tab** for inventory and **B** for flashlight; do not assign these to unrelated
+player actions. WASD and Shift retain movement/sprint roles. Space/C are the
+current inspection-camera ascend/descend controls; a grounded controller should
+use them for jump/crouch. The current RMB-look free camera is provisional.
+
 ### The opening
 
 - The world starts on a flat, dry, **cracked desert mudflat** during a **silent
   windstorm** — blowing sand, low visibility, and *no sound at all*.
 - Silence is the starting condition. Sound is what the player discovers.
-- The first thing the player must find is a **square wave** (an oscillator). It is the
-  first sound in the world, and it is audible only within a hearing range of where it
-  sits. Spawn is always out of range, so the game starts silent; the player wanders
+- The first waveform resource the player finds is a **square wave**, yielded by a
+  lightning bug. Its click is the first sound in the world and is audible only
+  within a hearing range of the resource. Spawn is always out of range, so the game starts silent; the player wanders
   until they catch it, then follows it in by ear. (A square, not a sine, because its
   harmonics make it locatable; a pure sine is the hardest sound to find by ear.)
 - The second is a **clock**, which appears in the world as a **pulsating light**. Its
@@ -44,6 +80,7 @@ docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
+  stubby_recipes/         waveform resources, inventory, recipe book and crafting (no Bevy)
 assets/                   runtime assets loaded by Bevy (glTF, textures, shaders)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts

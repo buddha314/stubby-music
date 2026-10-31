@@ -11,7 +11,10 @@ publish = false
 dev = ["bevy/dynamic_linking"]
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["3d"] }
+stubby_recipes = { path = "../crates/stubby_recipes" }
+stubby_audio = { path = "../crates/stubby_audio" }
+serde = { version = "~1.0", features = ["derive"] }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["3d", "ui"] }
 jackdaw_runtime = { path = "/home/buddha/src/jackdaw/crates/jackdaw_runtime", features = ["pie"] }
 half = "~2.7.1"
 serde_json = "~1.0"
