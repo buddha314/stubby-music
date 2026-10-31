@@ -2,6 +2,12 @@
 name = "stubby_audio"
 version = "0.1.0"
 edition = "2024"
+description = "Realtime modular-synth audio engine for stubby-music, independent of the Bevy engine"
+license = "MIT"
+repository = "https://github.com/buddha314/stubby-music"
+readme = "README.md"
+# Lives in the game's repo until it has a second user (see README).
+publish = false
 
 [dependencies]
 audioadapter-buffers = "5"
