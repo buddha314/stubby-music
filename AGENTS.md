@@ -78,8 +78,8 @@ thread. Bevy talks to it only through a message boundary:
 
 See `docs/research/audio-engine.md` and the `add-audio-engine` change for why.
 
-**Engine stack (decided by spike, 2026-10-31):** Firewheel runs the graph, device,
-declicking and scheduling; each module is a Firewheel node whose processor runs
+**Engine stack (decided by spike, 2026-10-31):** Firewheel runs the graph, device
+and scheduling; each module is a Firewheel node whose processor runs
 fundsp units. Only `stubby_audio` may name Firewheel or fundsp types. Firewheel
 0.14 zeros all output channels when any one is silent, so keep the keep-alive node
 from `spikes/spike_firewheel` until that is fixed upstream.

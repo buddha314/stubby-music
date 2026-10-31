@@ -40,8 +40,7 @@ audio thread can see. *Alternative:* `crossbeam-channel`. Rejected because it ca
 allocate and has no realtime guarantee.
 
 **D4 — Firewheel for the engine, fundsp for the DSP (decided by spike,
-2026-10-31).** Firewheel owns the graph, device I/O, scheduling, declicking and the
-audio clock. Each synth module is a Firewheel node whose processor runs fundsp
+2026-10-31).** Firewheel owns the graph, device I/O, scheduling and the audio clock. Each synth module is a Firewheel node whose processor runs fundsp
 units. The spike (`spikes/`, results below) measured all three options on one
 harness, offline:
 
@@ -49,23 +48,32 @@ harness, offline:
 | --- | --- | --- |
 | Tone / clock accuracy | exact (440.000 Hz; 20 ticks, 0-sample error) | exact |
 | Edit latency | next block (sample 2560 of 2560) | next block |
-| Clicks on add/remove, by default | **yes** (12× / 8× step ratio); clean only with explicit `fade_in`/`crossfade` | clean (automatic 10 ms declick) |
+| Clicks on add/remove, by default | **yes** (12× / 8× step ratio); clean only with explicit `fade_in`/`crossfade` | **yes**, see correction below |
 | Audio-thread allocations | 0 | 0 |
 | Render, 201 modules (budget 5.33 ms) | 0.12–0.26 ms | 0.14–0.24 ms |
 | Game-side add + commit at 201 modules | 0.04–0.19 ms (clones the whole graph) | 0.02–0.07 ms |
 
 Render cost is a wash, so the decision rests on what each saves us. Firewheel
-already provides what we would otherwise build: declick on graph edits,
-device-loss tolerance (`CpalStream`), sample-accurate scheduled events, a musical
+already provides what we would otherwise build: device-loss tolerance (`CpalStream`), sample-accurate scheduled events, a musical
 transport, and `audio_clock_instant()` for D6. It is also slated to become Bevy's
 default audio engine. fundsp provides the module library Firewheel lacks:
 oscillators, Moog/SVF/biquad filters, ADSR, noise, delays, reverb. The spike's
 `FunSineNode` showed a fundsp unit hosted inside a Firewheel node with zero
 audio-thread allocations and no extra cost.
 
-*Rejected:* fundsp `Net` alone (we would rebuild declick, scheduling and device
-handling ourselves, and `commit()` cost grows with patch size); `knyst`
+*Rejected:* fundsp `Net` alone (we would rebuild scheduling and device handling
+ourselves, and `commit()` cost grows with patch size); `knyst`
 (self-declared API churn); `kira` (playback rather than synthesis).
+
+**Correction (2026-10-31, found while building the engine core).** The spike's
+"clean" Firewheel add/remove results were coincidences, not declicking. Firewheel
+does **not** fade nodes on add or remove; it only declicks *bypass* toggles. The
+spike's sine started at phase 0, so adding it could not step. And removal happened at
+frame 38,400, where the 330 Hz sine had completed exactly 264 cycles and sat at zero.
+Removing at an arbitrary frame steps 5.8× the steady bound. Sound-producing modules
+therefore need their own fade envelope; bypass can't do it, because it routes a node's
+input (e.g. the Sine VCO's pitch CV) to its output. The decision in D4 still stands on
+the other reasons above.
 
 **Firewheel 0.14 bug found by the spike.** In `firewheel-graph`
 `processor/process.rs` (~line 217), a silent graph-output channel triggers
