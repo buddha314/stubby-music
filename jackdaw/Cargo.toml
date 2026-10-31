@@ -19,6 +19,13 @@ png = "~0.18"
 
 [profile.dev]
 debug = 0
+# Jackdaw's Play runs a dev build. Unoptimized, Bevy's shader compilation and the
+# desert generator kept the first frame from arriving for 40+ seconds, so Play
+# looked like it never launched. Optimize dependencies fully and the game lightly.
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
 
 [dev-dependencies]
 gltf = "~1.4"
