@@ -1,11 +1,20 @@
 # Square VCO
 
 The opening's first discovery: a square-wave oscillator, built as a world-scale
-Eurorack module (3U, 8HP, ×10, so 1.285 m tall and 0.41 m wide). Weathered dark case,
-brushed faceplate, an amber square-wave glyph, one FREQ knob, a V/OCT input, and an
-OUT output on the dark patch outputs conventionally sit on.
+Eurorack module (3U, 8HP, ×10: a 1.285 m panel, 1.375 m with its crown, 0.41 m wide).
+Weathered dark case, brushed faceplate, one FREQ knob, a V/OCT input, and an OUT
+output on the dark patch outputs conventionally sit on.
 
-![preview](preview.png)
+The square wave has to read from a distance, so it appears at three scales:
+
+- **Silhouette:** the case is crowned with a square wave (high, low, high, low) and
+  traced in amber along its front edge. It survives haze, where detail does not.
+- **Faceplate:** a large amber glyph on a dark recessed plate.
+- **Sides:** the same glyph on both sides, so it reads from any angle.
+
+| Close | About 12 m |
+| --- | --- |
+| ![preview](preview.png) | ![from 12 m](preview_far.png) |
 
 - Source: `assets-src/blender/square_vco.blend` (generated; see below).
 - Runtime: `assets/models/square_vco.glb`. Origin at the base centre; the faceplate
@@ -28,8 +37,8 @@ Tilting the module or sinking it into the mud is done at placement (see
 
 ## Rebuild
 
-The generator script is the source of truth. It rebuilds the `.blend`, the `.glb` and
-`preview.png`:
+The generator script is the source of truth. It rebuilds the `.blend`, the `.glb`,
+`preview.png` and `preview_far.png`:
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_square_vco.py

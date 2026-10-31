@@ -5,7 +5,8 @@ Builds only its own asset scene, so it is safe to run inside a user's open Blend
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_square_vco.py
 
-Scale: a 3U, 8HP Eurorack module, x10 (1.285 m tall, 0.406 m wide). Origin at the
+Scale: a 3U, 8HP Eurorack module, x10 (1.285 m panel, 1.375 m with the
+square-wave crown; 0.406 m wide). Origin at the
 base centre; the faceplate faces Blender -Y, which is glTF +Z. Named empties mark
 the game-facing parts: `Port_voct` and `Port_out` (cable sockets, local +Z out of the
 panel), `Knob_freq` (rotates about its local Z), and `Light_out` (driven by the rack's
@@ -28,6 +29,7 @@ HEIGHT = 1.285  # 3U x10
 WIDTH = 0.4064  # 8HP x10
 BODY_DEPTH = 0.30
 PANEL_THICKNESS = 0.02
+CROWN_HEIGHT = 0.09  # the square-wave silhouette on top of the case
 PANEL_FRONT = -BODY_DEPTH / 2 - PANEL_THICKNESS  # y of the faceplate's front face
 FACING_OUT = (math.pi / 2, 0.0, 0.0)  # rotates local +Z to point out of the panel (-Y)
 
@@ -67,7 +69,7 @@ def build():
     screw_mat = material("Screw", (0.3, 0.3, 0.3), metallic=1.0, roughness=0.4)
     amber = (1.0, 0.45, 0.08)
     led_mat = material("LedOut", (0.25, 0.08, 0.01), roughness=0.3, emission=amber, strength=8.0)
-    glyph_mat = material("Glyph", (0.2, 0.08, 0.02), roughness=0.4, emission=amber, strength=1.5)
+    glyph_mat = material("Glyph", (0.2, 0.08, 0.02), roughness=0.4, emission=amber, strength=4.0)
 
     root = bpy.data.objects.new("SquareVco_Root", None)
     collection.objects.link(root)
@@ -154,16 +156,44 @@ def build():
         for z in (0.03, HEIGHT - 0.03):
             cylinder("Screw", 0.013, 0.006, (x, front - 0.003, z), screw_mat, segments=16)
 
-    # The waveform this module makes, engraved and faintly lit near the top.
-    glyph_z, amp, half, stroke = HEIGHT - 0.17, 0.035, 0.12, 0.009
-    xs = [-half, -half / 2, -half / 2, 0.0, 0.0, half / 2, half / 2, half]
-    zs = [glyph_z - amp, glyph_z - amp, glyph_z + amp, glyph_z + amp,
-          glyph_z - amp, glyph_z - amp, glyph_z + amp, glyph_z + amp]
-    for i in range(len(xs) - 1):
-        (x0, z0), (x1, z1) = (xs[i], zs[i]), (xs[i + 1], zs[i + 1])
-        size = (abs(x1 - x0) + stroke, 0.004, abs(z1 - z0) + stroke)
-        box(f"Glyph{i}", size, ((x0 + x1) / 2, front - 0.001, (z0 + z1) / 2), glyph_mat)
-    label("Title", "SQUARE", (0, front - 0.0005, HEIGHT - 0.075), size=0.04)
+    # The waveform this module makes, readable at three scales. Silhouette first:
+    # a square-wave crown on the case (high, low, high, low), which survives haze.
+    # Then a large glyph on a dark recess on the faceplate, and the same glyph on both
+    # sides of the case, so it reads from any angle.
+    def trace(name, points, plane, offset, stroke, mat, depth=0.004):
+        """Strokes an axis-aligned polyline. `plane` is "xz" (front, offset is y) or
+        "yz" (side, offset is x); points are (u, z) in that plane."""
+        for i in range(len(points) - 1):
+            (u0, z0), (u1, z1) = points[i], points[i + 1]
+            du, dz = abs(u1 - u0) + stroke, abs(z1 - z0) + stroke
+            u, z = (u0 + u1) / 2, (z0 + z1) / 2
+            if plane == "xz":
+                box(f"{name}{i}", (du, depth, dz), (u, offset, z), mat)
+            else:
+                box(f"{name}{i}", (depth, du, dz), (offset, u, z), mat)
+
+    def square_wave(centre_u, centre_z, half, amp):
+        us = [-half, -half / 2, -half / 2, 0.0, 0.0, half / 2, half / 2, half]
+        hi, lo = centre_z + amp, centre_z - amp
+        return [(centre_u + u, z) for u, z in zip(us, [lo, lo, hi, hi, lo, lo, hi, hi])]
+
+    crown_h, quarter = CROWN_HEIGHT, WIDTH / 4
+    crown_depth = BODY_DEPTH / 2 - PANEL_FRONT
+    for i, x0 in enumerate((-WIDTH / 2, 0.0)):
+        box(f"Crown{i}", (quarter, crown_depth, crown_h),
+            (x0 + quarter / 2, PANEL_FRONT + crown_depth / 2, HEIGHT + crown_h / 2), body_mat, bevel=0.005)
+    top, raised = HEIGHT, HEIGHT + crown_h
+    crown_edge = [(-WIDTH / 2, raised), (-quarter, raised), (-quarter, top), (0.0, top),
+                  (0.0, raised), (quarter, raised), (quarter, top), (WIDTH / 2, top)]
+    trace("CrownTrace", crown_edge, "xz", PANEL_FRONT - 0.002, 0.012, glyph_mat)
+
+    glyph_z = 1.065
+    box("GlyphPlate", (0.36, 0.002, 0.2), (0, front - 0.001, glyph_z), output_mat)
+    trace("Glyph", square_wave(0.0, glyph_z, 0.155, 0.06), "xz", front - 0.0035, 0.024, glyph_mat)
+    side_x = (WIDTH - 0.01) / 2 + 0.002
+    for side, x in (("L", -side_x), ("R", side_x)):
+        trace(f"SideGlyph{side}", square_wave(0.0, 1.0, 0.11, 0.06), "yz", x, 0.024, glyph_mat)
+    label("Title", "SQUARE", (0, front - 0.0005, HEIGHT - 0.06), size=0.04)
 
     # FREQ knob: a pivot empty the game rotates, with the knob parts as children.
     knob_z = 0.80
@@ -236,6 +266,13 @@ def build():
         preview.parent.mkdir(parents=True, exist_ok=True)
         scene.render.filepath = str(preview)
         bpy.ops.render.render(write_still=True, scene=scene.name)
+        # Legibility check: the same view from about 12 m away.
+        near = camera.location.copy()
+        aim = Vector((0, 0, 0.66))
+        camera.location = aim + (near - aim).normalized() * 12.0
+        scene.render.filepath = str(preview.with_name("preview_far.png"))
+        bpy.ops.render.render(write_still=True, scene=scene.name)
+        camera.location = near
     else:
         # Inside a user's session: never save their file or switch their scene.
         bpy.data.libraries.write(str(source), {scene}, fake_user=True)
