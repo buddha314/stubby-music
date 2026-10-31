@@ -33,3 +33,13 @@ palette, heavy atmospheric perspective at low Mood, and readable industrial form
 #### Scenario: Silhouette readability
 - **WHEN** a discoverable is within visibility range during the storm
 - **THEN** it reads as a distinct silhouette against the haze
+
+### Requirement: Desert scene art study
+The initial scene SHALL provide a generated HDR desert sky with warm amber near
+the low sun, dusty neutral haze at the horizon and muted slate overhead. It SHALL
+include distant seeded mountain silhouettes and remain silent.
+
+#### Scenario: Initial scene preview
+- **WHEN** the standalone game is launched
+- **THEN** cracked mud plates extend toward hazy mountain silhouettes under a warm desert sky
+- **THEN** no audio is produced

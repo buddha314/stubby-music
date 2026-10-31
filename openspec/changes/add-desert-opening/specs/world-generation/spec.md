@@ -41,3 +41,13 @@ further out, at seed-determined positions guaranteed to be reachable on foot.
 #### Scenario: Clock placement
 - **WHEN** a world is generated with any seed
 - **THEN** the Clock lies farther from spawn than the Square VCO, and within 300 m
+
+### Requirement: Initial mud material study
+The initial visual scene SHALL generate primary polygonal mud plates with recessed
+seams and raised rims, plus seeded fine-crack albedo and normal textures applied to
+a rough PBR surface. It SHALL require no external ground photographs.
+
+#### Scenario: Ground inspection
+- **WHEN** the player views the initial floor at eye height under low-angle light
+- **THEN** primary seams have geometric depth and smaller cracks alter surface colour and normals
+- **THEN** the same seed reproduces the same plate layout and material

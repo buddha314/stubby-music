@@ -65,3 +65,25 @@ once they catch it. A square-wave ripple in the sand is the visual fallback. See
   side-ish camera (closer to Inside)? This affects the camera, storm volume, and
   controls. Needs a decision before task 4.
 - Whether `.blend` files go in Git LFS.
+
+## Initial visual scene (2026-10-31)
+
+The first increment is a standalone visual blockout, independent of the audio
+engine. Use a first-person free camera for inspecting the floor. A seed generates
+clipped Voronoi mud plates with inset seams, curled rims, a secondary procedural
+crack texture, distant mountain silhouettes, and a floating-point HDR desert
+cubemap. The reference guides plate scale and dusty amber/slate colours; it is
+not used as a texture. The warm sunset art-study palette precedes the full mood
+mapping. Streaming, storm particles, mood progression and discoveries remain
+unchecked until implemented. Geometry is generated on startup in this increment.
+
+## Jackdaw integration (2026-10-31)
+
+The local editor is Jackdaw 0.21.0-dev on Bevy main, commit
+c9c397ba1a73e6cfffe957318e0359330b701865. Its old installed `jd` 0.19
+cannot import this project. Keep the shipping Bevy 0.20.1 workspace unchanged:
+`jackdaw/` is an isolated workspace that compiles the same desert source against
+the editor's pinned Bevy and adds Jackdaw's runtime/PIE plugin. A reproducible
+glTF preview makes the procedural ground visible in the edit viewport; Play
+runs the shared generator. Generated preview meshes are inspection assets, not
+hand-authored terrain. They must be regenerated after generator changes.

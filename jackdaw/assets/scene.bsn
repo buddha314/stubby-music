@@ -1,0 +1,25 @@
+// Generated floor is a preview proxy. Play runs the shared procedural generator.
+#"Desert opening · seed 42"
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+bevy_ecs::hierarchy::Children [
+    #"Procedural mudflat preview"
+    jackdaw_scene_types::types::HiddenInGame
+    jackdaw_scene_types::types::GltfSource {
+        path: "generated/mudflat.glb",
+        scene_index: 0,
+    }
+    bevy_transform::components::transform::Transform
+    bevy_camera::visibility::Visibility::Visible
+    --
+    #"Desert sun"
+    jackdaw_scene_types::types::HiddenInGame
+    bevy_light::directional_light::DirectionalLight {
+        illuminance: 9500.0,
+        shadow_maps_enabled: true,
+    }
+    bevy_transform::components::transform::Transform {
+        rotation: glam::Quat { x: -0.047, y: -0.247, z: -0.012, w: 0.968 },
+    }
+    bevy_camera::visibility::Visibility::Visible
+]
