@@ -33,11 +33,17 @@ synth-server process (SuperCollider-style) for crash isolation. Rejected for now
 because of IPC and lifecycle cost. The command protocol is plain data, so moving to
 a process later stays possible.
 
-**D3 — Rings and snapshots.** `rtrb` SPSC rings for `Command` (game→audio),
-`Event` (audio→game), and `Garbage` (audio→drop thread). `triple_buffer` carries
-latest-value state (sample position, clock phases, meters). No `Mutex` anywhere the
-audio thread can see. *Alternative:* `crossbeam-channel`. Rejected because it can
-allocate and has no realtime guarantee.
+**D3 — Firewheel's channel carries commands; `rtrb` carries events back.**
+*(Revised when building the core.)* `Engine::send` validates a `Command` and applies
+it to the `FirewheelContext` on the game thread. `Engine::flush`, called once per
+frame, publishes the frame's edits over Firewheel's own lock-free context→processor
+channel, so a second command ring would only duplicate it. Removed nodes are freed
+by Firewheel off the audio thread, so no garbage ring is needed either. Events come
+back on one `rtrb` ring per Clock. Firewheel may rebuild a processor (for example
+after a device change), so each construction makes a fresh ring and posts the
+consumer to a game-side mailbox; that mutex is only touched on the game thread.
+`SetParam`s coalesce per frame (last value wins), which bounds per-flush work by the
+number of distinct parameters rather than the number of sends.
 
 **D4 — Firewheel for the engine, fundsp for the DSP (decided by spike,
 2026-10-31).** Firewheel owns the graph, device I/O, scheduling and the audio clock. Each synth module is a Firewheel node whose processor runs fundsp
@@ -87,10 +93,21 @@ workaround when fixed.
 sends `AddModule`, so it never waits on a round trip to learn an ID. The audio side
 keeps a fixed-capacity map, preallocated, from ID to node index.
 
-**D6 — Time sync.** Each block, the audio thread publishes
-`SyncPoint { sample_pos, instant }` via `triple_buffer`. The game maps
-`event.sample_time → Instant` with a smoothed rate estimate, and schedules visual
-peaks at the predicted display time.
+**D6 — Time sync.** *(Revised when building the core.)* Firewheel already
+publishes its audio clock with a delay-corrected reading
+(`audio_clock_corrected`), so `Engine::sample_to_instant` maps an event's
+`sample_time` to a predicted `Instant` from that clock. No `triple_buffer` needed.
+
+**D7 — Sound sources fade; gates and CV switch instantly.** Firewheel does not
+declick node add/remove (see the D4 correction). Sound-producing modules (today the
+Sine VCO) fade in over Firewheel's declick time when added. On removal they fade out
+and the node is deleted on a later `flush`, 50 ms later. Clock and Constant switch
+instantly, because fading a gate moves its edge and a CV fade is a pitch glide.
+Cable connect/disconnect is **not** declicked yet: Firewheel has no per-edge gain.
+
+**D8 — The engine is single-threaded.** `FirewheelContext` is not `Send` (each node
+holds an untyped `Box<dyn Any>`), so neither is `Engine`. It must live on one thread
+for its whole life.
 
 ## Risks / Trade-offs
 
@@ -109,6 +126,19 @@ peaks at the predicted display time.
   modules with offline tests.
 
 ## Open Questions
+
+- **Superseded in part by `add-rack-and-spatial-audio`:** modules move from Firewheel
+  nodes into a VCV-style rack (feedback allowed, VCV voltages). See that change's
+  design.md, "Relationship to add-audio-engine".
+
+- How Bevy holds a non-`Send` engine (task 5.1): a `NonSend` resource (simplest;
+  pins the audio systems to the main thread) or a dedicated control thread behind a
+  `Send` command ring (the original D3 shape, decoupled from Bevy's frame).
+- Declicking cable connect/disconnect: a hidden gain node per cable, or accept
+  Eurorack-faithful cable clicks.
+- The live device callback belongs to `firewheel-cpal`, so `assert_no_alloc` cannot
+  wrap it. Allocation-freedom is enforced by the offline tests, which run the same
+  processor code. A Firewheel hook, or our own cpal backend, would close the gap.
 
 - ~~fundsp `Net` vs `firewheel`~~: decided, see D4.
 - Firewheel pulls in `bevy_platform` 0.19 (a small utility crate). Our game uses

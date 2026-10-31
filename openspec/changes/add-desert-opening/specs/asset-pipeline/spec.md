@@ -13,8 +13,8 @@ A script under `tools/blender/` SHALL export any source file to `.glb` headlessl
 with transforms applied and Bevy-compatible axes and units.
 
 #### Scenario: One-command export
-- **WHEN** `blender -b assets-src/blender/sine_vco.blend -P tools/blender/export_gltf.py` runs
-- **THEN** `assets/models/sine_vco.glb` is written and loads in Bevy at the correct scale and orientation
+- **WHEN** `blender -b assets-src/blender/square_vco.blend -P tools/blender/export_gltf.py` runs
+- **THEN** `assets/models/square_vco.glb` is written and loads in Bevy at the correct scale and orientation
 
 ### Requirement: Engine-compatible materials
 Exported materials SHALL use only glTF PBR properties (base colour, metallic,

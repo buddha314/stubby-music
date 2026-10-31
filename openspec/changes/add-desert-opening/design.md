@@ -44,16 +44,19 @@ the value directly.
 triggered at the display time predicted from the audio `ClockTick.sample_time` (see
 `add-audio-engine` D6), not on event receipt.
 
-**Sine cue in silence.** The undiscovered Sine VCO distorts nearby sand particles
-into a slow sinusoidal ripple and has faint emissive bands. The player sees a waveform
-before hearing it.
+**Square found by ear.** *(Changed 2026-10-31 from a sine found by sight.)* A pure
+sine is the hardest sound to locate by ear, so the first discovery is a band-limited
+square, kept under 1 kHz. It emits, spatialized, within a 35 m hearing radius that
+spawn is always outside, so the game opens silent and the player follows the square
+once they catch it. A square-wave ripple in the sand is the visual fallback. See
+`docs/research/rack-and-spatial-audio.md`.
 
 ## Risks / Trade-offs
 
 - [Volumetric fog cost on laptop GPUs] → scale quality by preset; test on `breq`.
 - [bevy_hanabi version lag] → CPU fallback above; keep the sand behind one plugin.
 - [Players get lost in zero visibility] → gust troughs are guaranteed every 20–40 s,
-  and the sine is placed within 120 m.
+  and the square is placed within 120 m.
 - [Mood curves need lots of tuning] → expose them as an asset file, hot-reloaded.
 
 ## Open Questions

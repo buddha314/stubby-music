@@ -16,8 +16,11 @@ the player is building.
 - The world starts on a flat, dry, **cracked desert mudflat** during a **silent
   windstorm** — blowing sand, low visibility, and *no sound at all*.
 - Silence is the starting condition. Sound is what the player discovers.
-- The first thing the player must find is a **sine wave** (an oscillator). It is the
-  first sound the game makes.
+- The first thing the player must find is a **square wave** (an oscillator). It is the
+  first sound in the world, and it is audible only within a hearing range of where it
+  sits. Spawn is always out of range, so the game starts silent; the player wanders
+  until they catch it, then follows it in by ear. (A square, not a sine, because its
+  harmonics make it locatable; a pure sine is the hardest sound to find by ear.)
 - The second is a **clock**, which appears in the world as a **pulsating light**. Its
   pulse is driven by the audio clock, not by the frame rate.
 
@@ -71,10 +74,12 @@ Audio runs in `crates/stubby_audio`, which **must not depend on `bevy`**. It own
 audio device (via `cpal`) and runs the DSP graph on the realtime audio callback
 thread. Bevy talks to it only through a message boundary:
 
-- **Bevy → audio:** a lock-free SPSC ring buffer (`rtrb`) of commands — add/remove
-  module, connect/disconnect, set parameter.
-- **Audio → Bevy:** a second ring of timestamped events (clock ticks, triggers) and
-  lock-free snapshots (`triple_buffer` or atomics) for meters and phases.
+- **Game → audio:** `Engine::send(Command)` validates and stages an edit (add/remove
+  module, connect/disconnect, set parameter); `Engine::flush()` once per frame
+  publishes them over Firewheel's lock-free channel.
+- **Audio → game:** `Engine::drain_events` returns timestamped events (clock ticks)
+  from `rtrb` rings; `Engine::sample_to_instant` maps their sample times to wall time.
+- `Engine` is **not `Send`** (Firewheel's context isn't). It lives on one thread.
 
 See `docs/research/audio-engine.md` and the `add-audio-engine` change for why.
 
@@ -86,6 +91,8 @@ from `spikes/spike_firewheel` until that is fixed upstream.
 
 **Realtime rules for anything that runs on the audio thread:**
 
+- Sound-producing modules fade in on add and out before removal (Firewheel does not
+  declick node add/remove). Gates and CV switch instantly.
 - No allocation, no deallocation, no locks (`Mutex`, `RwLock`), no I/O, no logging,
   no `println!`, no channel that can block. Debug builds enforce allocation with
   `assert_no_alloc`.
