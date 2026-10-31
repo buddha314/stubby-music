@@ -167,6 +167,16 @@ Rollback: the Firewheel-node core is in git history on `audio-engine-core`.
 
 ## Open Questions
 
+- **Host: Firewheel node or our own `cpal` host?** (task 0.1) Once the rack exists,
+  Firewheel's dynamic graph is no longer needed. What remains (rack → spatial voices
+  → buses → device) is a fixed pipeline. Our own host on `cpal` would remove bug #145,
+  make the engine `Send`, put `assert_no_alloc` on the live callback, and end the glam
+  split. It costs device-loss recovery and running at the device's rate, roughly 1–2k
+  lines. HRTF would then come straight from the `hrtf` crate, not the Firewheel node.
+  Staged path: a `Host` trait, an offline host first (the 18 engine tests become
+  parity tests), then the live `cpal` host, then drop Firewheel. Recommended, not yet
+  decided.
+
 - Which emitter does a module expose by default (its main output, or an explicit
   "speaker" module)? Leaning towards: VCOs, VCAs and mixers emit by default; utilities
   do not.

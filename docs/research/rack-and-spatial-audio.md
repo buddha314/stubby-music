@@ -206,6 +206,21 @@ costs about 25 µs per emitter per block, roughly 16× panning, and 64 HRTF emit
 blow the budget. The default is therefore 16 HRTF + 32 panned emitters, with the HRTF
 FFT set to 2×128.
 
+## Host options (2026-10-31)
+
+We don't control Firewheel's source, so the options were reviewed:
+
+| Option | Fixes | Costs |
+| ------ | ----- | ----- |
+| **Own thin host on `cpal`** (recommended) | Bug #145, `Send` engine, `assert_no_alloc` on the live callback, glam split | Device-loss recovery, device-rate handling, a small SFX sampler; ~1–2k lines |
+| Fork Firewheel | Keeps today's code working; we can fix #145 | Merging a large crate that is being reshaped for Bevy; still not `Send` |
+| `kira` / `oddio` / `rodio` as the base | — | All external too; playback-focused, no HRTF; `oddio` is quiet, `rodio` not strictly realtime-safe |
+| Separate synth process (SuperCollider, VCV) | Crash isolation | GPL, IPC, process management; VCV can't be embedded |
+| Keep Firewheel behind our own trait | Buys time; mostly in place | The dependency stays; live callback still unguarded |
+
+`cpal`, `fundsp` and `hrtf` stay either way: `cpal` is the I/O foundation everything
+uses, and the other two are pure DSP crates we could vendor if they were abandoned.
+
 ## Sources
 
 - VCV Rack manual: [Voltage Standards](https://vcvrack.com/manual/VoltageStandards),

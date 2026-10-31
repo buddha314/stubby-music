@@ -10,7 +10,7 @@
 - [x] 2.2 Build the same patch on `firewheel`
 - [x] 2.3 Compare: add/remove modules while playing (clicks?), 200-module commit cost, tick timing precision, DSP coverage
 - [x] 2.4 Record the decision in `design.md` (D4, Open Questions) and update AGENTS.md stack table
-- [ ] 2.5 Listen to both `-- live` runs on real hardware and note any audible clicks
+- [x] 2.5 ~~Listen to both spike `-- live` runs~~: superseded by the engine-core live tests (3.3, 4.6), heard clean on `breq`
 - [x] 2.6 Report the Firewheel silent-channel bug upstream (BillyDM/Firewheel#145)
 
 ## 3. Engine core
@@ -23,7 +23,7 @@
 - [x] 3.6 Run every offline test render under `assert_no_alloc` (the live callback belongs to `firewheel-cpal`; see Open Questions)
 - [x] 3.7 Implement `render_offline`
 - [x] 3.8 Fade sound sources in on add and out before removal (D7)
-- [ ] 3.9 Declick cable connect/disconnect, or decide to accept cable clicks
+- [x] 3.9 ~~Declick cable connect/disconnect~~: moved to `add-rack-and-spatial-audio` task 3.4 (typed cable fades)
 
 ## 4. Modules
 
@@ -42,3 +42,4 @@
 - [x] 5.3 Verify a fresh game outputs digital silence (`a_fresh_game_is_silent`)
 - [x] 5.4 Stall test: the engine keeps rendering through a 200 ms game-thread stall (`engine_keeps_running_while_the_game_thread_stalls`)
 - [ ] 5.5 Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
+  Blocked on: the `add-lightning-bug-pulse` branch updating from `main` (it overlaps the audio wiring in six files). Then rebuild the Jackdaw game and play "Desert opening + audio demo".
