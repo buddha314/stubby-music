@@ -1,0 +1,46 @@
+name: stubby_audio
+
+# Builds and tests the audio engine crate by itself, so it never gains a hidden
+# dependency on the rest of the workspace (it should stay ready to split out).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/stubby_audio/**"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - ".github/workflows/stubby-audio.yml"
+  pull_request:
+    paths:
+      - "crates/stubby_audio/**"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - ".github/workflows/stubby-audio.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ALSA headers (cpal)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: stubby-audio
+      - name: Format
+        run: cargo fmt -p stubby_audio --check
+      - name: Clippy
+        run: cargo clippy -p stubby_audio --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test -p stubby_audio --locked
+      - name: No dependency on other workspace crates
+        run: |
+          deps=$(cargo tree -p stubby_audio -e normal,build --prefix none --format '{p}' --locked \
+            | grep -F "$GITHUB_WORKSPACE" | grep -v '^stubby_audio ' || true)
+          if [ -n "$deps" ]; then echo "stubby_audio depends on workspace crates:"; echo "$deps"; exit 1; fi
+          if cargo tree -p stubby_audio -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
+            echo "stubby_audio must not depend on the Bevy engine"; exit 1
+          fi
