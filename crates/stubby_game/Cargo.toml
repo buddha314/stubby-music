@@ -14,5 +14,5 @@ png = "~0.18"
 stubby_audio = { version = "0.1.0", path = "../stubby_audio" }
 
 [dev-dependencies]
-gltf = "~1.4"
+gltf = { version = "~1.4", features = ["extras"] }
 tempfile = "~3.27"

@@ -2,8 +2,8 @@
 
 - [ ] 1.1 Create `assets/`, `assets-src/blender/`, `tools/blender/` (in progress on `add-lightning-bug-pulse`)
 - [ ] 1.2 Write `tools/blender/export_gltf.py` (apply transforms, +Y up, metres, .glb) (in progress on `add-lightning-bug-pulse`)
-- [ ] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and load in Bevy (claimed: Claude, Blender asset development)
-- [ ] 1.4 Decide on Git LFS for `.blend` files (claimed: Claude)
+- [ ] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and load in Bevy (claimed: Claude, Blender asset development). Square VCO done (`tools/blender/create_square_vco.py`, asset test in `crates/stubby_game/tests/module_assets.rs`); clock lamp next
+- [x] 1.4 Decide on Git LFS for `.blend` files: not yet; see design.md "Asset files and Git LFS"
 
 ## 2. World generation
 
