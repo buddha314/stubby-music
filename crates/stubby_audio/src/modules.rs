@@ -5,6 +5,7 @@
 
 use crate::protocol::{Event, ModuleId, ModuleKind};
 use crate::signal::{GATE_HIGH, GATE_THRESHOLD, voct_to_hz};
+use crate::{PeriodicClock, PulseClock};
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
     diff::{Diff, Patch},
@@ -30,7 +31,7 @@ pub struct ParamSpec {
 
 const VCO_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "freq",
-    min: 1.0,
+    min: 0.01,
     max: 20_000.0,
     default: 261.63,
 }];
@@ -74,7 +75,9 @@ impl ModuleKind {
     pub fn inputs(&self) -> &'static [&'static str] {
         match self {
             ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => &["voct"],
-            ModuleKind::Clock { .. } | ModuleKind::Constant { .. } => &[],
+            ModuleKind::Clock { .. }
+            | ModuleKind::RandomClock { .. }
+            | ModuleKind::Constant { .. } => &[],
             ModuleKind::Envelope { .. } => &["gate"],
             ModuleKind::Vca { .. } => &["in", "cv"],
         }
@@ -88,6 +91,7 @@ impl ModuleKind {
             | ModuleKind::Envelope { .. }
             | ModuleKind::Vca { .. } => &["out"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
+            ModuleKind::RandomClock { .. } => &["gate"],
         }
     }
 
@@ -95,6 +99,7 @@ impl ModuleKind {
         match self {
             ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => VCO_PARAMS,
             ModuleKind::Clock { .. } => CLOCK_PARAMS,
+            ModuleKind::RandomClock { .. } => &[],
             ModuleKind::Constant { .. } => CONSTANT_PARAMS,
             ModuleKind::Envelope { .. } => ENVELOPE_PARAMS,
             ModuleKind::Vca { .. } => VCA_PARAMS,
@@ -305,43 +310,25 @@ impl AudioNode for ClockNode {
         if let Ok(mut mailbox) = config.mailbox.lock() {
             mailbox.push((config.module, consumer));
         }
-        let sample_rate = cx.stream_info.sample_rate.get() as f64;
         Ok(ClockProc {
             module: config.module,
             events: producer,
-            sample_rate,
-            samples_per_beat: samples_per_beat(sample_rate, self.bpm),
-            pos: 0.0,
-            tick_pending: true,
+            clock: PeriodicClock::new(cx.stream_info.sample_rate.get(), self.bpm),
         })
     }
-}
-
-fn samples_per_beat(sample_rate: f64, bpm: f32) -> f64 {
-    sample_rate * 60.0 / (bpm.max(1.0) as f64)
 }
 
 struct ClockProc {
     module: ModuleId,
     events: rtrb::Producer<Event>,
-    sample_rate: f64,
-    samples_per_beat: f64,
-    /// Frames since the current beat began. Counting frames, not accumulating a
-    /// phase increment, keeps the clock drift-free.
-    pos: f64,
-    tick_pending: bool,
+    clock: PeriodicClock,
 }
 
 impl AudioNodeProcessor for ClockProc {
     fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, _: &mut ProcExtra) {
         for patch in events.drain_patches::<ClockNode>() {
             match patch {
-                ClockNodePatch::Bpm(bpm) => {
-                    // Keep the position within the beat across a tempo change.
-                    let phase = self.pos / self.samples_per_beat;
-                    self.samples_per_beat = samples_per_beat(self.sample_rate, bpm);
-                    self.pos = phase * self.samples_per_beat;
-                }
+                ClockNodePatch::Bpm(bpm) => self.clock.set_bpm(bpm),
             }
         }
     }
@@ -357,24 +344,17 @@ impl AudioNodeProcessor for ClockProc {
         };
         let block_start = info.clock_samples.0.max(0) as u64;
         for (i, (g, p)) in gate.iter_mut().zip(phase.iter_mut()).enumerate() {
-            if self.tick_pending {
-                self.tick_pending = false;
-                // A full ring drops the tick rather than block or allocate.
+            *p = self.clock.phase();
+            *g = if self.clock.gate_high() {
+                GATE_HIGH
+            } else {
+                0.
+            };
+            if self.clock.advance() {
                 let _ = self.events.push(Event::ClockTick {
                     module: self.module,
                     sample_time: block_start + i as u64,
                 });
-            }
-            *g = if self.pos < self.samples_per_beat * 0.5 {
-                GATE_HIGH
-            } else {
-                0.0
-            };
-            *p = (self.pos / self.samples_per_beat) as f32;
-            self.pos += 1.0;
-            if self.pos >= self.samples_per_beat {
-                self.pos -= self.samples_per_beat;
-                self.tick_pending = true;
             }
         }
         ProcessStatus::OutputsModified

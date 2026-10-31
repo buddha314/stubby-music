@@ -10,6 +10,7 @@ use crate::modules::{
     Waveform,
 };
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
+use crate::random_clock::RandomClockNode;
 use audioadapter_buffers::direct::InterleavedSlice;
 use firewheel::{
     ActivateInfo, FirewheelConfig, FirewheelContext,
@@ -52,6 +53,7 @@ impl Default for EngineConfig {
 enum NodeState {
     Vco(VcoNode),
     Clock(ClockNode),
+    RandomClock,
     Constant(ConstantNode),
     Envelope(EnvelopeNode),
     Vca(VcaNode),
@@ -319,6 +321,32 @@ impl Engine {
                     NodeState::Clock(state),
                 )
             }
+            ModuleKind::RandomClock {
+                seed,
+                min_interval_s,
+                max_interval_s,
+            } => {
+                if !min_interval_s.is_finite()
+                    || !max_interval_s.is_finite()
+                    || min_interval_s < 0.01
+                    || max_interval_s < min_interval_s
+                    || max_interval_s > 60.
+                {
+                    return Err(EngineError::Config(
+                        "random clock bounds must be finite, ordered, and within 0.01..60 seconds",
+                    ));
+                }
+                let config = ClockConfig {
+                    module: id,
+                    mailbox: self.mailbox.clone(),
+                };
+                let node = RandomClockNode {
+                    seed,
+                    min_interval_s,
+                    max_interval_s,
+                };
+                (self.cx.add_node(node, Some(config)), NodeState::RandomClock)
+            }
             ModuleKind::Constant { value } => {
                 let state = ConstantNode { value };
                 (self.cx.add_node(state, None), NodeState::Constant(state))
@@ -371,7 +399,10 @@ impl Engine {
                 .diff(&old, PathBuilder::default(), &mut queue);
                 true
             }
-            NodeState::Clock(_) | NodeState::Constant(_) | NodeState::Envelope(_) => false,
+            NodeState::Clock(_)
+            | NodeState::RandomClock
+            | NodeState::Constant(_)
+            | NodeState::Envelope(_) => false,
         };
         if fading {
             let sample_rate = self.sample_rate().unwrap_or(48_000) as f64;
