@@ -1,0 +1,14 @@
+{
+  "name": "stubby-music",
+  "type": "bevy-game",
+  "language": "rust",
+  "editor": "jackdaw",
+  "run": {
+    "command": "cargo run",
+    "cwd": ".."
+  },
+  "build": {
+    "command": "cargo build",
+    "cwd": ".."
+  }
+}

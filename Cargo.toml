@@ -1,0 +1,21 @@
+[package]
+name = "stubby-music"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_asset",
+    "bevy_core_pipeline",
+    "bevy_gizmos",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_window",
+    "bevy_winit",
+    "dynamic_linking",
+    "png",
+    "x11",
+] }
