@@ -79,7 +79,12 @@ thread. Bevy talks to it only through a message boundary:
   publishes them over Firewheel's lock-free channel.
 - **Audio → game:** `Engine::drain_events` returns timestamped events (clock ticks)
   from `rtrb` rings; `Engine::sample_to_instant` maps their sample times to wall time.
-- `Engine` is **not `Send`** (Firewheel's context isn't). It lives on one thread.
+- `Engine` is **not `Send`** (Firewheel's context isn't), so the game never holds it
+  directly. `AudioThread` runs it on its own control thread and hands out a
+  `Send + Sync` handle. In Bevy that handle is the `Synth` resource
+  (`stubby_game::audio::SynthAudioPlugin`): send commands during the frame; they are
+  committed as one batch in `Last`, and clock ticks arrive as `ClockTick` messages
+  carrying the predicted instant (`at`) each beat is heard.
 
 See `docs/research/audio-engine.md` and the `add-audio-engine` change for why.
 

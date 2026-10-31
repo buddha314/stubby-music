@@ -109,6 +109,20 @@ Cable connect/disconnect is **not** declicked yet: Firewheel has no per-edge gai
 holds an untyped `Box<dyn Any>`), so neither is `Engine`. It must live on one thread
 for its whole life.
 
+**D9 — The engine runs on its own control thread; the game holds a `Send` handle
+(task 5.0, decided 2026-10-31).** `AudioThread` (in `stubby_audio`) creates the
+`Engine` on a dedicated thread and returns a `Send + Sync` handle. The game sends
+commands during the frame and calls `commit()` once at the end of it. The thread
+applies that frame's commands as one batch, flushes, drains events, and publishes an
+audio-clock snapshot for `sample_to_instant`. Validation errors come back as
+`Notice::Rejected` rather than return values. In Bevy the handle is a plain
+`Resource` (`Synth`), with `ClockTick` messages in `PreUpdate` and the commit in
+`Last`. *Alternative:* a `NonSend` resource. That would pin audio systems to the main
+thread, tie the engine to a Bevy API Bevy has talked of removing, and let a slow frame
+delay the engine's housekeeping. The handle shape also survives replacing Firewheel.
+`AudioThread::start_offline` renders in real time without a device, for tests and
+headless runs.
+
 ## Risks / Trade-offs
 
 - [fundsp `Net` commits rebuild more than needed for large patches] → measure commit
@@ -131,9 +145,7 @@ for its whole life.
   nodes into a VCV-style rack (feedback allowed, VCV voltages). See that change's
   design.md, "Relationship to add-audio-engine".
 
-- How Bevy holds a non-`Send` engine (task 5.1): a `NonSend` resource (simplest;
-  pins the audio systems to the main thread) or a dedicated control thread behind a
-  `Send` command ring (the original D3 shape, decoupled from Bevy's frame).
+- ~~How Bevy holds a non-`Send` engine~~: decided, see D9.
 - Declicking cable connect/disconnect: a hidden gain node per cable, or accept
   Eurorack-faithful cable clicks.
 - The live device callback belongs to `firewheel-cpal`, so `assert_no_alloc` cannot

@@ -13,7 +13,9 @@ mod engine;
 mod modules;
 mod protocol;
 pub mod signal;
+mod thread;
 
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
 pub use modules::ParamSpec;
 pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
+pub use thread::{AudioThread, Notice};
