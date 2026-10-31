@@ -78,6 +78,12 @@ thread. Bevy talks to it only through a message boundary:
 
 See `docs/research/audio-engine.md` and the `add-audio-engine` change for why.
 
+**Engine stack (decided by spike, 2026-10-31):** Firewheel runs the graph, device,
+declicking and scheduling; each module is a Firewheel node whose processor runs
+fundsp units. Only `stubby_audio` may name Firewheel or fundsp types. Firewheel
+0.14 zeros all output channels when any one is silent, so keep the keep-alive node
+from `spikes/spike_firewheel` until that is fixed upstream.
+
 **Realtime rules for anything that runs on the audio thread:**
 
 - No allocation, no deallocation, no locks (`Mutex`, `RwLock`), no I/O, no logging,
@@ -128,7 +134,8 @@ testable by asserting identical output for identical seeds.
 | ------- | ------ | ------------------------------- |
 | Engine | `bevy` | 0.20.1 |
 | Audio I/O | `cpal` | 0.18.2 |
-| DSP | `fundsp` (default), `firewheel` under evaluation | 0.23.0 / 0.14.0 |
+| Audio engine (graph, device, scheduling) | `firewheel` | 0.14.0 |
+| DSP inside modules | `fundsp` | 0.23.0 |
 | RT messaging | `rtrb`, `triple_buffer` | 0.4.1 / 9.0.0 |
 | RT safety | `assert_no_alloc` (debug) | 1.1.2 |
 | Noise | `noise` | 0.9.0 |

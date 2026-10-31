@@ -1,15 +1,17 @@
 ## 1. Workspace
 
 - [ ] 1.1 Create Cargo workspace with `crates/stubby_audio` and `crates/stubby_game` (edition 2024)
-- [ ] 1.2 Install `alsa-lib-devel`; confirm `cpal` enumerates the default output device
+- [x] 1.2 Install `alsa-lib-devel`; confirm `cpal` enumerates the default output device
 - [ ] 1.3 Enable clippy `unwrap_used`/`panic` lints on `stubby_audio`
 
 ## 2. Spike: fundsp Net vs firewheel (time-boxed, 2 days)
 
-- [ ] 2.1 Build sine + clock patch on `fundsp::Net` behind a throwaway boundary
-- [ ] 2.2 Build the same patch on `firewheel`
-- [ ] 2.3 Compare: add/remove modules while playing (clicks?), 200-module commit cost, tick timing precision, DSP coverage
-- [ ] 2.4 Record the decision in `design.md` (D4, Open Questions) and update AGENTS.md stack table
+- [x] 2.1 Build sine + clock patch on `fundsp::Net` behind a throwaway boundary
+- [x] 2.2 Build the same patch on `firewheel`
+- [x] 2.3 Compare: add/remove modules while playing (clicks?), 200-module commit cost, tick timing precision, DSP coverage
+- [x] 2.4 Record the decision in `design.md` (D4, Open Questions) and update AGENTS.md stack table
+- [ ] 2.5 Listen to both `-- live` runs on real hardware and note any audible clicks
+- [ ] 2.6 Report the Firewheel silent-channel bug upstream
 
 ## 3. Engine core
 

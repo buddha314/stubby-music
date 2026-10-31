@@ -1,0 +1,11 @@
+[package]
+name = "spike_fundsp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+assert_no_alloc = { version = "1.1.2", default-features = false, features = ["warn_debug", "warn_release"] }
+cpal = "0.18.2"
+fundsp = "0.23.0"
+rtrb = "0.4.1"
+spike_common = { version = "0.1.0", path = "../spike_common" }

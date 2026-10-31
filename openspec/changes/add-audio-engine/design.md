@@ -39,11 +39,41 @@ latest-value state (sample position, clock phases, meters). No `Mutex` anywhere 
 audio thread can see. *Alternative:* `crossbeam-channel`. Rejected because it can
 allocate and has no realtime guarantee.
 
-**D4 — fundsp `Net` behind the boundary, pending the spike.** `Net`'s
-frontend/backend split already gives realtime-safe commits with off-thread
-deallocation. *Alternative:* `firewheel`, which is game-oriented with built-in
-scheduling. Evaluated in the spike (tasks §2) before D4 is final. *Rejected:*
-`knyst` (self-declared API churn), `kira` (playback rather than synthesis).
+**D4 — Firewheel for the engine, fundsp for the DSP (decided by spike,
+2026-10-31).** Firewheel owns the graph, device I/O, scheduling, declicking and the
+audio clock. Each synth module is a Firewheel node whose processor runs fundsp
+units. The spike (`spikes/`, results below) measured all three options on one
+harness, offline:
+
+| | fundsp `Net` | Firewheel + fundsp DSP |
+| --- | --- | --- |
+| Tone / clock accuracy | exact (440.000 Hz; 20 ticks, 0-sample error) | exact |
+| Edit latency | next block (sample 2560 of 2560) | next block |
+| Clicks on add/remove, by default | **yes** (12× / 8× step ratio); clean only with explicit `fade_in`/`crossfade` | clean (automatic 10 ms declick) |
+| Audio-thread allocations | 0 | 0 |
+| Render, 201 modules (budget 5.33 ms) | 0.12–0.26 ms | 0.14–0.24 ms |
+| Game-side add + commit at 201 modules | 0.04–0.19 ms (clones the whole graph) | 0.02–0.07 ms |
+
+Render cost is a wash, so the decision rests on what each saves us. Firewheel
+already provides what we would otherwise build: declick on graph edits,
+device-loss tolerance (`CpalStream`), sample-accurate scheduled events, a musical
+transport, and `audio_clock_instant()` for D6. It is also slated to become Bevy's
+default audio engine. fundsp provides the module library Firewheel lacks:
+oscillators, Moog/SVF/biquad filters, ADSR, noise, delays, reverb. The spike's
+`FunSineNode` showed a fundsp unit hosted inside a Firewheel node with zero
+audio-thread allocations and no extra cost.
+
+*Rejected:* fundsp `Net` alone (we would rebuild declick, scheduling and device
+handling ourselves, and `commit()` cost grows with patch size); `knyst`
+(self-declared API churn); `kira` (playback rather than synthesis).
+
+**Firewheel 0.14 bug found by the spike.** In `firewheel-graph`
+`processor/process.rs` (~line 217), a silent graph-output channel triggers
+`output.fill_frames_with(..)`, which zeros **every** channel in the block, erasing
+channels already written. Symptom: left channel silent whenever right is silent.
+Workaround: a keep-alive node that writes zeros to every output and returns
+`OutputsModified` (see `spikes/spike_firewheel`). Report upstream; drop the
+workaround when fixed.
 
 **D5 — Module IDs are game-assigned.** The game allocates `ModuleId(u64)` when it
 sends `AddModule`, so it never waits on a round trip to learn an ID. The audio side
@@ -60,6 +90,10 @@ peaks at the predicted display time.
   cost at 200 modules during the spike; batch edits per frame.
 - [Firewheel and fundsp both pre-1.0] → the boundary in D1 limits the blast radius;
   pin exact versions.
+- [Firewheel's API shifts as it is upstreamed into Bevy] → only `stubby_audio`
+  touches Firewheel types; game code sees our `Command`/`Event` protocol.
+- [fundsp oscillators pick a hash-derived start phase] → set phase explicitly for
+  deterministic offline tests.
 - [PipeWire/ALSA buffer sizes vary per machine] → make buffer size configurable;
   default 256 frames at 48 kHz; log negotiated config at startup (off the audio thread).
 - [Panics in DSP code kill audio] → `catch_unwind` is not realtime-safe. Instead,
@@ -68,7 +102,13 @@ peaks at the predicted display time.
 
 ## Open Questions
 
-- fundsp `Net` vs `firewheel`: decided by the spike. Record the result here.
+- ~~fundsp `Net` vs `firewheel`~~: decided, see D4.
+- Firewheel pulls in `bevy_platform` 0.19 (a small utility crate). Our game uses
+  Bevy 0.20, so the build will carry two `bevy_platform` versions until Firewheel
+  catches up. This costs compile time, not correctness.
+- Not yet heard by a human: run `cargo run --release -p spike_firewheel -- live`
+  and `-p spike_fundsp -- live` to listen to the add/retune/remove sequence on real
+  hardware (from the `spikes/` directory).
 - Should factory simulation ticks be driven by the audio clock (musical) or a fixed
   Bevy timestep (gameplay)? Leaning toward audio-clock-driven for machines that
   "fire" and fixed-timestep for physics/movement.

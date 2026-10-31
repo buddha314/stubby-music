@@ -1,12 +1,14 @@
 ## ADDED Requirements
 
 ### Requirement: Engine is independent of the game engine
-The audio engine SHALL live in a crate that does not depend on `bevy`, and SHALL be
-usable headlessly (offline rendering to a buffer) without an audio device.
+The audio engine SHALL live in a crate that does not depend on the Bevy engine, and
+SHALL be usable headlessly (offline rendering to a buffer) without an audio device.
+Utility crates pulled in by the audio library (`bevy_platform`,
+`bevy_macro_utils`) are permitted; ECS, app, render and asset crates are not.
 
-#### Scenario: Crate builds without Bevy
+#### Scenario: Crate builds without the Bevy engine
 - **WHEN** `cargo tree -p stubby_audio` is inspected
-- **THEN** no `bevy` crate appears in its dependency tree
+- **THEN** none of `bevy`, `bevy_app`, `bevy_ecs`, `bevy_render`, or `bevy_asset` appears in its dependency tree
 
 #### Scenario: Offline render
 - **WHEN** a test builds a patch and requests N samples of offline rendering
