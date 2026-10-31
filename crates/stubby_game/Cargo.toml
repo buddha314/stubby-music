@@ -16,5 +16,5 @@ serde_json = "~1.0"
 png = "~0.18"
 
 [dev-dependencies]
-gltf = "~1.4"
+gltf = { version = "~1.4", features = ["extras"] }
 tempfile = "~3.27"

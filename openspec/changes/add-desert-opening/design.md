@@ -51,6 +51,14 @@ spawn is always outside, so the game opens silent and the player follows the squ
 once they catch it. A square-wave ripple in the sand is the visual fallback. See
 `docs/research/rack-and-spatial-audio.md`.
 
+**Asset files and Git LFS (decided 2026-10-31).** No Git LFS for now. Each asset
+has a generator script under `tools/blender/` that is its source of truth; it rebuilds
+the `.blend`, the `.glb` and the preview. The committed binaries are small (the Square
+VCO is a 0.2 MB `.blend` and a 0.2 MB `.glb`). LFS adds a server dependency and
+breaks plain clones. Blender's `*.blend1` backups are gitignored. Revisit if any single
+binary passes about 5 MB, or once hand-sculpted or textured assets arrive that no
+script can regenerate.
+
 ## Risks / Trade-offs
 
 - [Volumetric fog cost on laptop GPUs] → scale quality by preset; test on `breq`.
