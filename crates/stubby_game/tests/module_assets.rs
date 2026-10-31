@@ -65,3 +65,43 @@ fn vco_modules_expose_ports_knob_and_light() {
         );
     }
 }
+
+#[test]
+fn clock_lamp_exposes_outputs_knob_led_and_beacon() {
+    let gltf = model("clock_lamp.glb");
+    let node = |name: &str| {
+        gltf.nodes()
+            .find(|n| n.name() == Some(name))
+            .unwrap_or_else(|| panic!("clock_lamp: missing node {name}"))
+    };
+
+    let root = extras(&node("Clock_Root"));
+    assert_eq!(root["asset_id"], "clock_lamp");
+    assert_eq!(root["module_kind"], "Clock");
+    for (name, port) in [("Port_gate", "gate"), ("Port_phase", "phase")] {
+        let e = extras(&node(name));
+        assert_eq!(e["port"], port);
+        assert_eq!(e["direction"], "out", "the engine's Clock has no inputs");
+        let [_, _, z] = node(name).transform().decomposed().0;
+        assert!(z > 0.15, "{name} at z = {z}, behind the faceplate");
+    }
+    assert_eq!(extras(&node("Knob_bpm"))["param"], "bpm");
+    assert_eq!(extras(&node("Light_gate"))["light"], "gate");
+
+    // The beacon sits above the case and carries the flash the game drives from ticks.
+    let lamp = node("Lamp");
+    let e = extras(&lamp);
+    assert_eq!(e["light"], "gate");
+    assert_eq!(e["pulse_driver"], "audio_sample_timestamp");
+    assert!(e["peak_strength"].as_f64().unwrap() > e["rest_strength"].as_f64().unwrap());
+    let [_, y, _] = lamp.transform().decomposed().0;
+    assert!(y > 1.285, "beacon at height {y}, not above the case");
+
+    let mut emissive: Vec<_> = gltf
+        .materials()
+        .filter(|m| m.emissive_factor() != [0.0, 0.0, 0.0])
+        .filter_map(|m| m.name().map(str::to_owned))
+        .collect();
+    emissive.sort();
+    assert_eq!(emissive, ["Clock_Glyph", "Clock_Lamp", "Clock_LedGate"]);
+}

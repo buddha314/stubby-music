@@ -1,10 +1,34 @@
 # Modules
 
-Synth modules as world-scale Eurorack modules: 3U panels, ×10 scale (1.285 m tall,
-1.375 m with the crown). Every module comes from a generator script in
-`tools/blender/`, which is the source of truth. It writes the `.blend` to
+Synth modules as world-scale Eurorack modules: 3U panels, ×10 scale (1.285 m tall
+before anything on top). Every module comes from a generator script in
+`tools/blender/`, which is the source of truth. The scripts share
+`tools/blender/module_kit.py` (materials, case, knobs, jacks, labels, glyph strokes,
+preview and export). It writes the `.blend` to
 `assets-src/blender/`, the `.glb` to `assets/models/`, and `asset.json`,
 `preview.png` and `preview_far.png` (the same view from about 12 m) here.
+
+## Clock (`tools/blender/create_clock_lamp.py`)
+
+| Close | About 12 m |
+| --- | --- |
+| ![clock](clock_lamp/preview.png) | ![clock from 12 m](clock_lamp/preview_far.png) |
+
+The opening's second discovery, and the clock that manifests as a pulsating light.
+Instead of a waveform crown it carries a caged glass beacon (1.685 m tall overall),
+a silhouette nothing else has and a large emissive volume that can pulse visibly
+through haze. The faceplate follows the VCO family: a narrow tick-train glyph
+(deliberately unlike the square's 50% wave) on the front and both sides, a BPM knob,
+and GATE and PHASE outputs. The engine's Clock has no inputs.
+
+The `Lamp` node carries the flash the game drives from the clock's sample-stamped
+ticks, using the same envelope fields as the lightning bug (`attack_seconds`,
+`flash_seconds`, `rest_strength`, `peak_strength`, `light_lumens`,
+`light_range_metres`, `pulse_driver`). The previews show it at the peak of a flash.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_clock_lamp.py
+```
 
 ## VCOs (`tools/blender/create_vco.py`)
 
@@ -44,8 +68,10 @@ Named empties carry glTF extras the game reads (`<Prefix>` is `SquareVco`, `SawV
 | `Port_voct`, `Port_out` | `port`, `direction` | Cable sockets; local +Z points out of the panel |
 | `Knob_freq` | `param`, `param_min`, `param_max`, `taper`, `rotation_degrees` | Rotate about local Z to show the parameter |
 | `Light_out` | `light`, `rest_strength`, `peak_strength` | Drive the LED's emissive strength from the rack's light value |
+| `Lamp` (Clock only) | `light`, `pulse_driver`, flash envelope | The beacon; flash its emissive strength and a point light on each tick |
 
 Origin at the base centre; the faceplate faces glTF +Z. Tilting a module or sinking it
 into the mud happens at placement (`placement` in `asset.json`), so one asset serves
 every pose. `crates/stubby_game/tests/module_assets.rs` checks these nodes in every
-exported VCO.
+exported module. The Clock's equivalents are `Port_gate`, `Port_phase`, `Knob_bpm` and
+`Light_gate`.
