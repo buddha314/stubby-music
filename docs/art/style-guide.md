@@ -22,10 +22,12 @@ art decision serves that causal chain, which the player should be able to *see*:
 **Streams are staff music.** They deliver music to plants and animals as nutrients.
 They begin as **mud** flowing from a burbler (a gurgling hot-spring mud pot that
 bubbles at a BPM) and **pulse at that BPM**, so a stream is the played sequence laid
-out in space. Raw streams are **muddy on purpose**, like ore; constructors clean them
-up, and a cleaned stream can become clearer, brighter and more staff-like (five lines,
-notes carried downstream). Reeds are their conveyor-belt segments. A connected port
-lights a soft halo, as in Satisfactory.
+out in space. Raw streams are **muddy on purpose**, like ore. As other processes are
+identified, constructors clean them, and the water goes **from muddy to clear** in
+stages; a clear stream can become brighter and more staff-like (five lines, notes
+carried downstream). Stream assets need a look for each stage. Reeds are their conveyor-belt segments. Ports light a soft
+halo arch while a stream is being extended from them (Satisfactory's port
+highlighting), and the planned stream shows as a hologram before it is laid.
 
 So growth reads as a response to sound: flora and fauna that are being played to
 should visibly react (sway, pulse, open, glow in time) before they bloom. Bloom
@@ -197,7 +199,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 ## Budgets
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
-364, the mudpit burbler 14.1k (the rig concept 14.7k). Nested halo shells are the
+364, the mudpit burbler 14.9k (the rig concept 14.7k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -220,6 +222,12 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — The burbler is an organically round pool with a 1 m banked stream
+  leaving it, framed as a tall preview looking up the stream. Bubbles carry baked
+  one-beat clips. Stream water goes from muddy to clear as processes are identified.
+- **2026-10-31** — The burbler is the head of a mud stream: a channel about 1 m wide
+  between banked sides, framed as a tall (portrait) preview looking up the stream. Its
+  port is an upright halo arch over the mouth, lit while a stream is extended from it.
 - **2026-10-31** — The burbler is a natural hot-spring mud pot (no in-world rack);
   configuring it opens a Eurorack HUD. Mud streams leave it through an outlet that
   halos when connected; raw mud stays muddy. The rack version is kept as a concept,
