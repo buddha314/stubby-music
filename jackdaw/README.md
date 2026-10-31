@@ -4,6 +4,10 @@ Use the shared source checkout `/home/buddha/src/jackdaw`. This folder is a game
 project, not an editor fork. Both editor and CLI come from that shared checkout.
 The installed `~/.cargo/bin/jd` is older and must not be used for this project.
 
+The shared checkout uses `https://github.com/buddha314/jackdaw.git` as development
+`origin`, with `https://github.com/jbuehler23/jackdaw.git` retained as `upstream`.
+Publish and use fixes from our fork without waiting for upstream PRs to merge.
+
 From the repository root:
 
 ```sh
