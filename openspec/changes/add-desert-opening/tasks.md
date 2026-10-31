@@ -42,4 +42,4 @@
 - [x] 6.2 Share procedural scene source; add runtime plugin and windowless Play support
 - [x] 6.3 Export reproducible glTF floor preview and load through Jackdaw's GltfSource
 - [x] 6.4 Validate project doctor and schema extraction with the matching CLI
-- [ ] 6.5 Verify shared editor Play after fixing process-local environment-map projection
+- [x] 6.5 Verify shared editor Play after fixing process-local environment-map projection

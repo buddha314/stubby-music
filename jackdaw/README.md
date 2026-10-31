@@ -34,3 +34,9 @@ PIE snapshots and projection. Without it, a streamed generated environment map
 is rebuilt with a null image handle in the editor, causing storage-format and
 texture-usage GPU validation errors. Rebuild the shared editor after changing
 its source; no game-specific editor binary is used.
+
+Verified on 2026-10-31: `jd doctor` passes; `jd build` extracts 486 registered
+components; the floor loads in the edit viewport; embedded Play connects and
+streams the desert view; Stop restores authoring. The shared Jackdaw regression
+and all 23 PIE projection tests pass. The game workspace tests and both game
+and adapter Clippy checks pass.
