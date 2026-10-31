@@ -1,3 +1,40 @@
+## Before you start (handoff, 2026-10-31)
+
+This change is ready for any agent to pick up. Read `proposal.md`, `design.md` and
+`docs/research/rack-and-spatial-audio.md` first.
+
+**Code today** (`crates/stubby_audio`, all on `main`):
+- Modules are still Firewheel nodes in `src/modules.rs`: Sine, Square, Clock,
+  Constant, Envelope, VCA. `src/engine.rs` is the game-facing `Engine` (`send` /
+  `flush` / `drain_events` / `sample_to_instant`) and the offline renderer.
+- `src/thread.rs` runs the engine on its own control thread (`AudioThread`, design
+  D9 in `add-audio-engine`). The game uses it through
+  `crates/stubby_game/src/audio.rs` (`SynthAudioPlugin`, the `Synth` resource,
+  `ClockTick` messages, the F8 / `--audio-demo` test patch).
+- Tests: `cargo test --workspace` (engine, thread and plugin tests). The spike that
+  produced this change's numbers is `spikes/spike_rack` (its own workspace:
+  `cd spikes && cargo run --release -p spike_rack`).
+
+**Keep stable:** the `Engine` and `AudioThread` APIs and the `Synth` plugin surface.
+The rack replaces what is *behind* them. Game code and the Jackdaw adapter must not
+need changes beyond module kinds and voltage values.
+
+**Decide first (task 0.1):** what hosts the rack. D2 assumes one Firewheel node. We
+don't control Firewheel's source: it has an open bug of ours (BillyDM/Firewheel#145),
+isn't `Send`, and splits glam versions with Bevy. The alternative is our own thin
+`cpal` host. See "Host options" in the research note. Task 2.4 depends on this choice.
+
+**Coordinate with `add-lightning-bug-pulse`:** another agent is adding a
+`random_clock` module to `stubby_audio` and a creature pulse in the game. Port
+that module to the rack in 2.6, along with the others.
+
+**Conventions:** work in your own git worktree off `main`; claim a task by adding
+`(claimed: <agent>)` to its line in the same PR as your first commit for it.
+
+## 0. Decisions
+
+- [ ] 0.1 Host the rack in a Firewheel node (D2) or in our own `cpal` host; record the choice in design.md and update D2 and task 2.4
+
 ## 1. Spike (done)
 
 - [x] 1.1 Rack prototype: per-sample, 1-sample cables, feedback in every voice; cost at 50–400 modules
