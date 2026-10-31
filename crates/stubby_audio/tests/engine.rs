@@ -513,3 +513,145 @@ fn tempo_change_keeps_the_beat_position() {
         ticks[1]
     );
 }
+
+// ------------------------------------------------------------- envelope and VCA
+
+fn envelope(rig: &mut Rig, id: u64, attack_s: f32, decay_s: f32) -> ModuleId {
+    rig.add(id, ModuleKind::Envelope { attack_s, decay_s })
+}
+
+#[test]
+fn envelope_attacks_then_decays_to_minus_60_db() {
+    let mut rig = Rig::new();
+    let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
+    let env = envelope(&mut rig, 2, 0.002, 0.2);
+    rig.connect(PortRef::new(clock, "gate"), PortRef::new(env, "gate"));
+    rig.connect(out(env), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize);
+
+    let attack = (0.002 * SR as f32) as usize; // 96 samples
+    let decay = (0.2 * SR as f32) as usize; // 9,600 samples
+    let x = &rig.left;
+    assert!(
+        x[attack / 2] > 0.4 && x[attack / 2] < 0.6,
+        "mid-attack {}",
+        x[attack / 2]
+    );
+    assert!((x[attack] - 1.0).abs() < 0.02, "peak {}", x[attack]);
+    let at_decay = x[attack + decay];
+    assert!(
+        (0.0008..0.0012).contains(&at_decay),
+        "-60 dB point {at_decay}"
+    );
+    assert!(x[23_999] < 1e-4, "silent before the next beat");
+    // The second beat (sample 24,000) retriggers it.
+    assert!((x[24_000 + attack] - 1.0).abs() < 0.02);
+}
+
+#[test]
+fn envelope_retrigger_never_jumps() {
+    let mut rig = Rig::new();
+    // 600 BPM: a new beat every 4,800 samples, long before a 0.5 s decay ends.
+    let clock = rig.add(1, ModuleKind::Clock { bpm: 600.0 });
+    let env = envelope(&mut rig, 2, 0.01, 0.5);
+    rig.connect(PortRef::new(clock, "gate"), PortRef::new(env, "gate"));
+    rig.connect(out(env), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize / 2);
+    let max_step = rig
+        .left
+        .windows(2)
+        .map(|w| (w[1] - w[0]).abs())
+        .fold(0.0, f32::max);
+    let attack_step = 1.0 / (0.01 * SR as f32);
+    assert!(max_step <= attack_step * 1.01, "jump of {max_step}");
+}
+
+#[test]
+fn vca_scales_by_cv_and_gain_and_is_closed_without_cv() {
+    let mut rig = Rig::new();
+    let osc = rig.add(1, ModuleKind::SineVco { freq_hz: 440.0 });
+    let cv = rig.add(2, ModuleKind::Constant { value: 0.5 });
+    let vca = rig.add(3, ModuleKind::Vca { gain: 0.5 });
+    rig.connect(out(osc), PortRef::new(vca, "in"));
+    rig.connect(out(cv), PortRef::new(vca, "cv"));
+    rig.connect(out(vca), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize / 2);
+    let tail = &rig.left[SR as usize / 4..];
+    assert!((peak(tail) - 0.25).abs() < 0.005, "peak {}", peak(tail));
+
+    rig.send(Command::Disconnect {
+        from: out(cv),
+        to: PortRef::new(vca, "cv"),
+    });
+    rig.flush();
+    rig.render(SR as usize / 4);
+    let end = &rig.left[rig.left.len() - BLOCK..];
+    assert!(peak(end) < 1e-6, "VCA leaks {} with no CV", peak(end));
+}
+
+#[test]
+fn vca_gain_change_does_not_zipper() {
+    let mut rig = Rig::new();
+    let osc = rig.add(1, ModuleKind::SineVco { freq_hz: 440.0 });
+    let cv = rig.add(2, ModuleKind::Constant { value: 1.0 });
+    let vca = rig.add(3, ModuleKind::Vca { gain: 0.1 });
+    rig.connect(out(osc), PortRef::new(vca, "in"));
+    rig.connect(out(cv), PortRef::new(vca, "cv"));
+    rig.connect(out(vca), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize / 4);
+    let edit = rig.left.len();
+    rig.send(Command::SetParam {
+        module: vca,
+        param: "gain",
+        value: 1.0,
+    });
+    rig.flush();
+    rig.render(SR as usize / 4);
+    assert!(click_ratio(&rig.left[edit - 1..edit + 2400], &[440.0]) <= 1.2);
+    let tail = &rig.left[rig.left.len() - SR as usize / 10..];
+    assert!((peak(tail) - 1.0).abs() < 0.01);
+}
+
+#[test]
+fn clock_blip_patch_sounds_on_every_tick() {
+    let mut rig = Rig::new();
+    let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
+    let env = envelope(&mut rig, 2, 0.002, 0.15);
+    let osc = rig.add(3, ModuleKind::SineVco { freq_hz: 880.0 });
+    let vca = rig.add(4, ModuleKind::Vca { gain: 1.0 });
+    rig.connect(PortRef::new(clock, "gate"), PortRef::new(env, "gate"));
+    rig.connect(out(osc), PortRef::new(vca, "in"));
+    rig.connect(out(env), PortRef::new(vca, "cv"));
+    rig.connect(out(vca), PortRef::output());
+    rig.flush();
+    rig.render(2 * SR as usize);
+
+    let ticks: Vec<usize> = rig
+        .events()
+        .into_iter()
+        .map(|Event::ClockTick { sample_time, .. }| sample_time as usize)
+        .filter(|&t| t + 24_000 <= rig.left.len())
+        .collect();
+    assert_eq!(ticks, vec![0, 24_000, 48_000, 72_000]);
+    for &t in &ticks {
+        assert!(
+            peak(&rig.left[t..t + 2_000]) > 0.5,
+            "no blip after tick {t}"
+        );
+        assert!(
+            peak(&rig.left[t + 20_000..t + 24_000]) < 0.01,
+            "blip rings past tick {t}"
+        );
+        // A 2 ms attack: the onset is smooth, not a click.
+        let onset = if t == 0 {
+            &rig.left[..400]
+        } else {
+            &rig.left[t - 1..t + 400]
+        };
+        assert!(click_ratio(onset, &[880.0]) <= 1.2, "click at tick {t}");
+    }
+}

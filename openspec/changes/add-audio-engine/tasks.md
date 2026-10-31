@@ -17,7 +17,7 @@
 
 - [x] 3.1 Define `Command`, `Event`, `ModuleId`, `PortRef`, and signal constants in `stubby_audio::signal`
 - [x] 3.2 Validate commands game-side and publish via Firewheel's channel; `rtrb` event rings; `flush` returns `Err` on full (D3)
-- [ ] 3.3 Output stream via `firewheel-cpal` (`Engine::start`): implemented, not yet run on a device; run `--example play` and listen
+- [x] 3.3 Output stream via `firewheel-cpal` (`Engine::start`): run with `--example play` on `breq` (2026-10-31); sine fade-in, octave jump and fade-out clean, no crackle
 - [x] 3.4 Implement graph edits (add/remove/connect/disconnect); Firewheel frees removed nodes off-thread
 - [x] 3.5 Audio clock and `sample_to_instant` from Firewheel's corrected clock (D6)
 - [x] 3.6 Run every offline test render under `assert_no_alloc` (the live callback belongs to `firewheel-cpal`; see Open Questions)
@@ -31,6 +31,8 @@
 - [x] 4.2 Clock with BPM, gate and phase outputs, tick events; offline test for 20 ticks at 120 BPM over 10 s
 - [x] 4.3 Test fan-out and rejection of a second cable to one input
 - [x] 4.4 Constant CV module and master-output bus
+- [x] 4.5 Envelope and VCA modules; `play` example patches clock → envelope → VCA so the clock is audible
+- [x] 4.6 Listen to the clock blips in `--example play`: heard on `breq` (2026-10-31), clean and on the beat
 
 ## 5. Bevy integration
 

@@ -4,7 +4,7 @@
 //! no locks, no panics. `construct_processor` runs on the game thread and may allocate.
 
 use crate::protocol::{Event, ModuleId, ModuleKind};
-use crate::signal::{GATE_HIGH, voct_to_hz};
+use crate::signal::{GATE_HIGH, GATE_THRESHOLD, voct_to_hz};
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
     diff::{Diff, Patch},
@@ -46,12 +46,37 @@ const CONSTANT_PARAMS: &[ParamSpec] = &[ParamSpec {
     max: 10.0,
     default: 0.0,
 }];
+const ENVELOPE_PARAMS: &[ParamSpec] = &[
+    ParamSpec {
+        name: "attack",
+        min: 0.0005,
+        max: 10.0,
+        default: 0.002,
+    },
+    ParamSpec {
+        name: "decay",
+        min: 0.001,
+        max: 30.0,
+        default: 0.2,
+    },
+];
+const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
+    name: "gain",
+    min: 0.0,
+    max: 1.0,
+    default: 1.0,
+}];
+
+/// How long a VCA takes to follow a change of its gain parameter.
+const GAIN_SMOOTH_SECONDS: f64 = 0.005;
 
 impl ModuleKind {
     pub fn inputs(&self) -> &'static [&'static str] {
         match self {
             ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => &["voct"],
             ModuleKind::Clock { .. } | ModuleKind::Constant { .. } => &[],
+            ModuleKind::Envelope { .. } => &["gate"],
+            ModuleKind::Vca { .. } => &["in", "cv"],
         }
     }
 
@@ -59,7 +84,9 @@ impl ModuleKind {
         match self {
             ModuleKind::SineVco { .. }
             | ModuleKind::SquareVco { .. }
-            | ModuleKind::Constant { .. } => &["out"],
+            | ModuleKind::Constant { .. }
+            | ModuleKind::Envelope { .. }
+            | ModuleKind::Vca { .. } => &["out"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
         }
     }
@@ -69,6 +96,8 @@ impl ModuleKind {
             ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => VCO_PARAMS,
             ModuleKind::Clock { .. } => CLOCK_PARAMS,
             ModuleKind::Constant { .. } => CONSTANT_PARAMS,
+            ModuleKind::Envelope { .. } => ENVELOPE_PARAMS,
+            ModuleKind::Vca { .. } => VCA_PARAMS,
         }
     }
 
@@ -396,6 +425,175 @@ impl AudioNodeProcessor for ConstantProc {
         for ch in buffers.outputs.iter_mut() {
             ch.fill(self.value);
         }
+        ProcessStatus::OutputsModified
+    }
+}
+
+// ---------------------------------------------------------------- Envelope
+
+#[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
+pub(crate) struct EnvelopeNode {
+    pub attack: f32,
+    pub decay: f32,
+}
+
+impl AudioNode for EnvelopeNode {
+    type Configuration = EmptyConfig;
+
+    fn info(&self, _: &EmptyConfig) -> Result<AudioNodeInfo, NodeError> {
+        Ok(node_info(
+            "envelope",
+            ChannelCount::MONO,
+            ChannelCount::MONO,
+        ))
+    }
+
+    fn construct_processor(
+        &self,
+        _: &EmptyConfig,
+        cx: ConstructProcessorContext,
+    ) -> Result<impl AudioNodeProcessor, NodeError> {
+        let mut proc = EnvelopeProc {
+            sample_rate: cx.stream_info.sample_rate.get() as f64,
+            attack_step: 0.0,
+            decay_coeff: 0.0,
+            level: 0.0,
+            attacking: false,
+            gate_high: false,
+        };
+        proc.set_attack(self.attack);
+        proc.set_decay(self.decay);
+        Ok(proc)
+    }
+}
+
+struct EnvelopeProc {
+    sample_rate: f64,
+    /// Level added per sample while attacking.
+    attack_step: f32,
+    /// Per-sample multiplier while decaying; reaches -60 dB after `decay` seconds.
+    decay_coeff: f32,
+    level: f32,
+    attacking: bool,
+    gate_high: bool,
+}
+
+impl EnvelopeProc {
+    fn set_attack(&mut self, seconds: f32) {
+        self.attack_step = (1.0 / (seconds.max(1e-4) as f64 * self.sample_rate)) as f32;
+    }
+
+    fn set_decay(&mut self, seconds: f32) {
+        let samples = seconds.max(1e-4) as f64 * self.sample_rate;
+        self.decay_coeff = 0.001f64.powf(1.0 / samples) as f32;
+    }
+}
+
+impl AudioNodeProcessor for EnvelopeProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, _: &mut ProcExtra) {
+        for patch in events.drain_patches::<EnvelopeNode>() {
+            match patch {
+                EnvelopeNodePatch::Attack(s) => self.set_attack(s),
+                EnvelopeNodePatch::Decay(s) => self.set_decay(s),
+            }
+        }
+    }
+
+    fn process(&mut self, _: &ProcInfo, buffers: ProcBuffers, _: &mut ProcExtra) -> ProcessStatus {
+        let (Some(gate), Some(out)) = (buffers.inputs.first(), buffers.outputs.first_mut()) else {
+            return ProcessStatus::ClearAllOutputs;
+        };
+        for (o, &g) in out.iter_mut().zip(gate.iter()) {
+            let high = g > GATE_THRESHOLD;
+            if high && !self.gate_high {
+                // Retrigger from the current level, so the output never jumps.
+                self.attacking = true;
+            }
+            self.gate_high = high;
+            if self.attacking {
+                self.level += self.attack_step;
+                if self.level >= 1.0 {
+                    self.level = 1.0;
+                    self.attacking = false;
+                }
+            } else {
+                self.level *= self.decay_coeff;
+                if self.level < 1e-6 {
+                    self.level = 0.0;
+                }
+            }
+            *o = self.level;
+        }
+        ProcessStatus::OutputsModified
+    }
+}
+
+// ---------------------------------------------------------------- VCA
+
+#[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
+pub(crate) struct VcaNode {
+    pub gain: f32,
+    /// Set false to fade out before removal. A VCA's output is audio.
+    pub enabled: bool,
+}
+
+impl AudioNode for VcaNode {
+    type Configuration = EmptyConfig;
+
+    fn info(&self, _: &EmptyConfig) -> Result<AudioNodeInfo, NodeError> {
+        Ok(node_info("vca", ChannelCount::STEREO, ChannelCount::MONO))
+    }
+
+    fn construct_processor(
+        &self,
+        _: &EmptyConfig,
+        cx: ConstructProcessorContext,
+    ) -> Result<impl AudioNodeProcessor, NodeError> {
+        let sample_rate = cx.stream_info.sample_rate.get() as f64;
+        Ok(VcaProc {
+            target: self.gain,
+            gain: self.gain,
+            smooth: (1.0 - (-1.0 / (GAIN_SMOOTH_SECONDS * sample_rate)).exp()) as f32,
+            fade: SourceFade::new(),
+        })
+    }
+}
+
+struct VcaProc {
+    target: f32,
+    /// The gain actually applied, easing toward `target` so changes never zipper.
+    gain: f32,
+    smooth: f32,
+    fade: SourceFade,
+}
+
+impl AudioNodeProcessor for VcaProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, extra: &mut ProcExtra) {
+        for patch in events.drain_patches::<VcaNode>() {
+            match patch {
+                VcaNodePatch::Gain(g) => self.target = g,
+                VcaNodePatch::Enabled(on) => self.fade.set_enabled(on, extra),
+            }
+        }
+    }
+
+    fn process(
+        &mut self,
+        info: &ProcInfo,
+        buffers: ProcBuffers,
+        extra: &mut ProcExtra,
+    ) -> ProcessStatus {
+        let [input, cv, ..] = buffers.inputs else {
+            return ProcessStatus::ClearAllOutputs;
+        };
+        let Some(out) = buffers.outputs.first_mut() else {
+            return ProcessStatus::ClearAllOutputs;
+        };
+        for ((o, &x), &c) in out.iter_mut().zip(input.iter()).zip(cv.iter()) {
+            self.gain += (self.target - self.gain) * self.smooth;
+            *o = x * c.max(0.0) * self.gain;
+        }
+        self.fade.apply(buffers.outputs, info.frames, extra);
         ProcessStatus::OutputsModified
     }
 }
