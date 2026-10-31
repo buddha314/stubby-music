@@ -46,6 +46,21 @@ impl Default for PulseFollower {
     }
 }
 
+/// Receives engine clock ticks into the shared [`PulseBus`]. Added by every plugin that
+/// follows pulses (lightning bugs, synth module lights), guarded by `is_plugin_added`.
+pub struct PulseBusPlugin;
+impl Plugin for PulseBusPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<PulseBus>()
+            .add_message::<SamplePulse>()
+            .add_systems(Update, poll_audio.in_set(PulseReceive));
+    }
+}
+
+/// Systems that read pulse levels run after this set.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PulseReceive;
+
 #[derive(Resource, Default)]
 pub struct PulseBus {
     pending: Vec<SamplePulse>,
@@ -67,6 +82,10 @@ impl PulseBus {
             }
             false
         });
+    }
+    /// The most recent pulse from `clock` that has reached its display instant.
+    pub fn last(&self, clock: u64) -> Option<SamplePulse> {
+        self.latest.get(&clock).copied()
     }
     pub fn level(&self, clock: u64, now: Instant, attack: f32, duration: f32) -> f32 {
         self.latest
@@ -122,21 +141,18 @@ pub struct LightningBugPlugin {
 }
 impl Plugin for LightningBugPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<PulseBusPlugin>() {
+            app.add_plugins(PulseBusPlugin);
+        }
         app.insert_resource(PulseSeed(self.seed))
-            .init_resource::<PulseBus>()
             .register_type::<PulseFollower>()
-            .add_message::<SamplePulse>()
             .add_systems(Startup, initialize)
             .add_systems(PostUpdate, remove_collected_bugs)
             .add_systems(
                 Update,
-                (
-                    update_click_gains,
-                    poll_audio,
-                    animate,
-                    capture_pulse_preview,
-                )
-                    .chain(),
+                (update_click_gains, animate, capture_pulse_preview)
+                    .chain()
+                    .after(PulseReceive),
             );
     }
 }

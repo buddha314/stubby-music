@@ -7,6 +7,7 @@ pub mod export;
 pub mod pulse;
 pub mod resources;
 mod sky;
+pub mod synth_modules;
 mod terrain;
 mod waveform_audio;
 
@@ -30,6 +31,7 @@ impl Plugin for DesertPlugin {
             resources::ResourceRecipesPlugin,
             controls::PlayerControlsPlugin,
             waveform_audio::WaveformAudioPlugin,
+            synth_modules::SynthModulesPlugin::default(),
         ))
         .insert_resource(WorldSeed(self.seed))
         .add_systems(Startup, setup)

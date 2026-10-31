@@ -2,8 +2,9 @@
 
 - [ ] 1.1 Create `assets/`, `assets-src/blender/`, `tools/blender/` (in progress on `add-lightning-bug-pulse`)
 - [ ] 1.2 Write `tools/blender/export_gltf.py` (apply transforms, +Y up, metres, .glb) (in progress on `add-lightning-bug-pulse`)
-- [ ] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and load in Bevy (claimed: Claude, Blender asset development)
-- [ ] 1.4 Decide on Git LFS for `.blend` files (claimed: Claude)
+- [x] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and check in the game's asset test (`tools/blender/create_vco.py`, `tools/blender/create_clock_lamp.py`, `crates/stubby_game/tests/module_assets.rs`). Placing them in the world is task 2.5
+- [x] 1.3a Saw, triangle and sine VCO assets from the same generator, for later discoveries (`assets/modules/README.md`)
+- [x] 1.4 Decide on Git LFS for `.blend` files: not yet; see design.md "Asset files and Git LFS"
 
 ## 2. World generation
 

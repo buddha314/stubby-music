@@ -1,0 +1,90 @@
+{
+  "id": "clock_lamp",
+  "model": "models/clock_lamp.glb#Scene0",
+  "module_kind": "Clock",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "silhouette": "tick_train_crown",
+  "ports": [
+    {
+      "node": "Port_gate",
+      "port": "gate",
+      "direction": "out"
+    },
+    {
+      "node": "Port_phase",
+      "port": "phase",
+      "direction": "out"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_bpm",
+      "param": "bpm",
+      "min": 1.0,
+      "max": 999.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0,
+      "control": "encoder"
+    }
+  ],
+  "lights": [
+    {
+      "node": "Light_gate",
+      "light": "gate",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    },
+    {
+      "node": "Light_phase",
+      "light": "phase",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    }
+  ],
+  "display": {
+    "node": "Display",
+    "shows": "bpm",
+    "digits": 3,
+    "segments": "abcdefg",
+    "segment_node": "Display_d{digit}_{segment}",
+    "digit_segments": {
+      "0": "abcdef",
+      "1": "bc",
+      "2": "abdeg",
+      "3": "abcdg",
+      "4": "bcfg",
+      "5": "acdfg",
+      "6": "acdefg",
+      "7": "abc",
+      "8": "abcdefg",
+      "9": "abcdfg"
+    }
+  },
+  "lamp": {
+    "node": "Lamp",
+    "light": "gate",
+    "material": "Clock_Lamp",
+    "pulse_driver": "audio_sample_timestamp",
+    "colour_linear": [
+      1.0,
+      0.62,
+      0.25
+    ],
+    "attack_seconds": 0.015,
+    "flash_seconds": 0.25,
+    "rest_strength": 0.15,
+    "peak_strength": 30.0,
+    "light_lumens": 6000.0,
+    "light_range_metres": 40.0
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  }
+}

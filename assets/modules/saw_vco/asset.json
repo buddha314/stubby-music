@@ -1,0 +1,48 @@
+{
+  "id": "saw_vco",
+  "model": "models/saw_vco.glb#Scene0",
+  "module_kind": "SawVco",
+  "waveform": "saw",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "silhouette": "saw_crown",
+  "ports": [
+    {
+      "node": "Port_voct",
+      "port": "voct",
+      "direction": "in"
+    },
+    {
+      "node": "Port_out",
+      "port": "out",
+      "direction": "out"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_freq",
+      "param": "freq",
+      "min": 1.0,
+      "max": 20000.0,
+      "taper": "log",
+      "rotation_degrees": 300.0
+    }
+  ],
+  "lights": [
+    {
+      "node": "Light_out",
+      "light": "out",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    }
+  ],
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  }
+}
