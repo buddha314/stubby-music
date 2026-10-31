@@ -1,25 +1,9 @@
-[package]
-name = "stubby-music"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-bevy = { version = "0.15", default-features = false, features = [
-    "bevy_asset",
-    "bevy_core_pipeline",
-    "bevy_gizmos",
-    "bevy_render",
-    "bevy_scene",
-    "bevy_sprite",
-    "bevy_text",
-    "bevy_ui",
-    "bevy_window",
-    "bevy_winit",
-    "dynamic_linking",
-    "png",
-    "x11",
-] }
-
 [workspace]
-members = [".", "crates/stubby_audio"]
-exclude = ["spikes"]
+resolver = "3"
+members = ["crates/stubby_audio", "crates/stubby_game"]
+# Each has its own workspace: spikes are throwaway experiments, and jackdaw/ pins the
+# editor's Bevy revision, separate from the game's Bevy 0.20.
+exclude = ["spikes", "jackdaw"]
+
+[workspace.package]
+edition = "2024"

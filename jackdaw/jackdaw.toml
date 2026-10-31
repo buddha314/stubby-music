@@ -1,0 +1,12 @@
+plugin = "DesertPlugin"
+package = "stubby_jackdaw"
+
+[jackdaw]
+version = "0.21.0-dev"
+channel = "bleeding-edge"
+bevy_rev = "c9c397ba1a73e6cfffe957318e0359330b701865"
+bevy = "main"
+
+[[run]]
+name = "Desert opening"
+args = ["--seed=42"]

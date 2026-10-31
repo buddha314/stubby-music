@@ -28,3 +28,18 @@
 - [ ] 4.4 Clock gating (not collectable before the square) and cue toward the square
 - [ ] 4.5 Clock light driven by audio tick display-time prediction; verify ≤10 ms offset
 - [ ] 4.6 Mood increases on each discovery
+
+## 5. Initial visual scene increment
+
+- [x] 5.1 Add standalone Bevy 0.20 game and seeded inspection camera
+- [x] 5.2 Generate clipped mud plates, rim relief, fine-crack albedo and normals
+- [x] 5.3 Generate desert HDR cubemap and matching lighting, haze and ridgelines
+- [x] 5.4 Validate build, determinism tests and runtime preview
+
+## 6. Jackdaw opening integration
+
+- [x] 6.1 Isolate the editor's pinned Bevy development revision from the game workspace
+- [x] 6.2 Share procedural scene source; add runtime plugin and windowless Play support
+- [x] 6.3 Export reproducible glTF floor preview and load through Jackdaw's GltfSource
+- [x] 6.4 Validate project doctor and schema extraction with the matching CLI
+- [ ] 6.5 Verify shared editor Play after fixing process-local environment-map projection
