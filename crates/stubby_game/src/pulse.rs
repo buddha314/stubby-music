@@ -8,9 +8,15 @@ use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 pub const LIGHTNING_BUG_CLOCK: u64 = 1;
 const BUG_POSITIONS: [Vec3; 3] = [
     Vec3::new(-1., 1.5, 2.),
-    Vec3::new(0.5, 1.8, 0.),
-    Vec3::new(1.4, 1.2, -2.),
+    Vec3::new(0.5, 2.2, 0.),
+    Vec3::new(1.4, 2.8, -2.),
 ];
+fn bug_position(index: usize) -> Vec3 {
+    let mut position = BUG_POSITIONS[index];
+    position.y += super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
+    position
+}
+
 fn bug_clock(index: usize) -> u64 {
     LIGHTNING_BUG_CLOCK + index as u64
 }
@@ -90,7 +96,7 @@ struct BugAsset {
     light_lumens: f32,
     light_range_metres: f32,
     clock: ClockSettings,
-    click: ClickSettings,
+    click: super::waveform_audio::WaveformSound,
 }
 #[derive(Deserialize)]
 struct ClockSettings {
@@ -98,29 +104,18 @@ struct ClockSettings {
     max_interval_seconds: f32,
 }
 
-#[derive(Deserialize)]
-struct ClickSettings {
-    freq_hz: f32,
-    attack_seconds: f32,
-    decay_seconds: f32,
-    gain: f32,
-    hearing_radius_metres: f32,
-}
 fn voice_ids(index: usize) -> (ModuleId, ModuleId, ModuleId) {
     let base = 100 + index as u64 * 3;
     (ModuleId(base), ModuleId(base + 1), ModuleId(base + 2))
 }
-fn connect(from: ModuleId, output: &'static str, to: ModuleId, input: &'static str) -> Command {
-    Command::Connect {
-        from: PortRef::new(from, output),
-        to: PortRef::new(to, input),
-    }
-}
-
 #[derive(Component)]
 struct FlashVisual;
 #[derive(Component)]
 struct FlashLight;
+#[derive(Component)]
+struct FlashShadow;
+#[derive(Component)]
+struct BugInstance(usize);
 
 pub struct LightningBugPlugin {
     pub seed: u64,
@@ -132,6 +127,7 @@ impl Plugin for LightningBugPlugin {
             .register_type::<PulseFollower>()
             .add_message::<SamplePulse>()
             .add_systems(Startup, initialize)
+            .add_systems(PostUpdate, remove_collected_bugs)
             .add_systems(
                 Update,
                 (
@@ -170,38 +166,25 @@ fn initialize(world: &mut World) {
                 },
             });
             let (oscillator, envelope, vca) = voice_ids(index);
-            for command in [
-                Command::AddModule {
-                    id: oscillator,
-                    kind: ModuleKind::SquareVco {
-                        freq_hz: asset.click.freq_hz,
-                    },
-                },
-                Command::AddModule {
-                    id: envelope,
-                    kind: ModuleKind::Envelope {
-                        attack_s: asset.click.attack_seconds,
-                        decay_s: asset.click.decay_seconds,
-                    },
-                },
-                Command::AddModule {
-                    id: vca,
-                    kind: ModuleKind::Vca { gain: 0. },
-                },
-                connect(ModuleId(bug_clock(index)), "gate", envelope, "gate"),
-                connect(envelope, "out", vca, "cv"),
-                connect(oscillator, "out", vca, "in"),
-                Command::Connect {
-                    from: PortRef::new(vca, "out"),
-                    to: PortRef::output(),
-                },
-            ] {
+            for command in super::waveform_audio::voice_commands(
+                stubby_recipes::Waveform::Square,
+                [oscillator, envelope, vca],
+                PortRef::new(ModuleId(bug_clock(index)), "gate"),
+                0.,
+                asset.click,
+            ) {
                 synth.send(command);
             }
         }
     }
     let scene = world.resource::<AssetServer>().load(asset.model.clone());
-    for (index, position) in BUG_POSITIONS.into_iter().enumerate() {
+    let shadow_texture = shadow_texture();
+    let shadow_texture = world.resource_mut::<Assets<Image>>().add(shadow_texture);
+    let shadow_mesh = world
+        .resource_mut::<Assets<Mesh>>()
+        .add(Plane3d::default().mesh().size(2.0, 2.0));
+    for index in 0..BUG_POSITIONS.len() {
+        let position = bug_position(index);
         world.spawn((
             Name::new(format!("Lightning bug {}", index + 1)),
             WorldAssetRoot(scene.clone()),
@@ -209,9 +192,35 @@ fn initialize(world: &mut World) {
                 clock: bug_clock(index),
             },
             FlashVisual,
+            BugInstance(index),
             super::resources::ResourceNode::lightning_bug(index),
             Transform::from_translation(position).with_scale(Vec3::ZERO),
             Visibility::Hidden,
+        ));
+        let material = world
+            .resource_mut::<Assets<StandardMaterial>>()
+            .add(StandardMaterial {
+                base_color: Color::srgba(0.02, 0.015, 0.01, 0.),
+                base_color_texture: Some(shadow_texture.clone()),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            });
+        world.spawn((
+            Name::new(format!("Lightning bug {} ground shadow", index + 1)),
+            PulseFollower {
+                clock: bug_clock(index),
+            },
+            FlashShadow,
+            BugInstance(index),
+            Mesh3d(shadow_mesh.clone()),
+            MeshMaterial3d(material),
+            bevy::light::NotShadowCaster,
+            Transform::from_xyz(
+                position.x,
+                super::terrain::height(Vec2::new(position.x, position.z)) + 0.055,
+                position.z,
+            ),
         ));
         world.spawn((
             Name::new(format!("Lightning bug {} white flash", index + 1)),
@@ -219,6 +228,7 @@ fn initialize(world: &mut World) {
                 clock: bug_clock(index),
             },
             FlashLight,
+            BugInstance(index),
             PointLight {
                 color: Color::WHITE,
                 intensity: 0.,
@@ -232,17 +242,47 @@ fn initialize(world: &mut World) {
     world.insert_resource(asset);
 }
 
+// Run after collection's Update systems, so no depleted cue survives the frame.
+fn remove_collected_bugs(
+    mut commands: Commands,
+    mut collected: MessageReader<super::resources::ResourceCollected>,
+    bugs: Query<(Entity, &BugInstance)>,
+    synth: Option<Res<Synth>>,
+) {
+    for event in collected.read() {
+        for index in 0..BUG_POSITIONS.len() {
+            if event.instance != format!("lightning_bug-{index}") {
+                continue;
+            }
+            for (entity, instance) in &bugs {
+                if instance.0 == index {
+                    commands.entity(entity).despawn();
+                }
+            }
+            if let Some(synth) = &synth {
+                let (oscillator, envelope, vca) = voice_ids(index);
+                // Disconnect the output first, then remove its source nodes.
+                for id in [vca, oscillator, envelope, ModuleId(bug_clock(index))] {
+                    synth.send(Command::RemoveModule { id });
+                }
+            }
+        }
+    }
+}
+
 // Gain is listener distance only. The transient and its timing remain in the DSP graph.
 fn update_click_gains(
     audio: Option<Res<Synth>>,
     asset: Option<Res<BugAsset>>,
     camera: Query<&Transform, With<Camera3d>>,
+    bugs: Query<(&BugInstance, &Transform), With<FlashVisual>>,
 ) {
     let (Some(audio), Some(asset), Ok(camera)) = (audio, asset, camera.single()) else {
         return;
     };
-    for (index, position) in BUG_POSITIONS.into_iter().enumerate() {
-        let distance = position.distance(camera.translation);
+    for (instance, transform) in &bugs {
+        let index = instance.0;
+        let distance = transform.translation.distance(camera.translation);
         let gain = asset.click.gain
             * (1. - distance / asset.click.hearing_radius_metres)
                 .clamp(0., 1.)
@@ -275,11 +315,40 @@ fn poll_audio(
     bus.advance(Instant::now());
 }
 
+fn shadow_texture() -> Image {
+    let size = 64;
+    let mut data = Vec::with_capacity(size * size * 4);
+    for y in 0..size {
+        for x in 0..size {
+            let radius = Vec2::new(
+                (x as f32 + 0.5) / size as f32 * 2. - 1.,
+                (y as f32 + 0.5) / size as f32 * 2. - 1.,
+            )
+            .length();
+            let alpha = (1. - radius * radius).clamp(0., 1.);
+            data.extend_from_slice(&[255, 255, 255, (alpha * 255.) as u8]);
+        }
+    }
+    Image::new(
+        bevy::render::render_resource::Extent3d {
+            width: size as u32,
+            height: size as u32,
+            depth_or_array_layers: 1,
+        },
+        bevy::render::render_resource::TextureDimension::D2,
+        data,
+        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
+        bevy::asset::RenderAssetUsages::default(),
+    )
+}
+
 fn animate(
     bus: Res<PulseBus>,
     asset: Option<Res<BugAsset>>,
     mut visuals: Query<(&PulseFollower, &mut Transform, &mut Visibility), With<FlashVisual>>,
     mut lights: Query<(&PulseFollower, &mut PointLight), With<FlashLight>>,
+    shadows: Query<(&PulseFollower, &MeshMaterial3d<StandardMaterial>), With<FlashShadow>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let Some(asset) = asset else {
         return;
@@ -298,6 +367,18 @@ fn animate(
             Visibility::Hidden
         };
         transform.scale = Vec3::splat(level.sqrt());
+    }
+    for (follower, handle) in &shadows {
+        if let Some(mut material) = materials.get_mut(&handle.0) {
+            material.base_color.set_alpha(
+                0.95 * bus.level(
+                    follower.clock,
+                    now,
+                    asset.attack_seconds,
+                    asset.flash_seconds,
+                ),
+            );
+        }
     }
     for (follower, mut light) in &mut lights {
         light.intensity = asset.light_lumens
@@ -368,6 +449,46 @@ fn capture_pulse_preview(
 mod tests {
     use super::*;
     use std::time::Duration;
+    #[test]
+    fn collecting_removes_only_that_bugs_model_light_and_shadow() {
+        let mut app = App::new();
+        app.add_message::<super::super::resources::ResourceCollected>()
+            .add_systems(PostUpdate, remove_collected_bugs);
+        let mut removed = Vec::new();
+        for _ in 0..3 {
+            let root = app.world_mut().spawn(BugInstance(0)).id();
+            app.world_mut().spawn(ChildOf(root));
+            removed.push(root);
+        }
+        let other = app.world_mut().spawn(BugInstance(1)).id();
+        app.world_mut()
+            .write_message(super::super::resources::ResourceCollected {
+                instance: "lightning_bug-0".into(),
+                yields: Vec::new(),
+            });
+        app.update();
+        for entity in removed {
+            assert!(app.world().get_entity(entity).is_err());
+        }
+        assert!(app.world().get_entity(other).is_ok());
+        assert_eq!(
+            app.world_mut()
+                .query::<&ChildOf>()
+                .iter(app.world())
+                .count(),
+            0
+        );
+    }
+
+    #[test]
+    fn bugs_hover_one_to_three_metres_above_plate_rims() {
+        for index in 0..BUG_POSITIONS.len() {
+            let position = bug_position(index);
+            let ground = super::super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
+            assert!((1.0..=3.0).contains(&(position.y - ground)));
+        }
+    }
+
     #[test]
     fn shared_audio_ticks_reach_followers_with_original_sample_time() {
         let mut app = App::new();
@@ -457,7 +578,7 @@ mod tests {
             "../../../assets/creatures/lightning_bug/asset.json"
         ))
         .unwrap();
-        assert_eq!(profile.flash_seconds, 0.18);
+        assert_eq!(profile.flash_seconds, 0.3);
         assert!(profile.attack_seconds > 0. && profile.attack_seconds < profile.flash_seconds);
         assert!(profile.clock.min_interval_seconds > profile.flash_seconds);
     }

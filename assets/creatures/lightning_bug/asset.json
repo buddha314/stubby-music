@@ -7,7 +7,7 @@
     1.0,
     1.0
   ],
-  "flash_seconds": 0.18,
+  "flash_seconds": 0.3,
   "attack_seconds": 0.015,
   "light_lumens": 250.0,
   "light_range_metres": 3.0,
@@ -17,8 +17,8 @@
   },
   "click": {
     "freq_hz": 2200.0,
-    "attack_seconds": 0.0005,
-    "decay_seconds": 0.004,
+    "attack_seconds": 0.015,
+    "decay_seconds": 0.285,
     "gain": 0.12,
     "hearing_radius_metres": 3.0
   },

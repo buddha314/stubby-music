@@ -43,9 +43,8 @@ Follow Satisfactory's interaction conventions where applicable (research:
 holding E may collect successive nearby pickups without duplicating an instance.
 Use **O** for the recipe book/codex. Reserve **Q** for build, **F** for dismantle,
 **Tab** for inventory and **B** for flashlight; do not assign these to unrelated
-player actions. WASD and Shift retain movement/sprint roles. Space/C are the
-current inspection-camera ascend/descend controls; a grounded controller should
-use them for jump/crouch. The current RMB-look free camera is provisional.
+player actions. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+Escape or focus loss releases the cursor, and left click recaptures it.
 
 ### The opening
 
@@ -218,3 +217,24 @@ Several agents work in this repo at once. To avoid stepping on each other:
   (`add-rack-and-spatial-audio`) → unclaimed, ready to start.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
+
+### Waveform collection audio and asset status
+
+Square wave is an asset **in development**. Use the stable `square_wave` item ID
+and waveform metadata; do not assume its final visual asset or production recipe.
+A successful waveform harvest emits its actual yield stacks and plays one
+listener-level synthesis confirmation per distinct waveform type, not per item.
+Use the shared existing VCO/envelope/VCA composition. Failed or repeated collection
+must stay silent. Bugs currently yield 2 items, configured in the catalog.
+See `docs/research/firebug-audio-and-yields.md` for duration and mining research.
+
+### Infinite mines and exhaustible resources
+
+Loose lightning bugs are **exhaustible** and collected once. Scrub-oak trees are
+**infinite mines** that will produce fresh finite lightning bugs. A tree's bug
+production increases as water quality and light quality improve. Infinite means
+no finite reserve, not infinite instantaneous output. The source types, catalog
+mine definition and editor `MineNode` exist; production rates, quality simulation,
+spawn loops and tree visuals remain deferred in
+`openspec/changes/add-scrub-oak-production/`. Keep mines separate from E pickup
+queries. The domain chain is scrub oak mine → finite bug → square-wave items.

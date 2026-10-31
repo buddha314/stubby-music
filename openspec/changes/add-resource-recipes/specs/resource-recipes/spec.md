@@ -1,9 +1,9 @@
 ## ADDED Requirements
 ### Requirement: Lightning bug resource yield
-A lightning bug SHALL provide one square_wave item when collected. A world instance SHALL yield at most once. Holding a square-wave item SHALL NOT automatically make sound or change other bugs' clocks.
+A lightning bug SHALL provide the configured quantity of square_wave items (initially two) when collected. A world instance SHALL yield at most once. Holding a square-wave item SHALL NOT automatically make sound or change other bugs' clocks.
 #### Scenario: Collect a bug
 - **WHEN** the player collects an uncollected lightning bug in interaction range
-- **THEN** inventory gains one square_wave item and the instance is marked collected
+- **THEN** inventory gains the configured square_wave quantity, the instance is marked collected, and its model, ground pulse, light and audio voice are removed without affecting other bugs
 - **THEN** repeating collection of that instance adds nothing
 ### Requirement: General data-defined recipes
 Recipes SHALL have stable IDs, declared input item quantities and declared output item quantities. Catalog validation SHALL reject duplicate IDs, unknown items and zero quantities. Inventory crafting SHALL aggregate repeated ingredient lines and apply input consumption and output production atomically.

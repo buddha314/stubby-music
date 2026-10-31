@@ -8,6 +8,7 @@ pub mod pulse;
 pub mod resources;
 mod sky;
 mod terrain;
+mod waveform_audio;
 
 use bevy::{
     asset::RenderAssetUsages,
@@ -27,10 +28,12 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
+            controls::PlayerControlsPlugin,
+            waveform_audio::WaveformAudioPlugin,
         ))
         .insert_resource(WorldSeed(self.seed))
         .add_systems(Startup, setup)
-        .add_systems(Update, (fly, capture_preview));
+        .add_systems(Update, capture_preview);
     }
 }
 
@@ -201,7 +204,8 @@ fn setup(
         Camera3d::default(),
         bevy::post_process::bloom::Bloom::NATURAL,
         Exposure { ev100: 10.5 },
-        Transform::from_xyz(0., 1.65, 6.).looking_at(Vec3::new(-9., -4.5, -30.), Vec3::Y),
+        controls::Player::default(),
+        controls::spawn_transform(),
         Skybox {
             image: Some(sky),
             brightness: 1500.,
@@ -213,48 +217,6 @@ fn setup(
             ..default()
         },
     ));
-}
-
-fn fly(
-    time: Res<Time>,
-    keys: Res<ButtonInput<KeyCode>>,
-    buttons: Res<ButtonInput<MouseButton>>,
-    mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
-    mut camera: Query<&mut Transform, With<Camera3d>>,
-) {
-    let Ok(mut t) = camera.single_mut() else {
-        return;
-    };
-    let delta: Vec2 = motion.read().map(|m| m.delta).sum();
-    if buttons.pressed(MouseButton::Right) {
-        let (yaw, pitch, _) = t.rotation.to_euler(EulerRot::YXZ);
-        t.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            yaw - delta.x * 0.003,
-            (pitch - delta.y * 0.003).clamp(-1.5, 1.5),
-            0.,
-        );
-    }
-    let mut direction = Vec3::ZERO;
-    for (key, axis) in [
-        (KeyCode::KeyW, *t.forward()),
-        (KeyCode::KeyS, *t.back()),
-        (KeyCode::KeyA, *t.left()),
-        (KeyCode::KeyD, *t.right()),
-        (controls::INSPECT_ASCEND, Vec3::Y),
-        (controls::INSPECT_DESCEND, Vec3::NEG_Y),
-    ] {
-        if keys.pressed(key) {
-            direction += axis;
-        }
-    }
-    let speed = if keys.pressed(KeyCode::ShiftLeft) {
-        18.
-    } else {
-        4.
-    };
-    t.translation += direction.normalize_or_zero() * speed * time.delta_secs();
-    t.translation.y = t.translation.y.max(0.35);
 }
 
 // Capture after pipeline warmup; useful for reviewing a seed without desktop tools.

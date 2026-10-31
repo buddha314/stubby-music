@@ -8,8 +8,9 @@ Run the visual scene:
 cargo run -p stubby_game -- --seed=42
 ```
 
-WASD moves, hold right mouse to look, Space/C raises/lowers the inspection camera,
-and Shift moves faster. The camera starts at eye height. Use another seed to
+WASD walks, the mouse looks freely, Space jumps, C crouches,
+and hold Left Shift to sprint. Escape releases the cursor; click to resume.
+The player starts standing on the terrain at eye height. Use another seed to
 regenerate the mud plates, fine crack texture, and mountain silhouettes.
 For faster development linking use `--features dev`; omit it in release builds.
 
@@ -20,7 +21,7 @@ The HDR sky is generated as a linear half-float cubemap with an amber low sun,
 dusty horizon and slate zenith; the cubemap also supplies filtered environment lighting, alongside matching sunlight.
 
 This is the initial art-study scene: a fixed terrain area roughly 216 m wide,
-free-flight inspection, haze and distant mountains. Streaming, sandstorm particles,
+grounded first-person movement, haze and distant mountains. Streaming, sandstorm particles,
 mood transitions, discovery objects and spatial audio are tracked in the opening proposal
 and are not implemented yet.
 

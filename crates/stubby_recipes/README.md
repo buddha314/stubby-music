@@ -38,3 +38,10 @@ continues its existing flash behaviour; recovering its pattern does not kill it
 or connect audio. Press O for the recipe book, which remembers Square wave and its VCO, LFO and
 gate roles even after inventory is consumed. A future crafting UI or machine sends `CraftRequest { recipe }` and
 receives `CraftCompleted` only when the transaction succeeds.
+
+Source objects distinguish exhaustible resources from infinite mines. Use
+`Catalog::source` to create validated instances, then `harvest_source` for finite
+collection; mine objects explicitly reject that operation. `MineDefinition`
+references a produced resource, so a scrub oak produces finite bugs rather than
+directly granting item stacks. Infinite capacity is separate from production rate.
+Objects serialize with a `kind` tag; mine objects have no depletion flag/count.
