@@ -10,3 +10,7 @@ bevy = "main"
 [[run]]
 name = "Desert opening"
 args = ["--seed=42"]
+
+[[run]]
+name = "Desert opening + audio demo"
+args = ["--seed=42", "--audio-demo"]

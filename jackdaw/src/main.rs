@@ -13,6 +13,10 @@ fn main() -> AppExit {
         .add_plugins(plugins)
         .add_plugins(jackdaw_runtime::JackdawPlugin)
         .add_plugins(stubby_jackdaw::DesertPlugin { seed })
+        .add_plugins(stubby_jackdaw::audio::SynthAudioPlugin {
+            demo: std::env::args().any(|a| a == "--audio-demo"),
+            ..default()
+        })
         .add_systems(Startup, load_authored_scene)
         .run()
 }

@@ -29,5 +29,9 @@ fn main() {
                 }),
         )
         .add_plugins(stubby_game::DesertPlugin { seed })
+        .add_plugins(stubby_game::audio::SynthAudioPlugin {
+            demo: std::env::args().any(|a| a == "--audio-demo"),
+            ..default()
+        })
         .run();
 }

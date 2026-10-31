@@ -1,9 +1,9 @@
 ## 1. Asset pipeline
 
-- [ ] 1.1 Create `assets/`, `assets-src/blender/`, `tools/blender/`
-- [ ] 1.2 Write `tools/blender/export_gltf.py` (apply transforms, +Y up, metres, .glb)
-- [ ] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and load in Bevy
-- [ ] 1.4 Decide on Git LFS for `.blend` files
+- [ ] 1.1 Create `assets/`, `assets-src/blender/`, `tools/blender/` (in progress on `add-lightning-bug-pulse`)
+- [ ] 1.2 Write `tools/blender/export_gltf.py` (apply transforms, +Y up, metres, .glb) (in progress on `add-lightning-bug-pulse`)
+- [ ] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and load in Bevy (claimed: Claude, Blender asset development)
+- [ ] 1.4 Decide on Git LFS for `.blend` files (claimed: Claude)
 
 ## 2. World generation
 

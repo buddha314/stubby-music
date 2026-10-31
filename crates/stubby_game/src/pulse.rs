@@ -1,8 +1,9 @@
 //! Shared sample-clock pulse bus and the lightning bug's flash-only presentation.
+use super::audio::{ClockTick, Synth};
 use bevy::prelude::*;
 use serde::Deserialize;
 use std::{collections::HashMap, time::Instant};
-use stubby_audio::{Command, Engine, Event, ModuleId, ModuleKind, PortRef};
+use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 pub const LIGHTNING_BUG_CLOCK: u64 = 1;
 const BUG_POSITIONS: [Vec3; 3] = [
@@ -116,11 +117,6 @@ fn connect(from: ModuleId, output: &'static str, to: ModuleId, input: &'static s
     }
 }
 
-struct PulseAudio {
-    engine: Engine,
-    events: Vec<Event>,
-    failed: bool,
-}
 #[derive(Component)]
 struct FlashVisual;
 #[derive(Component)]
@@ -163,16 +159,16 @@ fn initialize(world: &mut World) {
         return;
     }
     let seed = world.resource::<PulseSeed>().0;
-    match Engine::start().and_then(|mut engine| {
+    if let Some(synth) = world.get_resource::<Synth>() {
         for index in 0..BUG_POSITIONS.len() {
-            engine.send(Command::AddModule {
+            synth.send(Command::AddModule {
                 id: ModuleId(bug_clock(index)),
                 kind: ModuleKind::RandomClock {
                     seed: bug_seed(seed, index),
                     min_interval_s: asset.clock.min_interval_seconds,
                     max_interval_s: asset.clock.max_interval_seconds,
                 },
-            })?;
+            });
             let (oscillator, envelope, vca) = voice_ids(index);
             for command in [
                 Command::AddModule {
@@ -200,19 +196,8 @@ fn initialize(world: &mut World) {
                     to: PortRef::output(),
                 },
             ] {
-                engine.send(command)?;
+                synth.send(command);
             }
-        }
-        engine.flush()?;
-        Ok(engine)
-    }) {
-        Ok(engine) => world.insert_non_send(PulseAudio {
-            engine,
-            events: Vec::with_capacity(64),
-            failed: false,
-        }),
-        Err(error) => {
-            warn!("Pulse audio clock could not start; lightning bugs remain hidden: {error}")
         }
     }
     let scene = world.resource::<AssetServer>().load(asset.model.clone());
@@ -249,11 +234,11 @@ fn initialize(world: &mut World) {
 
 // Gain is listener distance only. The transient and its timing remain in the DSP graph.
 fn update_click_gains(
-    audio: Option<NonSendMut<PulseAudio>>,
+    audio: Option<Res<Synth>>,
     asset: Option<Res<BugAsset>>,
     camera: Query<&Transform, With<Camera3d>>,
 ) {
-    let (Some(mut audio), Some(asset), Ok(camera)) = (audio, asset, camera.single()) else {
+    let (Some(audio), Some(asset), Ok(camera)) = (audio, asset, camera.single()) else {
         return;
     };
     for (index, position) in BUG_POSITIONS.into_iter().enumerate() {
@@ -263,7 +248,7 @@ fn update_click_gains(
                 .clamp(0., 1.)
                 .powi(2);
         let (_, _, vca) = voice_ids(index);
-        let _ = audio.engine.send(Command::SetParam {
+        audio.send(Command::SetParam {
             module: vca,
             param: "gain",
             value: gain,
@@ -272,43 +257,22 @@ fn update_click_gains(
 }
 
 fn poll_audio(
-    audio: Option<NonSendMut<PulseAudio>>,
+    mut ticks: MessageReader<ClockTick>,
     mut bus: ResMut<PulseBus>,
     mut pulses: MessageWriter<SamplePulse>,
 ) {
-    let now = Instant::now();
-    if let Some(mut audio) = audio {
-        let PulseAudio {
-            engine,
-            events,
-            failed,
-        } = &mut *audio;
-        if !*failed {
-            if let Err(error) = engine.flush()
-                && error != stubby_audio::EngineError::QueueFull
-            {
-                warn!("Pulse audio clock stopped: {error}");
-                *failed = true;
-            }
-            engine.drain_events(events);
-            for Event::ClockTick {
-                module,
-                sample_time,
-            } in events.drain(..)
-            {
-                if let Some(at) = engine.sample_to_instant(sample_time) {
-                    let pulse = SamplePulse {
-                        clock: module.0,
-                        sample_time,
-                        at,
-                    };
-                    bus.queue(pulse);
-                    pulses.write(pulse);
-                }
-            }
+    for tick in ticks.read() {
+        if let Some(at) = tick.at {
+            let pulse = SamplePulse {
+                clock: tick.module.0,
+                sample_time: tick.sample_time,
+                at,
+            };
+            bus.queue(pulse);
+            pulses.write(pulse);
         }
     }
-    bus.advance(now);
+    bus.advance(Instant::now());
 }
 
 fn animate(
@@ -404,6 +368,26 @@ fn capture_pulse_preview(
 mod tests {
     use super::*;
     use std::time::Duration;
+    #[test]
+    fn shared_audio_ticks_reach_followers_with_original_sample_time() {
+        let mut app = App::new();
+        app.add_message::<ClockTick>()
+            .add_message::<SamplePulse>()
+            .init_resource::<PulseBus>()
+            .add_systems(Update, poll_audio);
+        let at = Instant::now();
+        app.world_mut().write_message(ClockTick {
+            module: ModuleId(2),
+            sample_time: 48_000,
+            at: Some(at),
+        });
+        app.update();
+        let bus = app.world().resource::<PulseBus>();
+        assert_eq!(bus.latest[&2].sample_time, 48_000);
+        assert_eq!(bus.latest[&2].at, at);
+        assert!(!bus.latest.contains_key(&1));
+    }
+
     #[test]
     fn followers_share_timestamp_and_flash_has_exactly_invisible_rest() {
         let at = Instant::now();

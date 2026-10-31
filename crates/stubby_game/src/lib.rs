@@ -1,6 +1,7 @@
 #[cfg(all(feature = "dev", not(debug_assertions)))]
 compile_error!("The dev feature enables dynamic linking; omit it for release builds.");
 
+pub mod audio;
 pub mod controls;
 pub mod export;
 pub mod pulse;

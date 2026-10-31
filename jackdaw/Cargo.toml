@@ -19,6 +19,7 @@ jackdaw_runtime = { path = "/home/buddha/src/jackdaw/crates/jackdaw_runtime", fe
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
+# Bevy-free, so it builds unchanged against the editor's Bevy revision.
 
 [profile.dev]
 debug = 0

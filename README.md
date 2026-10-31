@@ -21,7 +21,7 @@ dusty horizon and slate zenith; the cubemap also supplies filtered environment l
 
 This is the initial art-study scene: a fixed terrain area roughly 216 m wide,
 free-flight inspection, haze and distant mountains. Streaming, sandstorm particles,
-mood transitions, discovery objects and audio are tracked in the opening proposal
+mood transitions, discovery objects and spatial audio are tracked in the opening proposal
 and are not implemented yet.
 
 To save a preview after shader warmup, append
@@ -30,8 +30,10 @@ To save a preview after shader warmup, append
 Open the level in the shared Jackdaw editor with `tools/jackdaw.sh open`.
 First-time setup and Play instructions are in [jackdaw/README.md](jackdaw/README.md).
 
-The audio engine is `crates/stubby_audio`. It has no Bevy dependency and runs the lightning bugs’ clocks and short click
-patches. To hear it on the default output device:
+The audio engine is `crates/stubby_audio`; it has no Bevy dependency. One shared
+audio thread drives the lightning bugs’ clocks and short click patches. The opening
+is silent until a bug is nearby. For a test patch, add `--audio-demo` or press F8.
+To hear the engine alone on the default output device:
 
 ```sh
 cargo run --release -p stubby_audio --example play

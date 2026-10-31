@@ -15,8 +15,10 @@ mod modules;
 mod protocol;
 mod random_clock;
 pub mod signal;
+mod thread;
 
 pub use clock::{PeriodicClock, PulseClock, RandomClock};
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
 pub use modules::ParamSpec;
 pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
+pub use thread::{AudioThread, Notice};

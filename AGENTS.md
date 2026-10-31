@@ -116,7 +116,12 @@ thread. Bevy talks to it only through a message boundary:
   publishes them over Firewheel's lock-free channel.
 - **Audio → game:** `Engine::drain_events` returns timestamped events (clock ticks)
   from `rtrb` rings; `Engine::sample_to_instant` maps their sample times to wall time.
-- `Engine` is **not `Send`** (Firewheel's context isn't). It lives on one thread.
+- `Engine` is **not `Send`** (Firewheel's context isn't), so the game never holds it
+  directly. `AudioThread` runs it on its own control thread and hands out a
+  `Send + Sync` handle. In Bevy that handle is the `Synth` resource
+  (`stubby_game::audio::SynthAudioPlugin`): send commands during the frame; they are
+  committed as one batch in `Last`, and clock ticks arrive as `ClockTick` messages
+  carrying the predicted instant (`at`) each beat is heard.
 
 See `docs/research/audio-engine.md` and the `add-audio-engine` change for why.
 
@@ -195,5 +200,21 @@ releases. Pin exact minor versions in `Cargo.toml`.
 - Tests: `cargo test --workspace`. DSP modules get offline render tests (render N
   samples, assert frequency/amplitude/phase) — they need no audio device.
 - Commit only when asked. Branch off `main` for feature work.
+
+### Working alongside other agents
+
+Several agents work in this repo at once. To avoid stepping on each other:
+
+- **Use your own git worktree** off `main` (`git worktree add ../stubby-music-<topic>
+  -b <topic> origin/main`). Never edit, switch branches in, or pull into another
+  session's checkout. The main checkout at `~/src/stubby-music` is usually someone's
+  live workspace, and often has the Jackdaw editor open on it.
+- **Claim tasks in OpenSpec:** add `(claimed: <agent>)` to the task's line in
+  `tasks.md`, in the PR with your first commit for it. Check claims before starting.
+- **Shared files** (`Cargo.lock`, `crates/*/src/lib.rs`, `jackdaw/Cargo.toml`) conflict
+  most often. Keep edits to them small, and update from `main` before opening a PR.
+- **Current owners (2026-10-31):** Blender assets (desert-opening 1.3, 1.4) → Claude.
+  Lightning-bug pulse → the `add-lightning-bug-pulse` agent. Rack and spatial audio
+  (`add-rack-and-spatial-audio`) → unclaimed, ready to start.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
