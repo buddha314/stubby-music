@@ -9,7 +9,7 @@ The opening has to establish tone (silence, storm, isolation) and teach the core
 **Goals:**
 - Seeded, streamed mudflat that looks hand-made at ground level.
 - A storm that hides and reveals, so the player navigates by silhouette and light.
-- Mood progression infrastructure that later content can push on.
+- The day/night cycle and the light-quality field that later content (plants) pushes on.
 - A repeatable Blender → Bevy pipeline.
 
 **Non-Goals:**
@@ -35,10 +35,20 @@ volumetric fog.** Particles near the camera sell speed; fog sells distance. Both
 `StormIntensity`, a seeded gust curve. *Fallback* if `bevy_hanabi` lags Bevy 0.20:
 CPU instanced billboards in a camera-local volume.
 
-**Mood: one `Resource<Mood>`, one place it is read.** An atmosphere system maps
-`Mood` to colour grading, fog, light colour/intensity, and storm scale through
-authored curves, eased with critical damping. Discoveries add to a target, never set
-the value directly.
+**Lighting: two axes, one place they are read.** *Time of day* is a global
+`Resource<TimeOfDay>` in [0, 1) advancing around a cycle. *Light quality* is local: a
+sparse field of 10 m cubic cells, each holding a value in [0, 1] (0 = bleak, 1 =
+bloomed), defaulting to 0. Game systems set each cell's target from local conditions,
+mostly the density of plants and animals the player's music has grown; the cell eases toward it, never jumping. An atmosphere system
+samples the field at the camera (trilinear across the neighbouring cells, then eased
+with critical damping), and reads `assets/lighting/lighting_keys.json`: interpolate
+between the four time keys of each mood, then blend the two moods by the sampled light
+quality. The result sets sun colour, illuminance and elevation, ambient, fog,
+exposure, sky and emissive gain. Per-cell values also feed things that vary across
+the screen rather than with the camera (ground tint, flora emission), so a bloomed
+grove reads from a bleak plain. The keys file is art-owned and hot-reloaded; the
+mapping code is game-owned. Storm intensity scales down with light quality.
+(Replaces the earlier single global `Mood`, 2026-10-31.)
 
 **Clock light timing.** A point light plus emissive mesh. Brightness is an envelope
 triggered at the display time predicted from the audio `ClockTick.sample_time` (see
@@ -65,7 +75,7 @@ script can regenerate.
 - [bevy_hanabi version lag] → CPU fallback above; keep the sand behind one plugin.
 - [Players get lost in zero visibility] → gust troughs are guaranteed every 20–40 s,
   and the square is placed within 120 m.
-- [Mood curves need lots of tuning] → expose them as an asset file, hot-reloaded.
+- [Lighting keys need lots of tuning] → they are an asset file (`lighting_keys.json`), hot-reloaded.
 
 ## Open Questions
 
@@ -81,8 +91,8 @@ engine. Use a first-person free camera for inspecting the floor. A seed generate
 clipped Voronoi mud plates with inset seams, curled rims, a secondary procedural
 crack texture, distant mountain silhouettes, and a floating-point HDR desert
 cubemap. The reference guides plate scale and dusty amber/slate colours; it is
-not used as a texture. The warm sunset art-study palette precedes the full mood
-mapping. Streaming, storm particles, mood progression and discoveries remain
+not used as a texture. The warm sunset art-study palette precedes the lighting keys
+mapping. Streaming, storm particles, light quality and discoveries remain
 unchecked until implemented. Geometry is generated on startup in this increment.
 
 ## Jackdaw integration (2026-10-31)
