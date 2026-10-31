@@ -14,17 +14,23 @@ preview and export). It writes the `.blend` to
 | --- | --- |
 | ![clock](clock_lamp/preview.png) | ![clock from 12 m](clock_lamp/preview_far.png) |
 
-The opening's second discovery, and the clock that manifests as a pulsating light.
-Instead of a waveform crown it carries a caged glass beacon (1.685 m tall overall),
-a silhouette nothing else has and a large emissive volume that can pulse visibly
-through haze. The faceplate follows the VCO family: a narrow tick-train glyph
-(deliberately unlike the square's 50% wave) on the front and both sides, a BPM knob,
-and GATE and PHASE outputs. The engine's Clock has no inputs.
+The opening's second discovery, and the clock that manifests as a pulsating light. It
+is a tempo module in the spirit of performance clock modules: a **BPM readout** and a
+**flashing clock light**.
 
-The `Lamp` node carries the flash the game drives from the clock's sample-stamped
-ticks, using the same envelope fields as the lightning bug (`attack_seconds`,
-`flash_seconds`, `rest_strength`, `peak_strength`, `light_lumens`,
-`light_range_metres`, `pulse_driver`). The previews show it at the peak of a flash.
+- **Display:** three seven-segment digits in a dark window, with faint unlit "8"s
+  behind them. Each segment is a node, `Display_d<digit>_<a-g>` (extras `digit`,
+  `segment`), so the game shows any tempo by toggling segments. `asset.json` carries
+  the digit-to-segment table. The preview shows 120.
+- **Clock light:** a large domed lens, the `Lamp` node. One flash material
+  (`Clock_Lamp`) lights the lens, the tick-train crown along the top, and the glyphs on
+  both sides, so the beat reads from a distance and from any side, and the game
+  modulates a single material per tick. The `Lamp` extras use the lightning bug's
+  envelope fields (`attack_seconds`, `flash_seconds`, `rest_strength`,
+  `peak_strength`, `light_lumens`, `light_range_metres`, `pulse_driver`). The previews
+  show the flash at its peak.
+- **Controls:** a TEMPO encoder (`Knob_bpm`), and GATE and PHASE outputs, each with an
+  LED (`Light_gate`, `Light_phase`). The engine's Clock has no inputs.
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_clock_lamp.py
@@ -68,10 +74,11 @@ Named empties carry glTF extras the game reads (`<Prefix>` is `SquareVco`, `SawV
 | `Port_voct`, `Port_out` | `port`, `direction` | Cable sockets; local +Z points out of the panel |
 | `Knob_freq` | `param`, `param_min`, `param_max`, `taper`, `rotation_degrees` | Rotate about local Z to show the parameter |
 | `Light_out` | `light`, `rest_strength`, `peak_strength` | Drive the LED's emissive strength from the rack's light value |
-| `Lamp` (Clock only) | `light`, `pulse_driver`, flash envelope | The beacon; flash its emissive strength and a point light on each tick |
+| `Lamp` (Clock only) | `light`, `pulse_driver`, flash envelope | The clock light; flash `Clock_Lamp` and a point light on each tick |
+| `Display`, `Display_d<n>_<seg>` (Clock only) | `display`, `digit`, `segment` | Seven-segment BPM readout |
 
 Origin at the base centre; the faceplate faces glTF +Z. Tilting a module or sinking it
 into the mud happens at placement (`placement` in `asset.json`), so one asset serves
 every pose. `crates/stubby_game/tests/module_assets.rs` checks these nodes in every
-exported module. The Clock's equivalents are `Port_gate`, `Port_phase`, `Knob_bpm` and
-`Light_gate`.
+exported module. The Clock's equivalents are `Port_gate`, `Port_phase`, `Knob_bpm`,
+`Light_gate` and `Light_phase`.

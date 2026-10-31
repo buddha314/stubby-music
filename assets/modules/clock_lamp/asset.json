@@ -5,10 +5,10 @@
   "scale": "eurorack_3u_8hp_x10",
   "size_metres": {
     "width": 0.4064,
-    "height": 1.685,
+    "height": 1.375,
     "depth": 0.32
   },
-  "silhouette": "caged_beacon",
+  "silhouette": "tick_train_crown",
   "ports": [
     {
       "node": "Port_gate",
@@ -28,7 +28,8 @@
       "min": 1.0,
       "max": 999.0,
       "taper": "linear",
-      "rotation_degrees": 300.0
+      "rotation_degrees": 300.0,
+      "control": "encoder"
     }
   ],
   "lights": [
@@ -37,16 +38,42 @@
       "light": "gate",
       "rest_strength": 0.0,
       "peak_strength": 8.0
+    },
+    {
+      "node": "Light_phase",
+      "light": "phase",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
     }
   ],
+  "display": {
+    "node": "Display",
+    "shows": "bpm",
+    "digits": 3,
+    "segments": "abcdefg",
+    "segment_node": "Display_d{digit}_{segment}",
+    "digit_segments": {
+      "0": "abcdef",
+      "1": "bc",
+      "2": "abdeg",
+      "3": "abcdg",
+      "4": "bcfg",
+      "5": "acdfg",
+      "6": "acdefg",
+      "7": "abc",
+      "8": "abcdefg",
+      "9": "abcdfg"
+    }
+  },
   "lamp": {
     "node": "Lamp",
     "light": "gate",
+    "material": "Clock_Lamp",
     "pulse_driver": "audio_sample_timestamp",
     "colour_linear": [
       1.0,
-      0.72,
-      0.42
+      0.62,
+      0.25
     ],
     "attack_seconds": 0.015,
     "flash_seconds": 0.25,
