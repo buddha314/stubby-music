@@ -212,9 +212,18 @@ Several agents work in this repo at once. To avoid stepping on each other:
   `tasks.md`, in the PR with your first commit for it. Check claims before starting.
 - **Shared files** (`Cargo.lock`, `crates/*/src/lib.rs`, `jackdaw/Cargo.toml`) conflict
   most often. Keep edits to them small, and update from `main` before opening a PR.
-- **Current owners (2026-10-31):** Blender assets (desert-opening 1.3, 1.4) → Claude.
-  Lightning-bug pulse → the `add-lightning-bug-pulse` agent. Rack and spatial audio
-  (`add-rack-and-spatial-audio`) → unclaimed, ready to start.
+- **Never share a `target/` directory between checkouts that are in use.** Cargo names a
+  workspace crate's artifacts the same in every checkout, so a shared
+  `CARGO_TARGET_DIR` lets one agent's build replace another's test binaries. The
+  result is missing or flaky tests that look like real failures (2026-10-31). Each
+  worktree builds in its own `target/`, even though the first build is slower.
+- **Engine module IDs are picked by hand, so keep to your range:** bug clocks 1–3,
+  bug voices 100–199, module showcase 8000–8999, audio demo 9000–9999, collection cues
+  10 000 and up. A duplicate `ModuleId` makes the engine reject the module.
+- **Current owners (2026-10-31, after reconciling):** nothing is claimed. Done: the
+  Blender module assets (desert-opening 1.3, 1.4) and the lightning-bug pulse. Ready to
+  start: `add-rack-and-spatial-audio` (begin with task 0.1, the host decision) and
+  desert-opening placement (2.5). Update this line when you claim work.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
 
