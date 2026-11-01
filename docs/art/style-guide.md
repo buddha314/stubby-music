@@ -199,7 +199,8 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 ## Budgets
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
-364, the mudpit burbler 14.9k (the rig concept 14.7k). Nested halo shells are the
+364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
+9.9k and the volume module 5.1k. Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -222,6 +223,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — First modules in the newer language: the burbler clock and volume
+  HUD modules (wood case, iron hardware, titanium faceplate, jellyfish-bell lamp, soft
+  lights), and a mock of the configuration HUD (`hud_mock.png`). Unlit display segments
+  are dark and matte so they never read as lit.
 - **2026-10-31** — The burbler is an organically round pool with a 1 m banked stream
   leaving it, framed as a tall preview looking up the stream. Bubbles carry baked
   one-beat clips. Stream water goes from muddy to clear as processes are identified.

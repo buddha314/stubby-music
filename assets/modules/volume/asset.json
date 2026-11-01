@@ -1,0 +1,57 @@
+{
+  "id": "volume",
+  "model": "models/volume.glb#Scene0",
+  "module_kind": "Vca",
+  "scale": "eurorack_3u_4hp_x10",
+  "size_metres": {
+    "width": 0.2032,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  },
+  "silhouette": "rising_wedge",
+  "ports": [
+    {
+      "node": "Port_in",
+      "port": "in",
+      "direction": "in"
+    },
+    {
+      "node": "Port_out",
+      "port": "out",
+      "direction": "out"
+    }
+  ],
+  "internal_ports": [
+    {
+      "port": "cv",
+      "note": "driven by the HUD voice's hidden envelope; no jack"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_gain",
+      "param": "gain",
+      "min": 0.0,
+      "max": 1.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    }
+  ],
+  "lights": [
+    {
+      "node": "Light_level",
+      "light": "level",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    }
+  ],
+  "hud": {
+    "place": "volume",
+    "fixed": false
+  }
+}

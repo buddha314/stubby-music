@@ -1,0 +1,90 @@
+{
+  "id": "burbler_clock",
+  "model": "models/burbler_clock.glb#Scene0",
+  "module_kind": "Clock",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  },
+  "silhouette": "bubble_crown",
+  "ports": [
+    {
+      "node": "Port_gate",
+      "port": "gate",
+      "direction": "out"
+    },
+    {
+      "node": "Port_phase",
+      "port": "phase",
+      "direction": "out"
+    }
+  ],
+  "params": [],
+  "tempo": {
+    "param": "bpm",
+    "source": "burbler",
+    "editable": false,
+    "note": "the burbler instance sets bpm; there is no knob"
+  },
+  "lights": [
+    {
+      "node": "Light_gate",
+      "light": "gate",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    },
+    {
+      "node": "Light_phase",
+      "light": "phase",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    }
+  ],
+  "display": {
+    "node": "Display",
+    "shows": "bpm",
+    "digits": 3,
+    "segments": "abcdefg",
+    "segment_node": "Display_d{digit}_{segment}",
+    "digit_segments": {
+      "0": "abcdef",
+      "1": "bc",
+      "2": "abdeg",
+      "3": "abcdg",
+      "4": "bcfg",
+      "5": "acdfg",
+      "6": "acdefg",
+      "7": "abc",
+      "8": "abcdefg",
+      "9": "abcdfg"
+    }
+  },
+  "lamp": {
+    "node": "Lamp",
+    "light": "gate",
+    "material": "BurblerClock_Lamp",
+    "pulse_driver": "audio_sample_timestamp",
+    "colour_linear": [
+      1.0,
+      0.6172065624196511,
+      0.25015828472995344
+    ],
+    "attack_seconds": 0.015,
+    "flash_seconds": 0.25,
+    "rest_strength": 0.15,
+    "peak_strength": 30.0,
+    "light_lumens": 6000.0,
+    "light_range_metres": 40.0
+  },
+  "hud": {
+    "place": "clock",
+    "fixed": true
+  }
+}
