@@ -239,7 +239,10 @@ testable by asserting identical output for identical seeds.
 | RT messaging | `rtrb`, `triple_buffer` | 0.4.1 / 9.0.0 |
 | RT safety | `assert_no_alloc` (debug) | 1.1.2 |
 | Noise | `noise` | 0.9.0 |
-| Particles (sand) | `bevy_hanabi` | 0.19.0 |
+| Particles (sand) | `bevy_hanabi` | 0.19.0 (needs Bevy 0.19; no 0.20 release yet) |
+| Physics | `avian3d` | 0.8.0 |
+| Player controller | `bevy-tnua`, `bevy-tnua-avian3d` | 0.33.1 / 0.13.1 |
+| Input | `bevy_enhanced_input` | 0.27.2 |
 
 Check a crate's Bevy compatibility before adding it, since Bevy plugins lag Bevy
 releases. Pin exact minor versions in `Cargo.toml`.
