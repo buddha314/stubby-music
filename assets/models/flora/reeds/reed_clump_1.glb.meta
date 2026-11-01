@@ -1,0 +1,42 @@
+(
+    meta_format_version: "1.0",
+    asset: Load(
+        loader: "jackdaw_scene_types::model_import::ModelLoader",
+        settings: (
+            gltf: (
+                load_meshes: ("MAIN_WORLD | RENDER_WORLD"),
+                load_materials: ("RENDER_WORLD"),
+                load_cameras: true,
+                load_lights: true,
+                load_animations: true,
+                include_source: false,
+                default_sampler: None,
+                override_sampler: false,
+                validate: true,
+                convert_coordinates: None,
+                skinned_mesh_bounds_policy: None,
+                mesh_compression: None,
+            ),
+            lod: Some((
+                version: 1,
+                source: NodeSuffixes,
+                size: 1.880801,
+                fade: Snap,
+                levels: [
+                    (
+                        show: Nodes([
+                            "reed_clump_1_LOD0",
+                        ]),
+                        screen_height: 0.0757,
+                    ),
+                    (
+                        show: Nodes([
+                            "reed_clump_1_LOD1",
+                        ]),
+                        screen_height: 0.01,
+                    ),
+                ],
+            )),
+        ),
+    ),
+)

@@ -1,0 +1,48 @@
+(
+    meta_format_version: "1.0",
+    asset: Load(
+        loader: "jackdaw_scene_types::model_import::ModelLoader",
+        settings: (
+            gltf: (
+                load_meshes: ("MAIN_WORLD | RENDER_WORLD"),
+                load_materials: ("RENDER_WORLD"),
+                load_cameras: true,
+                load_lights: true,
+                load_animations: true,
+                include_source: false,
+                default_sampler: None,
+                override_sampler: false,
+                validate: true,
+                convert_coordinates: None,
+                skinned_mesh_bounds_policy: None,
+                mesh_compression: None,
+            ),
+            lod: Some((
+                version: 1,
+                source: Authored,
+                size: 6.325,
+                fade: Snap,
+                levels: [
+                    (
+                        show: Model,
+                        screen_height: 0.2545,
+                    ),
+                    (
+                        show: Generated(
+                            ratio: 0.5,
+                            error: 0.01,
+                        ),
+                        screen_height: 0.0954,
+                    ),
+                    (
+                        show: Generated(
+                            ratio: 0.25,
+                            error: 0.02,
+                        ),
+                        screen_height: 0.01,
+                    ),
+                ],
+            )),
+        ),
+    ),
+)
