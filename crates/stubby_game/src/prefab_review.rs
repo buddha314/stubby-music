@@ -15,7 +15,7 @@ struct Review {
     next: f32,
     hovers: usize,
     uses: usize,
-    captured: [bool; 5],
+    captured: [bool; 6],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
@@ -57,7 +57,7 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 5],
+            captured: [false; 6],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
@@ -66,7 +66,8 @@ impl Plugin for PrefabReviewPlugin {
             rack_loaded: false,
             paused: 0.,
             rack_step: 0,
-            rack_wait: 0.,
+            // Let the rack's models load before the first click and screenshot.
+            rack_wait: 0.5,
             release: false,
             press_at: Vec2::ZERO,
             rack_configured: false,
@@ -281,6 +282,12 @@ fn observe(
         Some((0, "initial.png"))
     } else if review.stage >= 5 && !review.captured[1] {
         Some((1, "burbler-hover.png"))
+    } else if review.rack_loaded
+        && review.rack_step == 0
+        && review.rack_wait < 0.1
+        && !review.captured[5]
+    {
+        Some((5, "rack-open.png"))
     } else if review.rack_step >= RACK_STEPS && !review.captured[4] {
         Some((4, "rack-patched.png"))
     } else if review.stage >= 8 && !review.captured[2] {

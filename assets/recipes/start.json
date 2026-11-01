@@ -1,0 +1,10 @@
+{
+  "$schema": "schema/start.schema.json",
+  "format": 1,
+  "inventory": [
+    {
+      "item": "patch_cable",
+      "quantity": 10
+    }
+  ]
+}

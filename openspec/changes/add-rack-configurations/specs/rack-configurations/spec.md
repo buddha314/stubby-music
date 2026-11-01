@@ -55,3 +55,23 @@ jacks' halos SHALL rest, and a halo SHALL rest once its jack is patched.
 #### Scenario: Patched
 - **WHEN** a cable joins two jacks
 - **THEN** those jacks' halos rest
+
+### Requirement: The rack screen shows the relevant inventory
+As in Satisfactory, the rack screen SHALL show the player's inventory: a "Relevant" strip
+of the items the rack's open places accept, each with the amount held and a number key
+(1 to 0, in order), followed by the rest of the inventory. Clicking a relevant item, or
+pressing its number, SHALL insert it; an item the player holds none of SHALL show dimmed
+with where it comes from.
+
+#### Scenario: Inserting the VCO
+- **WHEN** the burbler's rack is open with its VCO slot empty and the player holds 2 square waves
+- **THEN** the Relevant strip shows "[1] Square wave x 2", and pressing 1 mounts a Square VCO and leaves 1 square wave
+
+### Requirement: Spare cables on the comb are free
+The cables a machine's configuration hangs on its comb SHALL come with the rack and SHALL
+NOT use the player's patch cables. Patch cables in the inventory are for patches of the
+player's own.
+
+#### Scenario: Patching the burbler
+- **WHEN** the player patches the burbler's two comb cables while holding 10 patch cables
+- **THEN** the player still holds 10 patch cables

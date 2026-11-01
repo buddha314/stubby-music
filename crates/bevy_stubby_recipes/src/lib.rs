@@ -44,6 +44,19 @@ impl Plugin for RecipesPlugin {
         if let Some(catalog) = catalog {
             app.insert_resource(RecipeCatalog(catalog));
         }
+        // A new player starts with the shipped starter inventory (`start.json`).
+        if self.catalog.is_none() && !app.world().contains_resource::<PlayerInventory>() {
+            let mut player = PlayerInventory::default();
+            if let Ok(rules) = stubby_recipes::shipped_rules() {
+                if let Err(error) = player.items.grant(&rules.start) {
+                    error!("Starter inventory: {error}");
+                }
+                for stack in &rules.start {
+                    player.book.discover(&stack.item);
+                }
+            }
+            app.insert_resource(player);
+        }
         app.init_resource::<PlayerInventory>()
             .add_message::<HarvestRequest>()
             .add_message::<ResourceCollected>()

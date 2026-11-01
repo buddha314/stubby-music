@@ -393,7 +393,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. Patch cables
   are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). Every rack has a small
   **cable comb** holding the machine's spare cables (the burbler: two), and each jack's
-  halo (patch pod) **pulses** in its cable's colour while it waits for a cable. **Sound
+  halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's
+  cables are free; the player starts with 10 patch cables (`start.json`) for their own
+  patches, and later makes them from discarded bird nests. The rack screen shows a
+  Satisfactory-style **Relevant** inventory strip (keys 1-0 insert). **Sound
   begins only when every cable is patched**, and the screen guides it: ghost cables show
   the patches still to make, and the hint line names each step. The stream's notes start
   with the sound.

@@ -19,7 +19,7 @@ The screen, slots, mounting and patching are the common rack (`add-rack-configur
 
 - [ ] 2.1 `mudpit_burbler` mine definition with output `clock`; seeded per-instance tempo
 - [ ] 2.2 Burbler world placement (relative to the opening's discoveries)
-- [x] 2.3 (claimed: codex) E within 3 m of the burbler's `Interact` node (the pickups' reach; `configure.interact` in the profile) opens the configuration screen, with the prompt "E | Configure burbler" while in range; the nearer target wins against pickups; Escape closes; cursor and movement handling
+- [x] 2.3 (claimed: codex) E within 3 m of the burbler's `Interact` node (the pickups' reach; `configure.interact` in the profile) opens the configuration screen, with the prompt "[E] Configure burbler" (the shared interaction prompt) while in range; the nearer target wins against pickups; Escape closes; cursor and movement handling
   - Verified with one focused interaction regression and a 20-second watchdog review: nested Interact ground reach, nearer pickup priority, rack opening, actual frame/clock/slot assets loaded, Escape closing. The fixed clock is a view of the existing engine node, not another clock.
 - [x] 2.4 (claimed: claude) Configuration HUD: three-place rack, VCO slot from inventory, volume knob; follow `docs/art/hud_mock.png`
 - [x] 2.4a (claimed: claude; the volume is built in, and its engine parts live in `rack.rs`) Register `burbler_clock` and `volume` in `ModuleCatalog` (`synth_modules.rs`); `Knob_bpm` sets the clock (default: the burbler's seeded tempo) and the display shows it; the volume's `trig` fires its built-in envelope into the VCA; drive `Light_level` from the VCA's output level
