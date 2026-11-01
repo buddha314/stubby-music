@@ -89,6 +89,10 @@ model in the Project window and open its import settings:
   placement if it must.
 - Models ship in their starting pose, set by node scale so they look right before any
   game code runs: oaks dormant, reed clumps standing, props bleak, streams muddy.
+- **Things that hover have a ground pivot.** The lightning bug prefab's root sits on
+  the ground, so dropping it snaps to the floor, and the bug itself is the child
+  `Lightning bug hover`, 1.8 m up, carrying the model and `ResourceNode`. Select the
+  child to change one bug's height.
 - Scrub oaks carry `MineNode`. Give every placed oak its own `instance` (the prefab's
   `scrub_oak-<k>` is only a default), since the harvest ledger keys on it.
 - Reed clumps and the burbler place as models for now; their game components arrive

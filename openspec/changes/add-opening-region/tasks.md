@@ -20,6 +20,7 @@
       - prefabs without `LodGroup` (the prefab test fails on one)
     - **Identify by model stem, not by node path:** levels now sit under `<id>_LOD0`, so `Limb_*`, `Foliage_*`, `Standing`, `Stubble` and so on are one level deeper than before.
     - **Reed yield conflict:** this design says "1 reed per clump", but `add-reeds` suggests 6 per clump (one stream segment's worth), because the user asked for reeds to be "very easy to get, like leaves in Satisfactory". Use 6, or ask the user, before writing the catalog entry.
+    - **The lightning bug prefab now has a ground pivot (2026-11-01):** the prefab root (what the designer drags, and what Jackdaw snaps to the floor) sits at ground level, and the bug is its child `Lightning bug hover`, 1.8 m up. `GltfSource`, `ResourceNode` and `PulseFollower` are on that **child**. Bind the flash, light, click voice, hearing range and E reach to the entity carrying `ResourceNode` (the child), using its world `GlobalTransform`. Put the ground shadow at the terrain under it. Designers set a bug's hover height on the child. The model's origin stays at the body centre, because the flash scales around it.
     - **The standalone game and LOD:** see `add-desert-opening` 1.5. Jackdaw `.glb.meta` files now sit beside 17 models, and they name Jackdaw's `ModelLoader`.
 - [ ] 2.1 Region generation from the seed: anchors, bug scatter near the grove, reed beds on wet ground, prop scatter; determinism test
 - [ ] 2.2 Placement constraint tests across 1,000 seeds (silent spawn, oak distance, affordable first stream)

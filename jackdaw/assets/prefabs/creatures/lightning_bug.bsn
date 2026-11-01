@@ -3,6 +3,14 @@ jackdaw::prefab::components::Prefab
 jackdaw::prefab::components::PrefabEntityId(0)
 bevy_transform::components::transform::Transform
 bevy_camera::visibility::Visibility::Visible
-jackdaw_scene_types::types::GltfSource { path: "models/creatures/lightning_bug.glb", scene_index: 0 }
-stubby_jackdaw::desert::resources::ResourceNode { resource: "lightning_bug", instance: "lightning_bug-placed-0", collected: false }
-stubby_jackdaw::desert::pulse::PulseFollower { clock: 1 }
+bevy_ecs::hierarchy::Children [
+    #"Lightning bug hover"
+    jackdaw::prefab::components::PrefabEntityId(1)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 { x: 0.0, y: 1.8, z: 0.0 },
+    }
+    bevy_camera::visibility::Visibility::Visible
+    jackdaw_scene_types::types::GltfSource { path: "models/creatures/lightning_bug.glb", scene_index: 0 }
+    stubby_jackdaw::desert::resources::ResourceNode { resource: "lightning_bug", instance: "lightning_bug-placed-0", collected: false }
+    stubby_jackdaw::desert::pulse::PulseFollower { clock: 1 }
+]
