@@ -1,0 +1,14 @@
+{
+  "id": "slot_outline_4hp",
+  "model": "models/hud/slot_outline_4hp.glb#Scene0",
+  "kind": "slot_outline",
+  "hp": 4,
+  "width_m": 0.2032,
+  "label_node": "Label",
+  "color": "#ffd39a",
+  "materials": {
+    "SlotOutline_GhostLine": "outline strokes",
+    "SlotOutline_GhostFill": "faint fill"
+  },
+  "state": "shown while the slot is empty; hide it when a component is mounted"
+}

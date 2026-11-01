@@ -233,6 +233,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Configuration racks are built from shared parts: a rack frame that
+  stretches to any width, slot outlines in the build-ghost amber for 4–16 HP, and a
+  label per component kind (CLOCK, VCO, VCF, VCA) with a glyph. Empty slots show what
+  goes there; the mocks now render the burbler's construction and built states.
 - **2026-10-31** — Patch cable: a general plug (titanium sleeve, knurled graphene grip,
   coloured collar) and a fully elastic VCV Rack-style cable the game draws. The burbler
   clock gains a BPM knob and the volume module a TRIG jack; the HUD mock shows the

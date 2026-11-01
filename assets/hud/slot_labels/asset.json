@@ -1,0 +1,25 @@
+{
+  "id": "slot_labels",
+  "model": "models/hud/slot_labels.glb#Scene0",
+  "kind": "slot_labels",
+  "labels": {
+    "clock": {
+      "node": "Label_clock",
+      "word": "CLOCK"
+    },
+    "vco": {
+      "node": "Label_vco",
+      "word": "VCO"
+    },
+    "vcf": {
+      "node": "Label_vcf",
+      "word": "VCF"
+    },
+    "vca": {
+      "node": "Label_vca",
+      "word": "VCA"
+    }
+  },
+  "use": "clone Label_<kind> onto a slot outline's Label node",
+  "add_kind": "add an entry to KINDS in tools/blender/create_hud_rack.py and re-export"
+}

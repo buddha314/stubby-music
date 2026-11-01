@@ -14,13 +14,28 @@ SHALL NOT be collectable as a finite pickup.
 - **THEN** no items are granted and the burbler remains
 
 ### Requirement: Configuration screen
-Pressing E (interact) while targeting a burbler SHALL open its configuration screen,
-in the manner of a Satisfactory machine. Escape SHALL close it. While it is open the
-cursor SHALL be free and player movement SHALL stop.
+Pressing E (interact) while within range of a burbler SHALL open its configuration
+screen, a separate HUD over the game view in the manner of a Satisfactory machine's
+screen. The range SHALL be the same 3 m reach as E pickups, measured to the burbler's
+`Interact` node, and a prompt SHALL show while the player is in range. Escape SHALL
+close the screen. While it is open the cursor SHALL be free and player movement SHALL
+stop.
 
 #### Scenario: Open and close
-- **WHEN** the player targets a burbler and presses E
+- **WHEN** the player is within 3 m of a burbler's `Interact` node and presses E
 - **THEN** its configuration screen opens with the cursor released
+
+#### Scenario: Out of range
+- **WHEN** the player is farther than 3 m from every burbler and presses E
+- **THEN** no configuration screen opens
+
+#### Scenario: Prompt
+- **WHEN** the player walks within range of a burbler
+- **THEN** the prompt "E | Configure burbler" shows, and hides again out of range
+
+#### Scenario: Burbler and pickup both in reach
+- **WHEN** a lightning bug and a burbler are both within reach
+- **THEN** E acts on the nearer of the two
 - **WHEN** the player presses Escape
 - **THEN** the screen closes and mouse look resumes
 

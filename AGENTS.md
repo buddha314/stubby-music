@@ -331,6 +331,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   with a built-in envelope). The player **patches the voice with cables**: clock GATE →
   volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. Patch cables
   are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`).
+- **Every machine gets a rack, and all racks share one implementation**: a common
+  `Rack` plus a per-machine `RackMachine` trait. Each machine's configurator is data, a
+  configuration recipe of slots by component kind and width; empty slots show labelled
+  outlines of what goes there (`add-rack-configurations`, `assets/hud/`).
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
   water is **sheet music**: a wavy staff runs along it and each beat's note rides it
