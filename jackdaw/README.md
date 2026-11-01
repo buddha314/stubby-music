@@ -168,8 +168,16 @@ python3 tools/jackdaw_timed_test.py --prefabs --seconds 20 --refresh 60 --name p
 
 The opt-in review collects a flashing bug and reeds, emits hover/use events, plays
 sample-timed burble clips, grows flora, replenishes reeds, and moves out to the
-model's far level and back. Evidence is written to `/tmp/stubby-prefab-review/`:
-`events.jsonl` must contain `complete` with `success: true`. Screenshots show the
+model's far level and back. At the burbler it opens the rack and plays it through with real
+pointer clicks (bevy_picking input, so UI and mesh picking are exercised): inserts the
+Square VCO, patches GATE to TRIG and OUT to IN, and checks `MachineConfigured`. Each
+rack step is a `rack_step` event; `rack-patched.png` shows the finished patch.
+
+**This is a development review, not a build or test step.** It runs only when the game
+gets `--prefab-review=…`, which only `tools/jackdaw_timed_test.py --prefabs` passes;
+`cargo test`, normal builds and normal Play never run it. Run it by hand when changing
+prefab binding, interaction or the rack. Evidence is written to `/tmp/stubby-prefab-review/`:
+`events.jsonl` must contain `complete` with `success: true` (it now also requires `rack_configured`). Screenshots show the
 starting pose and the settled LOD return. This fixture is not the production region
 layout. The watchdog ends the editor and game after at most 20 seconds.
 

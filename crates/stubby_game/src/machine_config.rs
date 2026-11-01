@@ -295,6 +295,9 @@ fn setup(mut commands: Commands) {
             Panel,
             Visibility::Hidden,
             GlobalZIndex(20),
+            // The backdrop must not catch the pointer: the jacks drawn by the rack camera
+            // sit under it. Only the buttons in `RackActions` take clicks.
+            Pickable::IGNORE,
             BackgroundColor(Color::srgba(0., 0., 0., 0.55)),
             Node {
                 position_type: PositionType::Absolute,
@@ -308,14 +311,22 @@ fn setup(mut commands: Commands) {
             },
         ))
         .with_children(|panel| {
-            panel.spawn((Header, Text::new(""), text(26., Color::srgb(1., 0.7, 0.31))));
+            panel.spawn((
+                Header,
+                Text::new(""),
+                text(26., Color::srgb(1., 0.7, 0.31)),
+                Pickable::IGNORE,
+            ));
             panel
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    row_gap: px(10),
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Center,
+                        row_gap: px(10),
+                        ..default()
+                    },
+                    Pickable::IGNORE,
+                ))
                 .with_children(|foot| {
                     foot.spawn((
                         RackHint,
@@ -343,9 +354,10 @@ fn setup(mut commands: Commands) {
     });
 }
 
-/// The rack's area on screen: the middle of the window, between header and hints.
-fn rack_viewport(window: &Window) -> Viewport {
-    let (w, h) = (window.physical_width(), window.physical_height());
+/// The rack's area on screen: the middle of what the game draws into (the window when
+/// run alone, an image when Jackdaw's Play hosts it), between header and hints.
+fn rack_viewport(target: UVec2) -> Viewport {
+    let (w, h) = (target.x, target.y);
     let height = (h as f32 * 0.7) as u32;
     let width = (height as f32 * 1.25).min(w as f32 * 0.9) as u32;
     Viewport {
@@ -387,8 +399,10 @@ fn sync_view(
     }
     if let Ok(mut camera) = cameras.get_mut(view.camera) {
         camera.is_active = machine.is_some();
-        if let Ok(window) = windows.single() {
-            camera.viewport = Some(rack_viewport(window));
+        if let Some(size) = camera.physical_target_size().or_else(|| {
+            windows.single().ok().map(|w| UVec2::new(w.physical_width(), w.physical_height()))
+        }) {
+            camera.viewport = Some(rack_viewport(size));
         }
     }
     for mut prompt in &mut prompts {

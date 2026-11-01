@@ -119,6 +119,8 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     commands
         .spawn((
             Name::new("Sunflower reticle"),
+            // Decorative and full-screen: it must never catch the pointer.
+            Pickable::IGNORE,
             Node {
                 position_type: PositionType::Absolute,
                 width: percent(100),
@@ -130,6 +132,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                Pickable::IGNORE,
                 ImageNode::new(images.add(reticle)),
                 Node {
                     width: px(28),
@@ -142,6 +145,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         .spawn((
             CollectionPopup,
             Visibility::Hidden,
+            Pickable::IGNORE,
             Node {
                 position_type: PositionType::Absolute,
                 top: percent(55),

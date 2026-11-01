@@ -259,7 +259,7 @@ fn open_rack(screens: &ScreenMode) -> Option<Entity> {
 // ------------------------------------------------------------------ mounting
 
 #[derive(Component)]
-struct MountButton {
+pub(crate) struct MountButton {
     machine: Entity,
     place: String,
     item: String,
