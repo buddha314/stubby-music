@@ -6,5 +6,7 @@ Future exported props belong in `models/` as `.glb` files.
 
 Creature profiles and previews live under `creatures/`; exported meshes live in
 `models/`. The first is [the lightning bug](creatures/lightning_bug/README.md),
-which stays invisible between sample-clock-driven white flashes. Editable Blender
+which stays invisible between sample-clock-driven white flashes. Flora lives under
+`flora/`: [the scrub oak](flora/README.md), dormant until clean water brings it to
+bloom. Editable Blender
 sources live in `assets-src/blender/` and builders in `tools/blender/`.
