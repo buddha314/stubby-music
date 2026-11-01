@@ -59,11 +59,11 @@ placed entities is the first game task (2.5).
 6. The player keeps extending: more streams, more oaks, new sources further out.
 
 ## Open questions
-- **Where the first clean water comes from.** Step 4 needs clean water, and cleaning
-  processes are not designed yet. Without one the loop stalls at muddy water. Options:
-  (a) reeds clean the water, so a stream running along reed segments clears with
-  distance, like a reed-bed filter; (b) the first oak wakes on muddy water too, slowly,
-  and clean water speeds it; (c) a first cleaning constructor in the region.
+- **The first clean water comes from a filter mini-rack** (decided in direction, designed
+  later; `add-fluid-quality-and-viscosity`): high-pass filters separate pure liquid,
+  low-pass filters separate solids and nutrients, into channels, controlled via audio.
+  Until it exists the loop stops at muddy water, so the region's first filter rack, and
+  where it sits between burbler and grove, is part of this change once designed.
 - Counts and distances above are a first pass, to tune in play.
 - Reconcile `add-desert-opening`'s discovery spec ("Square VCO", then "Clock"): the
   square now comes from a bug and the clock is the burbler.
