@@ -73,7 +73,10 @@ Follow Satisfactory's interaction conventions where applicable (research:
 holding E may collect successive nearby pickups without duplicating an instance.
 Use **O** for the recipe book/codex. Reserve **Q** for build, **F** for dismantle,
 **Tab** for inventory and **B** for flashlight; do not assign these to unrelated
-player actions. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+player actions. **Tab** opens the inventory screen and the upper right shows
+the goals hub: long- and short-term goals as the items to make, as Satisfactory's
+milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
+Goals guide; they never end the game. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it.
 
 ### The opening
