@@ -15,14 +15,33 @@ struct Review {
     next: f32,
     hovers: usize,
     uses: usize,
-    captured: [bool; 4],
+    captured: [bool; 5],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
     far_seen: bool,
     rack_opened: bool,
     rack_loaded: bool,
+    /// Seconds the main timeline waited while the rack steps ran.
+    paused: f32,
+    rack_step: usize,
+    rack_wait: f32,
+    release: bool,
+    press_at: Vec2,
+    rack_configured: bool,
 }
+impl Review {
+    /// Seconds on the main timeline (wall time minus the rack steps' pause).
+    fn now(&self) -> f32 {
+        self.start.elapsed().as_secs_f32() - self.paused
+    }
+    /// The rack steps run once the rack is up and pause the main timeline.
+    fn rack_busy(&self) -> bool {
+        self.rack_loaded && self.rack_step < RACK_STEPS
+    }
+}
+/// Mount, GATE, TRIG, OUT, IN, then the patched screenshot.
+const RACK_STEPS: usize = 6;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
     fn build(&self, app: &mut App) {
@@ -38,16 +57,25 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 4],
+            captured: [false; 5],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
             far_seen: false,
             rack_opened: false,
             rack_loaded: false,
+            paused: 0.,
+            rack_step: 0,
+            rack_wait: 0.,
+            release: false,
+            press_at: Vec2::ZERO,
+            rack_configured: false,
         })
         .add_systems(Startup, start.after(super::setup))
-        .add_systems(PreUpdate, drive.after(bevy::input::InputSystems))
+        .add_systems(
+            PreUpdate,
+            (drive_rack, drive).chain().after(bevy::input::InputSystems),
+        )
         .add_systems(PostUpdate, observe.after(super::pulse::BugEffects));
     }
 }
@@ -89,7 +117,10 @@ fn drive(
 ) {
     keys.reset(KeyCode::KeyE);
     keys.reset(KeyCode::Escape);
-    let elapsed = review.start.elapsed().as_secs_f32();
+    if review.rack_busy() {
+        return;
+    }
+    let elapsed = review.now();
     let times = [0.8, 1.5, 2.1, 2.7, 3.3, 3.9, 4.5, 5.2, 6.4, 7.7];
     if review.stage >= times.len() || elapsed < times[review.stage] {
         return;
@@ -173,11 +204,13 @@ fn observe(
     mut hover: MessageReader<AssetHoverEvent>,
     mut used: MessageReader<AssetUsed>,
     mut rack: MessageReader<super::machine_config::MachineConfigurationOpened>,
+    mut configured: MessageReader<super::rack::MachineConfigured>,
     screens: Res<super::controls::ScreenMode>,
     flat: Query<(&super::prefab_presentation::AssetPart, &Transform)>,
 ) {
-    let elapsed = review.start.elapsed().as_secs_f32();
+    let elapsed = review.now();
     review.hovers += hover.read().count();
+    review.rack_configured |= configured.read().next().is_some();
     review.uses += used.read().count();
     review.rack_opened |= rack.read().next().is_some();
     review.rack_loaded |=
@@ -248,6 +281,8 @@ fn observe(
         Some((0, "initial.png"))
     } else if review.stage >= 5 && !review.captured[1] {
         Some((1, "burbler-hover.png"))
+    } else if review.rack_step >= RACK_STEPS && !review.captured[4] {
+        Some((4, "rack-patched.png"))
     } else if review.stage >= 8 && !review.captured[2] {
         Some((2, "regrown.png"))
     } else if review.stage >= 10 && elapsed > 9.2 && !review.captured[3] {
@@ -269,7 +304,8 @@ fn observe(
         review.near_pass = roots.iter().count() == 7
             && sources.0.len() == 4
             && errors.is_empty()
-            && player.items.quantity("square_wave") == 2
+            // Two from the bug, one mounted in the burbler's rack as its Square VCO.
+            && player.items.quantity("square_wave") == 1
             && player.items.quantity("reed") == 6
             && standing
             && leaves > 0
@@ -290,13 +326,124 @@ fn observe(
             && review.far_seen
             && standing
             && leaves > 0
+            && review.rack_configured
             && errors.is_empty()
-            && player.items.quantity("square_wave") == 2
+            && player.items.quantity("square_wave") == 1
             && player.items.quantity("reed") == 6;
         write(
             &review,
-            serde_json::json!({"event":"complete","success":success,"seconds":elapsed,"near_pass":review.near_pass,"rack_opened":review.rack_opened,"rack_loaded":review.rack_loaded,"far_seen":review.far_seen,"saw_animation":review.saw_animation,"saw_flash":review.saw_flash}),
+            serde_json::json!({"event":"complete","success":success,"seconds":elapsed,"near_pass":review.near_pass,"rack_opened":review.rack_opened,"rack_loaded":review.rack_loaded,"rack_configured":review.rack_configured,"far_seen":review.far_seen,"saw_animation":review.saw_animation,"saw_flash":review.saw_flash}),
         );
         review.stage = 11;
     }
+}
+
+/// The rack steps: real pointer clicks through bevy_picking, on the mount button (UI
+/// picking) and on the jacks (mesh picking through the rack camera).
+#[allow(clippy::too_many_arguments, clippy::type_complexity)] // Clicks need window, both pickers' targets and the rack state.
+fn drive_rack(
+    mut review: ResMut<Review>,
+    time: Res<Time<Real>>,
+    windows: Query<(Entity, &Window), With<bevy::window::PrimaryWindow>>,
+    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    jacks: Query<(&super::machine_config::JackHit, &GlobalTransform)>,
+    buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
+    racks: Query<&super::rack::RackState>,
+    hovers: Res<bevy::picking::hover::HoverMap>,
+    names: Query<(
+        Option<&Name>,
+        Has<super::machine_config::JackHit>,
+        Has<Node>,
+    )>,
+    targets: Query<
+        (
+            Option<&bevy::camera::RenderTarget>,
+            Has<super::machine_config::RackHudCamera>,
+        ),
+        With<Camera3d>,
+    >,
+    mut input: MessageWriter<bevy::picking::pointer::PointerInput>,
+) {
+    use bevy::picking::pointer::{Location, PointerAction, PointerButton, PointerId, PointerInput};
+    if !review.rack_busy() {
+        return;
+    }
+    review.paused += time.delta_secs();
+    let Ok((window_entity, window)) = windows.single() else {
+        return;
+    };
+    // Aim at whatever the game camera draws into: the window when run alone, an image
+    // when Jackdaw's Play hosts it.
+    let Some(target) = targets
+        .iter()
+        .find(|(_, hud)| !hud)
+        .and_then(|(t, _)| t.cloned())
+        .unwrap_or_default()
+        .normalize(Some(window_entity))
+    else {
+        return;
+    };
+    let at = |position: Vec2| Location {
+        target: target.clone(),
+        position,
+    };
+    if review.release {
+        // Second frame of a click: lift the button where it went down.
+        let position = review.press_at;
+        input.write(PointerInput::new(
+            PointerId::Mouse,
+            at(position),
+            PointerAction::Release(PointerButton::Primary),
+        ));
+        review.release = false;
+        return;
+    }
+    review.rack_wait -= time.delta_secs();
+    if review.rack_wait > 0. {
+        return;
+    }
+    let jack = |place: &str, port: &str| {
+        let (camera, transform) = hud.single().ok()?;
+        let (_, world) = jacks
+            .iter()
+            .find(|(j, _)| j.0.place == place && j.0.port == port)?;
+        // Already in target coordinates: world_to_viewport includes the viewport's offset.
+        camera
+            .world_to_viewport(transform, world.translation())
+            .ok()
+    };
+    let step = review.rack_step;
+    let point = match step {
+        0 => buttons
+            .iter()
+            .next()
+            .map(|(t, node)| t.translation * node.inverse_scale_factor()),
+        1 => jack("clock", "gate"),
+        2 => jack("volume", "trig"),
+        3 => jack("vco", "out"),
+        4 => jack("volume", "in"),
+        _ => None,
+    };
+    if step + 1 < RACK_STEPS {
+        // Wait (briefly) for the target to exist: the VCO's jacks appear once it is mounted.
+        let Some(position) = point else { return };
+        for action in [
+            PointerAction::Move { delta: Vec2::ZERO },
+            PointerAction::Press(PointerButton::Primary),
+        ] {
+            input.write(PointerInput::new(PointerId::Mouse, at(position), action));
+        }
+        review.release = true;
+        review.press_at = position;
+    }
+    let state = racks.iter().next();
+    write(
+        &review,
+        serde_json::json!({"event":"rack_step","step":step,"at":point.map(|p| [p.x, p.y]),
+            "window":[window.width(), window.height(), window.scale_factor()],
+            "hovered":hovers.get(&PointerId::Mouse).map(|h| h.keys().map(|e| names.get(*e).map(|(n, jack, ui)| format!("{:?} jack={jack} ui={ui}", n.map(Name::as_str))).unwrap_or_default()).collect::<Vec<_>>()),
+            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.clone())}),
+    );
+    review.rack_step += 1;
+    review.rack_wait = 0.25;
 }
