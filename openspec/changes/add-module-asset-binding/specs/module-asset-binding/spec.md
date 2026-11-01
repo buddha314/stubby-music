@@ -74,3 +74,12 @@ so no two modules are given the same ID.
 #### Scenario: No collisions
 - **WHEN** module assets, lightning bugs, the audio demo and collection cues all add engine modules
 - **THEN** every engine module ID is distinct and no `AddModule` is rejected as a duplicate
+
+### Requirement: Optional live listening showcase
+The module showcase SHALL patch its placed square VCO through an envelope and VCA driven by its placed clock when --module-demo is enabled. Normal startup SHALL retain silence until discovery.
+#### Scenario: Hear the visible clock
+- **WHEN** the live listening showcase runs in the game or Jackdaw Play
+- **THEN** each audible square burst and the clock lamp follow the same engine clock ID and sample timestamp
+#### Scenario: Remove a showcased module
+- **WHEN** either source module is removed
+- **THEN** the showcase envelope and VCA are removed without changing unrelated voices

@@ -41,6 +41,11 @@
 - [x] 5.2 Sample-time → wall-time mapping: each `ClockTick` carries `at`, predicted from an audio-clock snapshot
 - [x] 5.3 Verify a fresh game outputs digital silence (`a_fresh_game_is_silent`)
 - [x] 5.4 Stall test: the engine keeps rendering through a 200 ms game-thread stall (`engine_keeps_running_while_the_game_thread_stalls`)
-- [ ] 5.5 Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
+- [ ] 5.5 (claimed: Codex, add-jackdaw-live-listen) Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
   Also run with `--module-demo` to check that the clock module's light flashes on the beat you hear (`add-module-asset-binding` 2.5).
-  Blocked on: the `add-lightning-bug-pulse` branch updating from `main` (it overlaps the audio wiring in six files). Then rebuild the Jackdaw game and play "Desert opening + audio demo".
+  Reconciliation is complete (PR #18); the old branch-overlap blocker is resolved.
+  Fixed in worktree: `--module-demo` now auditions clock 8001 and VCO 8002 through an envelope/VCA using that same clock. Do not combine with the independent F8 demo for the timing check.
+  Verified 2026-10-31: user heard standalone square bursts; game and Jackdaw output captures show 0.500s burst intervals. Stop gives digital silence; replay resumes the same bursts. Evidence: `docs/research/jackdaw-live-listen.md`.
+  Reboot-safe worktree: `/home/buddha/src/stubby-music-live-listen`, branch `add-jackdaw-live-listen`. User confirmed task 5.5: game and Jackdaw Play listening.
+
+  Regression: user reported whole-display flashing during Jackdaw Play, recurring after Stop. Audio checks pass, but live validation is reopened until display stability is established. Test editor and game are closed.

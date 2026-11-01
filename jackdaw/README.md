@@ -53,3 +53,17 @@ Audio: Play runs the game's audio engine too. The run configuration
 "Desert opening + audio demo" starts a test patch (the opening's square wave plus an
 audible clock); in either configuration F8 toggles it. Click into the Play panel
 first, so keys reach the game rather than the editor.
+
+## Live listen
+
+Choose **Live listen: clock + square** in the editor's run configurations, then
+Play. It places a clock and square VCO near spawn and patches that exact clock
+into the VCO's envelope/VCA, so the lamp and audible low square bursts share
+one source of timing. The normal Desert opening configuration remains silent
+until discovery. Leave F8's independent demo off during this check.
+
+Standalone equivalent: `cargo run -p stubby_game -- --seed=42 --module-demo`.
+At the default 120 BPM, listen for two bursts per second and watch the clock lamp.
+Stop Play to stop its audio; play again to verify it starts cleanly. Audio uses the
+game child's default output device, not an editor audio bridge. This check does
+not establish the separate 10ms on-screen timing requirement.
