@@ -14,3 +14,10 @@ Baseline rate, quality scales, combined quality response, maximum active bugs,
 spawn locations, collection automation and tree visual assets are intentionally
 undecided. Do not invent a formula, respawn timer or automatic production loop yet.
 Future spawning must use explicit world seed and stable generated instance IDs.
+
+## Water-system dependency
+`add-fluid-quality-and-viscosity` records the initial muddy-water resource, fluid
+viscosity and cleaning progression. Cleaning provides more useful nutrients and
+faster-flowing water. Future oak production should consume delivered water quality
+and nutrient provision alongside light quality; do not substitute a purely visual
+water material setting or assume an infinite instantaneous water supply.

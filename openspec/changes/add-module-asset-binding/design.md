@@ -49,3 +49,18 @@ cues.
   `add-rack-and-spatial-audio` 3.2.
 - [Saw and triangle make no sound] → task 2.3, when the engine gains those oscillators.
 - [Hand-picked IDs can collide as content grows] → task 2.1, the allocator.
+
+## Live listen verification (task 2.5 / add-audio-engine 5.5)
+
+`--module-demo` is an opt-in audition. Placed clock 8001 drives both its lamp
+and an AD envelope (2ms attack, 120ms decay); placed square VCO 8002 feeds a
+VCA at gain 0.15, controlled by that envelope. Auxiliary IDs 8003–8004 remain
+in the reserved showcase range until the shared allocator lands. Patch only
+once both source modules have been added; remove the auxiliary nodes if either
+source is removed. Normal startup stays unpatched. Do not combine the showcase
+with the independent F8/--audio-demo patch when checking timing.
+
+The Jackdaw run config is `Live listen: clock + square`. The same generator
+and graph code are compiled into the standalone game and Play adapter. Machine
+checks render bursts and verify exact sample tick spacing; the on-screen 10ms
+measurement remains task 2.4 rather than being inferred from a listening check.

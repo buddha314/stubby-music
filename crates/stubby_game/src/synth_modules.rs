@@ -17,7 +17,7 @@ use bevy::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::Instant;
-use stubby_audio::{Command, ModuleId, ModuleKind};
+use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 /// Profiles embedded at build time, as the lightning bug's is, so the game and the
 /// Jackdaw adapter read identical data.
@@ -143,6 +143,17 @@ pub struct SynthModulesPlugin {
     pub showcase: bool,
 }
 
+// Reserved showcase IDs; shared allocator migration is tracked in task 2.1.
+const SHOWCASE_CLOCK: ModuleId = ModuleId(8_001);
+const SHOWCASE_SQUARE: ModuleId = ModuleId(8_002);
+const SHOWCASE_ENV: ModuleId = ModuleId(8_003);
+const SHOWCASE_VCA: ModuleId = ModuleId(8_004);
+
+#[derive(Resource, Default)]
+struct ShowcaseAudio {
+    patched: bool,
+}
+
 impl Plugin for SynthModulesPlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<PulseBusPlugin>() {
@@ -152,13 +163,15 @@ impl Plugin for SynthModulesPlugin {
             Update,
             (
                 (add_to_engine, send_param_changes, remove_from_engine),
+                audition_showcase,
                 update_lights.after(PulseReceive),
                 (find_parts, apply_visuals).chain(),
             )
                 .chain(),
         );
         if self.showcase || std::env::args().any(|a| a == "--module-demo") {
-            app.add_systems(Startup, place_showcase);
+            app.init_resource::<ShowcaseAudio>()
+                .add_systems(Startup, place_showcase);
         }
     }
 }
@@ -192,14 +205,12 @@ pub fn spawn_module(
 }
 
 fn place_showcase(mut commands: Commands, assets: Res<AssetServer>, catalog: Res<ModuleCatalog>) {
-    const CLOCK: ModuleId = ModuleId(8_001);
-    const SQUARE: ModuleId = ModuleId(8_002);
     spawn_module(
         &mut commands,
         &assets,
         &catalog,
         "clock_lamp",
-        CLOCK,
+        SHOWCASE_CLOCK,
         Transform::from_xyz(-1.3, -0.12, 2.2),
         &[("bpm", 120.0)],
     );
@@ -208,10 +219,69 @@ fn place_showcase(mut commands: Commands, assets: Res<AssetServer>, catalog: Res
         &assets,
         &catalog,
         "square_vco",
-        SQUARE,
+        SHOWCASE_SQUARE,
         Transform::from_xyz(-0.2, -0.12, 2.0),
         &[("freq", 110.0)],
     );
+}
+
+/// Audition the *placed* clock and square oscillator. The lamp and audible burst
+/// share one clock module, rather than two independent clocks at the same BPM.
+fn showcase_patch() -> [Command; 6] {
+    [
+        Command::AddModule {
+            id: SHOWCASE_ENV,
+            kind: ModuleKind::Envelope {
+                attack_s: 0.002,
+                decay_s: 0.12,
+            },
+        },
+        Command::AddModule {
+            id: SHOWCASE_VCA,
+            kind: ModuleKind::Vca { gain: 0.15 },
+        },
+        Command::Connect {
+            from: PortRef::new(SHOWCASE_CLOCK, "gate"),
+            to: PortRef::new(SHOWCASE_ENV, "gate"),
+        },
+        Command::Connect {
+            from: PortRef::new(SHOWCASE_ENV, "out"),
+            to: PortRef::new(SHOWCASE_VCA, "cv"),
+        },
+        Command::Connect {
+            from: PortRef::new(SHOWCASE_SQUARE, "out"),
+            to: PortRef::new(SHOWCASE_VCA, "in"),
+        },
+        Command::Connect {
+            from: PortRef::new(SHOWCASE_VCA, "out"),
+            to: PortRef::output(),
+        },
+    ]
+}
+fn audition_showcase(
+    state: Option<ResMut<ShowcaseAudio>>,
+    synth: Option<Res<Synth>>,
+    modules: Query<&SynthModule, With<EngineModule>>,
+) {
+    let (Some(mut state), Some(synth)) = (state, synth) else {
+        return;
+    };
+    if !synth.is_running() {
+        return;
+    }
+    let ready = modules.iter().any(|module| module.id == SHOWCASE_CLOCK)
+        && modules.iter().any(|module| module.id == SHOWCASE_SQUARE);
+    if ready && !state.patched {
+        for command in showcase_patch() {
+            synth.send(command);
+        }
+        state.patched = true;
+    } else if !ready && state.patched {
+        for id in [SHOWCASE_VCA, SHOWCASE_ENV] {
+            synth.send(Command::RemoveModule { id });
+        }
+        state.patched = false;
+    }
 }
 
 /// The engine module for a profile, with its starting parameters.
@@ -542,6 +612,100 @@ mod tests {
     use super::*;
     use crate::audio::{AudioOutput, SynthAudioPlugin};
     use std::time::Duration;
+
+    #[test]
+    fn showcase_audition_waits_for_sources_and_retires_its_patch() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .add_plugins(SynthAudioPlugin {
+                output: AudioOutput::Offline,
+                demo: false,
+            })
+            .add_plugins(SynthModulesPlugin { showcase: false });
+        app.update();
+        assert!(
+            !app.world().contains_resource::<ShowcaseAudio>(),
+            "normal startup is not an audition"
+        );
+        app.init_resource::<ShowcaseAudio>();
+        let clock = app
+            .world_mut()
+            .spawn((
+                SynthModule {
+                    id: SHOWCASE_CLOCK,
+                    asset: "clock_lamp".into(),
+                },
+                ModuleParams(HashMap::from([("bpm".into(), 120.)])),
+                ModuleLights::default(),
+            ))
+            .id();
+        app.update();
+        assert!(!app.world().resource::<ShowcaseAudio>().patched);
+        app.world_mut().spawn((
+            SynthModule {
+                id: SHOWCASE_SQUARE,
+                asset: "square_vco".into(),
+            },
+            ModuleParams(HashMap::from([("freq".into(), 110.)])),
+            ModuleLights::default(),
+        ));
+        app.update();
+        assert!(app.world().resource::<ShowcaseAudio>().patched);
+        app.world_mut().despawn(clock);
+        app.update();
+        assert!(!app.world().resource::<ShowcaseAudio>().patched);
+    }
+
+    #[test]
+    fn showcase_sound_uses_the_lamps_clock_and_is_silent_between_beats() {
+        use stubby_audio::{Engine, EngineConfig, Event};
+        let (mut engine, mut renderer) = Engine::offline(EngineConfig::default()).unwrap();
+        engine
+            .send(Command::AddModule {
+                id: SHOWCASE_CLOCK,
+                kind: ModuleKind::Clock { bpm: 120. },
+            })
+            .unwrap();
+        engine
+            .send(Command::AddModule {
+                id: SHOWCASE_SQUARE,
+                kind: ModuleKind::SquareVco { freq_hz: 110. },
+            })
+            .unwrap();
+        for command in showcase_patch() {
+            engine.send(command).unwrap();
+        }
+        engine.flush().unwrap();
+        let mut samples = vec![0.; 48_000 * 2];
+        renderer.render(&mut samples);
+        let mut ticks = Vec::new();
+        engine.drain_events(&mut ticks);
+        assert_eq!(
+            ticks,
+            vec![
+                Event::ClockTick {
+                    module: SHOWCASE_CLOCK,
+                    sample_time: 0
+                },
+                Event::ClockTick {
+                    module: SHOWCASE_CLOCK,
+                    sample_time: 24_000
+                },
+            ]
+        );
+        for start in [0, 24_000] {
+            assert!(
+                samples[(start + 100) * 2..(start + 2400) * 2]
+                    .iter()
+                    .any(|sample| sample.abs() > 0.05)
+            );
+            assert!(
+                samples[(start + 12_000) * 2..(start + 23_000) * 2]
+                    .iter()
+                    .all(|sample| sample.abs() < 0.00001)
+            );
+        }
+    }
 
     #[test]
     fn every_shipped_profile_parses() {

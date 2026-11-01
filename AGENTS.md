@@ -242,6 +242,9 @@ Several agents work in this repo at once. To avoid stepping on each other:
     allocator (`add-module-asset-binding` 2.1) and `add-rack-and-spatial-audio`.
   - Art hands over data and models, not code: when an asset needs game support, write
     it as a task in the owning change rather than editing the crate.
+  Active Codex investigation: audio-engine 5.5 / module-asset-binding 2.5 in
+  `add-jackdaw-live-listen`; audio passes, whole-display flicker remains open.
+  Use the independent 20-second diagnostic watchdog for graphical tests.
   Update this line when you claim work.
 - **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,
   the stream and the base audio component are in the game, start iterating on the
@@ -307,3 +310,15 @@ Keep **https://github.com/jbuehler23/jackdaw.git** as `upstream` for reference a
 selective integration. Develop and publish fixes to the buddha314 fork; do not
 wait for upstream acceptance before using them locally or in this game. Preserve
 this remote convention when fetching, opening PRs, or configuring new checkouts.
+
+### Fluids and stream progression
+
+Muddy water is an initial raw resource. Every fluid needs viscosity as gameplay
+data. Cleaning water improves quality and usable nutrient provision and lowers
+viscosity so streams move faster, supporting mine productivity such as scrub-oak
+lightning bugs. Keep fluid transport deterministic and off the audio callback;
+render flow from simulation data and keep musical pulses on the sample clock.
+Requirements and implementation guidance are in
+`openspec/changes/add-fluid-quality-and-viscosity/`; exact rates, quality curves
+and cleaning recipes remain deferred. Coordinate stream visuals with the art
+owner and the existing muddy-to-clear stages.
