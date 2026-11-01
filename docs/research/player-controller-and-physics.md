@@ -81,3 +81,19 @@ game has one Bevy and one Avian dependency graph, then test
 `AvianColliderBridgePlugin` with a static prefab collider. Claude can then author
 the shapes already specified in each family's `colliders.json`. The terrain,
 Tnua controller and enhanced-input migrations remain tasks 4.2a–c.
+
+### After version normalization
+
+`normalize-jackdaw-versions` removes the released-Bevy/adapter split: both game
+entry points now follow the shared Jackdaw revision in one workspace and lockfile.
+The released-Bevy versions in the research table are historical compatibility
+information, not permission to upgrade Bevy independently. Physics remains gated
+by the selected shared editor's module support. See `jackdaw-version-policy.md`.
+
+### Supported-line alignment checkpoint
+
+The game now follows the shared dev/0.20 branch (upstream release-0.20), rather
+than bleeding-edge Bevy main. Its exact Jackdaw commit is recorded in
+`jackdaw/compatibility.json`; both game entry points use its Bevy 0.20.0 and Rust
+1.99.0. That line has Physics support. Adding the actual runtime plugin and game
+colliders remains a separate task; no physics implementation is claimed here.

@@ -9,27 +9,72 @@ on:
       - "crates/stubby_audio/**"
       - "Cargo.lock"
       - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "jackdaw/compatibility.json"
+      - "jackdaw/Cargo.toml"
+      - "jackdaw/jackdaw.toml"
+      - "crates/stubby_game/Cargo.toml"
+      - "crates/bevy_stubby_recipes/Cargo.toml"
+      - "tools/*jackdaw_versions.py"
       - ".github/workflows/stubby-audio.yml"
   pull_request:
     paths:
       - "crates/stubby_audio/**"
       - "Cargo.lock"
       - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "jackdaw/compatibility.json"
+      - "jackdaw/Cargo.toml"
+      - "jackdaw/jackdaw.toml"
+      - "crates/stubby_game/Cargo.toml"
+      - "crates/bevy_stubby_recipes/Cargo.toml"
+      - "tools/*jackdaw_versions.py"
       - ".github/workflows/stubby-audio.yml"
 
 jobs:
   check:
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: game
     steps:
       - uses: actions/checkout@v5
+        with:
+          path: game
+      - name: Read selected Jackdaw and Rust revisions
+        id: versions
+        run: |
+          python3 - <<'PYVERSIONS' >> "$GITHUB_OUTPUT"
+          import json
+          record = json.load(open('jackdaw/compatibility.json'))
+          print('jackdaw=' + record['jackdaw']['revision'])
+          print('rust=' + record['rust'])
+          PYVERSIONS
+      - uses: actions/checkout@v5
+        with:
+          repository: buddha314/jackdaw
+          ref: ${{ steps.versions.outputs.jackdaw }}
+          path: jackdaw
+      - name: Configure upstream reference
+        run: git -C ../jackdaw remote add upstream https://github.com/jbuehler23/jackdaw.git
+      - name: Version consistency
+        run: python3 tools/check_jackdaw_versions.py
       - name: Install ALSA headers (cpal)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ steps.versions.outputs.rust }}
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           key: stubby-audio
+          workspaces: game -> target
+      - name: Version-check regression tests
+        run: python3 tools/test_jackdaw_versions.py
+      - name: Active Bevy graph
+        run: |
+          cargo tree --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$RUNNER_TEMP/bevy-tree.txt"
+          python3 tools/check_jackdaw_versions.py --tree "$RUNNER_TEMP/bevy-tree.txt"
       - name: Format
         run: cargo fmt -p stubby_audio --check
       - name: Clippy

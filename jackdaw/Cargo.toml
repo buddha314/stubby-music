@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
-# Jackdaw's development Bevy is isolated from the released game engine.
-[workspace]
-
+# Keep this package for saved prefab type paths; dependency versions belong to the root workspace.
 [features]
 default = ["embedded_recipes_plugin"]
 dev = ["bevy/dynamic_linking"]
@@ -17,26 +15,17 @@ embedded_recipes_plugin = []
 stubby_recipes = { path = "../crates/stubby_recipes" }
 stubby_audio = { path = "../crates/stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["3d", "ui"] }
-jackdaw_runtime = { path = "/home/buddha/src/jackdaw/crates/jackdaw_runtime", features = ["pie"] }
-jackdaw_scene_types = { path = "/home/buddha/src/jackdaw/crates/jackdaw_scene_types" }
+bevy.workspace = true
+bevy.features = ["3d", "ui"]
+jackdaw_runtime = { path = "../../jackdaw/crates/jackdaw_runtime", features = ["pie"] }
+jackdaw_scene_types = { path = "../../jackdaw/crates/jackdaw_scene_types" }
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
 # Bevy-free, so it builds unchanged against the editor's Bevy revision.
 
-[profile.dev]
-debug = 0
-# Jackdaw's Play runs a dev build. Unoptimized, Bevy's shader compilation and the
-# desert generator kept the first frame from arriving for 40+ seconds, so Play
-# looked like it never launched. Optimize dependencies fully and the game lightly.
-opt-level = 1
-
-[profile.dev.package."*"]
-opt-level = 3
-
 [dev-dependencies]
 gltf = "~1.4"
 tempfile = "~3.27"
-jackdaw_bsn = { path = "/home/buddha/src/jackdaw/crates/jackdaw_bsn" }
-jackdaw_prefab = { path = "/home/buddha/src/jackdaw/crates/jackdaw_prefab" }
+jackdaw_bsn = { path = "../../jackdaw/crates/jackdaw_bsn" }
+jackdaw_prefab = { path = "../../jackdaw/crates/jackdaw_prefab" }

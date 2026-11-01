@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import time
 import urllib.request
 
@@ -91,6 +92,8 @@ def main():
     args = parser.parse_args()
     if not 0 < args.seconds <= 20:
         parser.error('--seconds must be greater than zero and no more than 20')
+    if not args.command:
+        subprocess.run([sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--binaries'], check=True)
     project = ROOT / 'jackdaw'
     manifest = project / 'jackdaw.toml'
     original = manifest.read_text()

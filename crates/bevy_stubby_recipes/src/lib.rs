@@ -15,8 +15,8 @@
 //! ```
 //!
 //! Jackdaw's adapter compiles this file as a module of the game (against the editor's
-//! Bevy revision), so it must not use `crate::` paths. Bevy is pinned here and only
-//! here; the core never depends on Bevy.
+//! Bevy version), so it must not use `crate::` paths. Its Bevy version is selected
+//! by the workspace's shared Jackdaw pin; the core never depends on Bevy.
 use bevy::prelude::*;
 use stubby_recipes::{
     Catalog, HarvestLedger, Inventory, RecipeBook, RecipeError, ResourceTime, SourceObject, Stack,

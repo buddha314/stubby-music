@@ -7,4 +7,5 @@ description = "The stubby_recipes crafting system as a Bevy plugin (thin adapter
 
 [dependencies]
 stubby_recipes = { path = "../stubby_recipes" }
-bevy = { version = "~0.20.1", default-features = false, features = ["std", "bevy_log"] }
+bevy.workspace = true
+bevy.features = ["std", "bevy_log"]

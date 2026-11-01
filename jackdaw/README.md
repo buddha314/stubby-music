@@ -18,12 +18,18 @@ tools/jackdaw.sh open      # open the shared editor on assets/scene.bsn
 ```
 
 The shared editor executable is
-`/home/buddha/src/jackdaw/target/debug/jackdaw`. Its SDK/toolchain is Rust 1.99.0,
-and it targets Bevy main at `c9c397ba1a73e6cfffe957318e0359330b701865`.
-This project's lockfile must retain that exact commit. The main game workspace
-continues to use Bevy 0.20.1; the isolated adapter compiles its generator source
-against the editor's Bevy, with `JackdawPlugin` and `maybe_windowless` for Play.
-The runtime dependency points directly to the shared Jackdaw checkout.
+`/home/buddha/src/jackdaw/target/debug/jackdaw`. **Jackdaw selects our versions**:
+`compatibility.json` records its source commit, upstream base, Bevy version and
+compiler. The standalone game and this adapter share the root Cargo workspace,
+Cargo.lock and Rust toolchain. The adapter package remains for saved-prefab type
+paths, with `JackdawPlugin` and `maybe_windowless` for Play. Runtime dependencies
+point to the sibling shared Jackdaw checkout, not a private game editor.
+
+Run `tools/jackdaw.sh check` for read-only source/version validation and
+`tools/jackdaw.sh prepare` to rebuild matching shared binaries and the floor preview.
+Prepare refuses while that shared editor is running. Managed launch/build verifies
+a local source-linked binary receipt; stale or missing receipts require Prepare.
+See [the upgrade and fork policy](../docs/research/jackdaw-version-policy.md).
 
 The edit viewport loads `generated/mudflat.glb` through `GltfSource` (a raw
 `SceneRoot` is not registered in this editor). Re-run `prepare` after changing the
