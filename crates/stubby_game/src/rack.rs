@@ -70,6 +70,7 @@ impl Plugin for RackPlugin {
                 (
                     attach,
                     mount_buttons,
+                    number_keys,
                     patch_engine,
                     guidance,
                     pods,
@@ -295,64 +296,171 @@ fn mount_buttons(
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
-    for place in config
+    // The player's inventory, Satisfactory-style: a "Relevant" strip of what this rack's
+    // open places accept (number keys 1-0 insert them, as does a click), then the rest
+    // of what you carry, dimmed.
+    let relevant: Vec<_> = relevant(config, state);
+    let amber = Color::srgb(1., 0.7, 0.31);
+    let muted = Color::srgb(0.55, 0.53, 0.49);
+    let ink = Color::srgb(0.95, 0.94, 0.89);
+    let text = |value: String, size: f32, color: Color| {
+        (
+            Text::new(value),
+            TextFont {
+                font_size: bevy::text::FontSize::Px(size),
+                ..default()
+            },
+            TextColor(color),
+            Pickable::IGNORE,
+        )
+    };
+    let name = |id: &str| {
+        catalog
+            .as_ref()
+            .and_then(|c| c.0.item(id))
+            .map_or(id.to_string(), |i| i.name.clone())
+    };
+    let row = || Node {
+        column_gap: px(10),
+        align_items: AlignItems::Center,
+        ..default()
+    };
+    commands.entity(area).with_children(|area| {
+        if !relevant.is_empty() {
+            area.spawn(text("Relevant".into(), 15., muted));
+            area.spawn((row(), Pickable::IGNORE))
+                .with_children(|strip| {
+                    for (index, (place, accept)) in relevant.iter().enumerate() {
+                        let count = player.items.quantity(&accept.item);
+                        let have = count > 0;
+                        let action = if have {
+                            format!(
+                                "insert a {} in the {} slot",
+                                module_name(&accept.module),
+                                place.kind.to_uppercase()
+                            )
+                        } else {
+                            format!(
+                                "collect a {} to make a {}",
+                                name(&accept.item).to_lowercase(),
+                                module_name(&accept.module)
+                            )
+                        };
+                        let mut tile = strip.spawn((
+                            Node {
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::axes(px(14), px(10)),
+                                row_gap: px(4),
+                                border: UiRect::all(px(1)),
+                                min_width: px(260),
+                                ..default()
+                            },
+                            BorderColor::all(if have {
+                                amber.with_alpha(0.8)
+                            } else {
+                                muted.with_alpha(0.4)
+                            }),
+                            BackgroundColor(Color::srgba(0.09, 0.085, 0.075, 0.95)),
+                        ));
+                        tile.with_children(|tile| {
+                            tile.spawn(text(
+                                format!("[{}]  {}", (index + 1) % 10, name(&accept.item)),
+                                19.,
+                                if have { ink } else { muted },
+                            ));
+                            tile.spawn(text(
+                                format!("x {count}"),
+                                24.,
+                                if have { amber } else { muted },
+                            ));
+                            tile.spawn(text(action, 14., if have { amber } else { muted }));
+                        });
+                        if have {
+                            tile.insert(MountButton {
+                                machine,
+                                place: place.place.clone(),
+                                item: accept.item.clone(),
+                                module: accept.module.clone(),
+                            });
+                        }
+                    }
+                });
+        }
+        let others: Vec<_> = player
+            .items
+            .items()
+            .filter(|(id, _)| !relevant.iter().any(|(_, a)| a.item == *id))
+            .map(|(id, n)| format!("{} x {n}", name(id)))
+            .collect();
+        if !others.is_empty() {
+            area.spawn(text(
+                format!("Inventory:  {}", others.join("   ")),
+                15.,
+                muted,
+            ));
+        }
+    });
+}
+
+/// The items this rack's open places accept, in place order (at most ten: keys 1-0).
+fn relevant<'a>(
+    config: &'a RackConfiguration,
+    state: &RackState,
+) -> Vec<(
+    &'a super::machine_config::RackPlace,
+    &'a super::machine_config::Accept,
+)> {
+    config
         .places
         .iter()
         .filter(|p| !p.fixed && !state.mounted.contains_key(&p.place))
-    {
-        for accept in &place.accepts {
-            let name = |id: &str| {
-                catalog
-                    .as_ref()
-                    .and_then(|c| c.0.item(id))
-                    .map_or(id.to_string(), |i| i.name.clone())
-            };
-            let have = player.items.quantity(&accept.item) > 0;
-            let label = if have {
-                format!(
-                    "Insert {}  (uses 1 {})",
-                    module_name(&accept.module),
-                    name(&accept.item)
-                )
-            } else {
-                format!(
-                    "Collect a {} to make a {}",
-                    name(&accept.item).to_lowercase(),
-                    module_name(&accept.module)
-                )
-            };
-            commands.entity(area).with_children(|area| {
-                let mut button = area.spawn((
-                    Node {
-                        padding: UiRect::axes(px(14), px(8)),
-                        border: UiRect::all(px(1)),
-                        ..default()
-                    },
-                    BorderColor::all(Color::srgba(1., 0.7, 0.31, if have { 0.8 } else { 0.25 })),
-                    BackgroundColor(Color::srgba(1., 0.7, 0.31, if have { 0.12 } else { 0.0 })),
-                    children![(
-                        Text::new(label),
-                        TextFont {
-                            font_size: bevy::text::FontSize::Px(17.),
-                            ..default()
-                        },
-                        TextColor(if have {
-                            Color::srgb(1., 0.7, 0.31)
-                        } else {
-                            Color::srgb(0.55, 0.53, 0.49)
-                        }),
-                    )],
-                ));
-                if have {
-                    button.insert((MountButton {
-                        machine,
-                        place: place.place.clone(),
-                        item: accept.item.clone(),
-                        module: accept.module.clone(),
-                    },));
-                }
-            });
-        }
+        .flat_map(|p| p.accepts.iter().map(move |a| (p, a)))
+        .take(10)
+        .collect()
+}
+
+/// Number keys 1-0 insert the matching relevant item, as in Satisfactory.
+fn number_keys(
+    keys: Res<ButtonInput<KeyCode>>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    mut player: ResMut<PlayerInventory>,
+    mut racks: Query<(&PlacedAsset, &mut RackState)>,
+) {
+    const DIGITS: [KeyCode; 10] = [
+        KeyCode::Digit1,
+        KeyCode::Digit2,
+        KeyCode::Digit3,
+        KeyCode::Digit4,
+        KeyCode::Digit5,
+        KeyCode::Digit6,
+        KeyCode::Digit7,
+        KeyCode::Digit8,
+        KeyCode::Digit9,
+        KeyCode::Digit0,
+    ];
+    let Some(index) = DIGITS.iter().position(|k| keys.just_pressed(*k)) else {
+        return;
+    };
+    let Some(machine) = open_rack(&screens) else {
+        return;
+    };
+    let Ok((asset, mut state)) = racks.get_mut(machine) else {
+        return;
+    };
+    let Some(config) = profiles.0.get(&asset.asset) else {
+        return;
+    };
+    let Some((place, accept)) = relevant(config, &state)
+        .get(index)
+        .map(|(p, a)| (p.place.clone(), (*a).clone()))
+    else {
+        return;
+    };
+    if player.items.take(&accept.item, 1).is_ok() {
+        state.mounted.insert(place, accept.module.clone());
+        state.version += 1;
+        player.feedback = format!("Mounted a {}.", module_name(&accept.module));
     }
 }
 

@@ -7,11 +7,12 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 
 | File | Holds |
 | --- | --- |
-| `items.json` | Everything that can sit in an inventory: `square_wave`, `reed`, `clock` |
+| `items.json` | Everything that can sit in an inventory: `square_wave`, `reed`, `clock`, `patch_cable` |
 | `resources.json` | Finite pickups and what they yield: `lightning_bug`, `reed_clump`, `clock_source` |
 | `mines.json` | Infinite sources and the resource they produce: `scrub_oak`, `mudpit_burbler` |
 | `recipes.json` | Inputs → outputs. Empty: no production recipe is designed yet |
 | `goals.json` | What the hub tells the player to do next. Chores are met by a `condition` (e.g. `machine_configured`), other goals by `requires` (items delivered). Kept in the order the hub offers them |
+| `start.json` | The starter inventory a new player gets: 10 patch cables |
 | `migrations.json` | Every renamed or removed ID, so saves survive the change |
 | `ids.lock` | Every ID ever shipped (maintained by the formatter; never delete lines) |
 | `schema/` | JSON Schemas generated from the Rust types (do not edit) |

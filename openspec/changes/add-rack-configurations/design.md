@@ -94,6 +94,11 @@ only in data:
   window (so mesh picking reaches the jacks), parts on its layer by `Propagate`, guidance
   from the data: ghost cables, colour-tinted pulsing pods, the step hint.
 
+Cables: the comb's spare cables come with the rack and are free; the player starts with
+10 patch cables (`assets/recipes/start.json`) for patches of their own. Later, patch
+cables will be made from discarded bird nests (designer, 2026-11-01); bird nests are not
+in the world yet, so there is no recipe row for it.
+
 Interim choices, to revisit: patching is click a jack, then the other (drag comes with
 direct cable dragging); mounting is a button under the rack; the `RackMachine` trait of
 D-section tasks is replaced by data, since no machine has needed behaviour of its own.

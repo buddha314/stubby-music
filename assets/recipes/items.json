@@ -8,6 +8,11 @@
       "description": "Clock resource provided by a mudpit burbler mine."
     },
     {
+      "id": "patch_cable",
+      "name": "Patch cable",
+      "description": "Joins two jacks on a rack. Racks come with the spare cables their voice needs; these are for patches of your own."
+    },
+    {
       "id": "reed",
       "name": "Reed",
       "description": "A renewable stream-building ingredient."
