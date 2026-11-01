@@ -286,7 +286,11 @@ See `docs/research/firebug-audio-and-yields.md` for duration and mining research
 
 ### Infinite mines and exhaustible resources
 
-Loose lightning bugs are **exhaustible** and collected once. Scrub-oak trees are
+Loose lightning bugs are **exhaustible** and collected once per availability period.
+They replenish at the next night boundary strictly after collection. Catalog policies
+also support timed returns and no replenishment. The shared calendar uses 45-minute
+days and 15-minute nights at 1×; bracket keys change simulation speed and backslash
+resets it. Audio pitch and musical clocks remain sample timed. Scrub-oak trees are
 **infinite mines** that will produce fresh finite lightning bugs. A tree's bug
 production increases as water quality and light quality improve. A tree **starts
 dormant** (winter) and escalates to **full bloom as clean water is applied**; bugs

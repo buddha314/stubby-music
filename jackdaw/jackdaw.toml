@@ -18,3 +18,7 @@ args = ["--seed=42", "--audio-demo"]
 [[run]]
 name = "Live listen: clock + square"
 args = ["--seed=42", "--module-demo"]
+
+[[run]]
+name = "Review: dusk and replenishment"
+args = ["--seed=42", "--replenishment-review=/tmp/stubby-replenishment-review"]

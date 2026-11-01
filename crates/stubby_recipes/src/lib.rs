@@ -33,8 +33,26 @@ pub struct Stack {
     pub item: String,
     pub quantity: u32,
 }
+/// Finite availability periods; independent of infinite mine production.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum ReplenishmentPolicy {
+    #[default]
+    Never,
+    After {
+        seconds: u32,
+    },
+    NextNight,
+}
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ResourceTime {
+    pub elapsed_millis: u64,
+    pub nights_started: u64,
+}
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ResourceDefinition {
+    #[serde(default)]
+    pub replenishment: ReplenishmentPolicy,
     pub id: String,
     pub name: String,
     pub yields: Vec<Stack>,
@@ -104,6 +122,7 @@ impl Inventory {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct HarvestLedger {
     instances: BTreeSet<String>,
+    returns: BTreeMap<String, (ReplenishmentPolicy, ResourceTime)>,
 }
 impl HarvestLedger {
     pub fn collected(&self, instance: &str) -> bool {
@@ -180,6 +199,14 @@ impl Catalog {
             insert_unique(&mut catalog.items, &item.id.clone(), item)?;
         }
         for resource in definition.resources {
+            if matches!(
+                resource.replenishment,
+                ReplenishmentPolicy::After { seconds: 0 }
+            ) {
+                return Err(RecipeError::InvalidCatalog(
+                    "replenishment delay must be positive".into(),
+                ));
+            }
             catalog.validate_stacks(&resource.yields)?;
             insert_unique(&mut catalog.resources, &resource.id.clone(), resource)?;
         }
@@ -283,6 +310,56 @@ impl Catalog {
             }
         }
     }
+    /// Atomically harvest, then schedule the next availability period.
+    pub fn harvest_source_at(
+        &self,
+        source: &mut SourceObject,
+        inventory: &mut Inventory,
+        ledger: &mut HarvestLedger,
+        now: ResourceTime,
+    ) -> Result<Vec<Stack>, RecipeError> {
+        let yields = self.harvest_source(source, inventory, ledger)?;
+        if let Some(resource) = self.resource(source.definition_id()) {
+            ledger
+                .returns
+                .insert(source.instance_id().into(), (resource.replenishment, now));
+        }
+        Ok(yields)
+    }
+    /// Return one depleted pickup. Inventory and learned recipes are untouched.
+    pub fn replenish_source(
+        &self,
+        source: &mut SourceObject,
+        ledger: &mut HarvestLedger,
+        now: ResourceTime,
+    ) -> bool {
+        let SourceObject::Exhaustible {
+            instance,
+            collected,
+            ..
+        } = source
+        else {
+            return false;
+        };
+        let Some((policy, harvested)) = ledger.returns.get(instance) else {
+            return false;
+        };
+        let due = match policy {
+            ReplenishmentPolicy::Never => false,
+            ReplenishmentPolicy::NextNight => now.nights_started > harvested.nights_started,
+            ReplenishmentPolicy::After { seconds } => {
+                now.elapsed_millis.saturating_sub(harvested.elapsed_millis)
+                    >= u64::from(*seconds) * 1000
+            }
+        };
+        if !*collected || !due {
+            return false;
+        }
+        ledger.returns.remove(instance);
+        ledger.instances.remove(instance);
+        *collected = false;
+        true
+    }
     pub fn recipes(&self) -> impl Iterator<Item = &RecipeDefinition> {
         self.recipes.values()
     }
@@ -357,6 +434,10 @@ impl Catalog {
         }
         *inventory = staged;
         ledger.instances.insert(instance.into());
+        ledger.returns.insert(
+            instance.into(),
+            (resource.replenishment, ResourceTime::default()),
+        );
         Ok(resource.yields.clone())
     }
 }
@@ -370,6 +451,57 @@ mod tests {
             "resources":[{"id":"lightning_bug","name":"Lightning bug","yields":[{"item":"square_wave","quantity":1}]}],
             "recipes":[{"id":"test_recipe","name":"Test only","inputs":[{"item":"square_wave","quantity":1},{"item":"square_wave","quantity":1}],"outputs":[{"item":"test_module","quantity":1}]}]
         }"#).unwrap()
+    }
+    #[test]
+    fn replenishment_is_once_per_availability_period() {
+        for policy in [
+            ReplenishmentPolicy::Never,
+            ReplenishmentPolicy::After { seconds: 10 },
+            ReplenishmentPolicy::NextNight,
+        ] {
+            let mut definition = fixture();
+            definition.resources[0].replenishment = policy;
+            let catalog = Catalog::new(definition).unwrap();
+            let mut source = catalog.source("lightning_bug", "bug").unwrap();
+            let mut inventory = Inventory::default();
+            let mut ledger = HarvestLedger::default();
+            let start = ResourceTime {
+                elapsed_millis: 100,
+                nights_started: 1,
+            };
+            catalog
+                .harvest_source_at(&mut source, &mut inventory, &mut ledger, start)
+                .unwrap();
+            assert!(!catalog.replenish_source(
+                &mut source,
+                &mut ledger,
+                ResourceTime {
+                    elapsed_millis: 10099,
+                    nights_started: 1
+                }
+            ));
+            let due = ResourceTime {
+                elapsed_millis: 10100,
+                nights_started: 2,
+            };
+            assert_eq!(
+                catalog.replenish_source(&mut source, &mut ledger, due),
+                policy != ReplenishmentPolicy::Never
+            );
+            assert_eq!(inventory.quantity("square_wave"), 1);
+            assert!(!catalog.replenish_source(&mut source, &mut ledger, due));
+            if policy != ReplenishmentPolicy::Never {
+                catalog
+                    .harvest_source_at(&mut source, &mut inventory, &mut ledger, due)
+                    .unwrap();
+                assert!(
+                    catalog
+                        .harvest_source_at(&mut source, &mut inventory, &mut ledger, due)
+                        .is_err()
+                );
+                assert_eq!(inventory.quantity("square_wave"), 2);
+            }
+        }
     }
     #[test]
     fn finite_and_infinite_source_objects_preserve_distinct_lifecycles() {

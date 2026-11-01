@@ -1,0 +1,15 @@
+# Day/night, spring sun and simulation speed
+
+Satisfactory baseline: 60 real minutes, 45 daylight and 15 night at 1×. Source: [Official Satisfactory Wiki, World](https://satisfactory.wiki.gg/wiki/World), checked 2026-10-31. The two-star transition blackout is not reproduced.
+
+Use an early-spring equinox at 37°N for the sun path. Solar declination zero gives noon elevation 90°−37° = 53°. Rise east, transit south, set west. Formula follows [NOAA solar position equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF). This is a stylised geographic analogy, not an Earth calendar: daylight traverses the upper half of the arc over 45 minutes and night the lower half over 15.
+
+`[` slows simulation, `]` speeds it up, and `\` resets to 1×. Speeds: 0.25, 0.5, 1, 2, 4, 8, 16, 64. The HUD displays phase and speed. Movement and resource deadlines use Bevy virtual time; sample-driven synthesis and pulse envelopes keep their pitch, tempo and flash duration. Pausing virtual time also pauses replenishment.
+
+Finite pickups have catalog policies: never by default, after a specified number of game seconds, or next night. Lightning bugs return next night, including when collected during night: they wait until the following night. Return restores availability without granting items or playing a collection cue. Retained dormant bug graphs are muted; visuals, shadow and light are suppressed. Infinite scrub-oak production remains separate.
+
+Validation: workspace tests, Clippy with warnings denied, and compilation against the shared Jackdaw source. Offline scene tests check visible sun/light alignment and dormant bug model/light/shadow restoration. Two graphical reviews ran through the shared Jackdaw editor with a 20-second hard watchdog at 60 Hz. The final run stopped at 20.076 seconds; the scripted review completed successfully at 10.204 seconds of game-process wall time. It verified inventory 0 → 2, depletion, next-night availability with inventory still 2, and recollection to 4. Speed samples included 64×, 16×, 1× and 0.5×. Screenshots confirmed the sunset sun, night fog, restored collection prompt and readable speed HUD. The initial run revealed daylight-colored night fog; this was fixed and covered by an offline scene test. No GPU validation errors or panics appeared in either editor log. These checks do not establish long-term display stability.
+
+Repeat with `python3 tools/jackdaw_timed_test.py --review --seconds 20 --refresh 60 --name replenishment-review`. Build the adapter first; the helper preserves the 20-second maximum and temporarily selects **Review: dusk and replenishment**. This opt-in mode starts five game minutes before sunset at 64×, injects E and speed keys, and writes JSONL evidence and screenshots under `/tmp/stubby-replenishment-review/`. Normal gameplay never installs the review systems. Keep the hard watchdog for subsequent graphical testing.
+
+Final evidence is retained locally under `/home/buddha/.cache/stubby-music-replenishment/evidence/final-review/`.

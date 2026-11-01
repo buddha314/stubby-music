@@ -21,7 +21,10 @@
           "item": "square_wave",
           "quantity": 2
         }
-      ]
+      ],
+      "replenishment": {
+        "kind": "next_night"
+      }
     }
   ],
   "recipes": [],

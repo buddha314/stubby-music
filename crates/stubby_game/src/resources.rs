@@ -120,6 +120,7 @@ impl Plugin for ResourceRecipesPlugin {
             .add_systems(
                 Update,
                 (
+                    replenish_nodes,
                     collect_nearby,
                     craft_requests,
                     update_hud,
@@ -216,6 +217,7 @@ fn collect_nearby(
     camera: Query<&Transform, With<Camera3d>>,
     mut nodes: Query<(&Transform, &mut ResourceNode)>,
     mut events: MessageWriter<ResourceCollected>,
+    calendar: Option<Res<super::calendar::Calendar>>,
 ) {
     if !keys.pressed(super::controls::INTERACT) {
         return;
@@ -246,7 +248,15 @@ fn collect_nearby(
             feedback,
         } = &mut *player;
         let mut source = node.source_object();
-        match catalog.0.harvest_source(&mut source, items, collected) {
+        match catalog.0.harvest_source_at(
+            &mut source,
+            items,
+            collected,
+            calendar
+                .as_ref()
+                .map(|c| c.resource_time())
+                .unwrap_or_default(),
+        ) {
             Ok(yields) => {
                 for stack in &yields {
                     book.discover(&stack.item);
@@ -386,9 +396,82 @@ fn update_hud(
     }
 }
 
+fn replenish_nodes(
+    calendar: Res<super::calendar::Calendar>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut player: ResMut<PlayerInventory>,
+    mut nodes: Query<&mut ResourceNode>,
+) {
+    let Some(catalog) = catalog else {
+        return;
+    };
+    for mut node in &mut nodes {
+        if !node.collected {
+            continue;
+        }
+        let mut source = node.source_object();
+        if catalog
+            .0
+            .replenish_source(&mut source, &mut player.collected, calendar.resource_time())
+        {
+            node.collected = false;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn night_return_restores_existing_pickup_without_free_items() {
+        let catalog =
+            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let mut player = PlayerInventory::default();
+        let mut node = ResourceNode::default();
+        let mut source = node.source_object();
+        catalog
+            .harvest_source_at(
+                &mut source,
+                &mut player.items,
+                &mut player.collected,
+                stubby_recipes::ResourceTime::default(),
+            )
+            .unwrap();
+        node.collected = true;
+        let mut time = Time::<Virtual>::default();
+        time.set_max_delta(std::time::Duration::from_secs(2700));
+        let mut app = App::new();
+        app.add_plugins(bevy::time::TimePlugin)
+            .insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
+                std::time::Duration::from_secs(2700),
+            ))
+            .insert_resource(RecipeCatalog(catalog))
+            .insert_resource(player)
+            .insert_resource(time)
+            .init_resource::<super::super::calendar::Calendar>()
+            .add_systems(Update, replenish_nodes);
+        // Drive the real shared calendar without rendering or an audio device.
+        app.add_systems(PreUpdate, super::super::calendar::advance);
+        let entity = app.world_mut().spawn(node).id();
+        app.update();
+        app.update();
+        assert!(!app.world().get::<ResourceNode>(entity).unwrap().collected);
+        assert_eq!(
+            app.world()
+                .resource::<PlayerInventory>()
+                .items
+                .quantity("square_wave"),
+            2
+        );
+        app.update();
+        assert_eq!(
+            app.world()
+                .resource::<PlayerInventory>()
+                .items
+                .quantity("square_wave"),
+            2
+        );
+    }
     #[test]
     fn mine_objects_are_authorable_but_not_finite_collection_nodes() {
         let mut app = App::new();

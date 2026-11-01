@@ -63,7 +63,7 @@ fn capture_cursor(
     };
 }
 fn move_player(
-    time: Res<Time>,
+    time: Res<Time<Virtual>>,
     keys: Res<ButtonInput<KeyCode>>,
     capture: Res<LookCapture>,
     mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
@@ -75,7 +75,12 @@ fn move_player(
     }
     for (mut transform, mut player) in &mut players {
         look(&mut transform, delta);
-        step(&mut transform, &mut player, &keys, time.delta_secs());
+        step(
+            &mut transform,
+            &mut player,
+            &keys,
+            time.delta_secs().min(0.1 * time.relative_speed()),
+        );
     }
 }
 fn look(transform: &mut Transform, delta: Vec2) {
@@ -113,8 +118,8 @@ fn step(transform: &mut Transform, player: &mut Player, keys: &ButtonInput<KeyCo
         player.vertical_speed = 7.;
         player.grounded = false;
     }
-    // Bound catch-up after stalls, and substep to keep landing stable at low FPS.
-    let mut remaining = dt.min(0.1);
+    // Bound simulation catch-up at the maximum 64× speed; substep for stable landing.
+    let mut remaining = dt.min(6.4);
     while remaining > 0. {
         let dt = remaining.min(1. / 120.);
         remaining -= dt;
