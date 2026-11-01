@@ -1,7 +1,7 @@
 //! Every world-asset prefab under `assets/prefabs` places in Jackdaw: it parses, a
 //! scene instancing it resolves, every component it names is a type the editor
 //! knows, and the models it points at (and their `_LOD<n>` levels) exist.
-//! Regenerate the prefabs with `python3 tools/jackdaw_prefabs.py`.
+//! Prefabs are made and edited in Jackdaw (Save as Prefab); this checks whatever is there.
 
 use std::path::{Path, PathBuf};
 
