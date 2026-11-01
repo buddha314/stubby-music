@@ -122,5 +122,14 @@ captures, original display state and standalone screenshot are preserved in
 `/home/buddha/.cache/stubby-music-live-listen/evidence/` (local, not versioned).
 Historical `/tmp` paths above describe the actual test runs; use the evidence
 folder after reboot. Build outputs remain in dedicated on-disk cache directories.
-No boot parameters have been changed; confirming and validating the PSR workaround
-remains open. Rebuild the game/adapter before running from the moved worktree.
+Update before reboot: the **user reports grubby was applied** with removal of
+`amdgpu.dcfeaturemask=0x8` and addition of `amdgpu.dcdebugmask=0x410`. The running
+kernel has not been reboot-verified yet. On resume check
+`cat /sys/module/amdgpu/parameters/dcdebugmask` → expected `1040`, and inspect the
+AMD options in `/proc/cmdline`. Do not reapply boot changes automatically.
+
+Rebuild the game/adapter before running from the moved worktree. Continue only
+with 20-second watchdog tests, first 60Hz then a bounded 165Hz comparison that
+restores 60Hz. Keep the flicker regression open until stable Play is validated.
+Earlier statements that no boot settings changed describe the automated
+investigation, before the user's manual grubby application.

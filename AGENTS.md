@@ -3,6 +3,26 @@
 Guidance for AI agents (Claude Code, Codex, etc.) and humans working in this repo.
 `CLAUDE.md` imports this file; keep the real content here.
 
+## Resume after reboot: display-flicker workaround
+
+The user reports applying the grubby workaround before reboot: remove
+`amdgpu.dcfeaturemask=0x8` and add `amdgpu.dcdebugmask=0x410`. Do not apply it again
+automatically. After reboot, first read
+`/sys/module/amdgpu/parameters/dcdebugmask`: expected **1040** (decimal 0x410), and
+check `/proc/cmdline` for the intended AMD options. This confirms configuration,
+not that the flicker is fixed. If the option is absent, investigate before graphics.
+
+Resume in `/home/buddha/src/stubby-music-live-listen` on `add-jackdaw-live-listen`.
+Rebuild the game/adapter from the moved worktree before testing. Use only
+`tools/jackdaw_timed_test.py` for graphical diagnostics: it has an independent
+20-second kill timer. Begin at fixed 60Hz; then compare 165Hz with automatic
+60Hz recovery. No unbounded graphical launches while the regression is open.
+Do not reboot or log out the user automatically. Task audio-engine 5.5 and the
+flicker change remain open until stable post-reboot Play is validated.
+
+Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
+`/home/buddha/.cache/stubby-music-live-listen/evidence/`.
+
 ## What we are building
 
 A 3D game that fuses **modular synthesis** (Eurorack-style patching: oscillators,
