@@ -22,6 +22,7 @@ pub const MINES: &str = "mines.json";
 pub const RECIPES: &str = "recipes.json";
 pub const MIGRATIONS: &str = "migrations.json";
 pub use crate::goals::GOALS;
+pub const START: &str = "start.json";
 pub const IDS_LOCK: &str = "ids.lock";
 
 /// One problem in the rules, located well enough to fix without searching.
@@ -90,6 +91,8 @@ rules_file!(MinesFile, mines, MineDefinition);
 rules_file!(RecipesFile, recipes, RecipeDefinition);
 rules_file!(MigrationsFile, migrations, Migration);
 rules_file!(GoalsFile, goals, crate::goals::GoalDefinition);
+// What a new player starts with.
+rules_file!(StartFile, inventory, Stack);
 
 /// A renamed (`to` set) or removed (`to` null) rule ID. IDs are save-game API: saves
 /// record the migrations they have applied and apply the rest on load.
@@ -137,6 +140,7 @@ pub struct RulesFiles<'a> {
     pub recipes: &'a str,
     pub migrations: &'a str,
     pub goals: &'a str,
+    pub start: &'a str,
 }
 
 /// The rules shipped with the game, embedded at build time.
@@ -148,6 +152,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
         recipes: include_str!("../../../assets/recipes/recipes.json"),
         migrations: include_str!("../../../assets/recipes/migrations.json"),
         goals: include_str!("../../../assets/recipes/goals.json"),
+        start: include_str!("../../../assets/recipes/start.json"),
     }
 }
 
@@ -157,6 +162,8 @@ pub struct Rules {
     pub definition: CatalogDefinition,
     pub migrations: Vec<Migration>,
     pub goals: Vec<crate::goals::GoalDefinition>,
+    /// The starter inventory.
+    pub start: Vec<Stack>,
 }
 impl Rules {
     /// Parse every file strictly and validate the set. Reports every problem found.
@@ -170,6 +177,7 @@ impl Rules {
         let migrations =
             parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
         let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
+        let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
         let (
             Some(items),
             Some(resources),
@@ -177,7 +185,8 @@ impl Rules {
             Some(recipes),
             Some(migrations),
             Some(goals),
-        ) = (items, resources, mines, recipes, migrations, goals)
+            Some(start),
+        ) = (items, resources, mines, recipes, migrations, goals, start)
         else {
             return Err(RulesErrors(errors));
         };
@@ -188,6 +197,7 @@ impl Rules {
             (RECIPES, recipes.format),
             (MIGRATIONS, migrations.format),
             (GOALS, goals.format),
+            (START, start.format),
         ] {
             if format != FORMAT {
                 errors.push(RulesError::new(
@@ -216,11 +226,25 @@ impl Rules {
             &goals.goals,
             &migrations.migrations,
         ));
+        for stack in &start.inventory {
+            if stack.quantity == 0 || !definition.items.iter().any(|i| i.id == stack.item) {
+                errors.push(RulesError::new(
+                    START,
+                    &stack.item,
+                    "inventory",
+                    format!(
+                        "{} x {} is not a known item and positive quantity",
+                        stack.quantity, stack.item
+                    ),
+                ));
+            }
+        }
         if errors.is_empty() {
             Ok(Self {
                 definition,
                 migrations: migrations.migrations,
                 goals: goals.goals,
+                start: start.inventory,
             })
         } else {
             Err(RulesErrors(errors))
@@ -234,6 +258,11 @@ impl Rules {
             .chain(self.goals.iter().map(|g| g.id.clone()))
             .collect()
     }
+}
+
+/// The shipped rules, validated.
+pub fn shipped_rules() -> Result<Rules, RulesErrors> {
+    Rules::load(&shipped_files())
 }
 
 /// Load the shipped rules into a catalog.
@@ -575,6 +604,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     let migrations =
         parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
     let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
+    let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
     let (
         Some(mut items),
         Some(mut resources),
@@ -582,7 +612,8 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         Some(mut recipes),
         Some(mut migrations),
         Some(mut goals),
-    ) = (items, resources, mines, recipes, migrations, goals)
+        Some(mut start),
+    ) = (items, resources, mines, recipes, migrations, goals, start)
     else {
         return Err(RulesErrors(errors));
     };
@@ -598,6 +629,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     migrations.migrations.sort_by(|a, b| a.id.cmp(&b.id));
     // Goals keep their authored order: it is the order the hub offers them in.
     goals.schema = schema_ref(GOALS);
+    start.schema = schema_ref(START);
     Ok(vec![
         (ITEMS, pretty(&items)),
         (RESOURCES, pretty(&resources)),
@@ -605,6 +637,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         (RECIPES, pretty(&recipes)),
         (MIGRATIONS, pretty(&migrations)),
         (GOALS, pretty(&goals)),
+        (START, pretty(&start)),
     ])
 }
 
@@ -618,6 +651,7 @@ pub fn schemas() -> Vec<(String, String)> {
         (RECIPES, schemars::schema_for!(RecipesFile)),
         (MIGRATIONS, schemars::schema_for!(MigrationsFile)),
         (GOALS, schemars::schema_for!(GoalsFile)),
+        (START, schemars::schema_for!(StartFile)),
     ] {
         out.push((schema_ref(file).unwrap_or_default(), pretty(&schema)));
     }
@@ -640,6 +674,7 @@ mod tests {
             "mines" => files.mines = text,
             "recipes" => files.recipes = text,
             "goals" => files.goals = text,
+            "start" => files.start = text,
             _ => files.migrations = text,
         }
         files

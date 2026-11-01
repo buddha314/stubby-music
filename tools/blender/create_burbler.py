@@ -66,7 +66,7 @@ INTERACT = {
     "key": "E",
     "range_m": 3.0,
     "measured": "ground distance from the player to the Interact node, the same reach as E pickups",
-    "prompt": "E | Configure burbler",
+    "prompt": "Configure burbler",   # the action; the shared prompt adds "[E]"
     "priority": "when a pickup is also in reach, the nearer target wins"
 }
 RACK_HP = {"clock": 8, "vco": 8, "volume": 4}

@@ -3,7 +3,7 @@ pub mod goals;
 pub mod rules;
 mod source;
 pub use goals::{Condition, GoalDefinition, Horizon};
-pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog};
+pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog, shipped_rules};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
 
 use schemars::JsonSchema;
@@ -124,6 +124,15 @@ impl Inventory {
         self.quantities
             .iter()
             .map(|(item, count)| (item.as_str(), *count))
+    }
+    /// Add stacks (e.g. the starter inventory), all or nothing.
+    pub fn grant(&mut self, stacks: &[Stack]) -> Result<(), RecipeError> {
+        let mut staged = self.clone();
+        for stack in stacks {
+            staged.add(&stack.item, stack.quantity)?;
+        }
+        *self = staged;
+        Ok(())
     }
     /// Take `quantity` of `item` out, all or nothing (e.g. a square wave mounted as a
     /// VCO in a rack slot).

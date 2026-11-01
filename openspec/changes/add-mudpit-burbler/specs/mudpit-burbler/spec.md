@@ -31,7 +31,7 @@ stop.
 
 #### Scenario: Prompt
 - **WHEN** the player walks within range of a burbler
-- **THEN** the prompt "E | Configure burbler" shows, and hides again out of range
+- **THEN** the prompt "[E] Configure burbler" shows, in the same style as "[E] Collect lightning bug", and hides again out of range
 
 #### Scenario: Burbler and pickup both in reach
 - **WHEN** a lightning bug and a burbler are both within reach

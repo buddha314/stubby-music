@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StartFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "inventory": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Stack"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "inventory"
+  ],
+  "$defs": {
+    "Stack": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "quantity"
+      ]
+    }
+  }
+}

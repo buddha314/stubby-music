@@ -104,8 +104,6 @@ pub struct RackHudCamera;
 #[derive(Component)]
 struct Panel;
 #[derive(Component)]
-struct Prompt;
-#[derive(Component)]
 struct Header;
 #[derive(Component)]
 struct HudPart;
@@ -266,21 +264,6 @@ fn setup(mut commands: Commands) {
         Transform::from_xyz(-1.2, HUD_Y + 1.9, 2.6),
         RenderLayers::layer(HUD_LAYER),
     ));
-    commands.spawn((
-        Prompt,
-        Text::new(""),
-        TextFont {
-            font_size: bevy::text::FontSize::Px(20.),
-            ..default()
-        },
-        TextColor(Color::srgb(1., 0.7, 0.31)),
-        Node {
-            position_type: PositionType::Absolute,
-            bottom: percent(24),
-            left: percent(35),
-            ..default()
-        },
-    ));
     let text = |size: f32, color: Color| {
         (
             TextFont {
@@ -295,6 +278,9 @@ fn setup(mut commands: Commands) {
             Panel,
             Visibility::Hidden,
             GlobalZIndex(20),
+            // The backdrop must not catch the pointer: the jacks drawn by the rack camera
+            // sit under it. Only the buttons in `RackActions` take clicks.
+            Pickable::IGNORE,
             BackgroundColor(Color::srgba(0., 0., 0., 0.55)),
             Node {
                 position_type: PositionType::Absolute,
@@ -308,14 +294,22 @@ fn setup(mut commands: Commands) {
             },
         ))
         .with_children(|panel| {
-            panel.spawn((Header, Text::new(""), text(26., Color::srgb(1., 0.7, 0.31))));
+            panel.spawn((
+                Header,
+                Text::new(""),
+                text(26., Color::srgb(1., 0.7, 0.31)),
+                Pickable::IGNORE,
+            ));
             panel
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    row_gap: px(10),
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Center,
+                        row_gap: px(10),
+                        ..default()
+                    },
+                    Pickable::IGNORE,
+                ))
                 .with_children(|foot| {
                     foot.spawn((
                         RackHint,
@@ -325,9 +319,12 @@ fn setup(mut commands: Commands) {
                     foot.spawn((
                         RackActions,
                         Node {
-                            column_gap: px(12),
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            row_gap: px(6),
                             ..default()
                         },
+                        Pickable::IGNORE,
                     ));
                     foot.spawn((
                         Text::new("Esc  close"),
@@ -343,10 +340,12 @@ fn setup(mut commands: Commands) {
     });
 }
 
-/// The rack's area on screen: the middle of the window, between header and hints.
-fn rack_viewport(window: &Window) -> Viewport {
-    let (w, h) = (window.physical_width(), window.physical_height());
-    let height = (h as f32 * 0.7) as u32;
+/// The rack's area on screen: the middle of what the game draws into (the window when
+/// run alone, an image when Jackdaw's Play hosts it), between header and hints.
+fn rack_viewport(target: UVec2) -> Viewport {
+    let (w, h) = (target.x, target.y);
+    // Leaves the bottom quarter for the step hint and the inventory tiles.
+    let height = (h as f32 * 0.6) as u32;
     let width = (height as f32 * 1.25).min(w as f32 * 0.9) as u32;
     Viewport {
         physical_position: UVec2::new((w - width) / 2, (h as f32 * 0.11) as u32),
@@ -361,7 +360,6 @@ fn sync_view(
     server: Res<AssetServer>,
     profiles: Res<Profiles>,
     screens: Res<ScreenMode>,
-    interaction: Res<MachineInteraction>,
     mut view: ResMut<View>,
     machines: Query<(
         &PlacedAsset,
@@ -371,8 +369,7 @@ fn sync_view(
     windows: Query<&Window, With<PrimaryWindow>>,
     mut cameras: Query<&mut Camera, With<RackHudCamera>>,
     mut panels: Query<&mut Visibility, With<Panel>>,
-    mut prompts: Query<&mut Text, (With<Prompt>, Without<Header>)>,
-    mut headers: Query<&mut Text, (With<Header>, Without<Prompt>)>,
+    mut headers: Query<&mut Text, With<Header>>,
 ) {
     let machine = match screens.open {
         Some(Screen::MachineConfiguration(e)) if machines.contains(e) => Some(e),
@@ -387,16 +384,14 @@ fn sync_view(
     }
     if let Ok(mut camera) = cameras.get_mut(view.camera) {
         camera.is_active = machine.is_some();
-        if let Ok(window) = windows.single() {
-            camera.viewport = Some(rack_viewport(window));
+        if let Some(size) = camera.physical_target_size().or_else(|| {
+            windows
+                .single()
+                .ok()
+                .map(|w| UVec2::new(w.physical_width(), w.physical_height()))
+        }) {
+            camera.viewport = Some(rack_viewport(size));
         }
-    }
-    for mut prompt in &mut prompts {
-        prompt.0 = if screens.open.is_none() {
-            interaction.prompt.clone()
-        } else {
-            String::new()
-        };
     }
     if let Some(entity) = machine
         && let Ok((asset, clock, _)) = machines.get(entity)
@@ -629,7 +624,7 @@ mod tests {
         app.update();
         assert_eq!(
             app.world().resource::<MachineInteraction>().prompt,
-            "E | Configure burbler"
+            "Configure burbler"
         );
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()

@@ -43,3 +43,11 @@ interaction prompt and action feedback.
 #### Scenario: Collecting with the screen closed
 - **WHEN** the player collects a lightning bug with the inventory closed
 - **THEN** the bottom-left HUD shows the feedback and no item count, and the goals hub updates
+
+### Requirement: A new player starts with the starter inventory
+A new game SHALL start the player's inventory from `assets/recipes/start.json`, validated
+like the other rules files; it holds 10 patch cables.
+
+#### Scenario: First Tab
+- **WHEN** a new game starts and the player presses Tab
+- **THEN** the inventory shows "Patch cable x 10"

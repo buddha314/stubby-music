@@ -119,6 +119,8 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     commands
         .spawn((
             Name::new("Sunflower reticle"),
+            // Decorative and full-screen: it must never catch the pointer.
+            Pickable::IGNORE,
             Node {
                 position_type: PositionType::Absolute,
                 width: percent(100),
@@ -130,6 +132,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                Pickable::IGNORE,
                 ImageNode::new(images.add(reticle)),
                 Node {
                     width: px(28),
@@ -142,6 +145,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         .spawn((
             CollectionPopup,
             Visibility::Hidden,
+            Pickable::IGNORE,
             Node {
                 position_type: PositionType::Absolute,
                 top: percent(55),
@@ -232,34 +236,58 @@ fn mark_collected(
         }
     }
 }
+/// The one interaction prompt, for whatever E would act on: a pickup or a machine.
 fn update_collection_popup(
     target: Res<super::interaction::InteractTarget>,
     nodes: Query<&ResourceNode, Without<super::prefabs::PrefabError>>,
     catalog: Option<Res<RecipeCatalog>>,
+    machine: Option<Res<super::machine_config::MachineInteraction>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
     mut labels: Query<&mut Text, With<CollectionPopupText>>,
     screens: Option<Res<super::controls::ScreenMode>>,
 ) {
-    let node = target
+    let action = if screens.as_ref().is_some_and(|s| s.open.is_some()) {
+        None
+    } else if let Some(node) = target
         .pickup()
         .and_then(|e| nodes.get(e).ok())
         .filter(|n| !n.collected)
-        .filter(|_| screens.as_ref().is_none_or(|s| s.open.is_none()));
+    {
+        let name = catalog
+            .as_ref()
+            .and_then(|catalog| catalog.0.resource(&node.resource))
+            .map_or(node.resource.as_str(), |resource| resource.name.as_str());
+        Some(format!("Collect {}", name.to_lowercase()))
+    } else {
+        machine
+            .as_ref()
+            .filter(|m| m.target.is_some() && !m.prompt.is_empty())
+            .map(|m| m.prompt.clone())
+    };
     for mut visibility in &mut popups {
-        visibility.set_if_neq(if node.is_some() {
+        visibility.set_if_neq(if action.is_some() {
             Visibility::Visible
         } else {
             Visibility::Hidden
         });
     }
-    if let Some(node) = node {
-        let name = catalog
-            .as_ref()
-            .and_then(|catalog| catalog.0.resource(&node.resource))
-            .map_or(node.resource.as_str(), |resource| resource.name.as_str());
+    if let Some(action) = action {
         for mut text in &mut labels {
-            text.0 = format!("[E] Collect {name}");
+            let label = interaction_prompt(&action);
+            if text.0 != label {
+                text.0 = label;
+            }
         }
+    }
+}
+/// How every interaction prompt reads: the key, then the action.
+pub(crate) fn interaction_prompt(action: &str) -> String {
+    format!("[{}] {action}", key_label(super::controls::INTERACT))
+}
+fn key_label(key: KeyCode) -> &'static str {
+    match key {
+        KeyCode::KeyE => "E",
+        _ => "?",
     }
 }
 fn update_hud(
@@ -285,11 +313,11 @@ fn update_hud(
     let nearby = target.pickup().is_some();
     let prompt = if let Some(machine) = machine.as_ref().filter(|machine| machine.target.is_some())
     {
-        machine.prompt.as_str()
+        interaction_prompt(&machine.prompt)
     } else if nearby {
-        "E | Collect resource (hold for nearby pickups)"
+        interaction_prompt("Collect (hold for nearby pickups)")
     } else {
-        "Explore for resources | approach within 3 m"
+        "Explore for resources | approach within 3 m".to_string()
     };
     let recipe_count = catalog
         .as_ref()
