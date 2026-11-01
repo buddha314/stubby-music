@@ -236,6 +236,9 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-01** — Patch guidance on the rack screen: each patch still to make is a ghost
+  cable in the build-ghost colour, and the two jacks each spare cable is for pulse in
+  that cable's colour. Mocks: `hud_mock_ready` (step 1), `hud_mock_step2`, `hud_mock`.
 - **2026-11-01** — Racks get a small iron cable comb on the right post; spare cables hang
   over it, plugs down, until patched. Every jack has a soft amber halo, the "patch
   pod", that pulses while it waits for a cable. Mocks: `hud_mock_empty`, `hud_mock_ready`,

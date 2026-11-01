@@ -53,13 +53,33 @@
     "cables": [
       {
         "color": "verdigris",
-        "for": "clock GATE -> volume TRIG"
+        "from": {
+          "place": "clock",
+          "port": "gate"
+        },
+        "to": {
+          "place": "volume",
+          "port": "trig"
+        },
+        "step": 1,
+        "hint": "take the green cable  \u00b7  patch GATE to TRIG"
       },
       {
         "color": "rust",
-        "for": "VCO OUT -> volume IN"
+        "from": {
+          "place": "vco",
+          "port": "out"
+        },
+        "to": {
+          "place": "volume",
+          "port": "in"
+        },
+        "step": 2,
+        "hint": "take the red cable  \u00b7  patch OUT to IN"
       }
-    ]
+    ],
+    "patched_hint": "patched  \u00b7  the burbler plays on every beat",
+    "sound": "starts only when every cable here is patched; the stream's notes start with it"
   },
   "lights": {
     "Burbler_Glow": {
