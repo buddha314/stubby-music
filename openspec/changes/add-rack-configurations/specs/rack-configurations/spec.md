@@ -28,3 +28,29 @@ component SHALL mount only in a slot of its kind, and a fixed slot SHALL never b
 #### Scenario: Wrong kind
 - **WHEN** the player drags a VCA onto the VCO slot
 - **THEN** it does not mount and the VCA stays in the inventory
+
+### Requirement: Every rack has a cable comb with the machine's spare cables
+Every rack SHALL show a small cable comb on its frame (`CableComb`, `Comb_<n>` slots).
+A machine's configuration SHALL list its spare cables (`configure.cables`), and they
+SHALL hang on the comb, folded over a slot with both plugs down, until the player takes
+one to patch. Unplugging both ends of a cable SHALL hang it back on the comb.
+
+#### Scenario: Opening the burbler's rack
+- **WHEN** the player opens an unpatched burbler's configuration screen
+- **THEN** two cables, verdigris and rust, hang on the comb ready to be placed
+
+#### Scenario: Taking a cable
+- **WHEN** the player drags a plug off the comb onto a jack
+- **THEN** that cable leaves the comb and its other end follows the pointer
+
+### Requirement: Patch pods pulse while waiting for a cable
+Each jack's halo (`Jack_<port>_Halo`) SHALL pulse while the jack is unpatched and the
+rack has a spare cable on its comb or in hand, and SHALL rest once the jack is patched.
+
+#### Scenario: Inviting the patch
+- **WHEN** a VCO and the volume are mounted and no cable is patched
+- **THEN** the patchable jacks' halos pulse
+
+#### Scenario: Patched
+- **WHEN** a cable joins two jacks
+- **THEN** those jacks' halos rest

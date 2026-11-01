@@ -63,7 +63,8 @@ bubbles, its stream's notes and the clock's lamp SHALL all follow that BPM.
 - **THEN** the display reads 120, and the bubbles, lamp and stream notes follow 120 BPM
 
 ### Requirement: Patched with cables
-The voice SHALL be patched by the player with patch cables, dragged from jack to jack:
+The voice SHALL be patched by the player with patch cables, taken from the two spare
+cables hanging on the rack's cable comb and dragged from jack to jack:
 the clock's GATE to the volume's TRIG, and the VCO's OUT to the volume's IN. The
 volume's OUT SHALL be normalled to the burbler's outlet. Cables SHALL be fully elastic,
 as in VCV Rack: no fixed length, drooping by one tension setting.

@@ -236,6 +236,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-01** — Racks get a small iron cable comb on the right post; spare cables hang
+  over it, plugs down, until patched. Every jack has a soft amber halo, the "patch
+  pod", that pulses while it waits for a cable. Mocks: `hud_mock_empty`, `hud_mock_ready`,
+  `hud_mock`.
 - **2026-11-01** — The stream's staff is a ribbon: its five lines keep a fixed spacing
   along the wave's normal (no bunching or crossing), and the wave travels downstream
   with the water (morph targets + a looping `Staff_Flow` clip). Bar lines ride with the

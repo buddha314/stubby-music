@@ -49,7 +49,17 @@
         "fixed": false
       }
     ],
-    "title": "MUDPIT BURBLER"
+    "title": "MUDPIT BURBLER",
+    "cables": [
+      {
+        "color": "verdigris",
+        "for": "clock GATE -> volume TRIG"
+      },
+      {
+        "color": "rust",
+        "for": "VCO OUT -> volume IN"
+      }
+    ]
   },
   "lights": {
     "Burbler_Glow": {

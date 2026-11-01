@@ -1,5 +1,6 @@
 ## 1. Art (Claude)
 - [x] 1.1 Rack frame, slot outlines (4–16 HP) and slot labels (CLOCK, VCO, VCF, VCA) (`tools/blender/create_hud_rack.py`, `assets/hud/`) (claimed: claude)
+- [x] 1.3 Cable comb on the rack frame (`CableComb`, `Comb_<n>`, plug rest nodes) and a pulsing halo on every jack (`Jack_<port>_Halo`); burbler lists two spare cables; mocks show construction, ready (cables on the comb, pods lit) and patched (`docs/art/hud_mock_ready.png`) (claimed: claude)
 - [x] 1.2 Mocks rendered from the assets and the burbler's configuration (`docs/art/hud_mock_empty.png`, `hud_mock.png`) (claimed: claude)
 
 ## 2. Game (Codex)
@@ -9,3 +10,5 @@
 - [ ] 2.4 Mount by kind from the inventory; fixed slots cannot be emptied
 - [ ] 2.5 Common open/close: E within range of `Interact`, prompt, nearer target wins, Escape closes
 - [ ] 2.6 Patching and the engine patch from modules and cables (shared with `add-mudpit-burbler` 2.4b, 2.5)
+- [ ] 2.7 Cable comb: hang `configure.cables` on `Comb_<n>` (stored-cable curve in `rack_frame` profile `cable_comb`); dragging a plug off the comb starts a cable; unplugging both ends hangs it back
+- [ ] 2.8 Pulse each `Jack_<port>_Halo` (`rest_strength` 0 → `peak_strength` 2, `period_s` 1.2) while unpatched and a spare cable exists; rest when patched
