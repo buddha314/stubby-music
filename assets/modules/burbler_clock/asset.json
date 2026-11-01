@@ -26,12 +26,22 @@
       "direction": "out"
     }
   ],
-  "params": [],
+  "params": [
+    {
+      "node": "Knob_bpm",
+      "param": "bpm",
+      "min": 30.0,
+      "max": 240.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0,
+      "default": "the burbler's seeded tempo"
+    }
+  ],
   "tempo": {
     "param": "bpm",
-    "source": "burbler",
-    "editable": false,
-    "note": "the burbler instance sets bpm; there is no knob"
+    "source": "Knob_bpm",
+    "editable": true,
+    "note": "starts at the burbler instance's seeded tempo; the display shows the knob's value"
   },
   "lights": [
     {

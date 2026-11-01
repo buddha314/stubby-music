@@ -1,9 +1,11 @@
 """Mock of the burbler's configuration HUD (add-mudpit-burbler 1.5).
 
 Configuring a burbler opens a basic three-place Eurorack over the game, as a
-Satisfactory machine screen does: the burbler's clock (fixed), a VCO slot (here a
-Square VCO) and the volume module, in a small rack of titanium rails on a weathered
-wood frame. This renders the rack straight on with a transparent background, then
+Satisfactory machine screen does: the burbler's clock (fixed; its BPM knob sets the tempo), a
+VCO slot (here the Square VCO from a lightning bug's square wave) and the volume
+module, in a small rack of titanium rails on a weathered wood frame. Two patch cables
+make the voice: clock GATE to volume TRIG, VCO OUT to volume IN. They are drawn with
+the game's cable rule (`create_patch_cable.cable_curve`). This renders the rack straight on with a transparent background, then
 lays it over a dimmed, blurred desert view with the screen's title and hints.
 
 A look reference for the HUD, not a game asset: the game builds the screen itself.
@@ -23,6 +25,12 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from create_clock_lamp import DIGITS  # noqa: E402
 from module_kit import HEIGHT, HP, PROJECT, model_file  # noqa: E402
+from create_patch_cable import COLORS, CABLE_RADIUS, cable_curve, tube  # noqa: E402
+import bmesh  # noqa: E402
+
+# (from place, port) -> (to place, port), cable colour
+PATCH = [(("burbler_clock", "gate"), ("volume", "trig"), "verdigris"),
+         (("square_vco", "out"), ("volume", "in"), "rust")]
 
 PLACES = [("burbler_clock", 8), ("square_vco", 8), ("volume", 4)]
 SHOW_BPM = " 90"
@@ -44,6 +52,11 @@ def material(name, hex_srgb, metallic=0.0, roughness=0.5):
     return mat
 
 
+def cable_material(colour):
+    name = f"HudCable_{colour}"
+    return bpy.data.materials.get(name) or material(name, COLORS[colour], roughness=0.55)
+
+
 def box(scene, name, size, location, mat):
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=location)
     obj = bpy.context.active_object
@@ -59,16 +72,51 @@ def main():
         bpy.data.objects.remove(obj)
     width = sum(hp for _, hp in PLACES) * HP
     x = -width / 2
+    ports = {}
     for asset, hp in PLACES:
         before = set(bpy.data.objects)
         bpy.ops.import_scene.gltf(filepath=str(model_file(asset)))
         for obj in set(bpy.data.objects) - before:
+            if obj.name.split(".")[0].startswith("Port_"):
+                ports[(asset, obj.name.split(".")[0][5:])] = obj
             if obj.parent is None:
                 obj.location.x += x + hp * HP / 2
             if obj.name.startswith("Display_d"):
                 digit, seg = int(obj.name[9]), obj.name[11]
                 obj.hide_render = SHOW_BPM[digit] == " " or seg not in DIGITS[SHOW_BPM[digit]]
         x += hp * HP
+    bpy.context.view_layer.update()
+    # The patch: a plug seated in each jack, a cable between them.
+    for (src, dst, colour) in PATCH:
+        ends = []
+        for place in (src, dst):
+            before = set(bpy.data.objects)
+            bpy.ops.import_scene.gltf(filepath=str(model_file("patch_plug")))
+            new = set(bpy.data.objects) - before
+            root = next(o for o in new if o.parent is None)
+            root.matrix_world = ports[place].matrix_world.copy()
+            bpy.context.view_layer.update()
+            attach = next(o for o in new if o.name.startswith("Cable_attach"))
+            for o in new:
+                if o.type == "MESH" and o.name.startswith("PatchCable_Stub"):
+                    o.hide_render = True
+                if o.type == "MESH":
+                    for slot in o.material_slots:
+                        if slot.material and slot.material.name.split(".")[0] in ("PatchCable_Cable",
+                                                                                   "PatchCable_Collar"):
+                            slot.material = cable_material(colour)
+            ends.append(attach.matrix_world.translation.copy())
+        bm = bmesh.new()
+        tube(bm, cable_curve(ends[0], ends[1]), CABLE_RADIUS)
+        mesh = bpy.data.meshes.new(f"Cable_{colour}")
+        bm.to_mesh(mesh)
+        bm.free()
+        cable = bpy.data.objects.new(f"Cable_{colour}", mesh)
+        cable.data.materials.append(cable_material(colour))
+        for face in cable.data.polygons:
+            face.use_smooth = True
+        scene.collection.objects.link(cable)
+
     # Lamp mid-flash, as in the module preview.
     lamp = bpy.data.materials.get("BurblerClock_Lamp")
     if lamp:
@@ -129,7 +177,7 @@ def main():
             "MUDPIT BURBLER",
             "-fill", "#ffb350", "-pointsize", "20", "-annotate", "+0+138", "90 BPM  ·  configure",
             "-gravity", "south", "-fill", "#adb8d4", "-pointsize", "18", "-annotate", "+0+92",
-            "drag a VCO from inventory into the slot      ·      Esc  close",
+            "turn BPM to set the tempo   ·   drag a VCO into the slot   ·   drag between jacks to patch   ·   Esc  close",
             str(OUT)], check=True)
         rack.unlink()
 

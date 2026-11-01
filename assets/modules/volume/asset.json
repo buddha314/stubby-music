@@ -16,6 +16,12 @@
   "silhouette": "rising_wedge",
   "ports": [
     {
+      "node": "Port_trig",
+      "port": "trig",
+      "direction": "in",
+      "note": "fires the built-in envelope that opens the VCA"
+    },
+    {
       "node": "Port_in",
       "port": "in",
       "direction": "in"
@@ -23,15 +29,15 @@
     {
       "node": "Port_out",
       "port": "out",
-      "direction": "out"
+      "direction": "out",
+      "normalled_to": "the burbler's outlet when nothing is patched"
     }
   ],
-  "internal_ports": [
-    {
-      "port": "cv",
-      "note": "driven by the HUD voice's hidden envelope; no jack"
-    }
-  ],
+  "envelope": {
+    "built_in": true,
+    "trigger": "trig",
+    "note": "fixed shape; engine Envelope -> Vca cv"
+  },
   "params": [
     {
       "node": "Knob_gain",
