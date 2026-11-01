@@ -1,0 +1,66 @@
+{
+  "id": "stream_hologram",
+  "model": "models/stream_hologram.glb#Scene0",
+  "kind": "stream_hologram",
+  "previews": "stream_segment",
+  "length_m": 4.0,
+  "flow_axis": "+X",
+  "width_m": 1.0,
+  "tileable": true,
+  "bendable": {
+    "length_subdivisions": 24
+  },
+  "ports": [
+    {
+      "node": "Port_in",
+      "direction": "in",
+      "ring": "Port_in_Ring"
+    },
+    {
+      "node": "Port_out",
+      "direction": "out",
+      "ring": "Port_out_Ring"
+    }
+  ],
+  "flow": {
+    "node": "Flow",
+    "scroll_axis": "+X",
+    "spacing_m": 0.5,
+    "speed": "the planned stream's flow speed; stream_segment's flow_speed_mps for now"
+  },
+  "states": {
+    "valid": {
+      "color": "#ffd39a",
+      "note": "the plan can be laid"
+    },
+    "invalid": {
+      "color": "#ff5a46",
+      "note": "blocked, too steep, or unaffordable"
+    }
+  },
+  "materials": {
+    "StreamHologram_Line": {
+      "emission_strength": 6.0,
+      "alpha": 1.0
+    },
+    "StreamHologram_Rib": {
+      "emission_strength": 2.2,
+      "alpha": 0.55
+    },
+    "StreamHologram_Chevron": {
+      "emission_strength": 4.0,
+      "alpha": 0.8
+    },
+    "StreamHologram_Surface": {
+      "emission_strength": 0.5,
+      "alpha": 0.09
+    },
+    "StreamHologram_Shell": {
+      "emission_strength": 0.2,
+      "alpha": 0.03
+    }
+  },
+  "shimmer": {
+    "note": "optional: a slow alpha flicker, 0.85 to 1.0 of each material's alpha"
+  }
+}
