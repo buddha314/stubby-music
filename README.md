@@ -91,6 +91,7 @@ and [docs/research/satisfactory-goals-and-inventory.md](docs/research/satisfacto
 | A pickup in the world and what it yields | `assets/recipes/resources.json` |
 | An infinite source that produces pickups | `assets/recipes/mines.json` |
 | A recipe (inputs → outputs) | `assets/recipes/recipes.json` |
+| A goal or chore the hub shows the player | `assets/recipes/goals.json` |
 
 1. Edit the file. In VS Code, field names autocomplete and mistakes are underlined,
    because each file names its schema.

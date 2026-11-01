@@ -2,9 +2,10 @@
 
 ### Requirement: Goals are lists of items, in two horizons
 Goals SHALL be defined as data in `assets/recipes/goals.json`, each with an id, a name,
-a horizon (`long` or `short`), the item stacks it requires, the goals it comes after,
-and the items it unlocks. Loading SHALL reject a goal that names an unknown item or
-goal, has no required items, or forms a prerequisite cycle.
+a horizon (`long` or `short`), either the item stacks it requires or a condition that
+meets it, the goals it comes after, and the items it unlocks. Loading SHALL reject a
+goal that names an unknown item, goal or condition, has neither required items nor a
+condition (or both), or forms a prerequisite cycle.
 
 #### Scenario: Valid goals
 - **WHEN** `goals.json` lists a long-term goal requiring catalog items and a short-term goal after nothing
@@ -102,3 +103,21 @@ required amount, high at half or more, and full with a tick at the full amount.
 #### Scenario: Thresholds
 - **WHEN** a goal requires 4 of an item and the player holds 0, 1, 2 or 4
 - **THEN** the bar is empty, low, high and full with a tick respectively
+
+### Requirement: Chores are met by a condition
+A goal with a `condition` SHALL complete, once, the first time the game reports that its
+condition holds, and SHALL stay complete if the condition later stops holding. The hub
+SHALL show a condition goal as its name and a one-line description of what meets it,
+with no item rows.
+
+#### Scenario: Build a heartbeat
+- **WHEN** the "Build a heartbeat" chore is active and the player patches the burbler's last cable so it sounds
+- **THEN** the chore completes and "Water the tree" opens
+
+#### Scenario: Unpatching later
+- **WHEN** the player unplugs a cable from a burbler after "Build a heartbeat" completed
+- **THEN** the chore stays complete
+
+#### Scenario: Unknown condition
+- **WHEN** a goal names a condition the schema does not define
+- **THEN** loading fails naming the goal and the condition

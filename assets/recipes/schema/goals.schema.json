@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GoalsFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/GoalDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "goals"
+  ],
+  "$defs": {
+    "Condition": {
+      "description": "Game states a goal can wait for. The game reports each when it starts to hold.",
+      "oneOf": [
+        {
+          "description": "Every `configure.cables` patch of a placed machine is made, so its voice sounds.",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "machine_configured"
+            },
+            "machine": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "machine"
+          ]
+        },
+        {
+          "description": "A stream delivers water to a placed tree of this mine (needs add-digging).",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "tree_watered"
+            },
+            "mine": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "mine"
+          ]
+        }
+      ]
+    },
+    "GoalDefinition": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "description": "Goals that must be complete before this one opens.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "description": {
+          "description": "One line the hub shows under the name.",
+          "type": "string"
+        },
+        "horizon": {
+          "$ref": "#/$defs/Horizon"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "requires": {
+          "description": "Items delivered to meet it. Exactly one of `requires` and `condition`.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Stack"
+          }
+        },
+        "unlocks": {
+          "description": "Items discovered in the recipe book when it completes.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "horizon"
+      ]
+    },
+    "Horizon": {
+      "type": "string",
+      "enum": [
+        "long",
+        "short"
+      ]
+    },
+    "Stack": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "quantity"
+      ]
+    }
+  }
+}

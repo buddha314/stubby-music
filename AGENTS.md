@@ -76,7 +76,9 @@ Use **O** for the recipe book/codex. **H** brings up the field recorder and puts
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
 milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
-Goals guide; they never end the game. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+Goals guide; they never end the game. The first chores (short-term goals met by a condition, not items) are
+**Build a heartbeat** (configure the burbler so it sounds), then **Water the tree** (lead
+its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`). WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it.
 
 ### The opening
