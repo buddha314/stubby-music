@@ -6,6 +6,7 @@ use bevy::{
 
 pub const INTERACT: KeyCode = KeyCode::KeyE;
 pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
+pub const INVENTORY: KeyCode = KeyCode::Tab;
 pub const JUMP: KeyCode = KeyCode::Space;
 pub const CROUCH: KeyCode = KeyCode::KeyC;
 const EYE_HEIGHT: f32 = 1.65;
@@ -34,26 +35,59 @@ pub fn spawn_transform() -> Transform {
 }
 #[derive(Resource)]
 struct LookCapture(bool);
+
+/// Full-screen HUD panels. One is open at a time; while one is, the cursor is free and
+/// the player neither moves nor looks (add-inventory-and-goals-hud D7). The burbler's
+/// rack screen joins this when it lands.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Screen {
+    Inventory,
+}
+#[derive(Resource, Default)]
+pub struct ScreenMode {
+    pub open: Option<Screen>,
+    closed_this_frame: bool,
+}
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(LookCapture(true))
-            .add_systems(Update, (capture_cursor, move_player).chain());
+            .init_resource::<ScreenMode>()
+            .add_systems(
+                Update,
+                (toggle_screens, capture_cursor, move_player).chain(),
+            );
     }
+}
+/// Tab opens and closes the inventory; Escape closes whatever is open.
+pub(crate) fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMut<ScreenMode>) {
+    let was = screens.open;
+    if keys.just_pressed(INVENTORY) {
+        screens.open = match screens.open {
+            Some(Screen::Inventory) => None,
+            _ => Some(Screen::Inventory),
+        };
+    } else if keys.just_pressed(KeyCode::Escape) {
+        screens.open = None;
+    }
+    screens.closed_this_frame = was.is_some() && screens.open.is_none();
 }
 fn capture_cursor(
     keys: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
+    screens: Res<ScreenMode>,
     mut capture: ResMut<LookCapture>,
     mut windows: Query<(&Window, &mut CursorOptions), With<PrimaryWindow>>,
 ) {
     let Ok((window, mut cursor)) = windows.single_mut() else {
         return;
     };
-    if !window.focused || keys.just_pressed(KeyCode::Escape) {
+    if screens.open.is_some() || !window.focused {
         capture.0 = false;
-    } else if buttons.just_pressed(MouseButton::Left) {
+    } else if screens.closed_this_frame || buttons.just_pressed(MouseButton::Left) {
         capture.0 = true;
+    } else if keys.just_pressed(KeyCode::Escape) {
+        capture.0 = false;
     }
     cursor.visible = !capture.0;
     cursor.grab_mode = if capture.0 {

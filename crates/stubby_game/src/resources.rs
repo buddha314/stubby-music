@@ -175,7 +175,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         });
     commands.spawn((
         InventoryHud,
-        Text::new("Square waves: 0"),
+        Text::new(""),
         TextFont {
             font_size: bevy::text::FontSize::Px(18.),
             ..default()
@@ -342,9 +342,7 @@ fn update_hud(
         view.open = !view.open;
     }
     let mut text = format!(
-        "Square waves: {} | Reeds: {}\n{prompt}\n{recipes} | O: Recipe book\n{}",
-        player.items.quantity("square_wave"),
-        player.items.quantity("reed"),
+        "{prompt}\n{recipes} | Tab: Inventory | O: Recipe book\n{}",
         player.feedback
     );
     if view.open {
