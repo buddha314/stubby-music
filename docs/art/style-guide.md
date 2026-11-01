@@ -236,6 +236,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-01** — The field recorder, the player's collecting device: a handheld X/Y
+  recorder at real size under a dusty fur windguard (shell fur: alpha-clipped shells cut
+  from one baked strand texture; the shells cast no shadows). Record light and meter in
+  the fairy-light language; no brand.
 - **2026-11-01** — The VCOs and the clock move to jellyfish light (`add-art-direction`
   2.8): fairy lights replace LEDs, the glyphs and crowns are glowing threads in soft
   halos, and the clock's domed lens is now a jellyfish bell, as on the burbler clock.
