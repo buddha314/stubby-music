@@ -3,8 +3,9 @@
 The initial desert scene generates its meshes, mud albedo/normal textures and
 half-float HDR cubemap in Rust at startup. No stock reference image is loaded.
 Exported models live in `models/<category>/` (`creatures`, `flora/<family>`,
-`machines`, `modules`, `props/<family>`, `streams`), with each far LOD
-(`<id>_LOD1.glb`) beside its model. Profiles and previews live under the same
+`machines`, `modules`, `props/<family>`, `streams`); a model's levels of detail are
+`_LOD<n>` nodes inside it, with Jackdaw's import settings in `<id>.glb.meta` beside it.
+Profiles and previews live under the same
 category folder at the top level (`flora/scrub_oak/`, `modules/square_vco/`, ...), and
 Blender sources under the same folder in `assets-src/blender/`.
 

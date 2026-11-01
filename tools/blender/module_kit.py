@@ -83,22 +83,25 @@ class ModuleKit:
             self.root[key] = value
         self.root["scale"] = f"eurorack_3u_{hp}hp_x10"
 
-    def export_lod(self, objects, level=1):
-        """Move `objects` out of the asset into `<asset_id>_LOD<level>.glb` beside it,
-        the file Jackdaw's LodGroup (and the game) loads as that level of detail."""
-        if bpy.app.background:
-            # The glTF exporter switches the window to the scene it exports, which
-            # segfaults while Blender's default scene is still around (5.3 alpha).
-            # `finish` drops the other scenes anyway; do it before this export too.
-            if bpy.context.window:
-                bpy.context.window.scene = self.scene
-            for other in list(bpy.data.scenes):
-                if other != self.scene:
-                    bpy.data.scenes.remove(other)
-            export_scene(self.scene, PROJECT / f"assets/models/{self.folder}/{self.asset_id}_LOD{level}.glb",
-                         only=objects)
-        for obj in objects:
-            bpy.data.objects.remove(obj, do_unlink=True)
+    def lod_levels(self, *levels):
+        """Put the model's levels of detail inside it, as nodes named `<asset_id>_LOD0`,
+        `<asset_id>_LOD1`, ...: the convention Unity's model importer and Jackdaw's
+        `model.lod.import` read. Level 0 takes everything already in the asset except
+        the objects passed for the later levels (one list per level, LOD1 first)."""
+        later = [obj for objs in levels for obj in objs]
+        nodes = []
+        for level in range(len(levels) + 1):
+            empty = bpy.data.objects.new(f"{self.asset_id}_LOD{level}", None)
+            empty.empty_display_type = "PLAIN_AXES"
+            self.link(empty)
+            nodes.append(empty)
+        for child in list(self.root.children):
+            if child not in nodes and child not in later:
+                child.parent = nodes[0]   # parents sit at the root's origin: transforms hold
+        for node, objs in zip(nodes[1:], levels):
+            for obj in objs:
+                obj.parent = node
+        return nodes
 
     # ------------------------------------------------------------ primitives
 

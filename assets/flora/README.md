@@ -1,7 +1,8 @@
 # Flora
 
-Every asset here has a Jackdaw prefab (`jackdaw/assets/prefabs/flora/`); far LODs
-are separate `_LOD1.glb` files, Jackdaw's `LodGroup` convention.
+Every asset here has a Jackdaw prefab (`jackdaw/assets/prefabs/flora/`). Levels of
+detail are inside each model as `<id>_LOD0` and `<id>_LOD1` nodes, imported into its
+settings (`.glb.meta`) by Jackdaw.
 
 ## Reeds (`tools/blender/create_reeds.py`)
 
@@ -20,7 +21,7 @@ scale `Standing` up from stubble height to show it coming back. Greenness (0 dry
 Four seeded variants (`models/flora/reeds/reed_clump_<k>.glb`) plus per-instance scale, height,
 yaw, sway phase and greenness from the world seed and instance ID. Nodes: `Interact`,
 `Standing` (with `Sway_0..2`, pivots at the ground), `Stubble` (ships at scale 0), and
-the far LOD in `reed_clump_<k>_LOD1.glb` (crossed strips, beyond 30 m). 1.4k–1.7k triangles near, 6 far; contract in `reeds/asset.json`.
+the far level `reed_clump_<k>_LOD1` inside the model (crossed strips, beyond 30 m). 1.4k–1.7k triangles near, 6 far; contract in `reeds/asset.json`.
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_reeds.py
@@ -75,8 +76,9 @@ delivered to the tree raises it; muddy water does not wake it.
 ### Nodes
 
 `Limb_<n>` (one per stem, pivot at its base; sway it), `Dead_<n>`, `Bud_<n>`,
-`Foliage_<n>`, `Bloom_<k>` (extras: `order`), `BugSpawn_<k>`, and the far LOD in
-`scrub_oak_<k>_LOD1.glb` (beyond 45 m; its foliage node follows leaf-out). Every
+`Foliage_<n>`, `Bloom_<k>` (extras: `order`), `BugSpawn_<k>`, all under
+`scrub_oak_<k>_LOD0`, and the far level `scrub_oak_<k>_LOD1` (beyond 45 m; its
+`ScrubOak_Far_Foliage_Node` follows leaf-out). Every
 part of a stem is parented to its limb, so it sways together.
 
 Triangles: 11.0k–14.7k near, 0.8k–1.1k far LOD.
