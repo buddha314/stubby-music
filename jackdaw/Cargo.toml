@@ -8,7 +8,10 @@ publish = false
 [workspace]
 
 [features]
+default = ["embedded_recipes_plugin"]
 dev = ["bevy/dynamic_linking"]
+# The game's crafting plugin, compiled as a module against this Bevy revision.
+embedded_recipes_plugin = []
 
 [dependencies]
 stubby_recipes = { path = "../crates/stubby_recipes" }

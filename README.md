@@ -60,7 +60,7 @@ kind. There is no `catalog.json` any more; it was split into these files.
 
 **The crafting system is our own, not a community crate.** `crates/stubby_recipes`
 holds the rules model, inventory, recipe book and crafting, with no Bevy dependency.
-It is being shaped as a Bevy community plugin: a thin `bevy_stubby_recipes` crate the
+It is used as a Bevy community plugin: the thin `bevy_stubby_recipes` crate, which the
 game adds with `add_plugins`, over that Bevy-free core, the structure long-lived Bevy
 plugins such as `bevy_rapier3d` use (`openspec/changes/add-recipes-bevy-plugin/`).
 We looked at the Bevy crafting and inventory crates (`bevy_inventory`, `bevy_items`,

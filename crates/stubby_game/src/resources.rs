@@ -1,7 +1,12 @@
 //! World resource collection and the first inventory/recipe boundary.
 use bevy::prelude::*;
-use stubby_recipes::{
-    Catalog, HarvestLedger, Inventory, RecipeBook, RecipeError, SignalUse, SourceObject, Stack,
+use stubby_recipes::{SignalUse, SourceObject};
+
+// The crafting system is the `bevy_stubby_recipes` plugin; these names stay importable
+// from here so the rest of the game is unchanged.
+pub use super::recipes_plugin::{
+    CraftCompleted, CraftRequest, HarvestRequest, PlayerInventory, RecipeCatalog, RecipesPlugin,
+    RecipesSystems, ResourceCollected,
 };
 
 #[derive(Component, Reflect, Clone)]
@@ -63,32 +68,6 @@ impl MineNode {
     }
 }
 
-#[derive(Resource, Default)]
-pub struct PlayerInventory {
-    pub items: Inventory,
-    pub collected: HarvestLedger,
-    pub book: RecipeBook,
-    pub feedback: String,
-}
-#[derive(Resource)]
-pub struct RecipeCatalog(pub Catalog);
-
-/// Future machines and crafting interfaces use this same transaction boundary.
-/// Successful world harvest; presentation removes the depleted resource's effects.
-#[derive(Message, Clone)]
-pub struct ResourceCollected {
-    pub instance: String,
-    pub yields: Vec<Stack>,
-}
-#[derive(Message, Clone)]
-pub struct CraftRequest {
-    pub recipe: String,
-}
-#[derive(Message, Clone)]
-pub struct CraftCompleted {
-    pub recipe: String,
-    pub outputs: Vec<Stack>,
-}
 #[derive(Component)]
 struct InventoryHud;
 #[derive(Component)]
@@ -111,25 +90,25 @@ struct RecipeBookView {
 pub struct ResourceRecipesPlugin;
 impl Plugin for ResourceRecipesPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PlayerInventory>()
-            .init_resource::<RecipeBookView>()
+        if !app.is_plugin_added::<RecipesPlugin>() {
+            app.add_plugins(RecipesPlugin::default());
+        }
+        app.init_resource::<RecipeBookView>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
-            .add_message::<ResourceCollected>()
-            .add_message::<CraftRequest>()
-            .add_message::<CraftCompleted>()
             .add_systems(Startup, setup)
+            .configure_sets(Update, RecipesSystems.after(super::prefabs::PrefabBinding))
             .add_systems(
                 Update,
                 (
-                    replenish_nodes,
-                    collect_nearby,
-                    craft_requests,
-                    update_hud,
-                    update_collection_popup,
-                )
-                    .chain()
-                    .after(super::prefabs::PrefabBinding),
+                    (replenish_nodes, collect_nearby)
+                        .chain()
+                        .after(super::prefabs::PrefabBinding)
+                        .before(RecipesSystems),
+                    (mark_collected, update_hud, update_collection_popup)
+                        .chain()
+                        .after(RecipesSystems),
+                ),
             );
     }
 }
@@ -165,10 +144,6 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
                 },
             ));
         });
-    match stubby_recipes::shipped_catalog() {
-        Ok(catalog) => commands.insert_resource(RecipeCatalog(catalog)),
-        Err(error) => error!("Recipe catalog failed validation: {error}"),
-    }
     commands
         .spawn((
             CollectionPopup,
@@ -214,21 +189,23 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         },
     ));
 }
-#[allow(clippy::too_many_arguments)] // Collection spans input, world transforms and the inventory transaction.
+/// The game decides *when* to harvest (E held, nearest available node within reach) and
+/// asks the plugin; `mark_collected` applies the result to the node.
+#[allow(clippy::too_many_arguments)] // Collection spans input, world transforms and the request.
 fn collect_nearby(
     keys: Res<ButtonInput<KeyCode>>,
     catalog: Option<Res<RecipeCatalog>>,
     mut player: ResMut<PlayerInventory>,
     camera: Query<Entity, With<Camera3d>>,
-    mut nodes: Query<(Entity, &mut ResourceNode), Without<super::prefabs::PrefabError>>,
+    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
     transforms: bevy::transform::helper::TransformHelper,
-    mut events: MessageWriter<ResourceCollected>,
+    mut requests: MessageWriter<HarvestRequest>,
     calendar: Option<Res<super::calendar::Calendar>>,
 ) {
     if !keys.pressed(super::controls::INTERACT) {
         return;
     }
-    let (Some(catalog), Ok(camera)) = (catalog, camera.single()) else {
+    let (Some(_), Ok(camera)) = (catalog, camera.single()) else {
         return;
     };
     let Ok(camera) = transforms.compute_global_transform(camera) else {
@@ -236,60 +213,39 @@ fn collect_nearby(
     };
     let camera = camera.compute_transform();
     let candidate = nodes
-        .iter_mut()
+        .iter()
         .filter(|(_, node)| !node.collected)
         .filter_map(|(entity, node)| {
             let transform = transforms
                 .compute_global_transform(entity)
                 .ok()?
                 .compute_transform();
-            Some((
-                ground_distance_squared(&transform, &camera),
-                node.instance.clone(),
-            ))
+            Some((ground_distance_squared(&transform, &camera), node))
         })
         .filter(|(distance, _)| *distance <= COLLECTION_RADIUS_SQUARED)
         .min_by(|a, b| a.0.total_cmp(&b.0));
-    let Some((_, instance)) = candidate else {
+    let Some((_, node)) = candidate else {
         player.feedback = "Move within 3 m of an available resource to collect.".into();
         return;
     };
-    if let Some((_, mut node)) = nodes.iter_mut().find(|(_, node)| node.instance == instance) {
-        let PlayerInventory {
-            items,
-            collected,
-            book,
-            feedback,
-        } = &mut *player;
-        let mut source = node.source_object();
-        match catalog.0.harvest_source_at(
-            &mut source,
-            items,
-            collected,
-            calendar
-                .as_ref()
-                .map(|c| c.resource_time())
-                .unwrap_or_default(),
-        ) {
-            Ok(yields) => {
-                for stack in &yields {
-                    book.discover(&stack.item);
-                }
+    requests.write(HarvestRequest {
+        source: node.source_object(),
+        now: calendar
+            .as_ref()
+            .map(|c| c.resource_time())
+            .unwrap_or_default(),
+    });
+}
+/// A harvested node is depleted until it replenishes.
+fn mark_collected(
+    mut collected: MessageReader<ResourceCollected>,
+    mut nodes: Query<&mut ResourceNode>,
+) {
+    for event in collected.read() {
+        for mut node in &mut nodes {
+            if node.instance == event.instance {
                 node.collected = true;
-                events.write(ResourceCollected {
-                    instance: node.instance.clone(),
-                    yields: yields.clone(),
-                });
-                *feedback = format!(
-                    "Collected {}. Available as recipe ingredients.",
-                    yields
-                        .iter()
-                        .map(|stack| format!("{} x {}", stack.quantity, stack.item))
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                );
             }
-            Err(error) => *feedback = error.to_string(),
         }
     }
 }
@@ -337,35 +293,6 @@ fn update_collection_popup(
     }
 }
 
-fn craft_requests(
-    mut requests: MessageReader<CraftRequest>,
-    catalog: Option<Res<RecipeCatalog>>,
-    mut player: ResMut<PlayerInventory>,
-    mut completed: MessageWriter<CraftCompleted>,
-) {
-    let Some(catalog) = catalog else {
-        return;
-    };
-    for request in requests.read() {
-        match catalog.0.craft(&request.recipe, &mut player.items) {
-            Ok(outputs) => {
-                player.feedback = format!("Crafted {}.", request.recipe);
-                completed.write(CraftCompleted {
-                    recipe: request.recipe.clone(),
-                    outputs,
-                });
-            }
-            Err(RecipeError::MissingIngredient {
-                item,
-                needed,
-                available,
-            }) => {
-                player.feedback = format!("Need {needed} {item}; have {available}.");
-            }
-            Err(error) => player.feedback = error.to_string(),
-        }
-    }
-}
 #[allow(clippy::too_many_arguments)] // HUD combines player, catalog and nearby world state.
 fn update_hud(
     keys: Res<ButtonInput<KeyCode>>,
@@ -478,6 +405,20 @@ fn replenish_nodes(
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// Collection as the game runs it: the plugin plus the game's systems around it.
+    fn collection_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(RecipesPlugin::default())
+            .init_resource::<ButtonInput<KeyCode>>()
+            .add_systems(
+                Update,
+                (
+                    collect_nearby.before(RecipesSystems),
+                    mark_collected.after(RecipesSystems),
+                ),
+            );
+        app
+    }
     #[test]
     fn night_return_restores_existing_pickup_without_free_items() {
         let catalog = stubby_recipes::shipped_catalog().unwrap();
@@ -529,12 +470,7 @@ mod tests {
     }
     #[test]
     fn mine_objects_are_authorable_but_not_finite_collection_nodes() {
-        let mut app = App::new();
-        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
-            .init_resource::<PlayerInventory>()
-            .init_resource::<ButtonInput<KeyCode>>()
-            .add_message::<ResourceCollected>()
-            .add_systems(Update, collect_nearby);
+        let mut app = collection_app();
         app.world_mut()
             .spawn((Camera3d::default(), Transform::default()));
         let tree = app
@@ -606,12 +542,7 @@ mod tests {
 
     #[test]
     fn holding_e_collects_new_resources_while_f_is_not_collect() {
-        let mut app = App::new();
-        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
-            .init_resource::<PlayerInventory>()
-            .init_resource::<ButtonInput<KeyCode>>()
-            .add_message::<ResourceCollected>()
-            .add_systems(Update, collect_nearby);
+        let mut app = collection_app();
         let camera = app
             .world_mut()
             .spawn((Camera3d::default(), Transform::default()))
@@ -680,12 +611,7 @@ mod tests {
 
     #[test]
     fn interaction_collects_only_one_nearby_instance_and_cannot_duplicate_it() {
-        let mut app = App::new();
-        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
-            .init_resource::<PlayerInventory>()
-            .init_resource::<ButtonInput<KeyCode>>()
-            .add_message::<ResourceCollected>()
-            .add_systems(Update, collect_nearby);
+        let mut app = collection_app();
         app.world_mut()
             .spawn((Camera3d::default(), Transform::default()));
         app.world_mut().spawn((

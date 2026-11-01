@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes"]
+members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes"]
 # Each has its own workspace: spikes are throwaway experiments, and jackdaw/ pins the
 # editor's Bevy revision, separate from the game's Bevy 0.20.
 exclude = ["spikes", "jackdaw"]

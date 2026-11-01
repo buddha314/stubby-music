@@ -160,6 +160,7 @@ impl RecipeBook {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Catalog {
     items: BTreeMap<String, ItemDefinition>,
     resources: BTreeMap<String, ResourceDefinition>,

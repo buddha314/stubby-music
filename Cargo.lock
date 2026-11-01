@@ -1898,6 +1898,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_stubby_recipes"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "stubby_recipes",
+]
+
+[[package]]
 name = "bevy_tasks"
 version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5807,6 +5815,7 @@ name = "stubby_game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_stubby_recipes",
  "gltf",
  "half",
  "png",

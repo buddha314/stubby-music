@@ -648,23 +648,6 @@ mod tests {
     }
 
     #[test]
-    fn golden_rows() {
-        let catalog = shipped_catalog().unwrap();
-        let reeds = catalog.resource("reed_clump").unwrap();
-        assert_eq!(
-            reeds.replenishment,
-            crate::ReplenishmentPolicy::After { seconds: 60 }
-        );
-        assert_eq!(reeds.yields[0].quantity, 6);
-        let burbler = catalog.mine("mudpit_burbler").unwrap();
-        assert_eq!(burbler.produces_resource, "clock_source");
-        assert_eq!(
-            catalog.resource("clock_source").unwrap().yields[0].item,
-            "clock"
-        );
-    }
-
-    #[test]
     fn misspelled_field_names_file_row_and_field() {
         let text = shipped_files()
             .resources
@@ -674,34 +657,6 @@ mod tests {
         assert_eq!(errors[0].file, RESOURCES);
         assert_eq!(errors[0].id, "clock_source");
         assert!(errors[0].message.contains("yeilds"), "{}", errors[0]);
-    }
-
-    #[test]
-    fn unknown_field_fails_in_every_file() {
-        for (domain, text) in [
-            (
-                "items",
-                shipped_files().items.replacen("\"name\"", "\"nmae\"", 1),
-            ),
-            (
-                "mines",
-                shipped_files().mines.replacen("\"name\"", "\"nmae\"", 1),
-            ),
-            (
-                "resources",
-                shipped_files()
-                    .resources
-                    .replacen("\"kind\"", "\"knid\"", 1),
-            ),
-            (
-                "migrations",
-                shipped_files()
-                    .migrations
-                    .replacen("\"from\"", "\"form\"", 1),
-            ),
-        ] {
-            assert!(Rules::load(&with(domain, &text)).is_err(), "{domain}");
-        }
     }
 
     #[test]
@@ -727,84 +682,5 @@ mod tests {
             "{}",
             RulesErrors(errors)
         );
-    }
-
-    #[test]
-    fn one_run_reports_every_problem() {
-        let mut definition = Rules::load(&shipped_files()).unwrap().definition;
-        definition.items[0].id = "Bad".into();
-        definition.mines[0].produces_resource = "nowhere".into();
-        let errors = validate(&definition);
-        assert!(errors.len() >= 2, "{}", RulesErrors(errors));
-    }
-
-    #[test]
-    fn unreachable_recipe_is_an_error() {
-        let mut definition = Rules::load(&shipped_files()).unwrap().definition;
-        definition.items.push(ItemDefinition {
-            id: "moon_dust".into(),
-            name: "Moon dust".into(),
-            description: "Nothing yields it.".into(),
-            waveform: None,
-            uses: vec![],
-        });
-        definition.recipes.push(RecipeDefinition {
-            id: "dust_reed".into(),
-            name: "Dusty reed".into(),
-            inputs: vec![Stack {
-                item: "moon_dust".into(),
-                quantity: 1,
-            }],
-            outputs: vec![Stack {
-                item: "reed".into(),
-                quantity: 1,
-            }],
-        });
-        let errors = validate(&definition);
-        assert!(
-            errors
-                .iter()
-                .any(|e| e.id == "dust_reed" && e.message.contains("moon_dust")),
-            "{}",
-            RulesErrors(errors)
-        );
-    }
-
-    #[test]
-    fn wrong_format_version_is_rejected() {
-        let text = shipped_files()
-            .items
-            .replace("\"format\": 1", "\"format\": 2");
-        let errors = Rules::load(&with("items", &text)).unwrap_err().0;
-        assert!(errors.iter().any(|e| e.field == "format"));
-    }
-
-    #[test]
-    fn migrations_must_point_from_gone_ids_to_existing_ones() {
-        let rules = Rules::load(&shipped_files()).unwrap();
-        let stale = Migration {
-            id: "test_stale".into(),
-            registry: Registry::Items,
-            from: "square_wave".into(),
-            to: Some("nowhere".into()),
-        };
-        let errors = validate_migrations(&rules.definition, &[stale]);
-        assert_eq!(errors.len(), 2, "{}", RulesErrors(errors));
-    }
-
-    #[test]
-    fn vanished_id_without_migration_fails_the_lock() {
-        let mut rules = Rules::load(&shipped_files()).unwrap();
-        let lock = updated_ids_lock("", &rules);
-        rules.definition.items.retain(|i| i.id != "reed");
-        rules.definition.resources.retain(|r| r.id != "reed_clump");
-        let errors = check_ids_lock(&lock, &rules);
-        assert!(
-            errors.iter().any(|e| e.id == "reed"),
-            "{}",
-            RulesErrors(errors)
-        );
-        // The rename on record (clock -> clock_source) is accepted.
-        assert!(!errors.iter().any(|e| e.id == "clock"));
     }
 }

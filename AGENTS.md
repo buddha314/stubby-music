@@ -118,7 +118,7 @@ crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
-  bevy_stubby_recipes/    the crafting system as a Bevy plugin over stubby_recipes (planned)
+  bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
 assets/                   runtime assets loaded by Bevy (glTF, textures, shaders)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts

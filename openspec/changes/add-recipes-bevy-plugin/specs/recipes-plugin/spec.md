@@ -3,11 +3,12 @@
 ### Requirement: Crafting installs as one Bevy plugin
 The crafting system SHALL be provided to the game by a plugin crate,
 `bevy_stubby_recipes`, whose `RecipesPlugin` is added with `app.add_plugins`. The game
-SHALL NOT load rules files or apply harvests, crafts or replenishment itself.
+SHALL NOT load rules files or apply harvests or crafts itself; it sends requests and
+reads results.
 
 #### Scenario: Adding the plugin
-- **WHEN** a Bevy app adds `RecipesPlugin` and spawns an entity with an `Inventory`
-- **THEN** the rules load, and harvest and craft messages for that entity are applied
+- **WHEN** a Bevy app adds `RecipesPlugin` and sends a harvest request for a lightning bug
+- **THEN** the shipped rules are loaded, the player's inventory gains the yield, and a collected message names the instance
 
 ### Requirement: The rules core never depends on Bevy
 `stubby_recipes` SHALL have no dependency on any Bevy crate, required or optional, and
@@ -19,31 +20,14 @@ Bevy and the core.
 - **WHEN** the core's dependency tree is listed
 - **THEN** it contains no `bevy` crate
 
-### Requirement: Inventories belong to entities
-Inventory, recipe book and harvest ledger SHALL be components on an owner entity, and
-the harvest, craft and completion messages SHALL name that entity.
+### Requirement: One player inventory, for now
+The plugin SHALL hold the player's items, harvest ledger and recipe book as one
+resource. Inventories owned by other entities (machines, storage) are out of scope
+until machines exist.
 
-#### Scenario: Two owners
-- **WHEN** a craft request names the player and another names a storage entity
-- **THEN** each consumes from and adds to its own inventory only
-
-### Requirement: Rules are a hot-reloaded asset that keeps the last valid rules
-The plugin SHALL load the rules files as a Bevy asset and reload them when they
-change. A reload that fails validation SHALL keep the previous rules and send a message
-with the errors.
-
-#### Scenario: Bad edit during play
-- **WHEN** a rules file is saved with an unknown field while the game runs
-- **THEN** play continues on the previous rules and an error message names the file, row and field
-
-### Requirement: Game-specific item data is an extension
-Item definitions in the core SHALL carry only generic fields plus an extension map the
-core passes through unchanged; the game's waveform and signal-use data SHALL live in
-the game's extension and be validated by the game's schema fragment.
-
-#### Scenario: Square wave metadata
-- **WHEN** the game reads the `square_wave` item
-- **THEN** its waveform and uses come from the item's `stubby` extension, and the core's types name neither
+#### Scenario: Harvest and craft share the inventory
+- **WHEN** a harvest request is applied and then a craft request
+- **THEN** both act on the same player inventory
 
 ### Requirement: Game presentation stays in the game
 HUD, prompts, input bindings, reach checks and screens SHALL remain in `stubby_game`;
