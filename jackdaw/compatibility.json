@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "jackdaw": {
-    "revision": "26e0924e3ceb44a1c7fe7c89b31d81b0b8dc68ed",
+    "revision": "3ca936dec8f09278598c8f9b128aea88cc3940fe",
     "upstream_revision": "42d12878a8943446747d21fcaccc56d1d7acdbec",
     "version": "0.20.1-rc.1",
     "origin": "https://github.com/buddha314/jackdaw.git",
