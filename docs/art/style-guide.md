@@ -157,9 +157,12 @@ plankton in a wave. It is never a hard point or a crisp rectangle.
   `alpha` 0.2–0.4 shells). No Blender-only glow tricks; the game's bloom does the
   rest.
 
-The first modules (VCOs, clock) predate this rule: their LEDs and segment display are
-LED-like. Read them as legacy; they migrate as they are touched (`add-art-direction`
-2.8). The clock display may stay segmented, because a number has to be read.
+Every module follows this through `module_kit.py`: `soft_light` (a status light: core
+plus two shells), `soft_trace` (a glyph or crown: a thin bright thread with three faint
+halo strokes behind it) and `jellyfish` (a flashing lamp: scalloped bell, core and
+tendrils sharing one translucent material, so the game flashes them together). A trace
+drawn in a pulsing lamp material takes no static halo, since it would not flash with it;
+bloom gives it one. Segment displays stay segmented, because a number has to be read.
 
 ## Material rules
 
@@ -233,6 +236,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-01** — The VCOs and the clock move to jellyfish light (`add-art-direction`
+  2.8): fairy lights replace LEDs, the glyphs and crowns are glowing threads in soft
+  halos, and the clock's domed lens is now a jellyfish bell, as on the burbler clock.
+  The helpers moved into `module_kit.py`, so every module shares them.
 - **2026-10-31** — Configuration racks are built from shared parts: a rack frame that
   stretches to any width, slot outlines in the build-ghost amber for 4–16 HP, and a
   label per component kind (CLOCK, VCO, VCF, VCA) with a glyph. Empty slots show what

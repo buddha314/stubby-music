@@ -29,12 +29,11 @@ from pathlib import Path
 import math
 import sys
 
-import bmesh
 import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from create_clock_lamp import DIGITS, FLASH, SEGMENTS, segment_boxes  # noqa: E402
-from module_kit import FACING_OUT, HEIGHT, PANEL_FRONT, ModuleKit, run  # noqa: E402
+from module_kit import HEIGHT, PANEL_FRONT, ModuleKit, run  # noqa: E402
 
 CROWN_HEIGHT = 0.09
 PREVIEW_BPM = 90  # the burbler's default tempo
@@ -64,46 +63,6 @@ class HudKit(ModuleKit):
         self.brass_mat = self.screw_mat  # jack nuts in the same rusted iron
         self.glow = m("Glow", AMBER, roughness=0.3, emission=AMBER, strength=8.0)
         self.glow_halo = self.translucent("GlowHalo", AMBER, 1.2, 0.12)
-
-    def translucent(self, name, color, strength, alpha):
-        mat = self.material(name, color, roughness=0.3, emission=color, strength=strength)
-        mat.node_tree.nodes["Principled BSDF"].inputs["Alpha"].default_value = alpha
-        mat.surface_render_method = "BLENDED"
-        return mat
-
-    def soft_light(self, light, location, core_r=0.01, halo_r=0.018):
-        """A fairy light in place of an LED: an opaque core inside two translucent shells.
-        Every mesh under `Light_<light>` is driven by the game, so the halo pulses too."""
-        node = self.socket(f"Light_{light}", location, light=light, rest_strength=0.0, peak_strength=8.0)
-        self.sphere("LightCore", core_r, self.glow, node)
-        self.sphere("LightHalo", halo_r, self.glow_halo, node)
-        self.sphere("LightHaloOuter", halo_r * 1.8, self.glow_halo, node)
-        return node
-
-    def sphere(self, name, radius, mat, parent, location=(0, 0, 0), shape=None, segments=16, rings=8):
-        def fill(bm):
-            bmesh.ops.create_uvsphere(bm, u_segments=segments, v_segments=rings, radius=radius)
-            if shape:
-                shape(bm)
-        obj = self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat, parent)
-        obj.location = location
-        for face in obj.data.polygons:
-            face.use_smooth = True
-        return obj
-
-    def ring(self, name, radius, tube, mat, parent, steps=48):
-        """A torus around the parent's local Z (the panel normal, under a socket)."""
-        def fill(bm):
-            verts = [bm.verts.new((radius + tube * math.cos(a), 0.0, tube * math.sin(a)))
-                     for a in (k / 8 * 2 * math.pi for k in range(9))]
-            edges = [bm.edges.new((a, b)) for a, b in zip(verts, verts[1:])]
-            bmesh.ops.spin(bm, geom=verts + edges, cent=(0, 0, 0), axis=(0, 0, 1),
-                           angle=2 * math.pi, steps=steps)
-            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
-        obj = self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat, parent)
-        for face in obj.data.polygons:
-            face.use_smooth = True
-        return obj
 
     def crown(self, edge, mat):
         """A silhouette along the top edge, traced in light, as every module has."""
@@ -184,33 +143,7 @@ def build_burbler_clock():
              default="burbler")
 
     # The beat lamp: a jellyfish bell on the faceplate, its tendrils trailing below.
-    lamp_z = 0.58
-    lamp = bpy.data.objects.new("Lamp", None)
-    lamp.empty_display_type = "CIRCLE"
-    lamp.empty_display_size = 0.07
-    kit.link(lamp)
-    lamp.location = (0, PANEL_FRONT - 0.002, lamp_z)
-    lamp.rotation_euler = FACING_OUT
-    lamp["light"] = "gate"
-    lamp["pulse_driver"] = "audio_sample_timestamp"
-    for key, value in FLASH.items():
-        lamp[key] = value
-
-    def bell(bm, r=0.08):
-        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -1e-4], context="VERTS")
-        for v in bm.verts:
-            angle = math.atan2(v.co.y, v.co.x)
-            if abs(v.co.z) < 1e-4:  # scalloped rim
-                v.co.x *= 1 + 0.1 * math.sin(8 * angle)
-                v.co.y *= 1 + 0.1 * math.sin(8 * angle)
-            v.co.z *= 0.6
-    kit.sphere("LampBell", 0.07, lamp_mat, lamp, shape=bell, segments=24, rings=10)
-    kit.sphere("LampCore", 0.023, lamp_mat, lamp, location=(0, 0, 0.018))
-    # No outer halo shell here: on the flat faceplate it reads as a disc and hides the
-    # bell's scalloped rim. The game's bloom gives the lamp its halo.
-    for k, x in enumerate((-0.045, -0.015, 0.015, 0.045)):
-        pts = [(x * 0.85 + 0.01 * math.sin(j * 1.1 + k), lamp_z - 0.06 - j * 0.016) for j in range(5)]
-        kit.trace(f"LampTendril{k}", pts, "xz", PANEL_FRONT - 0.0025, 0.006, lamp_mat)
+    kit.jellyfish("Lamp", (0, 0.58), lamp_mat, light="gate", pulse_driver="audio_sample_timestamp", **FLASH)
 
     kit.output_patch(0.27, 0.30)
     kit.jack("gate", "out", 0.34, "GATE", on_patch=True)

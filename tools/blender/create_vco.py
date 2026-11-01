@@ -3,7 +3,8 @@
 Each oscillator's waveform must read from a distance, so it appears at three
 scales: the case's crown is the waveform in silhouette (traced in amber along its
 front edge), a large glyph sits on a dark recess on the faceplate, and the same glyph
-is on both sides of the case.
+is on both sides of the case. Every trace is a glowing thread in a soft halo, and the
+OUT light is a fairy light, per the style guide's luminescence rule (module_kit.py).
 
 Reproduce every VCO:  blender -b --factory-startup -P tools/blender/create_vco.py
 Or one:               blender -b --factory-startup -P tools/blender/create_vco.py -- saw
@@ -80,7 +81,7 @@ def build(waveform):
     if abs(outline[0][0] - outline[-1][0]) < 1e-6 and abs(outline[0][1] - outline[-1][1]) < 1e-6:
         outline.pop()
     kit.prism("Crown", outline, kit.body_mat)
-    kit.trace("CrownTrace", edge, "xz", PANEL_FRONT - 0.002, 0.012, glyph_mat)
+    kit.soft_trace("CrownTrace", edge, "xz", PANEL_FRONT - 0.002, 0.008, glyph_mat)
 
     kit.glyphs(wave(0.0, 1.065, 0.155, 0.06), wave(0.0, 1.0, 0.11, 0.06), glyph_mat)
     kit.title(spec["title"])
