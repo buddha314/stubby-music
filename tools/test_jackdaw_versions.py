@@ -19,7 +19,7 @@ class CompatibilityTests(unittest.TestCase):
         self.root = Path(self.temp.name) / 'game'
         self.source = Path(self.temp.name) / 'jackdaw'
         for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
-                     'crates/stubby_game/Cargo.toml', 'jackdaw/Cargo.toml',
+                     'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'jackdaw/Cargo.toml',
                      'jackdaw/jackdaw.toml', 'jackdaw/compatibility.json'):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ class CompatibilityTests(unittest.TestCase):
 
     def test_independent_adapter_version_and_lockfile_are_rejected(self):
         path = self.root / 'jackdaw/Cargo.toml'
-        path.write_text(path.read_text().replace('bevy.workspace = true', 'bevy = "0.20"'))
+        path.write_text(path.read_text().replace('bevy.workspace = true', 'bevy.workspace = false'))
         (self.root / 'jackdaw/Cargo.lock').write_text('version = 4\n')
         errors = self.check()
         self.assertTrue(any('inherit Bevy' in e for e in errors))

@@ -1,0 +1,20 @@
+{
+  "$schema": "schema/mines.schema.json",
+  "format": 1,
+  "mines": [
+    {
+      "id": "mudpit_burbler",
+      "name": "Mudpit burbler",
+      "produces_resource": "clock_source"
+    },
+    {
+      "id": "scrub_oak",
+      "name": "Scrub oak",
+      "produces_resource": "lightning_bug",
+      "productivity_factors": [
+        "water_quality",
+        "light_quality"
+      ]
+    }
+  ]
+}

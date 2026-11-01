@@ -1,10 +1,19 @@
 #[cfg(all(feature = "dev", not(debug_assertions)))]
 compile_error!("The dev feature enables dynamic linking; omit it for release builds.");
 
+// The crafting system, as a Bevy plugin. Jackdaw's adapter builds the game against the
+// editor's Bevy revision, so there the plugin's source is compiled in as a module.
+#[cfg(not(feature = "embedded_recipes_plugin"))]
+pub use bevy_stubby_recipes as recipes_plugin;
+#[cfg(feature = "embedded_recipes_plugin")]
+#[path = "../../bevy_stubby_recipes/src/lib.rs"]
+pub mod recipes_plugin;
+
 pub mod audio;
 pub mod calendar;
 pub mod controls;
 pub mod export;
+mod inventory_screen;
 pub mod module_ids;
 pub mod prefab_presentation;
 mod prefab_review;
@@ -35,6 +44,7 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
+            inventory_screen::InventoryScreenPlugin,
             prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,
             review::ReplenishmentReviewPlugin,

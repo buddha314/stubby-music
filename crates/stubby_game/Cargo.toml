@@ -5,12 +5,16 @@ edition.workspace = true
 
 [features]
 dev = ["bevy/dynamic_linking"]
+# Set only by Jackdaw's adapter, which compiles the plugin's source as a module.
+embedded_recipes_plugin = []
 
 [dependencies]
 stubby_recipes = { path = "../stubby_recipes" }
+bevy_stubby_recipes = { path = "../bevy_stubby_recipes" }
 stubby_audio = { path = "../stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
+bevy.features = ["3d", "ui"]
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"

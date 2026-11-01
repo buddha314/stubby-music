@@ -40,7 +40,7 @@ def validate(root, source):
     if not isinstance(dep, dict) or dep.get('version') != '=' + bevy['version'] or 'git' in dep or 'path' in dep:
         errors.append('workspace Bevy source/version differs from the selected Jackdaw release')
     members = workspace['members']
-    for member in ('crates/stubby_game', 'jackdaw'):
+    for member in ('crates/stubby_game', 'crates/bevy_stubby_recipes', 'jackdaw'):
         manifest = read_toml(root / member / 'Cargo.toml')
         member_bevy = manifest['dependencies']['bevy']
         if member not in members or not isinstance(member_bevy, dict) or member_bevy.get('workspace') is not True:

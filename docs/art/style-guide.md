@@ -236,6 +236,15 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-01** — The stream's staff is a ribbon: its five lines keep a fixed spacing
+  along the wave's normal (no bunching or crossing), and the wave travels downstream
+  with the water (morph targets + a looping `Staff_Flow` clip). Bar lines ride with the
+  notes, one per bar (4 beats by default, configurable later), so measures follow the
+  clock's BPM.
+- **2026-11-01** — The field recorder, the player's collecting device: a handheld X/Y
+  recorder at real size under a dusty fur windguard (shell fur: alpha-clipped shells cut
+  from one baked strand texture; the shells cast no shadows). Record light and meter in
+  the fairy-light language; no brand.
 - **2026-11-01** — The VCOs and the clock move to jellyfish light (`add-art-direction`
   2.8): fairy lights replace LEDs, the glyphs and crowns are glowing threads in soft
   halos, and the clock's domed lens is now a jellyfish bell, as on the burbler clock.

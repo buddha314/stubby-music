@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MigrationsFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "migrations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Migration"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "migrations"
+  ],
+  "$defs": {
+    "Migration": {
+      "description": "A renamed (`to` set) or removed (`to` null) rule ID. IDs are save-game API: saves\nrecord the migrations they have applied and apply the rest on load.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "registry": {
+          "description": "Which rules file the ID lived in. Before IDs shared one namespace, two\nregistries could use the same ID (the item and the resource `clock`).",
+          "$ref": "#/$defs/Registry"
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "registry",
+        "from"
+      ]
+    },
+    "Registry": {
+      "type": "string",
+      "enum": [
+        "items",
+        "resources",
+        "mines",
+        "recipes"
+      ]
+    }
+  }
+}

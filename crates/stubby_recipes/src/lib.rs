@@ -1,41 +1,46 @@
 //! Item quantities, resource yields and atomic recipes. No Bevy or audio dependency.
+pub mod rules;
 mod source;
+pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SignalUse {
     Vco,
     Lfo,
     Gate,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Waveform {
     Square,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ItemDefinition {
     pub id: String,
     pub name: String,
     pub description: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub waveform: Option<Waveform>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub uses: Vec<SignalUse>,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Stack {
     pub item: String,
     pub quantity: u32,
 }
 /// Finite availability periods; independent of infinite mine production.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ReplenishmentPolicy {
     #[default]
     Never,
@@ -49,15 +54,22 @@ pub struct ResourceTime {
     pub elapsed_millis: u64,
     pub nights_started: u64,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ResourceDefinition {
-    #[serde(default)]
-    pub replenishment: ReplenishmentPolicy,
     pub id: String,
     pub name: String,
     pub yields: Vec<Stack>,
+    #[serde(default, skip_serializing_if = "ReplenishmentPolicy::is_never")]
+    pub replenishment: ReplenishmentPolicy,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+impl ReplenishmentPolicy {
+    fn is_never(&self) -> bool {
+        *self == Self::Never
+    }
+}
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct RecipeDefinition {
     pub id: String,
     pub name: String,
@@ -65,6 +77,7 @@ pub struct RecipeDefinition {
     pub outputs: Vec<Stack>,
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct CatalogDefinition {
     pub items: Vec<ItemDefinition>,
     pub resources: Vec<ResourceDefinition>,
@@ -147,6 +160,7 @@ impl RecipeBook {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Catalog {
     items: BTreeMap<String, ItemDefinition>,
     resources: BTreeMap<String, ResourceDefinition>,
@@ -157,7 +171,7 @@ fn insert_unique<T>(map: &mut BTreeMap<String, T>, id: &str, value: T) -> Result
     if id.is_empty()
         || !id
             .bytes()
-            .all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_')
     {
         return Err(RecipeError::InvalidCatalog(format!("invalid ID {id:?}")));
     }
@@ -189,6 +203,12 @@ impl Catalog {
         Self::new(definition)
     }
     pub fn new(definition: CatalogDefinition) -> Result<Self, RecipeError> {
+        let errors = rules::validate(&definition);
+        if !errors.is_empty() {
+            return Err(RecipeError::InvalidCatalog(
+                rules::RulesErrors(errors).to_string(),
+            ));
+        }
         let mut catalog = Self {
             items: BTreeMap::new(),
             resources: BTreeMap::new(),
@@ -505,8 +525,7 @@ mod tests {
     }
     #[test]
     fn finite_and_infinite_source_objects_preserve_distinct_lifecycles() {
-        let catalog =
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let catalog = shipped_catalog().unwrap();
         let mut bug = catalog.source("lightning_bug", "spawn-1").unwrap();
         let mut tree = catalog.source("scrub_oak", "tree-1").unwrap();
         assert_eq!(bug.kind(), SourceKind::Exhaustible);
@@ -547,13 +566,13 @@ mod tests {
     }
     #[test]
     fn mine_validation_rejects_unknown_outputs_duplicate_factors_and_reused_source_ids() {
-        let shipped: CatalogDefinition =
-            serde_json::from_str(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let shipped = Rules::load(&rules::shipped_files()).unwrap().definition;
         let mut bad = shipped.clone();
         bad.mines[0].produces_resource = "square_wave".into(); // item is not a resource
         assert!(Catalog::new(bad).is_err());
         let mut bad = shipped.clone();
-        bad.mines[0]
+        let oak = bad.mines.iter().position(|m| m.id == "scrub_oak").unwrap();
+        bad.mines[oak]
             .productivity_factors
             .push(ProductivityFactor::WaterQuality);
         assert!(Catalog::new(bad).is_err());
@@ -677,8 +696,7 @@ mod tests {
 
     #[test]
     fn shipped_catalog_yields_a_square_wave_without_a_fake_production_recipe() {
-        let catalog =
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let catalog = shipped_catalog().unwrap();
         let square = catalog.item("square_wave").unwrap();
         assert_eq!(square.waveform, Some(Waveform::Square));
         assert_eq!(

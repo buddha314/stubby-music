@@ -1,0 +1,42 @@
+{
+  "id": "field_recorder",
+  "model": "models/equipment/field_recorder.glb#Scene0",
+  "kind": "held_equipment",
+  "role": "collector",
+  "size_metres": {
+    "width": 0.068,
+    "depth": 0.034,
+    "height": 0.186
+  },
+  "grip": "Grip",
+  "capture": {
+    "node": "Capture",
+    "pattern": "xy_stereo",
+    "listens_along": "+Z"
+  },
+  "windguard": {
+    "node": "Windguard",
+    "shells": 14,
+    "fur_length_metres": 0.018,
+    "shells_cast_shadows": false,
+    "note": "give the FurShell meshes NotShadowCaster; the sock casts"
+  },
+  "lights": [
+    {
+      "node": "Light_rec",
+      "light": "rec",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0,
+      "pulse_while": "capturing"
+    }
+  ],
+  "screen": {
+    "node": "Screen",
+    "shows": "input_level",
+    "bars": 8,
+    "bar_node": "Level_{n}"
+  },
+  "held": {
+    "note": "first-person: hold at Grip in the right hand, Capture pointing forward and slightly up; real size"
+  }
+}

@@ -57,3 +57,63 @@ Version selection follows the shared Jackdaw checkout, recorded in
 [`jackdaw/compatibility.json`](jackdaw/compatibility.json). Both game entry points
 share one Cargo workspace and lockfile. Run `tools/jackdaw.sh check` before editor
 work; see [the version and upstream-sync policy](docs/research/jackdaw-version-policy.md).
+
+## Adding and changing game rules (designers)
+
+Items, resources, mines and recipes are JSON rows in `assets/recipes/`, one file per
+kind. There is no `catalog.json` any more; it was split into these files.
+
+**The crafting system is our own, not a community crate.** `crates/stubby_recipes`
+holds the rules model, inventory, recipe book and crafting, with no Bevy dependency.
+It is used as a Bevy community plugin: the thin `bevy_stubby_recipes` crate, which the
+game adds with `add_plugins`, over that Bevy-free core, the structure long-lived Bevy
+plugins such as `bevy_rapier3d` use (`openspec/changes/add-recipes-bevy-plugin/`).
+We looked at the Bevy crafting and inventory crates (`bevy_inventory`, `bevy_items`,
+`bevy-slotted` and others, checked 2026-11-01): they are small, behind our Bevy
+version, and built for RPG inventories rather than a factory builder's catalog, so
+none was adopted.
+
+For comparison, **no game engine ships a crafting system.** Unity, Unreal and Godot
+have none built in. Crafting there comes from third-party plugins written for one
+engine (Opsive's Ultimate Inventory System for Unity, Arc Inventory or Easy Survival
+RPG for Unreal, the expressobits Inventory System for Godot), built on that engine's
+own data types, so they cannot be reused in another engine. We found no mature
+crafting library that works independently of an engine, in any language (research,
+2026-11-01). Community crates are used around ours instead: `serde` and `schemars`
+for the files and their schemas, and, as planned, `bevy_common_assets` for hot
+reload and `moonshine-save` for saves. See
+[docs/research/crafting-and-inventory-crates.md](docs/research/crafting-and-inventory-crates.md)
+and [docs/research/satisfactory-goals-and-inventory.md](docs/research/satisfactory-goals-and-inventory.md).
+
+| To add or change | Edit |
+| --- | --- |
+| Something that can be held in the inventory | `assets/recipes/items.json` |
+| A pickup in the world and what it yields | `assets/recipes/resources.json` |
+| An infinite source that produces pickups | `assets/recipes/mines.json` |
+| A recipe (inputs → outputs) | `assets/recipes/recipes.json` |
+
+1. Edit the file. In VS Code, field names autocomplete and mistakes are underlined,
+   because each file names its schema.
+2. Run `cargo run -p stubby_recipes --bin rules-fmt`. It tidies the file, records new
+   IDs and lists every problem, e.g. `resources.json [reed_clump] .yeilds: unknown field`.
+3. Run `cargo test -p stubby_recipes`, then open a PR and tick **Data** in the template.
+
+For example, a recipe that turns 6 reeds into one stream segment (once the
+`stream_segment` item exists in `items.json`):
+
+```json
+{
+  "id": "stream_segment_from_reeds",
+  "name": "Stream segment",
+  "inputs": [{ "item": "reed", "quantity": 6 }],
+  "outputs": [{ "item": "stream_segment", "quantity": 1 }]
+}
+```
+
+IDs are lowercase `snake_case`, unique across all the files (so the recipe above is
+not called `stream_segment`, which is the item) and never reused; the `name` is what
+players see and can change any time. **Renaming or deleting an ID** needs a line in
+`assets/recipes/migrations.json` so old saves still load; the formatter and tests say
+when. If a rule needs something the files cannot express (a condition, a formula, a
+new field), that is not a data edit: ask for a new rule type, which starts as an
+OpenSpec change. The full guide is [assets/recipes/README.md](assets/recipes/README.md).

@@ -17,7 +17,7 @@ The table records keyboard/mouse defaults, not controller bindings.
 | Use / collect | E | Implemented; hold to collect successive nearby bugs |
 | Build menu | Q | Reserved; build system not implemented |
 | Dismantle | F | Reserved; dismantling not implemented |
-| Inventory | Tab | Reserved; inventory count is currently on HUD |
+| Inventory | Tab | Inventory screen, planned in `add-inventory-and-goals-hud` (goals hub top right, as Satisfactory's milestones) |
 | Codex | O | Recipe book implemented on O |
 | Flashlight | B | Reserved; no flashlight yet |
 | Resource scanner | V | Reserved for discovery/scanning |

@@ -1,0 +1,43 @@
+{
+  "$schema": "schema/resources.schema.json",
+  "format": 1,
+  "resources": [
+    {
+      "id": "clock_source",
+      "name": "Clock source",
+      "yields": [
+        {
+          "item": "clock",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "lightning_bug",
+      "name": "Lightning bug",
+      "yields": [
+        {
+          "item": "square_wave",
+          "quantity": 2
+        }
+      ],
+      "replenishment": {
+        "kind": "next_night"
+      }
+    },
+    {
+      "id": "reed_clump",
+      "name": "Reed clump",
+      "yields": [
+        {
+          "item": "reed",
+          "quantity": 6
+        }
+      ],
+      "replenishment": {
+        "kind": "after",
+        "seconds": 60
+      }
+    }
+  ]
+}

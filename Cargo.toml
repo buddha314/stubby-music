@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
-members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "jackdaw"]
-# Spikes remain isolated experiments. Game and editor adapter share Jackdaw's Bevy.
+members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes", "jackdaw"]
+# Both game entry points and the crafting adapter follow shared Jackdaw.
 exclude = ["spikes"]
 
 [workspace.package]
@@ -9,7 +9,7 @@ edition = "2024"
 
 # Selected by the recorded Jackdaw revision; Cargo.lock pins its matching engine dependencies.
 [workspace.dependencies]
-bevy = { version = "=0.20.0", default-features = false, features = ["3d", "ui"] }
+bevy = { version = "=0.20.0", default-features = false }
 
 [profile.dev]
 debug = 0

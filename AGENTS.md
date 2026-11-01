@@ -73,7 +73,10 @@ Follow Satisfactory's interaction conventions where applicable (research:
 holding E may collect successive nearby pickups without duplicating an instance.
 Use **O** for the recipe book/codex. Reserve **Q** for build, **F** for dismantle,
 **Tab** for inventory and **B** for flashlight; do not assign these to unrelated
-player actions. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+player actions. **Tab** opens the inventory screen and the upper right shows
+the goals hub: long- and short-term goals as the items to make, as Satisfactory's
+milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
+Goals guide; they never end the game. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it.
 
 ### The opening
@@ -114,7 +117,8 @@ docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
-  stubby_recipes/         waveform resources, inventory, recipe book and crafting (no Bevy)
+  stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
+  bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
 assets/                   runtime assets loaded by Bevy (glTF, textures, shaders)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
@@ -189,6 +193,49 @@ All module ports carry `f32` at audio rate, as in VCV Rack — there is no separ
 control-rate signal type. Use a nominal ±1.0 range for audio, 1.0 per octave for
 pitch CV (V/oct), and gates/triggers high above 0.5. Keep these in one place
 (`stubby_audio::signal`) and do not invent per-module conventions.
+
+### Rules are data; the schema is code
+
+Game rules (items, resources, mines, recipes, goals) are JSON rows under
+`assets/recipes/`, interpreted and validated by `stubby_recipes`. **The designer owns
+the rows; Codex owns the schema and validator; OpenSpec owns rule types.** Two flows:
+
+- **Data PR:** a new row or value of an existing type (a recipe, a goal, a yield). Edit
+  the JSON only; `cargo test -p stubby_recipes` must pass. No OpenSpec change.
+- **Rule PR:** a new rule type (a field, a trigger, an unlock kind, an accounting
+  mode). OpenSpec change first, then schema and validator code, then example rows.
+
+The crafting system (`stubby_recipes`: rules, inventory, recipe book, crafting,
+goals) is **ours, not a community crate**; no Bevy crafting or inventory crate fit
+(`docs/research/crafting-and-inventory-crates.md`). Do not swap one in without an
+OpenSpec change. It is shaped as a **Bevy community plugin** (`add-recipes-bevy-plugin`):
+the Bevy-free core `stubby_recipes`, a thin `bevy_stubby_recipes` plugin the game adds
+with `add_plugins`, and only presentation (HUD, input, screens) in `stubby_game`. Never
+add a Bevy dependency to the core, not even optional; Bevy versions live only in the
+plugin. Use community crates around it (serde, schemars, and as planned
+`bevy_common_assets`, `moonshine-save`).
+
+How to add or change a rule (designer or agent, same steps):
+
+1. Edit the domain file: `items.json`, `resources.json`, `mines.json` or
+   `recipes.json` (goals will be `goals.json`). There is no `catalog.json`; do not
+   recreate it or read rules from anywhere else.
+2. Run `cargo run -p stubby_recipes --bin rules-fmt`: it sorts rows, regenerates
+   `schema/`, appends new IDs to `ids.lock` and reports every error.
+3. `cargo test -p stubby_recipes` passes; open the PR as **Data** in the template.
+
+Never hand-edit `assets/recipes/schema/` or remove lines from `ids.lock`; both are the
+formatter's. Code reads rules only through `stubby_recipes` (`shipped_catalog()`,
+`Rules::load`), never by parsing the files itself. When a rule type changes, update
+the schema code, run `rules-fmt`, and update the files in the same PR. The authoring
+guide for designers is `assets/recipes/README.md` (root `README.md` has the short form).
+
+Rows never hold logic: if a row needs a condition or formula, that is a new rule type.
+IDs are `snake_case` `[a-z0-9_]`, unique across all registries, and part of the save
+format: rename or remove one only with a row in `assets/recipes/migrations.json`.
+Loading is strict (unknown fields fail) and reports every error with file, ID and
+field. See `openspec/changes/add-rules-data-conventions/` and
+`docs/research/crafting-and-goal-tracking.md`.
 
 ### Procedural generation is seeded and deterministic
 
@@ -345,8 +392,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   outlines of what goes there (`add-rack-configurations`, `assets/hud/`).
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
-  water is **sheet music**: a wavy staff runs along it and each beat's note rides it
-  downstream at the water's speed, so note spacing shows velocity. The
+  water is **sheet music**: a staff ribbon runs along it, its lines a fixed distance
+  apart and its wave travelling downstream; each beat's note rides it at the water's
+  speed, so note spacing shows velocity, and a bar line every bar (4 beats by
+  default, configurable later) keeps measures in time with the clock's BPM. The
   mud is **raw**: muddy on purpose, like ore. It is cleaned later by a **filter
   mini-rack** (direction, not yet designed): **high-pass filters separate out pure
   liquid, low-pass filters separate solids and nutrients**, into separate channels,

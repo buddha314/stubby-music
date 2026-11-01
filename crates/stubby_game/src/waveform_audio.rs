@@ -157,7 +157,7 @@ fn collection_cues(
 mod tests {
     use super::*;
     use stubby_audio::{Engine, EngineConfig};
-    use stubby_recipes::{Catalog, Stack};
+    use stubby_recipes::Stack;
     #[test]
     fn collection_cue_is_single_and_its_temporary_voice_is_retired() {
         use super::super::audio::{AudioOutput, SynthAudioPlugin};
@@ -167,9 +167,7 @@ mod tests {
             .insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
                 Duration::from_millis(10),
             ))
-            .insert_resource(RecipeCatalog(
-                Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap(),
-            ))
+            .insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
             .add_message::<ResourceCollected>()
             .add_plugins(SynthAudioPlugin {
                 output: AudioOutput::Offline,
@@ -200,9 +198,7 @@ mod tests {
 
     #[test]
     fn multiple_items_of_one_waveform_create_one_confirmation() {
-        let catalog = RecipeCatalog(
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap(),
-        );
+        let catalog = RecipeCatalog(stubby_recipes::shipped_catalog().unwrap());
         let event = ResourceCollected {
             instance: "test".into(),
             yields: vec![
