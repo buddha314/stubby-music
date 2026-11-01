@@ -3,7 +3,6 @@ use super::{
     controls::{Screen, ScreenMode},
     prefab_presentation::AssetUsed,
     prefabs::{AssetClock, PlacedAsset, PrefabBinding, PrefabError},
-    resources::ResourceNode,
     synth_modules::{ModuleLights, ModuleParams, ModuleView, SynthModule},
 };
 use bevy::{
@@ -161,6 +160,7 @@ impl Plugin for MachineConfigurationPlugin {
             .init_resource::<Profiles>()
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
+            .init_resource::<super::interaction::InteractTarget>()
             .add_message::<MachineConfigurationOpened>()
             .add_systems(Startup, setup)
             .add_systems(
@@ -168,6 +168,7 @@ impl Plugin for MachineConfigurationPlugin {
                 interact
                     .in_set(MachineInteractionSet)
                     .after(PrefabBinding)
+                    .after(super::interaction::InteractionTargeting)
                     .after(super::controls::toggle_screens)
                     .before(super::controls::capture_cursor),
             )
@@ -180,18 +181,14 @@ impl Plugin for MachineConfigurationPlugin {
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+/// E opens the rack of the machine `interaction::InteractTarget` points at.
 fn interact(
     keys: Res<ButtonInput<KeyCode>>,
     profiles: Res<Profiles>,
+    target: Res<super::interaction::InteractTarget>,
     mut state: ResMut<MachineInteraction>,
     mut screens: ResMut<ScreenMode>,
-    cameras: Query<Entity, (With<Camera3d>, Without<RackHudCamera>)>,
-    machines: Query<(Entity, &PlacedAsset), Without<PrefabError>>,
-    names: Query<(Entity, &Name)>,
-    parents: Query<&ChildOf>,
-    transforms: bevy::transform::helper::TransformHelper,
-    pickups: Query<(Entity, &ResourceNode), Without<PrefabError>>,
+    machines: Query<&PlacedAsset, Without<PrefabError>>,
     mut opened: MessageWriter<MachineConfigurationOpened>,
     mut used: MessageWriter<AssetUsed>,
 ) {
@@ -206,66 +203,25 @@ fn interact(
     if screens.open.is_some() {
         return;
     }
-    let Some(camera) = cameras
-        .single()
-        .ok()
-        .and_then(|e| transforms.compute_global_transform(e).ok())
+    let Some((machine, asset)) = target
+        .machine()
+        .and_then(|m| machines.get(m).ok().map(|a| (m, a)))
     else {
         return;
     };
-    let distance = |position: Vec3| {
-        let d = position - camera.translation();
-        Vec2::new(d.x, d.z).length_squared()
+    let Some(config) = profiles.0.get(&asset.asset) else {
+        return;
     };
-    let nearest_pickup = pickups
-        .iter()
-        .filter(|(_, node)| !node.collected)
-        .filter_map(|(e, _)| {
-            transforms
-                .compute_global_transform(e)
-                .ok()
-                .map(|t| distance(t.translation()))
-        })
-        .fold(f32::INFINITY, f32::min);
-    let mut nearest = f32::INFINITY;
-    for (point, name) in &names {
-        let Some(machine) = parents
-            .iter_ancestors(point)
-            .find(|e| machines.contains(*e))
-        else {
-            continue;
-        };
-        let Ok((_, asset)) = machines.get(machine) else {
-            continue;
-        };
-        let Some(config) = profiles.0.get(&asset.asset) else {
-            continue;
-        };
-        if name.as_str() != config.interact.node {
-            continue;
-        }
-        let Ok(at) = transforms.compute_global_transform(point) else {
-            continue;
-        };
-        let d = distance(at.translation());
-        if d <= config.interact.range_m.powi(2) && d < nearest && d < nearest_pickup {
-            nearest = d;
-            state.target = Some(machine);
-            state.prompt.clone_from(&config.interact.prompt);
-        }
-    }
-    if keys.just_pressed(super::controls::INTERACT)
-        && let Some(machine) = state.target
-    {
+    state.target = Some(machine);
+    state.prompt.clone_from(&config.interact.prompt);
+    if keys.just_pressed(super::controls::INTERACT) {
         screens.open = Some(Screen::MachineConfiguration(machine));
         opened.write(MachineConfigurationOpened { machine });
-        if let Ok((_, asset)) = machines.get(machine) {
-            used.write(AssetUsed {
-                entity: machine,
-                instance: asset.instance.clone(),
-                asset: asset.asset.clone(),
-            });
-        }
+        used.write(AssetUsed {
+            entity: machine,
+            instance: asset.instance.clone(),
+            asset: asset.asset.clone(),
+        });
     }
 }
 
@@ -645,13 +601,14 @@ fn prepare_parts(
 mod tests {
     use super::*;
     #[test]
-    fn interact_point_opens_rack_escape_closes_and_nearer_pickup_wins() {
+    fn e_on_a_targeted_machine_opens_its_rack_and_escape_closes_it() {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .init_resource::<Profiles>()
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
             .init_resource::<ButtonInput<KeyCode>>()
+            .init_resource::<super::super::interaction::InteractTarget>()
             .add_message::<AssetUsed>()
             .add_message::<MachineConfigurationOpened>()
             .add_systems(
@@ -660,29 +617,16 @@ mod tests {
             );
         let machine = app
             .world_mut()
-            .spawn((
-                PlacedAsset {
-                    asset: "mudpit_burbler".into(),
-                    model: "burbler.glb".into(),
-                    instance: "test-pit".into(),
-                },
-                Transform::from_xyz(100., 0., 0.),
-            ))
+            .spawn(PlacedAsset {
+                asset: "mudpit_burbler".into(),
+                model: "burbler.glb".into(),
+                instance: "test-pit".into(),
+            })
             .id();
-        app.world_mut().spawn((
-            Name::new("Interact"),
-            Transform::from_xyz(-10., 20., 0.),
-            ChildOf(machine),
-        ));
-        let camera = app
-            .world_mut()
-            .spawn((Camera3d::default(), Transform::from_xyz(88., 1.65, 0.)))
-            .id();
+        *app.world_mut()
+            .resource_mut::<super::super::interaction::InteractTarget>() =
+            super::super::interaction::InteractTarget::Machine(machine);
         app.update();
-        assert_eq!(
-            app.world().resource::<MachineInteraction>().target,
-            Some(machine)
-        );
         assert_eq!(
             app.world().resource::<MachineInteraction>().prompt,
             "E | Configure burbler"
@@ -695,51 +639,10 @@ mod tests {
             app.world().resource::<ScreenMode>().open,
             Some(Screen::MachineConfiguration(machine))
         );
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .clear();
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .press(KeyCode::Escape);
+        let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        keys.clear();
+        keys.press(KeyCode::Escape);
         app.update();
         assert_eq!(app.world().resource::<ScreenMode>().open, None);
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .clear();
-        let pickup = app
-            .world_mut()
-            .spawn((
-                ResourceNode {
-                    resource: "lightning_bug".into(),
-                    instance: "nearer".into(),
-                    collected: false,
-                },
-                Transform::from_xyz(88.5, 5., 0.),
-            ))
-            .id();
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .press(KeyCode::KeyE);
-        app.update();
-        assert_eq!(app.world().resource::<MachineInteraction>().target, None);
-        assert_eq!(app.world().resource::<ScreenMode>().open, None);
-        app.world_mut()
-            .get_mut::<ResourceNode>(pickup)
-            .unwrap()
-            .collected = true;
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .clear();
-        app.world_mut()
-            .get_mut::<Transform>(camera)
-            .unwrap()
-            .translation
-            .x = 100.;
-        app.update();
-        assert_eq!(
-            app.world().resource::<MachineInteraction>().target,
-            None,
-            "standing near the model root is not standing near Interact"
-        );
     }
 }

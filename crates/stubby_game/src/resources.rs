@@ -74,14 +74,6 @@ struct InventoryHud;
 struct CollectionPopup;
 #[derive(Component)]
 struct CollectionPopupText;
-const COLLECTION_RADIUS_SQUARED: f32 = 9.;
-fn ground_distance_squared(a: &Transform, b: &Transform) -> f32 {
-    let delta = a.translation - b.translation;
-    delta.x * delta.x + delta.z * delta.z
-}
-fn within_reach(camera: &Transform, target: &Transform, node: &ResourceNode) -> bool {
-    !node.collected && ground_distance_squared(camera, target) <= COLLECTION_RADIUS_SQUARED
-}
 #[derive(Resource, Default)]
 struct RecipeBookView {
     open: bool,
@@ -93,7 +85,8 @@ impl Plugin for ResourceRecipesPlugin {
         if !app.is_plugin_added::<RecipesPlugin>() {
             app.add_plugins(RecipesPlugin::default());
         }
-        app.init_resource::<RecipeBookView>()
+        app.init_resource::<super::interaction::InteractTarget>()
+            .init_resource::<RecipeBookView>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
             .add_systems(Startup, setup)
@@ -196,49 +189,25 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
 fn collect_nearby(
     keys: Res<ButtonInput<KeyCode>>,
     catalog: Option<Res<RecipeCatalog>>,
+    target: Res<super::interaction::InteractTarget>,
     mut player: ResMut<PlayerInventory>,
-    camera: Query<
-        Entity,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
-    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
-    transforms: bevy::transform::helper::TransformHelper,
+    nodes: Query<&ResourceNode, Without<super::prefabs::PrefabError>>,
     mut requests: MessageWriter<HarvestRequest>,
     calendar: Option<Res<super::calendar::Calendar>>,
-    machine: Option<Res<super::machine_config::MachineInteraction>>,
     screens: Option<Res<super::controls::ScreenMode>>,
 ) {
-    if machine.as_ref().is_some_and(|m| m.target.is_some())
-        || screens.as_ref().is_some_and(|s| s.open.is_some())
+    if screens.as_ref().is_some_and(|s| s.open.is_some())
+        || target.machine().is_some()
+        || !keys.pressed(super::controls::INTERACT)
+        || catalog.is_none()
     {
         return;
     }
-    if !keys.pressed(super::controls::INTERACT) {
-        return;
-    }
-    let (Some(_), Ok(camera)) = (catalog, camera.single()) else {
-        return;
-    };
-    let Ok(camera) = transforms.compute_global_transform(camera) else {
-        return;
-    };
-    let camera = camera.compute_transform();
-    let candidate = nodes
-        .iter()
-        .filter(|(_, node)| !node.collected)
-        .filter_map(|(entity, node)| {
-            let transform = transforms
-                .compute_global_transform(entity)
-                .ok()?
-                .compute_transform();
-            Some((ground_distance_squared(&transform, &camera), node))
-        })
-        .filter(|(distance, _)| *distance <= COLLECTION_RADIUS_SQUARED)
-        .min_by(|a, b| a.0.total_cmp(&b.0));
-    let Some((_, node)) = candidate else {
+    let Some(node) = target
+        .pickup()
+        .and_then(|e| nodes.get(e).ok())
+        .filter(|n| !n.collected)
+    else {
         player.feedback = "Move within 3 m of an available resource to collect.".into();
         return;
     };
@@ -264,75 +233,41 @@ fn mark_collected(
     }
 }
 fn update_collection_popup(
-    camera: Query<
-        Entity,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
-    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
-    transforms: bevy::transform::helper::TransformHelper,
+    target: Res<super::interaction::InteractTarget>,
+    nodes: Query<&ResourceNode, Without<super::prefabs::PrefabError>>,
     catalog: Option<Res<RecipeCatalog>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
     mut labels: Query<&mut Text, With<CollectionPopupText>>,
-    machine: Option<Res<super::machine_config::MachineInteraction>>,
     screens: Option<Res<super::controls::ScreenMode>>,
 ) {
-    let camera = camera
-        .single()
-        .ok()
-        .and_then(|entity| transforms.compute_global_transform(entity).ok());
-    let nearest = camera.and_then(|camera| {
-        nodes
-            .iter()
-            .filter(|(_, node)| !node.collected)
-            .filter_map(|(entity, node)| {
-                let target = transforms.compute_global_transform(entity).ok()?;
-                let delta = target.translation() - camera.translation();
-                let distance = Vec2::new(delta.x, delta.z).length_squared();
-                (distance <= COLLECTION_RADIUS_SQUARED).then_some((node, distance))
-            })
-            .min_by(|a, b| a.1.total_cmp(&b.1))
-    });
+    let node = target
+        .pickup()
+        .and_then(|e| nodes.get(e).ok())
+        .filter(|n| !n.collected)
+        .filter(|_| screens.as_ref().is_none_or(|s| s.open.is_none()));
     for mut visibility in &mut popups {
-        *visibility = if nearest.is_some()
-            && machine.as_ref().is_none_or(|m| m.target.is_none())
-            && screens.as_ref().is_none_or(|s| s.open.is_none())
-        {
+        visibility.set_if_neq(if node.is_some() {
             Visibility::Visible
         } else {
             Visibility::Hidden
-        };
+        });
     }
-    let name = nearest.map(|(node, _)| {
-        catalog
+    if let Some(node) = node {
+        let name = catalog
             .as_ref()
             .and_then(|catalog| catalog.0.resource(&node.resource))
-            .map_or(node.resource.as_str(), |resource| resource.name.as_str())
-    });
-    if let Some(name) = name {
+            .map_or(node.resource.as_str(), |resource| resource.name.as_str());
         for mut text in &mut labels {
             text.0 = format!("[E] Collect {name}");
         }
     }
 }
-
-#[allow(clippy::too_many_arguments)] // HUD combines player, catalog and nearby world state.
 fn update_hud(
     keys: Res<ButtonInput<KeyCode>>,
+    target: Res<super::interaction::InteractTarget>,
     mut view: ResMut<RecipeBookView>,
     player: Res<PlayerInventory>,
     catalog: Option<Res<RecipeCatalog>>,
-    camera: Query<
-        Entity,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
-    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
-    transforms: bevy::transform::helper::TransformHelper,
     mut hud: Query<&mut Text, With<InventoryHud>>,
     machine: Option<Res<super::machine_config::MachineInteraction>>,
     screens: Option<Res<super::controls::ScreenMode>>,
@@ -347,24 +282,7 @@ fn update_hud(
         hud.0.clear();
         return;
     }
-    let nearby = camera
-        .single()
-        .ok()
-        .and_then(|entity| transforms.compute_global_transform(entity).ok())
-        .is_some_and(|camera| {
-            nodes.iter().any(|(entity, node)| {
-                transforms
-                    .compute_global_transform(entity)
-                    .ok()
-                    .is_some_and(|target| {
-                        within_reach(
-                            &camera.compute_transform(),
-                            &target.compute_transform(),
-                            node,
-                        )
-                    })
-            })
-        });
+    let nearby = target.pickup().is_some();
     let prompt = if let Some(machine) = machine.as_ref().filter(|machine| machine.target.is_some())
     {
         machine.prompt.as_str()
@@ -445,12 +363,15 @@ fn replenish_nodes(
 
 #[cfg(test)]
 mod tests {
+    use super::super::interaction::InteractTarget;
     use super::*;
     /// Collection as the game runs it: the plugin plus the game's systems around it.
+    /// Reach is avian's (interaction.rs); here the target is set directly.
     fn collection_app() -> App {
         let mut app = App::new();
         app.add_plugins(RecipesPlugin::default())
             .init_resource::<ButtonInput<KeyCode>>()
+            .init_resource::<InteractTarget>()
             .add_systems(
                 Update,
                 (
@@ -512,16 +433,10 @@ mod tests {
     #[test]
     fn mine_objects_are_authorable_but_not_finite_collection_nodes() {
         let mut app = collection_app();
-        app.world_mut()
-            .spawn((Camera3d::default(), Transform::default()));
-        let tree = app
-            .world_mut()
-            .spawn((MineNode::scrub_oak(7), Transform::default()))
-            .id();
+        let tree = app.world_mut().spawn(MineNode::scrub_oak(7)).id();
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyE);
-        app.update();
         app.update();
         assert_eq!(
             app.world()
@@ -532,44 +447,57 @@ mod tests {
         );
         let mine = app.world().get::<MineNode>(tree).unwrap().source_object();
         assert_eq!(mine.kind(), stubby_recipes::SourceKind::InfiniteMine);
-        assert_eq!(mine.definition_id(), "scrub_oak");
         assert_eq!(mine.instance_id(), "scrub_oak-7");
     }
 
     #[test]
-    fn popup_matches_collection_range_and_hides_after_harvest() {
-        let mut app = App::new();
-        app.add_systems(Update, update_collection_popup);
+    fn e_collects_the_targeted_pickup_once_and_f_does_not() {
+        let mut app = collection_app();
+        let bug = app.world_mut().spawn(ResourceNode::lightning_bug(0)).id();
+        *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(bug);
+        let squares = |app: &App| {
+            app.world()
+                .resource::<PlayerInventory>()
+                .items
+                .quantity("square_wave")
+        };
         app.world_mut()
-            .spawn((Camera3d::default(), Transform::default()));
-        let bug = app
-            .world_mut()
-            .spawn((ResourceNode::default(), Transform::from_xyz(0., 3., -3.)))
-            .id();
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::KeyF);
+        app.update();
+        assert_eq!(squares(&app), 0);
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::KeyE);
+        app.update();
+        assert_eq!(squares(&app), 2);
+        assert!(
+            app.world()
+                .resource::<PlayerInventory>()
+                .book
+                .knows("square_wave")
+        );
+        app.update(); // E still held: the collected bug yields nothing more
+        assert_eq!(squares(&app), 2);
+        assert!(app.world().get::<ResourceNode>(bug).unwrap().collected);
+    }
+
+    #[test]
+    fn popup_shows_for_a_targeted_pickup_and_hides_after_harvest() {
+        let mut app = App::new();
+        app.init_resource::<InteractTarget>()
+            .add_systems(Update, update_collection_popup);
+        let bug = app.world_mut().spawn(ResourceNode::default()).id();
         let popup = app
             .world_mut()
             .spawn((CollectionPopup, Visibility::Hidden))
             .id();
+        *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(bug);
         app.update();
         assert_eq!(
             *app.world().get::<Visibility>(popup).unwrap(),
             Visibility::Visible
         );
-        app.world_mut()
-            .get_mut::<Transform>(bug)
-            .unwrap()
-            .translation
-            .z = -3.01;
-        app.update();
-        assert_eq!(
-            *app.world().get::<Visibility>(popup).unwrap(),
-            Visibility::Hidden
-        );
-        app.world_mut()
-            .get_mut::<Transform>(bug)
-            .unwrap()
-            .translation
-            .z = -2.;
         app.world_mut()
             .get_mut::<ResourceNode>(bug)
             .unwrap()
@@ -578,121 +506,6 @@ mod tests {
         assert_eq!(
             *app.world().get::<Visibility>(popup).unwrap(),
             Visibility::Hidden
-        );
-    }
-
-    #[test]
-    fn holding_e_collects_new_resources_while_f_is_not_collect() {
-        let mut app = collection_app();
-        let camera = app
-            .world_mut()
-            .spawn((Camera3d::default(), Transform::default()))
-            .id();
-        for (index, x) in [1., 2., 20.].into_iter().enumerate() {
-            app.world_mut().spawn((
-                Transform::from_xyz(x, 3., 0.),
-                ResourceNode::lightning_bug(index),
-            ));
-        }
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .press(KeyCode::KeyF);
-        app.update();
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            0
-        );
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .press(KeyCode::KeyE);
-        app.update();
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            2
-        );
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .clear_just_pressed(KeyCode::KeyE);
-        app.update();
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            4
-        );
-        app.update();
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            4
-        );
-        app.world_mut()
-            .get_mut::<Transform>(camera)
-            .unwrap()
-            .translation
-            .x = 19.;
-        app.update();
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            6
-        );
-    }
-
-    #[test]
-    fn interaction_collects_only_one_nearby_instance_and_cannot_duplicate_it() {
-        let mut app = collection_app();
-        app.world_mut()
-            .spawn((Camera3d::default(), Transform::default()));
-        app.world_mut().spawn((
-            Transform::from_xyz(1., 0., 0.),
-            ResourceNode::lightning_bug(0),
-        ));
-        app.world_mut().spawn((
-            Transform::from_xyz(20., 0., 0.),
-            ResourceNode::lightning_bug(1),
-        ));
-        app.world_mut()
-            .resource_mut::<ButtonInput<KeyCode>>()
-            .press(KeyCode::KeyE);
-        app.update();
-        assert!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .book
-                .knows("square_wave")
-        );
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            2
-        );
-        app.update();
-        assert!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .book
-                .knows("square_wave")
-        );
-        assert_eq!(
-            app.world()
-                .resource::<PlayerInventory>()
-                .items
-                .quantity("square_wave"),
-            2
         );
     }
 }

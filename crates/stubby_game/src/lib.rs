@@ -14,14 +14,15 @@ pub mod calendar;
 pub mod controls;
 pub mod export;
 mod hand;
+mod interaction;
 mod inventory_screen;
 pub mod machine_config;
 pub mod module_ids;
 pub mod prefab_presentation;
 mod prefab_review;
 pub mod prefabs;
-pub mod rack;
 pub mod pulse;
+pub mod rack;
 pub mod resources;
 mod review;
 mod sky;
@@ -50,6 +51,7 @@ impl Plugin for DesertPlugin {
             inventory_screen::InventoryScreenPlugin,
             hand::HandPlugin,
             rack::RackPlugin,
+            interaction::InteractionPlugin,
             prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,
             review::ReplenishmentReviewPlugin,

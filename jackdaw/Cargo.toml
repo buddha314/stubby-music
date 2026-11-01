@@ -18,6 +18,7 @@ stubby_audio = { path = "../crates/stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]
+avian3d.workspace = true
 jackdaw_runtime = { path = "../../jackdaw/crates/jackdaw_runtime", features = ["pie"] }
 jackdaw_scene_types = { path = "../../jackdaw/crates/jackdaw_scene_types" }
 half = "~2.7.1"

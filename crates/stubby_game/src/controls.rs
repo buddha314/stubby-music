@@ -191,6 +191,7 @@ mod tests {
         app.init_resource::<ButtonInput<KeyCode>>()
             .init_resource::<ButtonInput<MouseButton>>()
             .insert_resource(LookCapture(true))
+            .init_resource::<ScreenMode>()
             .add_systems(Update, capture_cursor);
         let window = app
             .world_mut()

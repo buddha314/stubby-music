@@ -580,8 +580,10 @@ mod tests {
             Transform::from_xyz(1., 0., 0.),
         );
         app.world_mut().entity_mut(reed).insert(ChildOf(parent));
-        app.world_mut()
-            .spawn((Camera3d::default(), Transform::from_xyz(100., 1.65, 0.)));
+        // Reach is avian's (interaction.rs); the reed is the target.
+        *app.world_mut()
+            .resource_mut::<super::super::interaction::InteractTarget>() =
+            super::super::interaction::InteractTarget::Pickup(reed);
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyE);
