@@ -10,6 +10,16 @@
         "lfo",
         "gate"
       ]
+    },
+    {
+      "id": "reed",
+      "name": "Reed",
+      "description": "A renewable stream-building ingredient."
+    },
+    {
+      "id": "clock",
+      "name": "Clock",
+      "description": "Clock resource provided by a mudpit burbler mine."
     }
   ],
   "resources": [
@@ -25,6 +35,30 @@
       "replenishment": {
         "kind": "next_night"
       }
+    },
+    {
+      "id": "reed_clump",
+      "name": "Reed clump",
+      "yields": [
+        {
+          "item": "reed",
+          "quantity": 6
+        }
+      ],
+      "replenishment": {
+        "kind": "after",
+        "seconds": 60
+      }
+    },
+    {
+      "id": "clock",
+      "name": "Clock source",
+      "yields": [
+        {
+          "item": "clock",
+          "quantity": 1
+        }
+      ]
     }
   ],
   "recipes": [],
@@ -37,6 +71,11 @@
         "water_quality",
         "light_quality"
       ]
+    },
+    {
+      "id": "mudpit_burbler",
+      "name": "Mudpit burbler",
+      "produces_resource": "clock"
     }
   ]
 }

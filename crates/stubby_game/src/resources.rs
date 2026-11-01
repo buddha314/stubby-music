@@ -93,6 +93,8 @@ pub struct CraftCompleted {
 struct InventoryHud;
 #[derive(Component)]
 struct CollectionPopup;
+#[derive(Component)]
+struct CollectionPopupText;
 const COLLECTION_RADIUS_SQUARED: f32 = 9.;
 fn ground_distance_squared(a: &Transform, b: &Transform) -> f32 {
     let delta = a.translation - b.translation;
@@ -126,7 +128,8 @@ impl Plugin for ResourceRecipesPlugin {
                     update_hud,
                     update_collection_popup,
                 )
-                    .chain(),
+                    .chain()
+                    .after(super::prefabs::PrefabBinding),
             );
     }
 }
@@ -181,6 +184,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                CollectionPopupText,
                 Text::new("[E] Collect lightning bug"),
                 TextFont {
                     font_size: bevy::text::FontSize::Px(20.),
@@ -210,12 +214,14 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         },
     ));
 }
+#[allow(clippy::too_many_arguments)] // Collection spans input, world transforms and the inventory transaction.
 fn collect_nearby(
     keys: Res<ButtonInput<KeyCode>>,
     catalog: Option<Res<RecipeCatalog>>,
     mut player: ResMut<PlayerInventory>,
-    camera: Query<&Transform, With<Camera3d>>,
-    mut nodes: Query<(&Transform, &mut ResourceNode)>,
+    camera: Query<Entity, With<Camera3d>>,
+    mut nodes: Query<(Entity, &mut ResourceNode), Without<super::prefabs::PrefabError>>,
+    transforms: bevy::transform::helper::TransformHelper,
     mut events: MessageWriter<ResourceCollected>,
     calendar: Option<Res<super::calendar::Calendar>>,
 ) {
@@ -225,19 +231,27 @@ fn collect_nearby(
     let (Some(catalog), Ok(camera)) = (catalog, camera.single()) else {
         return;
     };
+    let Ok(camera) = transforms.compute_global_transform(camera) else {
+        return;
+    };
+    let camera = camera.compute_transform();
     let candidate = nodes
         .iter_mut()
         .filter(|(_, node)| !node.collected)
-        .map(|(transform, node)| {
-            (
-                ground_distance_squared(transform, camera),
+        .filter_map(|(entity, node)| {
+            let transform = transforms
+                .compute_global_transform(entity)
+                .ok()?
+                .compute_transform();
+            Some((
+                ground_distance_squared(&transform, &camera),
                 node.instance.clone(),
-            )
+            ))
         })
         .filter(|(distance, _)| *distance <= COLLECTION_RADIUS_SQUARED)
         .min_by(|a, b| a.0.total_cmp(&b.0));
     let Some((_, instance)) = candidate else {
-        player.feedback = "Move within 3 m of a lightning bug to recover its square wave.".into();
+        player.feedback = "Move within 3 m of an available resource to collect.".into();
         return;
     };
     if let Some((_, mut node)) = nodes.iter_mut().find(|(_, node)| node.instance == instance) {
@@ -280,21 +294,46 @@ fn collect_nearby(
     }
 }
 fn update_collection_popup(
-    camera: Query<&Transform, With<Camera3d>>,
-    nodes: Query<(&Transform, &ResourceNode)>,
+    camera: Query<Entity, With<Camera3d>>,
+    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
+    transforms: bevy::transform::helper::TransformHelper,
+    catalog: Option<Res<RecipeCatalog>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
+    mut labels: Query<&mut Text, With<CollectionPopupText>>,
 ) {
-    let nearby = camera.single().ok().is_some_and(|camera| {
+    let camera = camera
+        .single()
+        .ok()
+        .and_then(|entity| transforms.compute_global_transform(entity).ok());
+    let nearest = camera.and_then(|camera| {
         nodes
             .iter()
-            .any(|(target, node)| within_reach(camera, target, node))
+            .filter(|(_, node)| !node.collected)
+            .filter_map(|(entity, node)| {
+                let target = transforms.compute_global_transform(entity).ok()?;
+                let delta = target.translation() - camera.translation();
+                let distance = Vec2::new(delta.x, delta.z).length_squared();
+                (distance <= COLLECTION_RADIUS_SQUARED).then_some((node, distance))
+            })
+            .min_by(|a, b| a.1.total_cmp(&b.1))
     });
     for mut visibility in &mut popups {
-        *visibility = if nearby {
+        *visibility = if nearest.is_some() {
             Visibility::Visible
         } else {
             Visibility::Hidden
         };
+    }
+    let name = nearest.map(|(node, _)| {
+        catalog
+            .as_ref()
+            .and_then(|catalog| catalog.0.resource(&node.resource))
+            .map_or(node.resource.as_str(), |resource| resource.name.as_str())
+    });
+    if let Some(name) = name {
+        for mut text in &mut labels {
+            text.0 = format!("[E] Collect {name}");
+        }
     }
 }
 
@@ -327,13 +366,15 @@ fn craft_requests(
         }
     }
 }
+#[allow(clippy::too_many_arguments)] // HUD combines player, catalog and nearby world state.
 fn update_hud(
     keys: Res<ButtonInput<KeyCode>>,
     mut view: ResMut<RecipeBookView>,
     player: Res<PlayerInventory>,
     catalog: Option<Res<RecipeCatalog>>,
-    camera: Query<&Transform, With<Camera3d>>,
-    nodes: Query<(&Transform, &ResourceNode)>,
+    camera: Query<Entity, With<Camera3d>>,
+    nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
+    transforms: bevy::transform::helper::TransformHelper,
     mut hud: Query<&mut Text, With<InventoryHud>>,
 ) {
     let Ok(mut hud) = hud.single_mut() else {
@@ -342,11 +383,25 @@ fn update_hud(
     let nearby = camera
         .single()
         .ok()
-        .is_some_and(|camera| nodes.iter().any(|(t, node)| within_reach(camera, t, node)));
+        .and_then(|entity| transforms.compute_global_transform(entity).ok())
+        .is_some_and(|camera| {
+            nodes.iter().any(|(entity, node)| {
+                transforms
+                    .compute_global_transform(entity)
+                    .ok()
+                    .is_some_and(|target| {
+                        within_reach(
+                            &camera.compute_transform(),
+                            &target.compute_transform(),
+                            node,
+                        )
+                    })
+            })
+        });
     let prompt = if nearby {
-        "E | Recover square wave (hold to collect)"
+        "E | Collect resource (hold for nearby pickups)"
     } else {
-        "Find a flashing lightning bug | approach within 3 m"
+        "Explore for resources | approach within 3 m"
     };
     let recipe_count = catalog
         .as_ref()
@@ -360,8 +415,9 @@ fn update_hud(
         view.open = !view.open;
     }
     let mut text = format!(
-        "Square waves: {}\n{prompt}\n{recipes} | O: Recipe book\n{}",
+        "Square waves: {} | Reeds: {}\n{prompt}\n{recipes} | O: Recipe book\n{}",
         player.items.quantity("square_wave"),
+        player.items.quantity("reed"),
         player.feedback
     );
     if view.open {

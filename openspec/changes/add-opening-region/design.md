@@ -103,3 +103,33 @@ Jackdaw's multiplayer module.
 - Counts and distances above are a first pass, to tune in play.
 - Reconcile `add-desert-opening`'s discovery spec ("Square VCO", then "Clock"): the
   square now comes from a bug and the clock is the burbler.
+
+## Runtime prefab binding (task 2.5)
+The Jackdaw adapter translates each authored `GltfSource` into the shared game's
+`PlacedAsset`, identified by model stem (so directory organisation does not change
+behaviour). Explicit resource/mine instance IDs are preserved. Otherwise derive a
+stable ID from the authored hierarchy, names and transforms. An authored level
+disables the legacy fixed bug spawn; runtime registration waits for asynchronous
+scene loading and is idempotent. Duplicate instance or owned clock IDs are reported
+and quarantined, never silently merged.
+
+Reuse the existing bug pulse bus, synthesis composition and module visual bindings.
+Dynamic engine IDs share one allocator; legacy demo/showcase IDs are reserved by
+name until their public diagnostic IDs are migrated. Removing/replacing a placed
+source cleans its helper entities and engine nodes. World-space transforms drive
+hearing, reach and shadows, including nested authored parents.
+
+Named glTF nodes, clips and existing asset metadata drive presentation: sample-clock
+phase for burbler clips; virtual time for nonmusical sway; explicit visual state for
+oak growth, reed regrowth and prop bloom. The ecological production simulation,
+water transport and full burbler configuration rack remain their own changes.
+Reeds use the existing elapsed-time policy (initial tuning: 6 reeds per clump and
+60 game seconds to return). Hovering exposes contextual information and emits
+enter/leave/use events for future configuration/building interfaces without
+pretending that deferred production or rack UI exists.
+
+Jackdaw owns model import, LOD generation, render geometry and level switching.
+The adapter reads source glTF metadata and attaches game animation state to the
+existing native `LodPart` render entities. It does not rebuild glTF scenes or
+replace meshes. Hidden flora is grown from the engine's flattened rest transform,
+preserving the authored attachment positions across level unload/reload.

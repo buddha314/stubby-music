@@ -19,18 +19,9 @@ pub(crate) struct WaveformSound {
 }
 #[derive(Resource)]
 struct CollectionSounds(WaveformSound);
-#[derive(Resource)]
+#[derive(Resource, Default)]
 struct CueVoices {
-    next_id: u64,
     active: Vec<([ModuleId; 4], f64)>,
-}
-impl Default for CueVoices {
-    fn default() -> Self {
-        Self {
-            next_id: 10_000,
-            active: Vec::new(),
-        }
-    }
 }
 pub struct WaveformAudioPlugin;
 impl Plugin for WaveformAudioPlugin {
@@ -45,6 +36,7 @@ impl Plugin for WaveformAudioPlugin {
         .expect("shipped waveform preset is valid");
         app.insert_resource(CollectionSounds(preset.click))
             .init_resource::<CueVoices>()
+            .init_resource::<super::module_ids::ModuleIds>()
             .add_systems(PostUpdate, collection_cues);
     }
 }
@@ -114,6 +106,7 @@ fn collection_cues(
     synth: Option<Res<Synth>>,
     preset: Res<CollectionSounds>,
     mut voices: ResMut<CueVoices>,
+    mut pool: ResMut<super::module_ids::ModuleIds>,
     time: Res<Time>,
 ) {
     let now = time.elapsed_secs_f64();
@@ -134,11 +127,10 @@ fn collection_cues(
             continue;
         }
         for waveform in collected_waveforms(event, &catalog) {
-            let Some(next_id) = voices.next_id.checked_add(4) else {
+            let ids: Option<Vec<_>> = (0..4).map(|_| pool.allocate()).collect();
+            let Some(ids) = ids.and_then(|ids| <[ModuleId; 4]>::try_from(ids).ok()) else {
                 continue;
             };
-            let ids = std::array::from_fn(|index| ModuleId(voices.next_id + index as u64));
-            voices.next_id = next_id;
             synth.send(Command::AddModule {
                 id: ids[0],
                 kind: ModuleKind::Constant { value: 1. },
@@ -198,7 +190,12 @@ mod tests {
             app.update();
         }
         assert!(app.world().resource::<CueVoices>().active.is_empty());
-        assert_eq!(app.world().resource::<CueVoices>().next_id, 10_004);
+        assert_eq!(
+            app.world_mut()
+                .resource_mut::<super::super::module_ids::ModuleIds>()
+                .allocate(),
+            Some(ModuleId(10_004))
+        );
     }
 
     #[test]

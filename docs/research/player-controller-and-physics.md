@@ -50,3 +50,34 @@ the scrub oaks and every prop. A factory builder needs the player to stop at mac
 
 Check each crate's Bevy compatibility again before adding it, and pin exact minor
 versions (AGENTS.md).
+
+## Jackdaw development compatibility check (2026-11-01)
+
+The versions above support the standalone game's **released Bevy 0.20.1**.
+They do **not** establish compatibility with the editor adapter's pinned Bevy
+main (`c9c397ba1a73e6cfffe957318e0359330b701865`). The shared Jackdaw checkout
+at `e73b8d35` explicitly declares Physics unavailable in
+`crates/jackdaw_project_build/src/modules.json` and in the physics integration's
+package metadata: `avian has no release for Bevy main`.
+
+Verified with the documented, read-only preview:
+
+```sh
+jd import jackdaw --modules physics
+# jd import: module `physics` is not compatible: avian has no release for Bevy main
+```
+
+Avian's [official manifest](https://github.com/avianphysics/avian/blob/main/crates/avian3d/Cargo.toml)
+uses released `bevy`, `bevy_curve`, `bevy_math` and `bevy_shape` 0.20 dependencies.
+Adding it directly to the adapter would introduce a second, incompatible Bevy
+rather than enable the editor's collider components. Task 4.2d remains open;
+`physics = true` is deliberately not written into a manifest the shared editor
+cannot build. No private collider types, replacement physics, or editor fork is
+introduced to bypass this check.
+
+Resume when the **shared** Jackdaw Physics module supports its pinned Bevy:
+run the preview again, apply the documented module integration, verify that the
+game has one Bevy and one Avian dependency graph, then test
+`AvianColliderBridgePlugin` with a static prefab collider. Claude can then author
+the shapes already specified in each family's `colliders.json`. The terrain,
+Tnua controller and enhanced-input migrations remain tasks 4.2a–c.

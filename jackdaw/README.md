@@ -2,7 +2,7 @@
 
 Use the shared source checkout `/home/buddha/src/jackdaw`. This folder is a game
 project, not an editor fork. Both editor and CLI come from that shared checkout.
-The installed `~/.cargo/bin/jd` is older and must not be used for this project.
+The system-wide `~/.cargo/bin/jd` and `~/.cargo/bin/jackdaw` are soft links to that shared build.
 
 The shared checkout uses `https://github.com/buddha314/jackdaw.git` as development
 `origin`, with `https://github.com/jbuehler23/jackdaw.git` retained as `upstream`.
@@ -95,8 +95,25 @@ model in the Project window and open its import settings:
   child to change one bug's height.
 - Scrub oaks carry `MineNode`. Give every placed oak its own `instance` (the prefab's
   `scrub_oak-<k>` is only a default), since the harvest ledger keys on it.
-- Reed clumps and the burbler place as models for now; their game components arrive
-  with the catalog work in `add-reeds` and `add-mudpit-burbler`.
+- Play binds supported models by file stem. Placed bugs get their own seeded clock,
+  flash, shadow, light and existing square/envelope/VCA voice; the authored level
+  disables the legacy fixed bug scatter. Bindings follow the resource child and its
+  world transform, including the bug's ground-pivot parent.
+- Bugs and oaks need unique authored `instance` IDs; owned clocks also need unique
+  IDs. Duplicates are reported and quarantined until corrected. Other placements
+  derive deterministic identities from the authored names and transforms.
+- Reeds become finite `reed_clump` resources: E yields six reeds, changes the visual
+  to stubble, and the clump returns after 60 game seconds. The burbler is an infinite
+  clock mine with a seeded BPM, never an E pickup. E emits a use event; its full rack
+  interface, water transport and oak production are still separate tasks.
+- `AssetState` exposes growth, water/light quality and stream-port highlighting for
+  visual bindings. Burble clips follow audio sample phase. Flora sway uses game time.
+  Each instance has its own material state. Reload/removal retires helpers and audio.
+  Saw and triangle modules retain their existing visual-only status until their DSP
+  modules land.
+- Game animation metadata is attached to Jackdaw's existing render parts. Bevy and
+  Jackdaw own the meshes, LOD generation and runtime switching; the game does not
+  rebuild scenes or supply another LOD implementation.
 
 `cargo test --test prefabs` (from this folder) loads every prefab the way the editor
 does and fails on an unknown type, a missing model or a missing LOD level. Run it
@@ -133,3 +150,34 @@ Use the watchdog when testing the review run configuration.
 
 Normal play uses `[`/`]` for slower/faster simulation and `\` for 1×.
 Music pitch, clock tempo and flash envelopes retain their audio timing.
+
+## Bounded prefab review
+
+Build the adapter, then run the seven-instance saved-prefab fixture:
+
+```sh
+cargo +1.99.0 build --bin stubby_jackdaw --manifest-path jackdaw/Cargo.toml
+python3 tools/jackdaw_timed_test.py --prefabs --seconds 20 --refresh 60 --name prefab-runtime
+```
+
+The opt-in review collects a flashing bug and reeds, emits hover/use events, plays
+sample-timed burble clips, grows flora, replenishes reeds, and moves out to the
+model's far level and back. Evidence is written to `/tmp/stubby-prefab-review/`:
+`events.jsonl` must contain `complete` with `success: true`. Screenshots show the
+starting pose and the settled LOD return. This fixture is not the production region
+layout. The watchdog ends the editor and game after at most 20 seconds.
+
+Verified 2026-11-01: the complete review passed in 9.36 seconds of game lifetime,
+with seven bound assets, four registered sources, two square-wave items, six reeds,
+no binding errors, a visible flash, running audio-phase animations, and a far/near
+return. The independent watchdog stopped the session at 20.035 seconds. This does
+not establish indefinite display stability or the separate 10 ms visual timing bar.
+
+## Physics integration status
+
+The shared development editor currently refuses its Physics module on Bevy main.
+Do not enable an unbuildable `[modules] physics = true` entry or add a second Bevy
+through Avian's released dependencies. Task `add-desert-opening` 4.2d remains open;
+[the compatibility check and resume steps](../docs/research/player-controller-and-physics.md#jackdaw-development-compatibility-check-2026-11-01)
+record the exact CLI rejection. The collider-shape JSONs remain ready for authoring
+once the shared module supports this SDK.

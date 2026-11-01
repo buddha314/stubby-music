@@ -48,7 +48,11 @@ fn every_prefab_places_with_known_types_and_real_models() {
     let mut files = Vec::new();
     prefab_files(&assets().join("prefabs"), &mut files);
     files.sort();
-    assert!(files.len() >= 27, "expected the world-asset prefabs, found {}", files.len());
+    assert!(
+        files.len() >= 27,
+        "expected the world-asset prefabs, found {}",
+        files.len()
+    );
 
     for file in files {
         let rel = file.strip_prefix(assets()).unwrap().to_path_buf();
@@ -68,19 +72,67 @@ fn every_prefab_places_with_known_types_and_real_models() {
         let mut app = editor_world();
         load_bsn_document(app.world_mut(), resolved);
         let unresolved = app.world().resource::<UnresolvedTypes>().types().clone();
-        assert!(unresolved.is_empty(), "{}: unknown types {unresolved:?}", rel.display());
+        assert!(
+            unresolved.is_empty(),
+            "{}: unknown types {unresolved:?}",
+            rel.display()
+        );
 
         let world = app.world_mut();
         let mut sources = world.query::<(&GltfSource, Option<&LodGroup>, Option<&MineNode>)>();
         let placed: Vec<_> = sources.iter(world).collect();
         assert_eq!(placed.len(), 1, "{}: one model per prefab", rel.display());
         let (source, lod, mine) = placed[0];
-        assert!(assets().join(&source.path).is_file(), "{}: no model at {}", rel.display(), source.path);
+        assert!(
+            assets().join(&source.path).is_file(),
+            "{}: no model at {}",
+            rel.display(),
+            source.path
+        );
         // Levels of detail belong to the model (its `_LOD<n>` nodes and import
         // settings), never to a placement.
-        assert!(lod.is_none(), "{}: LodGroup on a prefab; put the levels in the model", rel.display());
+        assert!(
+            lod.is_none(),
+            "{}: LodGroup on a prefab; put the levels in the model",
+            rel.display()
+        );
         if rel.starts_with("prefabs/flora") && rel.to_string_lossy().contains("scrub_oak") {
-            assert_eq!(mine.map(|m| m.mine.as_str()), Some("scrub_oak"), "{}", rel.display());
+            assert_eq!(
+                mine.map(|m| m.mine.as_str()),
+                Some("scrub_oak"),
+                "{}",
+                rel.display()
+            );
         }
     }
+}
+
+#[test]
+fn multi_prefab_review_scene_resolves_seven_separate_instances() {
+    let mut files = Vec::new();
+    prefab_files(&assets().join("prefabs"), &mut files);
+    let library: std::collections::HashMap<_, _> = files
+        .into_iter()
+        .map(|file| {
+            (
+                file.strip_prefix(assets()).unwrap().to_path_buf(),
+                parse_bsn_text(&std::fs::read_to_string(&file).unwrap()).unwrap(),
+            )
+        })
+        .collect();
+    let scene = parse_bsn_text(
+        &std::fs::read_to_string(assets().join("review_prefab_runtime.bsn")).unwrap(),
+    )
+    .unwrap();
+    let resolved = resolve_scene(&scene, &|path: &Path| library.get(path)).unwrap();
+    let mut app = editor_world();
+    load_bsn_document(app.world_mut(), resolved);
+    assert!(app.world().resource::<UnresolvedTypes>().types().is_empty());
+    assert_eq!(
+        app.world_mut()
+            .query::<&GltfSource>()
+            .iter(app.world())
+            .count(),
+        7
+    );
 }

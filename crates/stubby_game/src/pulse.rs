@@ -53,6 +53,7 @@ impl Plugin for PulseBusPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PulseBus>()
             .add_message::<SamplePulse>()
+            .init_resource::<PulseAliases>()
             .add_systems(Update, poll_audio.in_set(PulseReceive));
     }
 }
@@ -66,19 +67,36 @@ pub(super) struct BugEffects;
 
 #[derive(Resource, Default)]
 pub struct PulseBus {
+    first: HashMap<u64, SamplePulse>,
     pending: Vec<SamplePulse>,
     latest: HashMap<u64, SamplePulse>,
 }
 impl PulseBus {
+    pub fn forget(&mut self, clock: u64) {
+        self.pending.retain(|pulse| pulse.clock != clock);
+        self.latest.remove(&clock);
+        self.first.remove(&clock);
+    }
+    pub fn elapsed(&self, clock: u64, now: Instant, sample_rate: u32) -> Option<f64> {
+        let first = self.first.get(&clock)?;
+        let last = self.latest.get(&clock)?;
+        let age = now.checked_duration_since(last.at)?.as_secs_f64();
+        Some(
+            last.sample_time.saturating_sub(first.sample_time) as f64 / f64::from(sample_rate)
+                + age,
+        )
+    }
     pub fn queue(&mut self, pulse: SamplePulse) {
         self.pending.push(pulse);
     }
     pub fn advance(&mut self, now: Instant) {
         let latest = &mut self.latest;
+        let first = &mut self.first;
         self.pending.retain(|pulse| {
             if pulse.at > now {
                 return true;
             }
+            first.entry(pulse.clock).or_insert(*pulse);
             let entry = latest.entry(pulse.clock).or_insert(*pulse);
             if pulse.sample_time >= entry.sample_time {
                 *entry = *pulse;
@@ -110,7 +128,7 @@ fn flash_envelope(age: f32, attack: f32, duration: f32) -> f32 {
     }
 }
 
-#[derive(Resource, Deserialize)]
+#[derive(Resource, Clone, Deserialize)]
 struct BugAsset {
     model: String,
     flash_seconds: f32,
@@ -120,7 +138,7 @@ struct BugAsset {
     clock: ClockSettings,
     click: super::waveform_audio::WaveformSound,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct ClockSettings {
     min_interval_seconds: f32,
     max_interval_seconds: f32,
@@ -138,6 +156,20 @@ struct FlashLight;
 struct FlashShadow;
 #[derive(Component)]
 struct BugInstance(usize);
+#[derive(Resource, Default)]
+pub struct PulseAliases(pub HashMap<u64, u64>);
+#[derive(Resource, Clone)]
+struct BugVisualAssets {
+    mesh: Handle<Mesh>,
+    texture: Handle<Image>,
+}
+#[derive(Component)]
+struct PlacedBug {
+    voices: [ModuleId; 3],
+    rest_scale: Vec3,
+}
+#[derive(Component)]
+struct BugEffectOwner(Entity);
 
 pub struct LightningBugPlugin {
     pub seed: u64,
@@ -153,7 +185,12 @@ impl Plugin for LightningBugPlugin {
             .add_systems(PostUpdate, suppress_collected_bugs.in_set(BugEffects))
             .add_systems(
                 Update,
-                (update_click_gains, animate, capture_pulse_preview)
+                (
+                    update_placed_effects,
+                    update_click_gains,
+                    animate,
+                    capture_pulse_preview,
+                )
                     .chain()
                     .after(PulseReceive),
             );
@@ -174,7 +211,9 @@ fn initialize(world: &mut World) {
         return;
     }
     let seed = world.resource::<PulseSeed>().0;
-    if let Some(synth) = world.get_resource::<Synth>() {
+    if !world.contains_resource::<super::prefabs::AuthoredLevel>()
+        && let Some(synth) = world.get_resource::<Synth>()
+    {
         for index in 0..BUG_POSITIONS.len() {
             synth.send(Command::AddModule {
                 id: ModuleId(bug_clock(index)),
@@ -202,6 +241,14 @@ fn initialize(world: &mut World) {
     let shadow_mesh = world
         .resource_mut::<Assets<Mesh>>()
         .add(Plane3d::default().mesh().size(2.0, 2.0));
+    world.insert_resource(BugVisualAssets {
+        mesh: shadow_mesh.clone(),
+        texture: shadow_texture.clone(),
+    });
+    if world.contains_resource::<super::prefabs::AuthoredLevel>() {
+        world.insert_resource(asset);
+        return;
+    }
     for index in 0..BUG_POSITIONS.len() {
         let position = bug_position(index);
         world.spawn((
@@ -264,7 +311,11 @@ fn initialize(world: &mut World) {
 // Run after collection's Update systems, so no depleted cue survives the frame.
 #[allow(clippy::type_complexity)] // Each effect has a different set of rendering components.
 fn suppress_collected_bugs(
-    nodes: Query<(&BugInstance, &super::resources::ResourceNode)>,
+    nodes: Query<(
+        &BugInstance,
+        &super::resources::ResourceNode,
+        Option<&PlacedBug>,
+    )>,
     mut effects: Query<(
         &BugInstance,
         Option<&mut Visibility>,
@@ -274,7 +325,7 @@ fn suppress_collected_bugs(
     mut materials: ResMut<Assets<StandardMaterial>>,
     synth: Option<Res<Synth>>,
 ) {
-    for (index, node) in &nodes {
+    for (index, node, placed) in &nodes {
         if !node.collected {
             continue;
         }
@@ -299,7 +350,7 @@ fn suppress_collected_bugs(
         }
         if let Some(synth) = &synth {
             synth.send(Command::SetParam {
-                module: voice_ids(index.0).2,
+                module: placed.map_or_else(|| voice_ids(index.0).2, |placed| placed.voices[2]),
                 param: "gain",
                 value: 0.,
             });
@@ -312,19 +363,19 @@ fn update_click_gains(
     audio: Option<Res<Synth>>,
     asset: Option<Res<BugAsset>>,
     camera: Query<&Transform, With<Camera3d>>,
-    bugs: Query<(&BugInstance, &Transform), With<FlashVisual>>,
+    bugs: Query<(&BugInstance, &GlobalTransform, Option<&PlacedBug>), With<FlashVisual>>,
 ) {
     let (Some(audio), Some(asset), Ok(camera)) = (audio, asset, camera.single()) else {
         return;
     };
-    for (instance, transform) in &bugs {
+    for (instance, transform, placed) in &bugs {
         let index = instance.0;
-        let distance = transform.translation.distance(camera.translation);
+        let distance = transform.translation().distance(camera.translation);
         let gain = asset.click.gain
             * (1. - distance / asset.click.hearing_radius_metres)
                 .clamp(0., 1.)
                 .powi(2);
-        let (_, _, vca) = voice_ids(index);
+        let vca = placed.map_or_else(|| voice_ids(index).2, |placed| placed.voices[2]);
         audio.send(Command::SetParam {
             module: vca,
             param: "gain",
@@ -335,6 +386,7 @@ fn update_click_gains(
 
 fn poll_audio(
     mut ticks: MessageReader<ClockTick>,
+    aliases: Res<PulseAliases>,
     mut bus: ResMut<PulseBus>,
     mut pulses: MessageWriter<SamplePulse>,
 ) {
@@ -347,6 +399,14 @@ fn poll_audio(
             };
             bus.queue(pulse);
             pulses.write(pulse);
+            if let Some(clock) = aliases.0.get(&pulse.clock) {
+                let alias = SamplePulse {
+                    clock: *clock,
+                    ..pulse
+                };
+                bus.queue(alias);
+                pulses.write(alias);
+            }
         }
     }
     bus.advance(Instant::now());
@@ -382,7 +442,15 @@ fn shadow_texture() -> Image {
 fn animate(
     bus: Res<PulseBus>,
     asset: Option<Res<BugAsset>>,
-    mut visuals: Query<(&PulseFollower, &mut Transform, &mut Visibility), With<FlashVisual>>,
+    mut visuals: Query<
+        (
+            &PulseFollower,
+            &mut Transform,
+            &mut Visibility,
+            Option<&PlacedBug>,
+        ),
+        With<FlashVisual>,
+    >,
     mut lights: Query<(&PulseFollower, &mut PointLight), With<FlashLight>>,
     shadows: Query<(&PulseFollower, &MeshMaterial3d<StandardMaterial>), With<FlashShadow>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -391,7 +459,7 @@ fn animate(
         return;
     };
     let now = Instant::now();
-    for (follower, mut transform, mut visibility) in &mut visuals {
+    for (follower, mut transform, mut visibility, placed) in &mut visuals {
         let level = bus.level(
             follower.clock,
             now,
@@ -403,7 +471,7 @@ fn animate(
         } else {
             Visibility::Hidden
         };
-        transform.scale = Vec3::splat(level.sqrt());
+        transform.scale = placed.map_or(Vec3::ONE, |placed| placed.rest_scale) * level.sqrt();
     }
     for (follower, handle) in &shadows {
         if let Some(mut material) = materials.get_mut(&handle.0) {
@@ -479,6 +547,133 @@ fn capture_pulse_preview(
             .observe(bevy::render::view::screenshot::save_to_disk(format!(
                 "{prefix}_{suffix}.png"
             )));
+    }
+}
+
+pub(crate) fn bind_placed_bug(
+    world: &mut World,
+    root: Entity,
+    logical: u64,
+    clock: ModuleId,
+    voices: [ModuleId; 3],
+) -> Result<(), String> {
+    let asset = world
+        .get_resource::<BugAsset>()
+        .cloned()
+        .ok_or("bug asset has not initialized")?;
+    let assets = world.resource::<BugVisualAssets>().clone();
+    let tag = root.to_bits() as usize;
+    let rest_scale = world
+        .get::<Transform>(root)
+        .map_or(Vec3::ONE, |transform| transform.scale);
+    let world_seed = world.resource::<super::WorldSeed>().0;
+    let seed = world
+        .get::<super::resources::ResourceNode>(root)
+        .map(|node| {
+            node.instance.bytes().fold(world_seed, |hash, byte| {
+                (hash ^ u64::from(byte)).wrapping_mul(1099511628211)
+            })
+        })
+        .unwrap_or(world_seed);
+    if let Some(synth) = world.get_resource::<Synth>() {
+        synth.send(Command::AddModule {
+            id: clock,
+            kind: ModuleKind::RandomClock {
+                seed,
+                min_interval_s: asset.clock.min_interval_seconds,
+                max_interval_s: asset.clock.max_interval_seconds,
+            },
+        });
+        for command in super::waveform_audio::voice_commands(
+            stubby_recipes::Waveform::Square,
+            voices,
+            PortRef::new(clock, "gate"),
+            0.,
+            asset.click,
+        ) {
+            synth.send(command);
+        }
+    }
+    world.entity_mut(root).insert((
+        BugInstance(tag),
+        FlashVisual,
+        PulseFollower { clock: logical },
+        PlacedBug { voices, rest_scale },
+        Visibility::Hidden,
+    ));
+    let material = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::srgba(0.02, 0.015, 0.01, 0.),
+            base_color_texture: Some(assets.texture),
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            ..default()
+        });
+    world.spawn((
+        BugEffectOwner(root),
+        BugInstance(tag),
+        FlashShadow,
+        PulseFollower { clock: logical },
+        Mesh3d(assets.mesh),
+        MeshMaterial3d(material),
+        bevy::light::NotShadowCaster,
+        Transform::default(),
+    ));
+    world.spawn((
+        BugEffectOwner(root),
+        BugInstance(tag),
+        FlashLight,
+        PulseFollower { clock: logical },
+        PointLight {
+            color: Color::WHITE,
+            intensity: 0.,
+            range: asset.light_range_metres,
+            shadow_maps_enabled: false,
+            ..default()
+        },
+        Transform::default(),
+    ));
+    Ok(())
+}
+pub(crate) fn retire_placed_bug(world: &mut World, root: Entity) {
+    let helpers: Vec<_> = world
+        .query::<(Entity, &BugEffectOwner)>()
+        .iter(world)
+        .filter(|(_, owner)| owner.0 == root)
+        .map(|(entity, _)| entity)
+        .collect();
+    for entity in helpers {
+        world.despawn(entity);
+    }
+    if let Some(placed) = world.get::<PlacedBug>(root) {
+        let scale = placed.rest_scale;
+        if let Some(mut transform) = world.get_mut::<Transform>(root) {
+            transform.scale = scale;
+        }
+        world
+            .entity_mut(root)
+            .remove::<(PlacedBug, BugInstance, FlashVisual)>();
+    }
+}
+fn update_placed_effects(
+    mut effects: Query<(&BugEffectOwner, &mut Transform, Has<FlashShadow>)>,
+    sources: Query<&GlobalTransform, Without<BugEffectOwner>>,
+) {
+    for (owner, mut transform, shadow) in &mut effects {
+        let Ok(source) = sources.get(owner.0) else {
+            continue;
+        };
+        let position = source.translation();
+        transform.translation = if shadow {
+            Vec3::new(
+                position.x,
+                super::terrain::height(Vec2::new(position.x, position.z)) + 0.055,
+                position.z,
+            )
+        } else {
+            position
+        };
     }
 }
 
@@ -607,6 +802,7 @@ mod tests {
         app.add_message::<ClockTick>()
             .add_message::<SamplePulse>()
             .init_resource::<PulseBus>()
+            .init_resource::<PulseAliases>()
             .add_systems(Update, poll_audio);
         let at = Instant::now();
         app.world_mut().write_message(ClockTick {
@@ -661,9 +857,10 @@ mod tests {
 
     #[test]
     fn shipped_bug_has_white_emission_and_a_scale_flash_clip() {
-        let asset =
-            gltf::Gltf::from_slice(include_bytes!("../../../assets/models/creatures/lightning_bug.glb"))
-                .expect("lightning bug must remain a valid GLB");
+        let asset = gltf::Gltf::from_slice(include_bytes!(
+            "../../../assets/models/creatures/lightning_bug.glb"
+        ))
+        .expect("lightning bug must remain a valid GLB");
         let root = asset
             .nodes()
             .find(|node| node.name() == Some("LightningBug_FlashRoot"))
