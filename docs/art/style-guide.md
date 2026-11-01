@@ -24,8 +24,9 @@ They begin as **mud** flowing from a burbler (a gurgling hot-spring mud pot that
 bubbles at a BPM) and **pulse at that BPM**, so a stream is the played sequence laid
 out in space. Raw streams are **muddy on purpose**, like ore. As other processes are
 identified, constructors clean them, and the water goes **from muddy to clear** in
-stages; a clear stream can become brighter and more staff-like (five lines, notes
-carried downstream). Stream assets need a look for each stage. Reeds are their conveyor-belt segments. Ports light a soft
+stages. The water is always sheet music: a wavy five-line staff floats on it and
+each beat's note rides the staff downstream at the water's speed, so note spacing shows
+velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds are their conveyor-belt segments. Ports light a soft
 halo arch while a stream is being extended from them (Satisfactory's port
 highlighting), and the planned stream shows as a hologram before it is laid.
 
@@ -225,6 +226,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Streams are sheet music at every stage: the staff floats on the
+  surface and waves from bank to bank (two waves per 4 m segment, so it tiles), and
+  each beat's note rides it downstream at the flow speed. Replaces the staff hidden
+  under muddy water and the band-of-light pulse.
 - **2026-10-31** — Stream hologram: the planned-stream preview, a luminous ghost of
   the stream segment on the same 24 subdivisions so it bends and chains like the stream
   it plans. Faint shells, crest and edge lines, half-metre ribs and downstream chevrons;

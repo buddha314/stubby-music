@@ -310,6 +310,8 @@ equivalent of an iron ore node, so the player does not pick it up.
   minimal patch: the burbler's clock triggers the VCO and the volume knob sets its level.
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
+  water is **sheet music**: a wavy staff runs along it and each beat's note rides it
+  downstream at the water's speed, so note spacing shows velocity. The
   mud is **raw**: muddy on purpose, like ore. As other processes are identified,
   constructors clean it, and the stream's water goes **from muddy to clear**.
 - **Reeds are the conveyor belt segments** that streams run along (not yet designed).

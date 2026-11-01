@@ -164,7 +164,7 @@ class StreamHologram(Stream):
                 self.scene.collection.objects.link(obj)
             if obj.parent is None:
                 obj.location += Vector((-LENGTH, 0, 0))
-            if any(part in obj.name for part in ("Halo", "Pulse", "Staff")):
+            if any(part in obj.name for part in ("Halo", "Pulse")):
                 obj.hide_render = True
 
     def build(self):

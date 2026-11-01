@@ -38,7 +38,9 @@ BPM / 60 / division and phase-locks it to the clock ticks, so the art owns the s
 a burble and the game owns its timing.
 
 **Streams are the sequence in space.** A mud stream from the outlet pulses at the
-burbler's BPM; following a stream is following the music. Streams run along reeds,
+burbler's BPM; following a stream is following the music. Its water is sheet music: a
+wavy five-line staff floats on it, and each beat sends a note riding the staff
+downstream at the water's speed, so note spacing shows velocity. Streams run along reeds,
 the conveyor-belt segments (a later change). Extending one works like dragging a
 conveyor from a generator: the port arch highlights and a hologram shows the plan. Raw mud is muddy by design; cleaning is
 a later constructor's job, taking the water from muddy to clear in stages as processes
