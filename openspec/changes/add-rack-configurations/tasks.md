@@ -9,3 +9,9 @@
 - [ ] 2.4 Mount by kind from the inventory; fixed slots cannot be emptied
 - [ ] 2.5 Common open/close: E within range of `Interact`, prompt, nearer target wins, Escape closes
 - [ ] 2.6 Patching and the engine patch from modules and cables (shared with `add-mudpit-burbler` 2.4b, 2.5)
+
+Prototype view landed with mudpit interaction 2.3: the profile lays out the existing
+rack_frame, the fixed burbler_clock, slot outlines and selected slot_labels in a
+native render-to-image HUD camera. ScreenMode owns cursor/movement and Escape.
+Full mounting, patching, knob interaction and backdrop blur remain unfinished.
+Do not treat this initial view as completion of those tasks.

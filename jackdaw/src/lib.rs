@@ -2,6 +2,6 @@
 #[path = "../../crates/stubby_game/src/lib.rs"]
 mod desert;
 pub use desert::{
-    DesertPlugin, WorldSeed, audio, calendar, controls, export, prefab_presentation, prefabs,
-    pulse, resources, synth_modules,
+    DesertPlugin, WorldSeed, audio, calendar, controls, export, machine_config,
+    prefab_presentation, prefabs, pulse, resources, synth_modules,
 };

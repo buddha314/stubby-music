@@ -20,6 +20,8 @@ struct Review {
     saw_flash: bool,
     near_pass: bool,
     far_seen: bool,
+    rack_opened: bool,
+    rack_loaded: bool,
 }
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
@@ -41,6 +43,8 @@ impl Plugin for PrefabReviewPlugin {
             saw_flash: false,
             near_pass: false,
             far_seen: false,
+            rack_opened: false,
+            rack_loaded: false,
         })
         .add_systems(Startup, start.after(super::setup))
         .add_systems(PreUpdate, drive.after(bevy::input::InputSystems))
@@ -73,11 +77,18 @@ fn start(mut review: ResMut<Review>, mut calendar: ResMut<Calendar>) {
 fn drive(
     mut review: ResMut<Review>,
     mut keys: ResMut<ButtonInput<KeyCode>>,
-    mut camera: Query<&mut Transform, With<Camera3d>>,
+    mut camera: Query<
+        &mut Transform,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     mut roots: Query<(&PlacedAsset, &mut AssetState)>,
     mut calendar: ResMut<Calendar>,
 ) {
     keys.reset(KeyCode::KeyE);
+    keys.reset(KeyCode::Escape);
     let elapsed = review.start.elapsed().as_secs_f32();
     let times = [0.8, 1.5, 2.1, 2.7, 3.3, 3.9, 4.5, 5.2, 6.4, 7.7];
     if review.stage >= times.len() || elapsed < times[review.stage] {
@@ -102,7 +113,7 @@ fn drive(
         }
         4 => {
             for mut camera in &mut camera {
-                camera.translation = Vec3::new(-4., 1.7, 3.);
+                camera.translation = Vec3::new(-4., 1.7, 2.2);
                 *camera = camera.looking_at(Vec3::new(-4., 0.3, 1.), Vec3::Y);
             }
         }
@@ -128,6 +139,7 @@ fn drive(
             }
         }
         9 => {
+            keys.press(KeyCode::Escape);
             for mut camera in &mut camera {
                 camera.translation = Vec3::new(0., 1.7, 6.);
                 *camera = camera.looking_at(Vec3::new(3., 1.5, -1.), Vec3::Y);
@@ -151,14 +163,25 @@ fn observe(
     errors: Query<&PrefabError>,
     players: Query<&AnimationPlayer>,
     nodes: Query<(&Name, &Transform)>,
-    cameras: Query<&bevy::camera::RenderTarget, With<Camera3d>>,
+    cameras: Query<
+        &bevy::camera::RenderTarget,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     mut hover: MessageReader<AssetHoverEvent>,
     mut used: MessageReader<AssetUsed>,
+    mut rack: MessageReader<super::machine_config::MachineConfigurationOpened>,
+    screens: Res<super::controls::ScreenMode>,
     flat: Query<(&super::prefab_presentation::AssetPart, &Transform)>,
 ) {
     let elapsed = review.start.elapsed().as_secs_f32();
     review.hovers += hover.read().count();
     review.uses += used.read().count();
+    review.rack_opened |= rack.read().next().is_some();
+    review.rack_loaded |=
+        screens.open.is_some() && nodes.iter().any(|(name, _)| name.as_str() == "RailTop");
     let phases: Vec<_> = players
         .iter()
         .flat_map(|player| {
@@ -261,6 +284,9 @@ fn observe(
     }
     if review.stage == 10 && elapsed > 9.2 {
         let success = review.near_pass
+            && review.rack_opened
+            && review.rack_loaded
+            && screens.open.is_none()
             && review.far_seen
             && standing
             && leaves > 0
@@ -269,7 +295,7 @@ fn observe(
             && player.items.quantity("reed") == 6;
         write(
             &review,
-            serde_json::json!({"event":"complete","success":success,"seconds":elapsed,"near_pass":review.near_pass,"far_seen":review.far_seen,"saw_animation":review.saw_animation,"saw_flash":review.saw_flash}),
+            serde_json::json!({"event":"complete","success":success,"seconds":elapsed,"near_pass":review.near_pass,"rack_opened":review.rack_opened,"rack_loaded":review.rack_loaded,"far_seen":review.far_seen,"saw_animation":review.saw_animation,"saw_flash":review.saw_flash}),
         );
         review.stage = 11;
     }

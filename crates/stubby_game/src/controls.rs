@@ -35,7 +35,7 @@ pub fn spawn_transform() -> Transform {
     Transform::from_xyz(0., floor(0., 6.) + EYE_HEIGHT, 6.)
 }
 #[derive(Resource)]
-struct LookCapture(bool);
+pub(crate) struct LookCapture(bool);
 
 /// Full-screen HUD panels. One is open at a time; while one is, the cursor is free and
 /// the player neither moves nor looks (add-inventory-and-goals-hud D7). The burbler's
@@ -43,11 +43,18 @@ struct LookCapture(bool);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Screen {
     Inventory,
+    MachineConfiguration(Entity),
 }
 #[derive(Resource, Default)]
 pub struct ScreenMode {
     pub open: Option<Screen>,
     closed_this_frame: bool,
+}
+impl ScreenMode {
+    pub(crate) fn close(&mut self) {
+        self.open = None;
+        self.closed_this_frame = true;
+    }
 }
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
@@ -73,7 +80,7 @@ pub(crate) fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMu
     }
     screens.closed_this_frame = was.is_some() && screens.open.is_none();
 }
-fn capture_cursor(
+pub(crate) fn capture_cursor(
     keys: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     screens: Res<ScreenMode>,

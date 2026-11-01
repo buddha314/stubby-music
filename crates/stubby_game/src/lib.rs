@@ -15,6 +15,7 @@ pub mod controls;
 pub mod export;
 mod hand;
 mod inventory_screen;
+pub mod machine_config;
 pub mod module_ids;
 pub mod prefab_presentation;
 mod prefab_review;
@@ -52,6 +53,7 @@ impl Plugin for DesertPlugin {
             review::ReplenishmentReviewPlugin,
             prefab_review::PrefabReviewPlugin,
             controls::PlayerControlsPlugin,
+            machine_config::MachineConfigurationPlugin,
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
@@ -229,6 +231,7 @@ fn setup(
         Camera3d::default(),
         bevy::post_process::bloom::Bloom::NATURAL,
         Exposure { ev100: 10.5 },
+        bevy::ui::IsDefaultUiCamera,
         controls::Player::default(),
         controls::spawn_transform(),
         Skybox {

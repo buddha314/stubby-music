@@ -158,6 +158,9 @@ struct ShowcaseAudio {
 
 #[derive(SystemSet, Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ModuleEngine;
+/// A second view of an existing module, such as a machine's HUD; owns no audio node.
+#[derive(Component)]
+pub(crate) struct ModuleView;
 pub(crate) fn unbind_module(world: &mut World, entity: Entity) {
     if let Some(light) = world
         .get::<ModuleParts>(entity)
@@ -328,7 +331,7 @@ fn add_to_engine(
     mut commands: Commands,
     synth: Option<Res<Synth>>,
     catalog: Res<ModuleCatalog>,
-    added: Query<(Entity, &SynthModule, &ModuleParams), Added<SynthModule>>,
+    added: Query<(Entity, &SynthModule, &ModuleParams), (Added<SynthModule>, Without<ModuleView>)>,
 ) {
     for (entity, module, params) in &added {
         let Some(profile) = catalog.0.get(&module.asset) else {

@@ -91,7 +91,8 @@ impl Plugin for PrefabPresentationPlugin {
                     find_materials,
                 )
                     .chain()
-                    .after(PrefabBinding),
+                    .after(PrefabBinding)
+                    .after(super::machine_config::MachineInteractionSet),
             )
             .add_systems(
                 PostUpdate,
@@ -485,7 +486,13 @@ fn seek_animations(
 fn update_hover(
     mut hover: ResMut<HoveredAsset>,
     keys: Res<ButtonInput<KeyCode>>,
-    cameras: Query<Entity, With<Camera3d>>,
+    cameras: Query<
+        Entity,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     roots: Query<
         (
             Entity,
@@ -499,46 +506,50 @@ fn update_hover(
     mut events: MessageWriter<AssetHoverEvent>,
     mut uses: MessageWriter<AssetUsed>,
     mut labels: Query<&mut Text, With<HoverLabel>>,
+    screens: Option<Res<super::controls::ScreenMode>>,
 ) {
     let camera = cameras
         .single()
         .ok()
         .and_then(|camera| transforms.compute_global_transform(camera).ok());
-    let target = camera.and_then(|camera| {
-        let forward = camera.forward();
-        roots
-            .iter()
-            .filter(|(_, asset, resource, _)| {
-                !asset.asset.starts_with("desert_")
-                    && !resource.is_some_and(|resource| resource.collected)
-            })
-            .filter_map(|(entity, asset, _, _)| {
-                let global = transforms.compute_global_transform(entity).ok()?;
-                let mut center = global.translation();
-                if asset.asset != "lightning_bug" {
-                    center.y += if asset.asset == "mudpit_burbler" {
-                        0.3
-                    } else {
-                        0.8
-                    };
-                }
-                let delta = center - camera.translation();
-                if Vec2::new(delta.x, delta.z).length_squared() > 9. {
-                    return None;
-                }
-                let along = delta.dot(*forward);
-                let radius =
-                    if asset.asset == "mudpit_burbler" || asset.asset.starts_with("scrub_oak_") {
+    let target = camera
+        .filter(|_| screens.as_ref().is_none_or(|s| s.open.is_none()))
+        .and_then(|camera| {
+            let forward = camera.forward();
+            roots
+                .iter()
+                .filter(|(_, asset, resource, _)| {
+                    !asset.asset.starts_with("desert_")
+                        && !resource.is_some_and(|resource| resource.collected)
+                })
+                .filter_map(|(entity, asset, _, _)| {
+                    let global = transforms.compute_global_transform(entity).ok()?;
+                    let mut center = global.translation();
+                    if asset.asset != "lightning_bug" {
+                        center.y += if asset.asset == "mudpit_burbler" {
+                            0.3
+                        } else {
+                            0.8
+                        };
+                    }
+                    let delta = center - camera.translation();
+                    if Vec2::new(delta.x, delta.z).length_squared() > 9. {
+                        return None;
+                    }
+                    let along = delta.dot(*forward);
+                    let radius = if asset.asset == "mudpit_burbler"
+                        || asset.asset.starts_with("scrub_oak_")
+                    {
                         1.5
                     } else {
                         0.7
                     };
-                (along >= 0. && (delta - *forward * along).length() <= radius)
-                    .then_some((entity, along))
-            })
-            .min_by(|a, b| a.1.total_cmp(&b.1))
-            .map(|(entity, _)| entity)
-    });
+                    (along >= 0. && (delta - *forward * along).length() <= radius)
+                        .then_some((entity, along))
+                })
+                .min_by(|a, b| a.1.total_cmp(&b.1))
+                .map(|(entity, _)| entity)
+        });
     if target != hover.entity {
         if let Some(previous) = hover.entity {
             events.write(AssetHoverEvent {
@@ -566,8 +577,8 @@ fn update_hover(
     let text = selected.map_or_else(String::new, |(_, asset, resource, clock)| {
         if resource.is_some() {
             String::new()
-        } else if let Some(clock) = clock {
-            format!("Mudpit burbler | {:.0} BPM", clock.bpm)
+        } else if clock.is_some() {
+            String::new()
         } else if asset.asset.starts_with("scrub_oak_") {
             "Scrub oak | Infinite lightning-bug mine".into()
         } else {
@@ -581,6 +592,7 @@ fn update_hover(
     }
     if keys.just_pressed(super::controls::INTERACT)
         && let Some((entity, asset, _, _)) = selected
+        && asset.asset != "mudpit_burbler"
     {
         uses.write(AssetUsed {
             entity,

@@ -362,7 +362,13 @@ fn suppress_collected_bugs(
 fn update_click_gains(
     audio: Option<Res<Synth>>,
     asset: Option<Res<BugAsset>>,
-    camera: Query<&Transform, With<Camera3d>>,
+    camera: Query<
+        &Transform,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     bugs: Query<(&BugInstance, &GlobalTransform, Option<&PlacedBug>), With<FlashVisual>>,
 ) {
     let (Some(audio), Some(asset), Ok(camera)) = (audio, asset, camera.single()) else {

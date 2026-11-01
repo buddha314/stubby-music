@@ -104,6 +104,7 @@ impl Plugin for ResourceRecipesPlugin {
                     (replenish_nodes, collect_nearby)
                         .chain()
                         .after(super::prefabs::PrefabBinding)
+                        .after(super::machine_config::MachineInteractionSet)
                         .before(RecipesSystems),
                     (mark_collected, update_hud, update_collection_popup)
                         .chain()
@@ -196,12 +197,25 @@ fn collect_nearby(
     keys: Res<ButtonInput<KeyCode>>,
     catalog: Option<Res<RecipeCatalog>>,
     mut player: ResMut<PlayerInventory>,
-    camera: Query<Entity, With<Camera3d>>,
+    camera: Query<
+        Entity,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
     transforms: bevy::transform::helper::TransformHelper,
     mut requests: MessageWriter<HarvestRequest>,
     calendar: Option<Res<super::calendar::Calendar>>,
+    machine: Option<Res<super::machine_config::MachineInteraction>>,
+    screens: Option<Res<super::controls::ScreenMode>>,
 ) {
+    if machine.as_ref().is_some_and(|m| m.target.is_some())
+        || screens.as_ref().is_some_and(|s| s.open.is_some())
+    {
+        return;
+    }
     if !keys.pressed(super::controls::INTERACT) {
         return;
     }
@@ -250,12 +264,20 @@ fn mark_collected(
     }
 }
 fn update_collection_popup(
-    camera: Query<Entity, With<Camera3d>>,
+    camera: Query<
+        Entity,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
     transforms: bevy::transform::helper::TransformHelper,
     catalog: Option<Res<RecipeCatalog>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
     mut labels: Query<&mut Text, With<CollectionPopupText>>,
+    machine: Option<Res<super::machine_config::MachineInteraction>>,
+    screens: Option<Res<super::controls::ScreenMode>>,
 ) {
     let camera = camera
         .single()
@@ -274,7 +296,10 @@ fn update_collection_popup(
             .min_by(|a, b| a.1.total_cmp(&b.1))
     });
     for mut visibility in &mut popups {
-        *visibility = if nearest.is_some() {
+        *visibility = if nearest.is_some()
+            && machine.as_ref().is_none_or(|m| m.target.is_none())
+            && screens.as_ref().is_none_or(|s| s.open.is_none())
+        {
             Visibility::Visible
         } else {
             Visibility::Hidden
@@ -299,14 +324,29 @@ fn update_hud(
     mut view: ResMut<RecipeBookView>,
     player: Res<PlayerInventory>,
     catalog: Option<Res<RecipeCatalog>>,
-    camera: Query<Entity, With<Camera3d>>,
+    camera: Query<
+        Entity,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
     nodes: Query<(Entity, &ResourceNode), Without<super::prefabs::PrefabError>>,
     transforms: bevy::transform::helper::TransformHelper,
     mut hud: Query<&mut Text, With<InventoryHud>>,
+    machine: Option<Res<super::machine_config::MachineInteraction>>,
+    screens: Option<Res<super::controls::ScreenMode>>,
 ) {
     let Ok(mut hud) = hud.single_mut() else {
         return;
     };
+    if screens
+        .as_ref()
+        .is_some_and(|screens| screens.open.is_some())
+    {
+        hud.0.clear();
+        return;
+    }
     let nearby = camera
         .single()
         .ok()
@@ -325,7 +365,10 @@ fn update_hud(
                     })
             })
         });
-    let prompt = if nearby {
+    let prompt = if let Some(machine) = machine.as_ref().filter(|machine| machine.target.is_some())
+    {
+        machine.prompt.as_str()
+    } else if nearby {
         "E | Collect resource (hold for nearby pickups)"
     } else {
         "Explore for resources | approach within 3 m"
