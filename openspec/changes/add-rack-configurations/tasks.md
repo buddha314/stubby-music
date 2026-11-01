@@ -14,3 +14,9 @@
 - [ ] 2.7 Cable comb: hang `configure.cables` on `Comb_<n>` (stored-cable curve in `rack_frame` profile `cable_comb`); dragging a plug off the comb starts a cable; unplugging both ends hangs it back
 - [ ] 2.8 Pulse the `Jack_<port>_Halo` of each jack a waiting `configure.cables` entry names (its `from`/`to`), tinted the cable's colour (`rest_strength` 0 → `peak_strength` 2, `period_s` 1.2); rest otherwise and once patched
 - [ ] 2.9 Patch guidance: ghost cable (build-ghost colour) for each waiting `configure.cables` entry; hint line shows `<step> of <n>  ·  <hint>`, then `patched_hint`
+
+Prototype view landed with mudpit interaction 2.3: the profile lays out the existing
+rack_frame, the fixed burbler_clock, slot outlines and selected slot_labels in a
+native render-to-image HUD camera. ScreenMode owns cursor/movement and Escape.
+Full mounting, patching, knob interaction and backdrop blur remain unfinished.
+Do not treat this initial view as completion of those tasks.

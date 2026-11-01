@@ -187,3 +187,16 @@ through Avian's released dependencies. Task `add-desert-opening` 4.2d remains op
 [the compatibility check and resume steps](../docs/research/player-controller-and-physics.md#jackdaw-development-compatibility-check-2026-11-01)
 record the exact CLI rejection. The collider-shape JSONs remain ready for authoring
 once the shared module supports this SDK.
+
+## Machine configuration interaction
+
+Within 3 m along the ground of a mudpit's authored Interact node, the game shows
+E | Configure burbler. E opens the rack HUD from the machine's configure profile;
+a closer finite pickup wins. The HUD uses rack_frame.glb, the existing clock
+model and labelled empty slot assets. It views the mine's existing clock rather
+than creating another audio module. Escape closes it and restores mouse look.
+The initial rack view is implemented; mounting, knob editing and cable patching
+remain the subsequent rack tasks.
+
+Checked with one focused interaction regression and one 20-second bounded review.
+The review confirmed the actual rack assets loaded and the screen opened/closed.
