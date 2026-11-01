@@ -7,6 +7,7 @@ use bevy::{
 pub const INTERACT: KeyCode = KeyCode::KeyE;
 pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
 pub const INVENTORY: KeyCode = KeyCode::Tab;
+pub const RECORDER: KeyCode = KeyCode::KeyH;
 pub const JUMP: KeyCode = KeyCode::Space;
 pub const CROUCH: KeyCode = KeyCode::KeyC;
 const EYE_HEIGHT: f32 = 1.65;

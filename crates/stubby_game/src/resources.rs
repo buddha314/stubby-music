@@ -342,7 +342,7 @@ fn update_hud(
         view.open = !view.open;
     }
     let mut text = format!(
-        "{prompt}\n{recipes} | Tab: Inventory | O: Recipe book\n{}",
+        "{prompt}\n{recipes} | Tab: Inventory | H: Recorder | O: Recipe book\n{}",
         player.feedback
     );
     if view.open {

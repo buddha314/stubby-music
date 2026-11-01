@@ -71,7 +71,7 @@ audio, as the burbler is.
 Follow Satisfactory's interaction conventions where applicable (research:
 `docs/research/satisfactory-controls.md`). Use **E** for use/interact/collection;
 holding E may collect successive nearby pickups without duplicating an instance.
-Use **O** for the recipe book/codex. Reserve **Q** for build, **F** for dismantle,
+Use **O** for the recipe book/codex. **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. Reserve **Q** for build, **F** for dismantle,
 **Tab** for inventory and **B** for flashlight; do not assign these to unrelated
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
