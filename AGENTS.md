@@ -389,7 +389,7 @@ equivalent of an iron ore node, so the player does not pick it up.
   places: the **clock** (built in, provided by the burbler; it cannot be removed; its
   BPM knob sets the BPM, starting at the burbler's seeded tempo), a **VCO** slot (a
   square wave from a lightning bug makes a Square VCO), and a **volume** module (a VCA
-  with a built-in envelope). The player **patches the voice with cables**: clock GATE →
+  opened by TRIG while the gate is high; no envelope, so the voice stays square). The player **patches the voice with cables**: clock GATE →
   volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. Patch cables
   are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). Every rack has a small
   **cable comb** holding the machine's spare cables (the burbler: two), and each jack's
@@ -408,6 +408,13 @@ equivalent of an iron ore node, so the player does not pick it up.
   port). The engine patch is exactly the patched cables; completing them sends
   `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,
   design "The rack pattern as built").
+- **A rack plays only what it shows** (user rule, until the user gives an override).
+  Every engine module is a module the player sees in the rack, and every connection is a
+  cable the player patched or an output normalled on the panel. No hidden modules (no
+  built-in envelope, filter, LFO, or anything else off the panel), and tests, reviews
+  and renders never add patches the player did not make (e.g. PHASE → V/OCT, which
+  sweeps the pitch into a siren). The burbler's voice is therefore a plain gated square
+  at the lightning bug's pitch.
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
   water is **sheet music**: a staff ribbon runs along it, its lines a fixed distance

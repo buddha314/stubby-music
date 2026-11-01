@@ -24,6 +24,7 @@ use bevy::{
 };
 use std::collections::HashMap;
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
+use stubby_recipes::Stack;
 
 /// What the rack of one placed machine holds.
 #[derive(Component, Default)]
@@ -32,6 +33,9 @@ pub struct RackState {
     pub mounted: HashMap<String, String>,
     /// Per spare cable in the profile: patched yet?
     pub patched: Vec<bool>,
+    /// The player's own cables (output jack, input jack), each one patch cable from the
+    /// inventory; unplugging returns it.
+    pub own: Vec<(JackRef, JackRef)>,
     /// Bumped whenever the rack's contents change, so the screen redraws.
     pub version: u32,
 }
@@ -58,10 +62,24 @@ pub struct MachineConfigured {
 #[derive(Resource, Default)]
 struct PatchSelection(Option<JackRef>);
 
+/// A cable taken from the comb: which spare cable, and the jack its first end went into.
+#[derive(Resource, Default)]
+pub(crate) struct HeldCable {
+    pub(crate) cable: Option<usize>,
+    first: Option<JackRef>,
+}
+
+/// A hanging spare cable's tube or plug on the comb (spare cable index), pickable.
+#[derive(Component, Clone, Copy)]
+pub(crate) struct CombCable(pub usize);
+
 pub struct RackPlugin;
 impl Plugin for RackPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PatchSelection>()
+            .init_resource::<HeldCable>()
+            .add_observer(take_cable)
+            .add_observer(drop_cable)
             .add_message::<MachineConfigured>()
             .add_observer(click_jack)
             .add_observer(press_mount)
@@ -71,6 +89,8 @@ impl Plugin for RackPlugin {
                     attach,
                     mount_buttons,
                     number_keys,
+                    comb_parts_pickable,
+                    clear_feedback_on_open,
                     patch_engine,
                     guidance,
                     pods,
@@ -88,27 +108,22 @@ impl Plugin for RackPlugin {
 /// machine's, `AssetClock`).
 fn parts(module: &str) -> Vec<(&'static str, ModuleKind)> {
     match module {
-        "square_vco" => vec![("vco", ModuleKind::SquareVco { freq_hz: 110. })],
-        // The volume is a VCA with a built-in envelope fired by TRIG.
-        "volume" => vec![
-            (
-                "env",
-                ModuleKind::Envelope {
-                    attack_s: 0.005,
-                    decay_s: 0.3,
-                },
-            ),
-            ("vca", ModuleKind::Vca { gain: 0.25 }),
-        ],
+        // A Square VCO is made from a bug's square wave, so it sounds at the bug's pitch.
+        "square_vco" => vec![(
+            "vco",
+            ModuleKind::SquareVco {
+                freq_hz: super::waveform_audio::bug_click().freq_hz,
+            },
+        )],
+        // The volume is a plain VCA: TRIG opens it while the gate is high, so the
+        // voice stays square (no envelope shaping it).
+        "volume" => vec![("vca", ModuleKind::Vca { gain: 0.25 })],
         _ => vec![],
     }
 }
-/// Connections inside one module (the volume's envelope opens its VCA).
-fn internal(module: &str) -> Vec<((&'static str, &'static str), (&'static str, &'static str))> {
-    match module {
-        "volume" => vec![(("env", "out"), ("vca", "cv"))],
-        _ => vec![],
-    }
+/// Connections inside one module (none yet: the volume is a single VCA).
+fn internal(_module: &str) -> Vec<((&'static str, &'static str), (&'static str, &'static str))> {
+    vec![]
 }
 /// A panel jack's engine port: (part, port).
 fn jack(module: &str, port: &str) -> Option<(&'static str, &'static str)> {
@@ -117,9 +132,18 @@ fn jack(module: &str, port: &str) -> Option<(&'static str, &'static str)> {
         ("burbler_clock", "phase") => ("clock", "phase"),
         ("square_vco", "out") => ("vco", "out"),
         ("square_vco", "voct") => ("vco", "voct"),
-        ("volume", "trig") => ("env", "gate"),
+        ("volume", "trig") => ("vca", "cv"),
         ("volume", "in") => ("vca", "in"),
         ("volume", "out") => ("vca", "out"),
+        _ => return None,
+    })
+}
+
+/// Whether a panel jack is an output (true) or an input (false).
+fn is_output(module: &str, port: &str) -> Option<bool> {
+    Some(match (module, port) {
+        ("burbler_clock", "gate" | "phase") | ("square_vco", "out") | ("volume", "out") => true,
+        ("square_vco", "voct") | ("volume", "trig" | "in") => false,
         _ => return None,
     })
 }
@@ -180,6 +204,11 @@ fn plan(
     };
     for (cable, patched) in config.cables.iter().zip(&state.patched) {
         if *patched && let (Some(from), Some(to)) = (port(&cable.from), port(&cable.to)) {
+            commands.push(Command::Connect { from, to });
+        }
+    }
+    for (from, to) in &state.own {
+        if let (Some(from), Some(to)) = (port(from), port(to)) {
             commands.push(Command::Connect { from, to });
         }
     }
@@ -513,6 +542,7 @@ fn click_jack(
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
     mut selection: ResMut<PatchSelection>,
+    mut held: ResMut<HeldCable>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
     mut player: ResMut<PlayerInventory>,
 ) {
@@ -534,6 +564,31 @@ fn click_jack(
             .iter()
             .position(|c| &c.from == j || &c.to == j)
     };
+    // A cable taken from the comb: its first end, then its second.
+    if let Some(i) = held.cable {
+        let cable = &config.cables[i];
+        if &cable.from != jack && &cable.to != jack {
+            player.feedback = format!(
+                "The {} cable goes from {} to {}.",
+                colour_name(&cable.color),
+                cable.from.port.to_uppercase(),
+                cable.to.port.to_uppercase()
+            );
+            return;
+        }
+        match held.first.take() {
+            None => held.first = Some(jack.clone()),
+            Some(first) if &first != jack => {
+                state.patched[i] = true;
+                state.version += 1;
+                held.cable = None;
+                player.feedback.clear();
+            }
+            Some(first) => held.first = Some(first),
+        }
+        return;
+    }
+    // A patched comb cable at this jack: back onto the comb.
     if let Some(i) = cable_at(jack).filter(|&i| state.patched[i]) {
         state.patched[i] = false;
         state.version += 1;
@@ -541,24 +596,171 @@ fn click_jack(
         player.feedback = "Cable back on the comb.".into();
         return;
     }
+    // One of the player's own cables at this jack: back into the inventory.
+    if let Some(i) = state.own.iter().position(|(a, b)| a == jack || b == jack) {
+        state.own.remove(i);
+        state.version += 1;
+        selection.0 = None;
+        let back = player.items.grant(&[Stack {
+            item: PATCH_CABLE.into(),
+            quantity: 1,
+        }]);
+        player.feedback = match back {
+            Ok(()) => format!(
+                "Patch cable back in your inventory ({}).",
+                player.items.quantity(PATCH_CABLE)
+            ),
+            Err(error) => error.to_string(),
+        };
+        return;
+    }
     let Some(first) = selection.0.take() else {
         selection.0 = Some(jack.clone());
         return;
     };
-    let pair = config
+    let mounted = modules(config, &state);
+    // An input takes one cable; an output may feed several.
+    let input_taken = |j: &JackRef| {
+        state.own.iter().any(|(_, to)| to == j)
+            || config
+                .cables
+                .iter()
+                .zip(&state.patched)
+                .any(|(c, p)| *p && &c.to == j)
+    };
+    // The comb cable these two jacks are for, if any.
+    if let Some(i) = config
         .cables
         .iter()
-        .position(|c| (c.from == first && &c.to == jack) || (&c.from == jack && c.to == first));
-    match pair {
-        Some(i)
-            if modules(config, &state).contains_key(&config.cables[i].from.place)
-                && modules(config, &state).contains_key(&config.cables[i].to.place) =>
-        {
-            state.patched[i] = true;
-            state.version += 1;
-        }
-        _ => player.feedback = "Those two jacks don't take a cable here; follow the glow.".into(),
+        .position(|c| (c.from == first && &c.to == jack) || (&c.from == jack && c.to == first))
+        && mounted.contains_key(&config.cables[i].from.place)
+        && mounted.contains_key(&config.cables[i].to.place)
+        && !input_taken(&config.cables[i].to)
+    {
+        state.patched[i] = true;
+        state.version += 1;
+        return;
     }
+    // Otherwise, a cable of the player's own: an output to a free input.
+    let (from, to) = match (direction(&mounted, &first), direction(&mounted, jack)) {
+        (Some(true), Some(false)) => (first, jack.clone()),
+        (Some(false), Some(true)) => (jack.clone(), first),
+        _ => {
+            player.feedback = "A cable joins an output to an input; follow the glow.".into();
+            return;
+        }
+    };
+    if input_taken(&to) {
+        player.feedback = "That input already has a cable.".into();
+    } else if player.items.take(PATCH_CABLE, 1).is_ok() {
+        state.own.push((from, to));
+        state.version += 1;
+        player.feedback = format!(
+            "Patched one of your cables ({} left).",
+            player.items.quantity(PATCH_CABLE)
+        );
+    } else {
+        player.feedback = "You have no patch cables.".into();
+    }
+}
+
+/// Clicking a hanging cable takes it from the comb; then click its two jacks.
+fn take_cable(
+    click: On<PointerClick>,
+    parts: Query<&CombCable>,
+    screens: Res<ScreenMode>,
+    racks: Query<&RackState>,
+    mut held: ResMut<HeldCable>,
+    mut selection: ResMut<PatchSelection>,
+) {
+    let Ok(CombCable(i)) = parts.get(click.entity) else {
+        return;
+    };
+    let Some(state) = open_rack(&screens).and_then(|e| racks.get(e).ok()) else {
+        return;
+    };
+    if !state.patched.get(*i).copied().unwrap_or(true) {
+        held.cable = Some(*i);
+        held.first = None;
+        selection.0 = None;
+    }
+}
+
+/// Dragging a hanging cable onto either of its jacks patches it.
+fn drop_cable(
+    drop: On<bevy::picking::events::PointerDragDrop>,
+    parts: Query<&CombCable>,
+    jacks: Query<&JackHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    mut held: ResMut<HeldCable>,
+    mut racks: Query<(&PlacedAsset, &mut RackState)>,
+) {
+    let (Ok(CombCable(i)), Ok(JackHit(jack))) = (parts.get(drop.dropped), jacks.get(drop.entity))
+    else {
+        return;
+    };
+    let Some(machine) = open_rack(&screens) else {
+        return;
+    };
+    let Ok((asset, mut state)) = racks.get_mut(machine) else {
+        return;
+    };
+    let Some(cable) = profiles.0.get(&asset.asset).and_then(|c| c.cables.get(*i)) else {
+        return;
+    };
+    if (&cable.from == jack || &cable.to == jack) && !state.patched[*i] {
+        state.patched[*i] = true;
+        state.version += 1;
+        held.cable = None;
+        held.first = None;
+    }
+}
+
+/// The comb's hanging cables load as models; make their meshes pickable.
+fn comb_parts_pickable(
+    mut commands: Commands,
+    meshes: Query<Entity, (With<Mesh3d>, Without<Pickable>, Without<CombCable>)>,
+    parents: Query<&ChildOf>,
+    combs: Query<&CombCable>,
+) {
+    for entity in &meshes {
+        if let Some(cable) = parents
+            .iter_ancestors(entity)
+            .find_map(|a| combs.get(a).ok())
+        {
+            commands
+                .entity(entity)
+                .insert((*cable, Pickable::default()));
+        }
+    }
+}
+
+/// Feedback on the rack screen starts fresh each time it opens.
+fn clear_feedback_on_open(
+    mut opened: MessageReader<super::machine_config::MachineConfigurationOpened>,
+    mut player: ResMut<PlayerInventory>,
+    mut held: ResMut<HeldCable>,
+) {
+    if opened.read().next().is_some() {
+        player.feedback.clear();
+        *held = HeldCable::default();
+    }
+}
+
+fn colour_name(colour: &str) -> &str {
+    match colour {
+        "verdigris" => "green",
+        "rust" => "red",
+        other => other,
+    }
+}
+
+/// Your own cables are this item; the comb's come with the rack.
+const PATCH_CABLE: &str = "patch_cable";
+
+fn direction(mounted: &HashMap<String, String>, j: &JackRef) -> Option<bool> {
+    is_output(mounted.get(&j.place)?, &j.port)
 }
 
 // ------------------------------------------------------------------ guidance
@@ -566,6 +768,8 @@ fn click_jack(
 fn guidance(
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
+    held: Res<HeldCable>,
+    player: Res<PlayerInventory>,
     racks: Query<(&PlacedAsset, &RackState)>,
     mut hints: Query<&mut Text, With<RackHint>>,
 ) {
@@ -580,7 +784,24 @@ fn guidance(
         .iter()
         .find(|p| !p.fixed && !state.mounted.contains_key(&p.place));
     let n = config.cables.len();
-    let text = if let Some(place) = missing {
+    let text = if let Some(cable) = held.cable.and_then(|i| config.cables.get(i)) {
+        let other = match &held.first {
+            None => format!(
+                "click {}, then {}",
+                cable.from.port.to_uppercase(),
+                cable.to.port.to_uppercase()
+            ),
+            Some(first) => {
+                let rest = if first == &cable.from {
+                    &cable.to
+                } else {
+                    &cable.from
+                };
+                format!("now click {}", rest.port.to_uppercase())
+            }
+        };
+        format!("{} cable in hand  |  {other}", colour_name(&cable.color))
+    } else if let Some(place) = missing {
         format!("insert a module in the {} slot", place.kind.to_uppercase())
     } else if let Some(i) = state.patched.iter().position(|p| !p) {
         format!(
@@ -589,7 +810,15 @@ fn guidance(
             config.cables[i].hint.replace('·', "|")
         )
     } else {
-        config.patched_hint.replace('·', "|")
+        format!(
+            "{}  |  patch more with your own cables: an output, then an input",
+            config.patched_hint.replace('·', "|")
+        )
+    };
+    let text = if player.feedback.is_empty() {
+        text
+    } else {
+        format!("{text}\n{}", player.feedback)
     };
     for mut hint in &mut hints {
         if hint.0 != text {
@@ -723,7 +952,7 @@ fn draw_cables(
     profiles: Res<Profiles>,
     racks: Query<(&PlacedAsset, &RackState)>,
     ports: Query<(&PortNode, &GlobalTransform)>,
-    comb: Query<(&CombNode, &GlobalTransform)>,
+    comb: Query<(Entity, &CombNode, &GlobalTransform, &Transform)>,
     old: Query<Entity, With<CableVisual>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -746,7 +975,7 @@ fn draw_cables(
     let layout = ports
         .iter()
         .map(|(_, t)| t.translation())
-        .chain(comb.iter().map(|(_, t)| t.translation()))
+        .chain(comb.iter().map(|(_, _, t, _)| t.translation()))
         .fold(Vec3::ZERO, |sum, p| sum + p.abs());
     let key = (
         machine,
@@ -764,7 +993,12 @@ fn draw_cables(
             .find(|(p, _)| &p.0 == j)
             .map(|(_, t)| t.translation())
     };
-    let node = |name: String| comb.iter().find(|(c, _)| c.0 == name).map(|(_, t)| *t);
+    // A comb node: its entity and local transform (the plugs hang below their slot).
+    let node = |name: String| {
+        comb.iter()
+            .find(|(_, c, ..)| c.0 == name)
+            .map(|(e, _, _, t)| (e, *t))
+    };
     let layer = bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER);
     let ready = config
         .places
@@ -778,6 +1012,21 @@ fn draw_cables(
         ..default()
     });
     let mut slot = 0;
+    let own = materials.add(StandardMaterial {
+        base_color: cable_color("bone"),
+        perceptual_roughness: 0.6,
+        ..default()
+    });
+    for (from, to) in &state.own {
+        if let (Some(a), Some(b)) = (port(from), port(to)) {
+            commands.spawn((
+                CableVisual,
+                Mesh3d(meshes.add(tube(&cable_curve(a, b), CABLE_RADIUS))),
+                MeshMaterial3d(own.clone()),
+                layer.clone(),
+            ));
+        }
+    }
     for (cable, patched) in config.cables.iter().zip(&state.patched) {
         let mat = materials.add(StandardMaterial {
             base_color: cable_color(&cable.color),
@@ -810,20 +1059,32 @@ fn draw_cables(
             node(format!("Comb_{slot}_PlugA")),
             node(format!("Comb_{slot}_PlugB")),
         ) {
-            let (a, b) = (pa.translation(), pb.translation());
-            let c = 2. * top.translation() - (a + b) / 2. + Vec3::Y * 0.03;
+            // Drawn in the slot's own space, as its children, so the cable and plugs
+            // follow the frame however it is fitted (its posts move after it spawns).
+            let (slot_entity, (a, b)) = (top.0, (pa.1.translation, pb.1.translation));
+            let c = -(a + b) / 2. + Vec3::Y * 0.03;
+            let index = config
+                .cables
+                .iter()
+                .position(|c| std::ptr::eq(c, cable))
+                .unwrap_or(0);
             commands.spawn((
                 CableVisual,
-                Mesh3d(meshes.add(tube(&bezier(a, c, b), CABLE_RADIUS))),
+                CombCable(index),
+                Pickable::default(),
+                Mesh3d(meshes.add(tube(&bezier(a, c, b), CABLE_RADIUS * 1.6))),
                 MeshMaterial3d(mat),
                 layer.clone(),
+                ChildOf(slot_entity),
             ));
             for plug in [pa, pb] {
                 commands.spawn((
                     CableVisual,
+                    CombCable(index),
                     WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
-                    plug.compute_transform(),
+                    plug.1,
                     bevy::app::Propagate(layer.clone()),
+                    ChildOf(slot_entity),
                 ));
             }
         }
@@ -855,12 +1116,74 @@ mod tests {
             .filter(|c| matches!(c, Command::Connect { .. }))
             .count()
         };
-        // Internal env -> vca and the normalled output only: no tone.
-        assert_eq!(connections(&state), 2);
+        // The normalled output only: no tone.
+        assert_eq!(connections(&state), 1);
         state.patched = vec![true, false];
         assert!(!state.complete());
         state.patched = vec![true, true];
         assert!(state.complete());
-        assert_eq!(connections(&state), 4, "GATE->TRIG and OUT->IN added");
+        assert_eq!(connections(&state), 3, "GATE->TRIG and OUT->IN added");
+    }
+
+    /// Development only: renders the burbler's patch to WAVs for listening (not run in
+    /// normal builds). `STUBBY_RENDER_DIR=<dir> cargo test -p stubby_game --lib
+    /// render_burbler -- --ignored` writes `burbler-patched.wav` (the two comb cables).
+    #[test]
+    #[ignore]
+    fn render_burbler() {
+        use stubby_audio::{Engine, EngineConfig};
+        let dir = std::env::var("STUBBY_RENDER_DIR").unwrap_or_else(|_| ".".into());
+        let profiles = Profiles::default();
+        let config = &profiles.0["mudpit_burbler"];
+        let mut patched = RackState {
+            patched: vec![true; config.cables.len()],
+            ..default()
+        };
+        patched.mounted.insert("vco".into(), "square_vco".into());
+        for (name, state) in [("burbler-patched", patched)] {
+            const SR: u32 = 48_000;
+            let (mut engine, mut renderer) = Engine::offline(EngineConfig {
+                sample_rate: SR,
+                max_block_frames: 512,
+            })
+            .unwrap();
+            let clock = ModuleId(1);
+            engine
+                .send(Command::AddModule {
+                    id: clock,
+                    kind: ModuleKind::Clock { bpm: 90. },
+                })
+                .unwrap();
+            let mut next = 100;
+            for command in plan(config, &state, Some(clock), || {
+                next += 1;
+                Some(ModuleId(next))
+            })
+            .1
+            {
+                engine.send(command).unwrap();
+            }
+            engine.flush().unwrap();
+            let mut samples = Vec::new();
+            let mut buf = vec![0f32; 512 * 2];
+            for _ in 0..(SR as usize * 6).div_ceil(512) {
+                renderer.render(&mut buf);
+                samples.extend_from_slice(&buf);
+            }
+            let mut wav = Vec::new();
+            let data = (samples.len() * 2) as u32;
+            for chunk in [&b"RIFF"[..], &(36 + data).to_le_bytes(), b"WAVEfmt "] {
+                wav.extend_from_slice(chunk);
+            }
+            for v in [16u32, 1 | (2 << 16), SR, SR * 4, 4 | (16 << 16)] {
+                wav.extend_from_slice(&v.to_le_bytes());
+            }
+            wav.extend_from_slice(b"data");
+            wav.extend_from_slice(&data.to_le_bytes());
+            for s in &samples {
+                wav.extend_from_slice(&((s.clamp(-1., 1.) * 32767.) as i16).to_le_bytes());
+            }
+            std::fs::write(format!("{dir}/{name}.wav"), wav).unwrap();
+        }
     }
 }

@@ -23,18 +23,23 @@ struct CollectionSounds(WaveformSound);
 struct CueVoices {
     active: Vec<([ModuleId; 4], f64)>,
 }
+/// The lightning bug's click: the square wave's pitch and shape, shared by every
+/// voice that plays a square wave from a bug (the bugs, collection cues, the burbler's VCO).
+pub(crate) fn bug_click() -> WaveformSound {
+    #[derive(Deserialize)]
+    struct Preset {
+        click: WaveformSound,
+    }
+    let preset: Preset = serde_json::from_str(include_str!(
+        "../../../assets/creatures/lightning_bug/asset.json"
+    ))
+    .expect("shipped waveform preset is valid");
+    preset.click
+}
 pub struct WaveformAudioPlugin;
 impl Plugin for WaveformAudioPlugin {
     fn build(&self, app: &mut App) {
-        #[derive(Deserialize)]
-        struct Preset {
-            click: WaveformSound,
-        }
-        let preset: Preset = serde_json::from_str(include_str!(
-            "../../../assets/creatures/lightning_bug/asset.json"
-        ))
-        .expect("shipped waveform preset is valid");
-        app.insert_resource(CollectionSounds(preset.click))
+        app.insert_resource(CollectionSounds(bug_click()))
             .init_resource::<CueVoices>()
             .init_resource::<super::module_ids::ModuleIds>()
             .add_systems(PostUpdate, collection_cues);
