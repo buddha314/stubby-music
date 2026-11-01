@@ -1,12 +1,13 @@
 """The Clock, the opening's second discovery: a tempo module with a BPM readout and a
 flashing clock light, in the spirit of performance clock modules.
 
-The clock manifests as a pulsating light (desert-opening spec). The panel's large
-domed lens is that light (`Lamp`), and the same flash material lights the tick-train
+The clock manifests as a pulsating light (desert-opening spec). The panel's
+jellyfish-bell lamp is that light (`Lamp`), and the same flash material lights the tick-train
 crown along the top and the glyphs on both sides, so the beat reads from a distance
 and from any side. Above the lens, a three-digit seven-segment display shows the
 tempo; each segment is its own node so the game can show any BPM. Below: a TEMPO
-encoder, and GATE and PHASE outputs with their own LEDs. The engine's Clock has no
+encoder, and GATE and PHASE outputs with their own fairy lights. The display stays
+segmented, because a number has to be read (style guide). The engine's Clock has no
 inputs.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_clock_lamp.py
@@ -71,8 +72,8 @@ def build():
     kit = ModuleKit("Clock", "clock_lamp")
     # One flash material for the lens, the crown trace and the side glyphs: the game
     # modulates it once per tick and every view of the clock flashes together.
-    lamp_mat = kit.material("Lamp", (0.6, 0.35, 0.12), roughness=0.15, emission=LAMP_WARM,
-                            strength=FLASH["peak_strength"])
+    # Translucent, so the bell, its core and its tendrils share it and flash as one.
+    lamp_mat = kit.translucent("Lamp", LAMP_WARM, FLASH["peak_strength"], 0.55)
     segment_mat = kit.material("Segment", (0.3, 0.07, 0.02), roughness=0.3, emission=(1.0, 0.32, 0.06),
                                strength=6.0)
     ghost_mat = kit.material("SegmentGhost", (0.05, 0.025, 0.02), roughness=0.4)
@@ -121,23 +122,10 @@ def build():
             lit[(digit, seg)] = obj
     kit.label("BpmLabel", "BPM", (0.12, PANEL_FRONT - 0.0005, display_z - 0.125), size=0.03)
 
-    # The clock light: a large domed lens with a dark bezel.
-    lens_z = 0.875
-    kit.cylinder("LensBezel", 0.085, 0.02, (0, PANEL_FRONT - 0.01, lens_z), kit.knob_mat, segments=48)
-    lamp = bpy.data.objects.new("Lamp", None)
-    lamp.empty_display_type = "CIRCLE"
-    lamp.empty_display_size = 0.07
-    kit.link(lamp)
-    lamp.location = (0, PANEL_FRONT - 0.02, lens_z)
-    lamp.rotation_euler = (1.5707963, 0.0, 0.0)
-    lamp["light"] = "gate"
-    lamp["pulse_driver"] = "audio_sample_timestamp"
-    for key, value in FLASH.items():
-        lamp[key] = value
-    lens = kit.cylinder("Lens", 0.068, 0.03, (0, 0, 0.0), lamp_mat, segments=48, parent=lamp)
-    lens["light"] = "gate"
-    for face in lens.data.polygons:
-        face.use_smooth = True
+    # The clock light: a jellyfish bell, its tendrils trailing toward the encoder.
+    kit.jellyfish("Lamp", (0, 0.875), lamp_mat, radius=0.068, light="gate",
+                  pulse_driver="audio_sample_timestamp", **FLASH)
+    bpy.data.objects["Clock_LampBell"]["light"] = "gate"
 
     kit.knob("bpm", 0.64, "TEMPO", param_min=1.0, param_max=999.0, taper="linear", rotation_degrees=300.0,
              control="encoder")
@@ -154,6 +142,9 @@ def build():
             ch = shown[digit]
             on = ch != " " and seg in DIGITS[ch]
             obj.hide_render = not on
+        # Preview mid-flash: at peak the bell's shape is lost in its own glow. The
+        # exported material stays authored at peak.
+        lamp_mat.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 4.0
 
     base = kit.base_profile(extra_height=CROWN_HEIGHT)
     profile = {

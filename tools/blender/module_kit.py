@@ -8,6 +8,11 @@ user's open Blender (e.g. through MCP), where `finish` writes only the .blend.
 Game-facing parts are named empties with glTF extras: `Port_<port>` (cable sockets,
 local +Z out of the panel), `Knob_<param>` (rotates about local Z), and
 `Light_<light>` (emissive strength follows the rack's light value).
+
+Light follows the style guide's luminescence rule: jellyfish and fairies, not LEDs. A
+light is a bright opaque core inside translucent shells (`soft_light`), a glyph is a
+glowing thread with a translucent halo (`soft_trace`), and a flashing lamp is a
+jellyfish bell with trailing tendrils (`jellyfish`).
 """
 from pathlib import Path
 import json
@@ -74,6 +79,7 @@ class ModuleKit:
         self.brass_mat = m("JackBrass", (0.55, 0.40, 0.18), metallic=1.0, roughness=0.32)
         self.hole_mat = m("JackHole", (0.0, 0.0, 0.0), roughness=0.9)
         self.screw_mat = m("Screw", (0.3, 0.3, 0.3), metallic=1.0, roughness=0.4)
+        self.glow_halo = None  # made on first use, so modules without halos don't carry it
 
         self.root = bpy.data.objects.new(f"{kind}_Root", None)
         self.collection.objects.link(self.root)
@@ -132,6 +138,50 @@ class ModuleKit:
         bm.to_mesh(mesh)
         bm.free()
         return mesh
+
+    def translucent(self, name, color, strength, alpha):
+        """An emissive, alpha-blended material: the shells around a light's core."""
+        mat = self.material(name, color, roughness=0.3, emission=color, strength=strength)
+        mat.node_tree.nodes["Principled BSDF"].inputs["Alpha"].default_value = alpha
+        mat.surface_render_method = "BLENDED"
+        return mat
+
+    def halo(self):
+        """The shared faint halo shell, in signal amber."""
+        if self.glow_halo is None:
+            self.glow_halo = self.translucent("GlowHalo", AMBER, 1.2, 0.12)
+        return self.glow_halo
+
+    def trace_halo(self):
+        """Fainter than `halo`: traces layer three of these, so the steps stay gentle."""
+        if getattr(self, "glow_halo_faint", None) is None:
+            self.glow_halo_faint = self.translucent("GlowHaloFaint", AMBER, 0.8, 0.06)
+        return self.glow_halo_faint
+
+    def sphere(self, name, radius, mat, parent, location=(0, 0, 0), shape=None, segments=16, rings=8):
+        def fill(bm):
+            bmesh.ops.create_uvsphere(bm, u_segments=segments, v_segments=rings, radius=radius)
+            if shape:
+                shape(bm)
+        obj = self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat, parent)
+        obj.location = location
+        for face in obj.data.polygons:
+            face.use_smooth = True
+        return obj
+
+    def ring(self, name, radius, tube, mat, parent, steps=48):
+        """A torus around the parent's local Z (the panel normal, under a socket)."""
+        def fill(bm):
+            verts = [bm.verts.new((radius + tube * math.cos(a), 0.0, tube * math.sin(a)))
+                     for a in (k / 8 * 2 * math.pi for k in range(9))]
+            edges = [bm.edges.new((a, b)) for a, b in zip(verts, verts[1:])]
+            bmesh.ops.spin(bm, geom=verts + edges, cent=(0, 0, 0), axis=(0, 0, 1),
+                           angle=2 * math.pi, steps=steps)
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+        obj = self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat, parent)
+        for face in obj.data.polygons:
+            face.use_smooth = True
+        return obj
 
     def box(self, name, size, location, mat, bevel=0.0):
         def fill(bm):
@@ -217,6 +267,20 @@ class ModuleKit:
                     bm.faces.new([v[i] for i in face])
         return self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat)
 
+    def soft_trace(self, name, points, plane, offset, stroke, mat, halo=True):
+        """A glowing thread: a thin bright core with three translucent halo strokes
+        behind it (1.7x to 3.5x its width), so the glow falls off instead of stopping at
+        an edge. The halos sit between the core's front and the surface, so the core
+        always shows through them. Pass `halo=False` where the glow itself pulses (the
+        game drives a lamp material by name; a static halo would not flash with it)."""
+        core = self.trace(name, points, plane, offset, stroke, mat)
+        if halo:
+            inward = -1.0 if offset > 0 else 1.0  # toward the surface the trace lies on
+            for k, width in enumerate((1.7, 2.5, 3.5)):
+                self.trace(f"{name}Halo{k}", points, plane, offset + inward * (0.0008 + 0.0003 * k),
+                           stroke * width, self.trace_halo(), depth=0.0002)
+        return core
+
     def prism(self, name, outline, mat):
         """Extrudes a front outline (u, z) back through the case's depth."""
         depth = BODY_DEPTH / 2 - PANEL_FRONT
@@ -250,11 +314,11 @@ class ModuleKit:
         same glyph on both sides of the case (mirrored on the left, so it reads
         correctly from outside: +y runs left there)."""
         self.box("GlyphPlate", (0.36, 0.002, 0.2), (0, PANEL_FRONT - 0.001, glyph_z), self.output_mat)
-        self.trace("Glyph", front_points, "xz", PANEL_FRONT - 0.0035, 0.024, mat)
+        self.soft_trace("Glyph", front_points, "xz", PANEL_FRONT - 0.0035, 0.014, mat)
         side_x = (self.width - 0.01) / 2 + 0.002
         for side, x in (("L", -side_x), ("R", side_x)):
             points = side_points if side == "R" else [(-u, z) for u, z in side_points]
-            self.trace(f"SideGlyph{side}", points, "yz", x, 0.024, mat)
+            self.soft_trace(f"SideGlyph{side}", points, "yz", x, 0.014, mat)
 
     def title(self, text):
         self.label("Title", text, (0, PANEL_FRONT - 0.0005, HEIGHT - 0.06), size=0.04)
@@ -288,13 +352,57 @@ class ModuleKit:
         """Outputs sit on a dark patch, the usual Eurorack cue."""
         self.box("OutputPatch", (self.width - 0.08, 0.002, height), (0, PANEL_FRONT - 0.001, z), self.output_mat)
 
+    def soft_light(self, light, location, mat=None, peak_strength=8.0, core_r=0.01, halo_r=0.018):
+        """A fairy light in place of an LED: an opaque core inside two translucent shells.
+        Every mesh under `Light_<light>` is driven by the game, so the halo pulses too."""
+        node = self.socket(f"Light_{light}", location, light=light, rest_strength=0.0,
+                           peak_strength=peak_strength)
+        core = self.sphere("LightCore", core_r, mat or self.glow, node)
+        core["light"] = light
+        self.sphere("LightHalo", halo_r, self.halo(), node)
+        self.sphere("LightHaloOuter", halo_r * 1.8, self.halo(), node)
+        return node
+
     def led(self, light, location, mat, peak_strength):
-        """An LED whose brightness follows the rack's light value."""
-        led = self.socket(f"Light_{light}", location, light=light, rest_strength=0.0,
-                          peak_strength=peak_strength)
-        dome = self.cylinder("Led", 0.011, 0.012, (0, 0, 0.004), mat, segments=16, parent=led)
-        dome["light"] = light
-        return led
+        """A status light whose brightness follows the rack's light value: a soft light,
+        lifted just off the faceplate so its shells clear it."""
+        x, y, z = location
+        return self.soft_light(light, (x, y - 0.004, z), mat, peak_strength)
+
+    def jellyfish(self, name, location, mat, radius=0.07, tendrils=4, **props):
+        """A flashing lamp as a jellyfish: a scalloped bell with a bright core, and
+        tendrils trailing down the faceplate. Bell, core and tendrils share `mat` (make it
+        translucent) so they flash together when the game drives it. Returns the lamp
+        node, which carries `props` as extras."""
+        x, z = location
+        lamp = bpy.data.objects.new(name, None)
+        lamp.empty_display_type = "CIRCLE"
+        lamp.empty_display_size = radius
+        self.link(lamp)
+        lamp.location = (x, PANEL_FRONT - 0.002, z)
+        lamp.rotation_euler = FACING_OUT
+        for key, value in props.items():
+            lamp[key] = value
+
+        def bell(bm):
+            bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -1e-4], context="VERTS")
+            for v in bm.verts:
+                angle = math.atan2(v.co.y, v.co.x)
+                if abs(v.co.z) < 1e-4:  # scalloped rim
+                    v.co.x *= 1 + 0.1 * math.sin(8 * angle)
+                    v.co.y *= 1 + 0.1 * math.sin(8 * angle)
+                v.co.z *= 0.6
+        self.sphere(f"{name}Bell", radius, mat, lamp, shape=bell, segments=24, rings=10)
+        self.sphere(f"{name}Core", radius * 23 / 70, mat, lamp, location=(0, 0, radius * 18 / 70))
+        # No outer halo shell: on the flat faceplate it reads as a disc and hides the
+        # bell's scalloped rim. The game's bloom gives the lamp its halo.
+        spread = radius * 45 / 70
+        for k in range(tendrils):
+            u = -spread + 2 * spread * k / max(tendrils - 1, 1)
+            pts = [(x + u * 0.85 + 0.01 * math.sin(j * 1.1 + k), z - radius * 6 / 7 - j * radius * 16 / 70)
+                   for j in range(5)]
+            self.trace(f"{name}Tendril{k}", pts, "xz", PANEL_FRONT - 0.0025, 0.006, mat)
+        return lamp
 
     # ------------------------------------------------------------ output
 

@@ -51,7 +51,8 @@ fn vco_modules_expose_ports_knob_and_light() {
         assert_eq!(extras(&node("Knob_freq"))["param"], "freq");
         assert_eq!(extras(&node("Light_out"))["light"], "out");
 
-        // The LED and the waveform glyphs glow; nothing else does.
+        // The OUT light and the waveform glyphs glow, each in its translucent halo
+        // (style guide: jellyfish and fairies, not LEDs); nothing else does.
         let mut emissive: Vec<_> = gltf
             .materials()
             .filter(|m| m.emissive_factor() != [0.0, 0.0, 0.0])
@@ -60,7 +61,12 @@ fn vco_modules_expose_ports_knob_and_light() {
         emissive.sort();
         assert_eq!(
             emissive,
-            [format!("{prefix}_Glyph"), format!("{prefix}_LedOut")],
+            [
+                format!("{prefix}_GlowHalo"),
+                format!("{prefix}_GlowHaloFaint"),
+                format!("{prefix}_Glyph"),
+                format!("{prefix}_LedOut")
+            ],
             "{waveform}"
         );
     }
@@ -111,5 +117,13 @@ fn clock_exposes_outputs_encoder_leds_lamp_and_bpm_display() {
         .filter_map(|m| m.name().map(str::to_owned))
         .collect();
     emissive.sort();
-    assert_eq!(emissive, ["Clock_Lamp", "Clock_LedGate", "Clock_Segment"]);
+    assert_eq!(
+        emissive,
+        [
+            "Clock_GlowHalo",
+            "Clock_Lamp",
+            "Clock_LedGate",
+            "Clock_Segment"
+        ]
+    );
 }
