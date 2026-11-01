@@ -1,6 +1,7 @@
 //! Every world-asset prefab under `assets/prefabs` places in Jackdaw: it parses, a
 //! scene instancing it resolves, every component it names is a type the editor
-//! knows, and the models it points at (and their `_LOD<n>` levels) exist.
+//! knows, the model it points at exists, and no prefab carries its own LodGroup
+//! (levels of detail belong to the model).
 //! Prefabs are made and edited in Jackdaw (Save as Prefab); this checks whatever is there.
 
 use std::path::{Path, PathBuf};
@@ -75,12 +76,9 @@ fn every_prefab_places_with_known_types_and_real_models() {
         assert_eq!(placed.len(), 1, "{}: one model per prefab", rel.display());
         let (source, lod, mine) = placed[0];
         assert!(assets().join(&source.path).is_file(), "{}: no model at {}", rel.display(), source.path);
-        if let Some(lod) = lod {
-            for level in 1..lod.levels.len() {
-                let path = LodGroup::implied_level_path(&source.path, level);
-                assert!(assets().join(&path).is_file(), "{}: no LOD level at {path}", rel.display());
-            }
-        }
+        // Levels of detail belong to the model (its `_LOD<n>` nodes and import
+        // settings), never to a placement.
+        assert!(lod.is_none(), "{}: LodGroup on a prefab; put the levels in the model", rel.display());
         if rel.starts_with("prefabs/flora") && rel.to_string_lossy().contains("scrub_oak") {
             assert_eq!(mine.map(|m| m.mine.as_str()), Some("scrub_oak"), "{}", rel.display());
         }

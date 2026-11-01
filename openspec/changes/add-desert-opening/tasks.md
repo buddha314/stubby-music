@@ -5,6 +5,7 @@
 - [x] 1.3 Blockout `square_vco.blend` and `clock_lamp.blend` (emissive lamp); export and check in the game's asset test (`tools/blender/create_vco.py`, `tools/blender/create_clock_lamp.py`, `crates/stubby_game/tests/module_assets.rs`). Placing them in the world is task 2.5
 - [x] 1.3a Saw, triangle and sine VCO assets from the same generator, for later discoveries (`assets/modules/README.md`)
 - [x] 1.4 Decide on Git LFS for `.blend` files: not yet; see design.md "Asset files and Git LFS"
+- [ ] 1.5 Standalone game (Codex): levels of detail from a model's `_LOD<n>` nodes (Bevy `VisibilityRange` per level; screen heights from the Jackdaw `.meta` when present); make sure Jackdaw's `.meta` files (naming its `ModelLoader`) do not break the standalone asset loader
 
 ## 2. World generation
 

@@ -4,10 +4,3 @@ jackdaw::prefab::components::PrefabEntityId(0)
 bevy_transform::components::transform::Transform
 bevy_camera::visibility::Visibility::Visible
 jackdaw_scene_types::types::GltfSource { path: "models/flora/reeds/reed_clump_2.glb", scene_index: 0 }
-jackdaw_scene_types::types::LodGroup {
-    levels: [
-        jackdaw_scene_types::types::LodLevel { screen_height: 0.045 },
-        jackdaw_scene_types::types::LodLevel { screen_height: 0.002 },
-    ],
-    fade: 0.1,
-}

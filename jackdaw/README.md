@@ -57,8 +57,8 @@ first, so keys reach the game rather than the editor.
 ## Placing world assets
 
 Levels are built from **prefabs**, the usual editor workflow: the art pipeline
-delivers a model (`.glb`, plus a `_LOD1.glb` where it has a far level), a prefab wraps
-it with its gameplay components, and level design places prefabs.
+delivers a model (`.glb`), a prefab wraps it with its gameplay components, and level
+design places prefabs.
 
 The prefabs live under `assets/prefabs/`: `flora/` (scrub oaks, reed clumps),
 `props/` (desert brush, stumps, mud debris), `creatures/` (the lightning bug),
@@ -68,13 +68,25 @@ instance; move, rotate and scale it like any entity. Prefabs are ordinary editor
 assets: open one to edit it, and every instance follows.
 
 **Making a prefab for a new asset:** drag its `.glb` from `models/<category>/` into the viewport,
-add its components in the inspector (a `LodGroup` if it has a `_LOD1.glb`, and its
-game component, such as `MineNode`), then right-click it in the hierarchy and choose
+add its game component in the inspector (such as `MineNode`), then right-click it in the hierarchy and choose
 **Save as Prefab**, saving under `prefabs/<group>/`.
 
 - Each prefab names its model with a `GltfSource` (under `models/<category>/`, the shared
-  runtime models). Oaks and reed clumps also carry a `LodGroup`: the model up close,
-  the `<name>_LOD1.glb` beside it far off.
+  runtime models). Prefabs never carry their own levels of detail.
+
+**Levels of detail belong to the model**, as in Unity, Unreal and Godot. Select the
+model in the Project window and open its import settings:
+- **Import LOD levels** reads the `<id>_LOD0`, `<id>_LOD1` nodes the art pipeline puts
+  inside a model (the scrub oaks and reed clumps).
+- **Generate** gives a model without hand-made levels simplified ones from its own
+  meshes.
+- **Apply** writes them to `<model>.glb.meta`; commit that file.
+- **All models at once:** the editor does this per model, so with the project open run
+  `python3 tools/jackdaw_lods.py` (from the repository root). It calls the same
+  operators through Jackdaw's remote control (`jd mcp`): import for models with
+  `_LOD` nodes, generate for the heavy models it lists, then apply. Every placement of the
+  model then switches level by screen size on its own; `LodOverride` adjusts one
+  placement if it must.
 - Models ship in their starting pose, set by node scale so they look right before any
   game code runs: oaks dormant, reed clumps standing, props bleak, streams muddy.
 - Scrub oaks carry `MineNode`. Give every placed oak its own `instance` (the prefab's

@@ -34,8 +34,9 @@ Game-facing nodes, per variant:
   Bloom_<k>            hanging luminous catkins, extras: order. Open one by one in
                        `order` over the last stretch of growth
   BugSpawn_<k>         where a produced bug appears: one in each bloom
-Far LOD: `scrub_oak_<k>_LOD1.glb` beside it (Jackdaw's LodGroup convention), with
-  ScrubOak_LOD_Far_Bark and ScrubOak_LOD_Far_Foliage_Node; the foliage node ships at scale 0
+Levels of detail live inside the model, as `scrub_oak_<k>_LOD0` (everything above)
+  and `scrub_oak_<k>_LOD1` (ScrubOak_Far_Bark and ScrubOak_Far_Foliage_Node), the node
+  convention Jackdaw imports into the model's settings; the far foliage node ships at scale 0
   (dormant) and follows leaf_out like Foliage_<n>.
 
 The glb ships posed dormant using node scale only, so it shows correctly wherever it
@@ -43,7 +44,7 @@ is placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_scrub_oak.py
            (or `-- 3` for one variant; `-- montage` rebuilds the lineup only)
-Writes assets/models/flora/scrub_oak/scrub_oak_<k>(_LOD1).glb and assets/flora/scrub_oak/ (profiles,
+Writes assets/models/flora/scrub_oak/scrub_oak_<k>.glb and assets/flora/scrub_oak/ (profiles,
 previews per variant and stage, and the lineup).
 """
 from pathlib import Path
@@ -256,8 +257,8 @@ class ScrubOak(Burbler):
         """Joined, decimated copies of the wood and the leaves."""
         self.scene.view_layers[0].update()
         made = []
-        for name, prefix, ratio in (("LOD_Far_Bark", "ScrubOak_LimbWood_", 0.12),
-                                    ("LOD_Far_Foliage", "ScrubOak_Foliage_", 0.14)):
+        for name, prefix, ratio in (("Far_Bark", "ScrubOak_LimbWood_", 0.12),
+                                    ("Far_Foliage", "ScrubOak_Foliage_", 0.14)):
             parts = [o for o in self.collection.objects if o.name.startswith(prefix) and o.type == "MESH"]
             bm = bmesh.new()
             for obj in parts:
@@ -340,10 +341,10 @@ class ScrubOak(Burbler):
         # Dormant: no leaves, far or near. The scale sits on an empty above the mesh:
         # a mesh object at scale 0 crashes Blender 5.3's glTF exporter.
         foliage = next(obj for obj in lod if "Foliage" in obj.name)
-        holder = self.node("ScrubOak_LOD_Far_Foliage_Node", (0, 0, 0), leaf_out=True)
+        holder = self.node("ScrubOak_Far_Foliage_Node", (0, 0, 0), leaf_out=True)
         foliage.parent = holder
         holder.scale = (0, 0, 0)
-        self.export_lod(lod + [holder])
+        self.lod_levels([obj for obj in lod if obj is not foliage] + [holder])
         self.set_growth(0.0)   # ships dormant: the opening is winter
 
         def stage():
@@ -406,9 +407,9 @@ def write_profile():
         "sway": {"nodes": "Limb_<n>", "pivot": "node origin (stem base)", "max_deg": 2.5,
                  "phase": "per_instance.sway_phase, plus the limb index"},
         "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
-        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/flora/scrub_oak/scrub_oak_<k>_LOD1.glb",
-                    "nodes": ["ScrubOak_LOD_Far_Bark", "ScrubOak_LOD_Far_Foliage_Node"],
-                    "note": "Jackdaw LodGroup level 1. ScrubOak_LOD_Far_Foliage_Node ships at scale 0 and scales "
+        "far_lod": {"distance_m": FAR_LOD_M, "levels": "nodes scrub_oak_<k>_LOD0 and scrub_oak_<k>_LOD1 inside the model",
+                    "nodes": ["ScrubOak_Far_Bark", "ScrubOak_Far_Foliage_Node"],
+                    "note": "LOD1. ScrubOak_Far_Foliage_Node ships at scale 0 and scales "
                             "with leaf_out; buds, dead leaves and blooms are not drawn far"},
         "materials": {"ScrubOak_Leaf": "also jittered by per_instance.foliage_value_jitter",
                       "ScrubOak_Catkin": "tinted by per_instance.bloom_tint",

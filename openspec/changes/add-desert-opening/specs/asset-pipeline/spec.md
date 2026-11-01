@@ -35,3 +35,18 @@ the shared procedural scene with Jackdaw's runtime integration.
 - **WHEN** the matching Jackdaw editor opens the supplied editor project
 - **THEN** the desert preview loads without version or scene errors
 - **THEN** building the game extracts its schema and Play runs the procedural opening
+
+### Requirement: Levels of detail belong to the model
+A model's levels of detail SHALL live with the model: hand-made levels as nodes named
+`<id>_LOD0`, `<id>_LOD1`, ... inside its glb, and the level settings in the model's
+import settings (`<id>.glb.meta`), as Jackdaw's model importer writes them. Placements
+and prefabs SHALL NOT carry their own levels. Both Jackdaw's Play and the standalone
+game SHALL switch levels by screen size from the model alone.
+
+#### Scenario: One choice to place
+- **WHEN** a level designer places a scrub oak
+- **THEN** they place one prefab naming one model, and it draws its far level when far away
+
+#### Scenario: Standalone game
+- **WHEN** the standalone game loads a model that has `_LOD` nodes and a Jackdaw `.meta`
+- **THEN** it loads the model and draws one level at a time, never both

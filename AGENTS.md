@@ -201,8 +201,8 @@ testable by asserting identical output for identical seeds.
 - Blender is installed at `~/.local/bin/blender`.
 - Sources live in `assets-src/blender/<category>/`. Export to **glTF binary (`.glb`)**
   into the same folder under `assets/models/` (`creatures`, `flora/<family>`,
-  `machines`, `modules`, `props/<family>`, `streams`), each far LOD beside its model.
-  Bevy loads `.glb`, never `.blend`.
+  `machines`, `modules`, `props/<family>`, `streams`). Bevy loads `.glb`, never
+  `.blend`.
 - Export headlessly and reproducibly with a script, not by hand:
   `blender -b assets-src/blender/<category>/<file>.blend -P tools/blender/export_gltf.py`.
 - Apply transforms before export. Use metres, +Y up in Bevy (the glTF exporter
@@ -219,8 +219,14 @@ testable by asserting identical output for identical seeds.
   `jackdaw/README.md`) and edit them there. `cargo test --test prefabs` in `jackdaw/`
   validates them.
 - Ship each glb in its starting pose using **node scale** (Blender's hidden-in-render
-  flag does not export), and far LODs as a separate `<name>_LOD1.glb` beside the
-  model, Jackdaw's `LodGroup` convention.
+  flag does not export).
+- **Levels of detail belong to the model, never to a placement** (Unity's, Unreal's
+  and Godot's practice, and Jackdaw's). Hand-made levels go inside the one glb as nodes
+  named `<id>_LOD0`, `<id>_LOD1`, ...; Jackdaw's **Import LOD levels**
+  (`model.lod.import`) reads them into the model's import settings, or **Generate**
+  (`model.lod.generate`) simplifies the model's own meshes. **Apply** writes the
+  settings to `<model>.glb.meta`; commit it. Level designers place one prefab; the
+  engine picks the level at runtime. No `LodGroup` on prefabs, no `_LOD1.glb` files.
 
 ## Stack
 

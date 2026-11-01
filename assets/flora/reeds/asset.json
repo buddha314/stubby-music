@@ -69,8 +69,8 @@
   "interact": "Interact",
   "far_lod": {
     "distance_m": 30.0,
-    "file": "models/flora/reeds/reed_clump_<k>_LOD1.glb",
-    "note": "Jackdaw LodGroup level 1"
+    "levels": "nodes reed_clump_<k>_LOD0 and reed_clump_<k>_LOD1 inside the model",
+    "note": "imported into the model's settings by Jackdaw (model.lod.import)"
   },
   "triangles": {
     "reed_clump_0": {

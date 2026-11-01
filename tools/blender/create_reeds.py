@@ -18,15 +18,16 @@ Game-facing nodes, per variant:
   Sway_<n>             groups of stalks under Standing, pivot at the ground: rock them
                        gently, each with its own phase
   Stubble              the cut stalks, shown while harvested and regrowing
-  Far LOD              crossed strips in `reed_clump_<k>_LOD1.glb` beside it (Jackdaw's
-                       LodGroup convention), shown beyond `far_lod_m`
+  reed_clump_<k>_LOD0  everything above: the near level
+  reed_clump_<k>_LOD1  ReedClump_Far, crossed strips shown beyond `far_lod_m`: levels
+                       live inside the model, the node convention Jackdaw imports
 
 The glb ships standing with Stubble at scale 0, so it shows correctly wherever it is
 placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_reeds.py
            (`-- 2` for one variant, `-- montage` for the lineup)
-Writes assets/models/flora/reeds/reed_clump_<k>(_LOD1).glb and assets/flora/reeds/.
+Writes assets/models/flora/reeds/reed_clump_<k>.glb and assets/flora/reeds/.
 """
 from pathlib import Path
 import json
@@ -186,8 +187,7 @@ class ReedClump(Burbler):
                 v = [bm.verts.new(c) for c in ((-dx, -dy, 0), (dx, dy, 0), (dx * 0.4, dy * 0.4, 1.6),
                                                (-dx * 0.4, -dy * 0.4, 1.6))]
                 bm.faces.new(v)
-        obj = self.mesh_obj("LOD_Far", fill, self.stalk, smooth=False)
-        obj.name = "LOD_Far"
+        obj = self.mesh_obj("Far", fill, self.stalk, smooth=False)
         obj["lod"] = "far"
         return obj
 
@@ -218,7 +218,7 @@ class ReedClump(Burbler):
         standing, stubble = self.build_clump()
         lod = self.far_lod()
         near, far = self.triangles(), self.triangles(far=True)
-        self.export_lod([lod])
+        self.lod_levels([lod])
         self.set_state(standing, stubble, "standing")
         profile = {"id": self.asset_id, "model": f"{self.model_ref}#Scene0", "kind": "resource",
                    "resource": "reed", "variant": self.index, "seed": self.seed,
@@ -268,8 +268,8 @@ def write_profile():
         "sway": {"nodes": "Sway_<n>", "pivot": "ground", "max_deg": 4.0,
                  "phase": "per_instance.sway_phase plus the group index; follows the wind"},
         "interact": "Interact",
-        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/flora/reeds/reed_clump_<k>_LOD1.glb",
-                    "note": "Jackdaw LodGroup level 1"},
+        "far_lod": {"distance_m": FAR_LOD_M, "levels": "nodes reed_clump_<k>_LOD0 and reed_clump_<k>_LOD1 inside the model",
+                    "note": "imported into the model's settings by Jackdaw (model.lod.import)"},
         "triangles": {p["id"]: p["triangles"] for p in profiles},
     }
     (OUT / "asset.json").write_text(json.dumps(profile, indent=2) + "\n")
