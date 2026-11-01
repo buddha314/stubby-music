@@ -9,10 +9,13 @@ along +X; the origin is the inlet's centre on the ground, so segments chain port
 port. It is subdivided along its length so the game can bend it along a path.
 
 The water is sheet music. A five-line staff of luminous lines floats on the surface
-and waves gently from bank to bank along the flow. Each clock tick at the source emits
-a note that rides the staff downstream at the water's speed, so the notes sit
-`flow_speed * 60 / BPM` metres apart: the music visibly moves, and faster water spreads
-it out. The water goes from muddy to clear as cleaning processes are identified; the
+like a ribbon: the lines keep a fixed distance (each is offset along the wave's normal,
+so they never bunch or cross), and the whole ribbon waves from bank to bank, the wave
+travelling downstream at the water's speed. Each clock tick at the source emits a note
+that rides the staff downstream at that speed, so notes sit `flow_speed * 60 / BPM`
+metres apart and stay on the same crest of the moving ribbon. Every `beats_per_bar`
+ticks a bar line rides down with them, so measures are `beats_per_bar` beats long at
+the clock's BPM: faster water spreads the music out, a faster clock packs it in. The water goes from muddy to clear as cleaning processes are identified; the
 profile's `clarity` table gives its look at each stage, and the staff glows brighter
 and crisper as the water clears.
 
@@ -21,11 +24,15 @@ and crisper as the water clears.
                        green as it clears; pivots at the ground, for a gentle sway
   Port_in, Port_out    extras: stream = mud. +X along the flow
   Port_<end>_Halo      upright arch over each end: port highlighting while building
-  Staff                extras: wave_amplitude_m, wavelength_m. Five wavy lines; their
-                       centre sits at y = A sin(2 pi x / wavelength)
-  Pulse_0              extras: travel_axis, length_m. The note template the game spawns
-                       per beat and slides downstream, setting its y to the staff's wave
-                       (plus `staff_step` half-spaces for pitch, 0 = middle line)
+  Staff                extras: wave_amplitude_m, wavelength_m. Five lines a fixed
+                       spacing apart, built straight with two morph targets, WaveSin and
+                       WaveCos; weights (cos p, -sin p) give the centre line
+                       y = A sin(2 pi x / wavelength - p). glTF clip `Staff_Flow` loops p
+                       over one wavelength at the profile's flow speed
+  Pulse_0              The note template the game spawns per tick and slides downstream
+                       (see the profile's `notes` for its position on the ribbon)
+  Bar_0                The bar-line template: spans the staff across the flow; the game
+                       spawns one every `beats_per_bar` ticks (see the profile's `bars`)
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_stream.py
 Writes assets/streams/stream_segment/ (profile and previews: muddy, silty, clear).
@@ -57,6 +64,8 @@ STAFF_SPACING = 0.12       # line to line; the staff spans 0.48 m of the 1 m cha
 STAFF_WAVE = 0.07          # the staff's sideways wave, amplitude in metres
 STAFF_WAVELENGTH = 2.0     # two waves per segment, so it tiles
 STAFF_Z = WATER_Z + 0.012  # floats just above the surface's ripple
+BEATS_PER_BAR = 4
+FLOW_FPS = 24              # frames of the baked Staff_Flow clip per second
 PREVIEW_BPM = 90
 # The water's look at each stage of clarity (sRGB, for the game to blend between).
 # Muddy is 0.98, not 1, so the material exports alpha-blended and can fade to clear.
@@ -96,6 +105,18 @@ class Stream(Burbler):
     def wave(x):
         """The staff's centre line: tiles, since the segment holds whole wavelengths."""
         return STAFF_WAVE * math.sin(2 * math.pi * x / STAFF_WAVELENGTH)
+
+    @staticmethod
+    def ribbon_point(x, offset, phase=0.0, shape=math.sin):
+        """A point `offset` metres across the staff ribbon from its centre line
+        y = A shape(2 pi x / wavelength - phase), measured along the line's normal, so
+        every line of the staff keeps the same distance from its neighbours."""
+        k = 2 * math.pi / STAFF_WAVELENGTH
+        y = STAFF_WAVE * shape(k * x - phase)
+        dshape = math.cos if shape is math.sin else (lambda a: -math.sin(a))
+        slope = STAFF_WAVE * k * dshape(k * x - phase)
+        n = math.hypot(slope, 1.0)
+        return (x - offset * slope / n, y + offset / n)
 
     @staticmethod
     def ends_fade(x):
@@ -140,23 +161,75 @@ class Stream(Burbler):
             stone.scale = (self.rng.uniform(1.0, 1.6), 1.0, 0.35)
             stone.rotation_euler.z = self.rng.uniform(0, math.pi)
 
+    def staff_ribbon(self, name, offset, width, mat, parent, z):
+        """One staff line: built straight, with WaveSin and WaveCos morph targets."""
+        n = 64
+        xs = [LENGTH * i / n for i in range(n + 1)]
+        straight = [(x, offset, z) for x in xs]
+        obj = self.ribbon(name, straight, width, mat, parent=parent)
+        obj.shape_key_add(name="Basis")
+        for key_name, shape in (("WaveSin", math.sin), ("WaveCos", math.cos)):
+            curve = [(*self.ribbon_point(x, offset, shape=shape), z) for x in xs]
+            temp = self.ribbon(f"{name}_{key_name}Temp", curve, width, mat)
+            key = obj.shape_key_add(name=key_name)
+            key.slider_min, key.slider_max = -1.0, 1.0
+            for v, t in zip(key.data, temp.data.vertices):
+                v.co = t.co
+            bpy.data.objects.remove(temp)
+        obj.data.shape_keys.key_blocks["WaveSin"].value = 1.0  # at rest: phase 0
+        return obj
+
     def staff(self):
-        """Five wavy lines floating on the water: the stream is sheet music."""
+        """Five lines a fixed distance apart on a ribbon that waves across the water."""
         node = self.node("Staff", (0, 0, 0), wave_amplitude_m=STAFF_WAVE, wavelength_m=STAFF_WAVELENGTH,
                          spacing_m=STAFF_SPACING)
-        n = 48
+        lines = []
         for k in range(STAFF_LINES):
             offset = (k - (STAFF_LINES - 1) / 2) * STAFF_SPACING
-            pts = [(LENGTH * i / n, self.wave(LENGTH * i / n) + offset, STAFF_Z) for i in range(n + 1)]
-            self.ribbon(f"StaffLine{k}", pts, 0.009, self.staff_line, parent=node)
-            self.ribbon(f"StaffHalo{k}", [(x, y, z + 0.002) for x, y, z in pts], 0.035, self.staff_halo,
-                        parent=node)
+            lines.append(self.staff_ribbon(f"StaffLine{k}", offset, 0.009, self.staff_line, node, STAFF_Z))
+            lines.append(self.staff_ribbon(f"StaffHalo{k}", offset, 0.035, self.staff_halo, node,
+                                           STAFF_Z + 0.002))
+        self.flow_clip(lines)
+        return node
+
+    def flow_clip(self, lines):
+        """Bake one wavelength of travel at FLOW_SPEED into `Staff_Flow`, shared by every
+        line, so the ribbon's wave moves downstream with the water and loops."""
+        period = STAFF_WAVELENGTH / FLOW_SPEED
+        frames = round(period * FLOW_FPS)
+        self.scene.render.fps = FLOW_FPS
+        action = bpy.data.actions.new("Staff_Flow")
+        for obj in lines:
+            keys = obj.data.shape_keys
+            keys.animation_data_create()
+            keys.animation_data.action = action
+            for f in range(frames + 1):
+                p = 2 * math.pi * f / frames
+                for key_name, weight in (("WaveSin", math.cos(p)), ("WaveCos", -math.sin(p))):
+                    block = keys.key_blocks[key_name]
+                    block.value = weight
+                    block.keyframe_insert("value", frame=f)
+            keys.key_blocks["WaveSin"].value, keys.key_blocks["WaveCos"].value = 1.0, 0.0
+        self.flow_frames = frames
+
+    def bar(self, name, x, parent=None):
+        """A bar line across the staff at x, square to the ribbon there."""
+        span = (STAFF_LINES - 1) / 2 * STAFF_SPACING
+        cx, cy = self.ribbon_point(x, 0.0)
+        k = 2 * math.pi / STAFF_WAVELENGTH
+        yaw = math.atan(STAFF_WAVE * k * math.cos(k * x))
+        node = self.node(name, (cx, cy, STAFF_Z + 0.003), parent=parent)
+        node.rotation_euler.z = yaw
+        self.ribbon(f"{name}_Line", [(0, -span, 0), (0, span, 0)], 0.012, self.staff_line, up=(0, 0, 1),
+                    parent=node)
+        self.ribbon(f"{name}_Halo", [(0, -span, 0.002), (0, span, 0.002)], 0.04, self.staff_halo,
+                    up=(0, 0, 1), parent=node)
         return node
 
     def note(self, name, x, parent=None, step=0):
         """A quarter note lying on the staff: head on a line, stem toward the +Y bank."""
-        y = self.wave(x) + step * STAFF_SPACING / 2
-        node = self.node(name, (x, y, STAFF_Z + 0.004), parent=parent)
+        px, py = self.ribbon_point(x, step * STAFF_SPACING / 2)
+        node = self.node(name, (px, py, STAFF_Z + 0.004), parent=parent)
         head = self.sphere(f"{name}_Head", 0.062, self.wisp_core, (0, 0, 0), node, 14, 7)
         head.scale = (1.35, 1.0, 0.45)
         head.rotation_euler.z = 0.45
@@ -167,6 +240,10 @@ class Stream(Burbler):
 
     def pulse(self):
         return self.note("Pulse_0", LENGTH * 0.4, step=0)
+
+    def bar_template(self):
+        # Half a beat downstream of the downbeat note: between the measures.
+        return self.bar("Bar_0", LENGTH * 0.4 + 0.5 * FLOW_SPEED * 60 / PREVIEW_BPM)
 
     def ports(self):
         radius = CHANNEL_HALF_WIDTH + 0.12
@@ -238,6 +315,8 @@ class Stream(Burbler):
         x, k = LENGTH * 0.4 - spacing, 1
         while x > 0.15:
             self.note(f"PreviewNote{k}", x, step=(k * 3) % 5 - 2)
+            if k % BEATS_PER_BAR == 0:
+                self.bar(f"PreviewBar{k}", x + 0.5 * spacing)
             x, k = x - spacing, k + 1
         x = LENGTH * 0.4 + spacing
         while x < LENGTH - 0.15:
@@ -259,14 +338,28 @@ class Stream(Burbler):
             "ports": [{"node": "Port_in", "direction": "in", "halo": "Port_in_Halo"},
                       {"node": "Port_out", "direction": "out", "halo": "Port_out_Halo"}],
             "staff": {"node": "Staff", "lines": STAFF_LINES, "spacing_m": STAFF_SPACING, "height_m": STAFF_Z,
+                      "ribbon": "lines keep spacing_m apart along the centre line's normal; they never cross",
                       "wave": {"amplitude_m": STAFF_WAVE, "wavelength_m": STAFF_WAVELENGTH,
-                               "y": "amplitude * sin(2 pi x / wavelength), x along the segment"},
+                               "centre_y": "amplitude * sin(2 pi x / wavelength - phase), x along the segment",
+                               "phase": "2 pi * flow_speed_mps * t / wavelength_m: the wave travels downstream"},
+                      "morph_targets": {"WaveSin": "cos(phase)", "WaveCos": "-sin(phase)"},
+                      "clip": {"name": "Staff_Flow", "loops": True,
+                               "seconds_at_profile_speed": STAFF_WAVELENGTH / FLOW_SPEED,
+                               "speed": "play at flow_speed_mps / profile flow_speed_mps, or drive the weights"},
                       "material": "Stream_Staff", "halo_material": "Stream_StaffHalo"},
             "notes": {"node": "Pulse_0", "travel_axis": "+X",
                       "emit": "one note per clock tick at the stream's source, riding the staff downstream",
                       "flow_speed_mps": FLOW_SPEED,
                       "spacing": "flow_speed_mps * 60 / bpm metres between notes: velocity reads as spread",
-                      "y": "staff wave at the note's x, plus staff_step * spacing_m / 2 (0 = middle line)"},
+                      "position": "the ribbon's centre line at the note's x, plus staff_step * spacing_m / 2 "
+                                  "along its normal (0 = middle line); notes move with the wave, so each "
+                                  "stays on its crest",
+                      "yaw": "atan of the centre line's slope"},
+            "bars": {"node": "Bar_0", "beats_per_bar": BEATS_PER_BAR,
+                     "emit": "one bar line every beats_per_bar clock ticks, on the downbeat",
+                     "offset": "half a note spacing downstream of the downbeat note (between measures)",
+                     "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock",
+                     "position": "the ribbon's centre line at its x, square to it (yaw as notes)"},
             "clarity": {"material": "Stream_Water", "stages": CLARITY},
             "reeds": {"nodes": ["Reeds_L", "Reeds_R"], "built_from": {"item": "reed", "quantity": 6},
                       "greenness": "each stage's reed_greenness: dry while muddy, green when clear",
@@ -283,6 +376,7 @@ class Stream(Burbler):
         self.reeds()
         self.staff()
         pulse = self.pulse()
+        self.bar_template()
         self.ports()
         self.set_clarity(CLARITY[0])  # ships muddy
 
