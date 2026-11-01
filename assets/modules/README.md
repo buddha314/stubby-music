@@ -82,3 +82,31 @@ into the mud happens at placement (`placement` in `asset.json`), so one asset se
 every pose. `crates/stubby_game/tests/module_assets.rs` checks these nodes in every
 exported module. The Clock's equivalents are `Port_gate`, `Port_phase`, `Knob_bpm`,
 `Light_gate` and `Light_phase`.
+
+## Burbler HUD modules (`tools/blender/create_hud_modules.py`)
+
+| Burbler clock | Volume |
+| --- | --- |
+| ![burbler clock](burbler_clock/preview.png) | ![volume](volume/preview.png) |
+
+The modules in a mudpit burbler's configuration HUD (`add-mudpit-burbler`), with a VCO
+in the middle place: see `docs/art/hud_mock.png`. They are the first modules in the
+style guide's newer language: a weathered wood case and rusted iron hardware behind a
+titanium faceplate, outputs on graphene, and light like jellyfish and fairies (a bright
+core in translucent shells) instead of LEDs.
+
+- **Burbler clock** (8HP, engine `Clock`): the burbler's own beat. Its tempo belongs to
+  the burbler, so it has **no tempo knob** (`params` is empty; `tempo.source` is
+  `burbler`): a read-only BPM display (the same segment nodes as the Clock), a
+  jellyfish-bell `Lamp` that flashes on the beat (`BurblerClock_Lamp`, translucent so
+  bell and core flash together; the previews show it mid-flash), and GATE and PHASE
+  outputs with soft lights (`Light_gate`, `Light_phase`). Crown: a row of bubbles.
+- **Volume** (4HP, engine `Vca`): one large knob (`Knob_gain`, 0–1) in a soft ring of
+  light (`Light_level`), IN and OUT jacks. The VCA's `cv` input is driven inside the
+  HUD voice by a hidden envelope, so it has no jack (`internal_ports`). Crown: a rising
+  wedge, repeated on the faceplate and both sides.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_hud_modules.py
+~/.local/bin/blender -b --factory-startup -P tools/blender/render_hud_mock.py   # docs/art/hud_mock.png
+```
