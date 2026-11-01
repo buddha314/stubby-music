@@ -40,8 +40,9 @@ impl Review {
         self.rack_loaded && self.rack_step < RACK_STEPS
     }
 }
-/// Mount, GATE, TRIG, OUT, IN, then the patched screenshot.
-const RACK_STEPS: usize = 6;
+/// Mount; take the green cable from the comb, GATE, TRIG; take the red one, OUT, IN;
+/// then the patched screenshot. Only what the rack shows is patched (AGENTS.md).
+const RACK_STEPS: usize = 8;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
     fn build(&self, app: &mut App) {
@@ -334,6 +335,8 @@ fn observe(
             && standing
             && leaves > 0
             && review.rack_configured
+            // The comb's two cables are free: the player's ten are untouched.
+            && player.items.quantity("patch_cable") == 10
             && errors.is_empty()
             && player.items.quantity("square_wave") == 1
             && player.items.quantity("reed") == 6;
@@ -354,8 +357,10 @@ fn drive_rack(
     windows: Query<(Entity, &Window), With<bevy::window::PrimaryWindow>>,
     hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
     jacks: Query<(&super::machine_config::JackHit, &GlobalTransform)>,
+    plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
     buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
     racks: Query<&super::rack::RackState>,
+    held: Res<super::rack::HeldCable>,
     hovers: Res<bevy::picking::hover::HoverMap>,
     names: Query<(
         Option<&Name>,
@@ -419,16 +424,26 @@ fn drive_rack(
             .world_to_viewport(transform, world.translation())
             .ok()
     };
+    // A hanging cable's plug on the comb (just above its rest point, on the plug body).
+    let comb = |index: usize| {
+        let (camera, transform) = hud.single().ok()?;
+        let (_, at) = plugs.iter().find(|(c, _)| c.0 == index)?;
+        camera
+            .world_to_viewport(transform, at.translation() + Vec3::Y * 0.03)
+            .ok()
+    };
     let step = review.rack_step;
     let point = match step {
         0 => buttons
             .iter()
             .next()
             .map(|(t, node)| t.translation * node.inverse_scale_factor()),
-        1 => jack("clock", "gate"),
-        2 => jack("volume", "trig"),
-        3 => jack("vco", "out"),
-        4 => jack("volume", "in"),
+        1 => comb(0),
+        2 => jack("clock", "gate"),
+        3 => jack("volume", "trig"),
+        4 => comb(1),
+        5 => jack("vco", "out"),
+        6 => jack("volume", "in"),
         _ => None,
     };
     if step + 1 < RACK_STEPS {
@@ -449,7 +464,8 @@ fn drive_rack(
         serde_json::json!({"event":"rack_step","step":step,"at":point.map(|p| [p.x, p.y]),
             "window":[window.width(), window.height(), window.scale_factor()],
             "hovered":hovers.get(&PointerId::Mouse).map(|h| h.keys().map(|e| names.get(*e).map(|(n, jack, ui)| format!("{:?} jack={jack} ui={ui}", n.map(Name::as_str))).unwrap_or_default()).collect::<Vec<_>>()),
-            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.clone())}),
+            "held":held.cable,
+            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.clone()),"own":state.map(|s| s.own.len())}),
     );
     review.rack_step += 1;
     review.rack_wait = 0.25;
