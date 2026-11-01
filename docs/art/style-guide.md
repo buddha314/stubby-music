@@ -26,7 +26,7 @@ out in space. Raw streams are **muddy on purpose**, like ore. As other processes
 identified, constructors clean them, and the water goes **from muddy to clear** in
 stages. The water is always sheet music: a wavy five-line staff floats on it and
 each beat's note rides the staff downstream at the water's speed, so note spacing shows
-velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds are their conveyor-belt segments. Ports light a soft
+velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds build streams: 6 reeds make a segment, and reeds outline its banks, dry while muddy and green as it clears. They are as easy to gather as leaves in Satisfactory. Ports light a soft
 halo arch while a stream is being extended from them (Satisfactory's port
 highlighting), and the planned stream shows as a hologram before it is laid.
 
@@ -94,6 +94,7 @@ been made once (2026-10-31, `accents[0]`).
 | Crude | Sand `#8c7656`, Rust iron `#5e3a22`, Weathered wood `#5a4a3a` |
 | High-tech | Titanium `#b8bcc2`, Graphene `#1a1c1f` |
 | Scrub oak | Bark dormant `#625d57`, alive `#4b4037`, Leaf young `#7b8c3c`, mature `#36412a`, Dry leaf `#7a5a3a`, Bud `#9a6a48`, Catkin `#c8f060` |
+| Reeds | Stalk dry `#9a8460`, green `#5f6e34`, Blade dry `#8a7552`, green `#4f5e2c`, Cattail `#4a3222`, Cut `#c2ab7c` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
@@ -204,7 +205,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
 364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
-9.9k, the volume module 5.1k, the stream segment 7.6k, the stream hologram 5.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
+9.9k, the volume module 5.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -227,6 +228,11 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Reeds outline the stream segment's banks (6 reeds build a segment):
+  dry while the water is muddy, green as it clears.
+- **2026-10-31** — Reeds: a frequent renewable. Clumps of tall reeds with cattail heads,
+  four seeded variants plus per-instance variation; harvested they show cut stubble with
+  pale cut faces, and they grow back. Dry to green on one value. Reed colours added.
 - **2026-10-31** — Scrub oak: six seeded variants of a many-stemmed desert oak, varied
   again per instance in the game. It starts dormant in winter (grey wood, buds, dry
   leaves holding on) and one growth value, raised by clean water, takes it through

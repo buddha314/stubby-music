@@ -57,7 +57,8 @@
         "roughness": 0.5,
         "alpha": 0.98,
         "staff_strength": 2.5,
-        "staff_halo": false
+        "staff_halo": false,
+        "reed_greenness": 0.0
       },
       {
         "at": 0.5,
@@ -66,7 +67,8 @@
         "roughness": 0.22,
         "alpha": 0.72,
         "staff_strength": 5.0,
-        "staff_halo": true
+        "staff_halo": true,
+        "reed_greenness": 0.5
       },
       {
         "at": 1.0,
@@ -75,9 +77,38 @@
         "roughness": 0.04,
         "alpha": 0.22,
         "staff_strength": 8.0,
-        "staff_halo": true
+        "staff_halo": true,
+        "reed_greenness": 1.0
       }
     ]
+  },
+  "reeds": {
+    "nodes": [
+      "Reeds_L",
+      "Reeds_R"
+    ],
+    "built_from": {
+      "item": "reed",
+      "quantity": 6
+    },
+    "greenness": "each stage's reed_greenness: dry while muddy, green when clear",
+    "colors": {
+      "stalk_dry": "#9a8460",
+      "stalk_green": "#5f6e34",
+      "blade_dry": "#8a7552",
+      "blade_green": "#4f5e2c"
+    },
+    "materials": {
+      "Stream_ReedStalk": [
+        "stalk_dry",
+        "stalk_green"
+      ],
+      "Stream_ReedBlade": [
+        "blade_dry",
+        "blade_green"
+      ]
+    },
+    "sway_max_deg": 3.0
   },
   "lights": {
     "Stream_PortHalo": {

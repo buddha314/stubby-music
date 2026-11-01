@@ -7,7 +7,7 @@
 - [x] 1.4 Volume module: one large `gain` knob in a soft level ring, IN/OUT, engine `Vca` (`volume`) (claimed: claude)
 - [x] 1.5 Configuration HUD look: a basic Eurorack framed as a Satisfactory-style HUD (`docs/art/hud_mock.png`, `tools/blender/render_hud_mock.py`) (claimed: claude)
 - [x] 1.7 Stream segment asset: tileable, bendable 4 m channel; ports with halo arches; wavy five-line staff floating on the water at every clarity, brighter as it clears; `Pulse_0` is a note riding the staff; clarity stages muddy/silty/clear (`tools/blender/create_stream.py`, `assets/streams/`) (claimed: claude)
-- [ ] 1.8 Reeds as conveyor-belt segments (needs its own change once designed)
+- [x] 1.8 Reeds and streams: a stream segment is built from 6 reeds, and reeds outline its banks (`add-reeds`; `Reeds_L`/`Reeds_R` in `stream_segment`) (claimed: claude)
 - [x] 1.9 Stream hologram: the planned-stream preview shown while extending (separate asset): ghost of `stream_segment` on the same subdivisions; `Flow` chevrons; valid/invalid tints (`tools/blender/create_stream_hologram.py`, `assets/streams/stream_hologram/`) (claimed: claude)
 - [ ] 1.6 Asset test for the burbler glb's nodes and extras, like `module_assets.rs`
 

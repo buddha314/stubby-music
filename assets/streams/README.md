@@ -26,6 +26,9 @@ sides, built up from the ground. Its bank profile and water height are imported 
 - **Staff:** five luminous lines (`Staff`, material `Stream_Staff`) float just above
   the water at every clarity. Their centre waves sideways, y = 0.07 sin(2πx / 2 m), so
   a segment holds two whole waves and tiles.
+- **Reeds:** a segment costs 6 reeds, and reeds outline both banks (`Reeds_L`,
+  `Reeds_R`, pivots at the ground for a gentle sway), clear of the ends so joins do not
+  double up. They go from dry to green with clarity (`reed_greenness` per stage).
 - **Notes:** `Pulse_0` is a quarter note lying on the staff. The game spawns one per
   clock tick at the source and slides it downstream (+X) at `flow_speed_mps`, setting
   its y to the staff wave plus `staff_step` half-spaces for pitch. Notes sit

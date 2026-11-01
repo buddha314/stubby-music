@@ -317,7 +317,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   downstream at the water's speed, so note spacing shows velocity. The
   mud is **raw**: muddy on purpose, like ore. As other processes are identified,
   constructors clean it, and the stream's water goes **from muddy to clear**.
-- **Reeds are the conveyor belt segments** that streams run along (not yet designed).
+- **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds
+  outline every laid segment's banks. They are a frequent renewable, as easy to get as
+  leaves in Satisfactory: abundant on wet ground, harvested with E (hold E for nearby
+  clumps), cut to stubble, and back after a short interval (`openspec/changes/add-reeds/`).
 - **Port highlighting.** The burbler's mouth carries an upright halo arch, its stream
   port. When the player extends a stream from it, the arch lights to show the
   connection point, as a generator's port does when you drag a conveyor from it in
