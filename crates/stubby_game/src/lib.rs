@@ -13,6 +13,7 @@ pub mod audio;
 pub mod calendar;
 pub mod controls;
 pub mod export;
+mod hand;
 mod inventory_screen;
 pub mod module_ids;
 pub mod prefab_presentation;
@@ -45,6 +46,7 @@ impl Plugin for DesertPlugin {
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
             inventory_screen::InventoryScreenPlugin,
+            hand::HandPlugin,
             prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,
             review::ReplenishmentReviewPlugin,

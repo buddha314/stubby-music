@@ -9,7 +9,7 @@ cargo run -p stubby_game -- --seed=42
 ```
 
 WASD walks, the mouse looks freely, Space jumps, C crouches,
-and hold Left Shift to sprint. Escape releases the cursor; click to resume.
+and hold Left Shift to sprint. H brings up the field recorder, Tab opens the inventory. Escape releases the cursor; click to resume.
 The player starts standing on the terrain at eye height. Use another seed to
 regenerate the mud plates, fine crack texture, and mountain silhouettes.
 For faster development linking use `--features dev`; omit it in release builds.
