@@ -31,10 +31,22 @@
     "lines": 5,
     "spacing_m": 0.12,
     "height_m": 0.082,
+    "ribbon": "lines keep spacing_m apart along the centre line's normal; they never cross",
     "wave": {
       "amplitude_m": 0.07,
       "wavelength_m": 2.0,
-      "y": "amplitude * sin(2 pi x / wavelength), x along the segment"
+      "centre_y": "amplitude * sin(2 pi x / wavelength - phase), x along the segment",
+      "phase": "2 pi * flow_speed_mps * t / wavelength_m: the wave travels downstream"
+    },
+    "morph_targets": {
+      "WaveSin": "cos(phase)",
+      "WaveCos": "-sin(phase)"
+    },
+    "clip": {
+      "name": "Staff_Flow",
+      "loops": true,
+      "seconds_at_profile_speed": 1.3333333333333333,
+      "speed": "play at flow_speed_mps / profile flow_speed_mps, or drive the weights"
     },
     "material": "Stream_Staff",
     "halo_material": "Stream_StaffHalo"
@@ -45,7 +57,16 @@
     "emit": "one note per clock tick at the stream's source, riding the staff downstream",
     "flow_speed_mps": 1.5,
     "spacing": "flow_speed_mps * 60 / bpm metres between notes: velocity reads as spread",
-    "y": "staff wave at the note's x, plus staff_step * spacing_m / 2 (0 = middle line)"
+    "position": "the ribbon's centre line at the note's x, plus staff_step * spacing_m / 2 along its normal (0 = middle line); notes move with the wave, so each stays on its crest",
+    "yaw": "atan of the centre line's slope"
+  },
+  "bars": {
+    "node": "Bar_0",
+    "beats_per_bar": 4,
+    "emit": "one bar line every beats_per_bar clock ticks, on the downbeat",
+    "offset": "half a note spacing downstream of the downbeat note (between measures)",
+    "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock",
+    "position": "the ribbon's centre line at its x, square to it (yaw as notes)"
   },
   "clarity": {
     "material": "Stream_Water",
