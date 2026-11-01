@@ -1,0 +1,74 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/props/desert/desert_brush_0.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_brush_1.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_brush_2.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_debris_0.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_debris_1.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_debris_2.glb": {
+      "walk_through": true,
+      "why": "brush and mud debris: the player walks through them"
+    },
+    "models/props/desert/desert_stump_0.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.296,
+          "height": 0.711,
+          "translation": [
+            0,
+            0.356,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/props/desert/desert_stump_1.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.282,
+          "height": 0.985,
+          "translation": [
+            0,
+            0.492,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/props/desert/desert_stump_2.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.284,
+          "height": 0.917,
+          "translation": [
+            0,
+            0.459,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

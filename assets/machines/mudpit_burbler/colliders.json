@@ -1,0 +1,20 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/machines/mudpit_burbler.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 1.601,
+          "height": 1.0,
+          "translation": [
+            0.0,
+            0.5,
+            -1.219
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

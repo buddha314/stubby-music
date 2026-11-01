@@ -1,0 +1,93 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/modules/burbler_clock.glb": {
+      "walk_through": true,
+      "why": "a rack (HUD) module only, never placed in the world"
+    },
+    "models/modules/clock_lamp.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.418,
+          "y_length": 1.381,
+          "z_length": 0.398,
+          "translation": [
+            0.0,
+            0.691,
+            0.049
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/modules/saw_vco.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.422,
+          "y_length": 1.383,
+          "z_length": 0.398,
+          "translation": [
+            0.0,
+            0.691,
+            0.049
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/modules/sine_vco.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.42,
+          "y_length": 1.382,
+          "z_length": 0.398,
+          "translation": [
+            0.0,
+            0.691,
+            0.049
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/modules/square_vco.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.418,
+          "y_length": 1.381,
+          "z_length": 0.398,
+          "translation": [
+            0.0,
+            0.691,
+            0.049
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/modules/triangle_vco.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.423,
+          "y_length": 1.383,
+          "z_length": 0.398,
+          "translation": [
+            0.0,
+            0.692,
+            0.049
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/modules/volume.glb": {
+      "walk_through": true,
+      "why": "a rack (HUD) module only, never placed in the world"
+    }
+  }
+}

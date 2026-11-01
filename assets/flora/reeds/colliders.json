@@ -1,0 +1,21 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/flora/reeds/reed_clump_0.glb": {
+      "walk_through": true,
+      "why": "thin reeds: the player walks through, like grass"
+    },
+    "models/flora/reeds/reed_clump_1.glb": {
+      "walk_through": true,
+      "why": "thin reeds: the player walks through, like grass"
+    },
+    "models/flora/reeds/reed_clump_2.glb": {
+      "walk_through": true,
+      "why": "thin reeds: the player walks through, like grass"
+    },
+    "models/flora/reeds/reed_clump_3.glb": {
+      "walk_through": true,
+      "why": "thin reeds: the player walks through, like grass"
+    }
+  }
+}
