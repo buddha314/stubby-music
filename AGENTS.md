@@ -232,7 +232,7 @@ testable by asserting identical output for identical seeds.
 
 | Concern | Choice | Version (crates.io, 2026-10-31) |
 | ------- | ------ | ------------------------------- |
-| Engine | `bevy` | 0.20.1 |
+| Engine | `bevy` | selected by Jackdaw; `jackdaw/compatibility.json` |
 | Audio I/O | `cpal` | 0.18.2 |
 | Audio engine (graph, device, scheduling) | `firewheel` | 0.14.0 |
 | DSP inside modules | `fundsp` | 0.23.0 |
@@ -249,9 +249,8 @@ releases. Pin exact minor versions in `Cargo.toml`.
 
 ## Conventions
 
-- Rust 2024 edition, `cargo fmt`, and `cargo clippy --all-targets -- -D warnings`
-  clean before committing.
-- Tests: `cargo test --workspace`. DSP modules get offline render tests (render N
+- Rust 2024 edition. Format changed Rust files and use the smallest relevant build or check; do not run all-target lint sweeps by default.
+- Tests: focused checks only during this prototype. DSP modules get offline render tests (render N
   samples, assert frequency/amplitude/phase) — they need no audio device.
 - Commit only when asked. Branch off `main` for feature work.
 
@@ -394,3 +393,44 @@ Requirements and implementation guidance are in
 `openspec/changes/add-fluid-quality-and-viscosity/`; exact rates, quality curves
 and cleaning recipes remain deferred. Coordinate stream visuals with the art
 owner and the existing muddy-to-clear stages.
+
+### Jackdaw is the version authority
+
+The standalone game and editor adapter share the root Cargo workspace, its one
+Cargo.lock, the workspace Bevy dependency and rust-toolchain.toml. Keep the adapter
+package/type paths for existing saved prefabs. Do not independently upgrade Bevy
+or restore a separate adapter lockfile. `jackdaw/compatibility.json` records the
+shared editor source revision, upstream base, Bevy revision and compiler.
+
+Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
+`tools/jackdaw.sh prepare` builds the selected shared editor/CLI and records local
+binary hashes; managed launches verify that receipt. This does not install a
+per-game editor. A source mismatch requires deliberate integration and validation,
+not silently rewriting the pin to whatever happens to be installed.
+
+For this game, use origin/dev/0.20 as the tested shared editor line and
+upstream/release-0.20 as its incoming reference. Fork main tracks upstream/main
+separately. Use fix/<issue> for focused fixes and sync/<date> for integration. Merge upstream
+in an isolated worktree; preserve shared history and local regression coverage.
+Never force-sync/reset the fork to discard fixes. Promote only validated revisions
+while the shared editor is idle and its checkout clean. Follow
+`docs/research/jackdaw-version-policy.md` for checks, promotion and rollback.
+
+### Prototype testing: keep it minimal
+
+**User direction (2026-11-01): keep testing minimal; we are prototyping. No testing busywork.**
+
+- Use the smallest relevant check that gives useful confidence in the change. A focused build, one regression check, or one brief smoke test is usually enough.
+- Do not run blanket workspace tests, all-target lint sweeps, full upstream fast/integration suites, documentation builds or doctests by default, including for upstream syncs. Broaden only when the user asks or a concrete failure directly requires it.
+- Do not install extra testing infrastructure just to run broad suites. Do not repeat or expand passing checks speculatively.
+- Once the relevant check passes, continue the actual work. Prefer iteration speed over exhaustive validation during this prototype.
+- When a graphical check is relevant, retain the existing independent 20-second watchdog.
+- This policy supersedes earlier blanket instructions to run full workspace tests and all-target Clippy before every commit. Upstream release-check lists are not our default prototype workflow.
+
+## Hard rule: jbuehler23 is read-only
+
+Never push to jbuehler23, whether through a named remote, a direct URL, GitHub CLI,
+an API or any other route. Never open pull requests or publish changes to that
+account. Fetching and reading are allowed. All pushes and PRs go only to buddha314.
+This rule overrides any older instruction to offer fixes upstream. The upstream
+remote's push URL is deliberately disabled; do not restore or bypass it.

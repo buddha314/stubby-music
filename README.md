@@ -52,3 +52,8 @@ provides validated data definitions, inventory, one-time resource yields and
 atomic crafting. Press O for the recipe book: Square wave is a raw building block
 for VCO, LFO and gate uses. Other waveform resources and production combinations
 will be authored later.
+
+Version selection follows the shared Jackdaw checkout, recorded in
+[`jackdaw/compatibility.json`](jackdaw/compatibility.json). Both game entry points
+share one Cargo workspace and lockfile. Run `tools/jackdaw.sh check` before editor
+work; see [the version and upstream-sync policy](docs/research/jackdaw-version-policy.md).

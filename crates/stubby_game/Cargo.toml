@@ -10,7 +10,7 @@ dev = ["bevy/dynamic_linking"]
 stubby_recipes = { path = "../stubby_recipes" }
 stubby_audio = { path = "../stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
-bevy = { version = "~0.20.1", default-features = false, features = ["3d", "ui"] }
+bevy.workspace = true
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
