@@ -95,6 +95,7 @@ been made once (2026-10-31, `accents[0]`).
 | High-tech | Titanium `#b8bcc2`, Graphene `#1a1c1f` |
 | Scrub oak | Bark dormant `#625d57`, alive `#4b4037`, Leaf young `#7b8c3c`, mature `#36412a`, Dry leaf `#7a5a3a`, Bud `#9a6a48`, Catkin `#c8f060` |
 | Reeds | Stalk dry `#9a8460`, green `#5f6e34`, Blade dry `#8a7552`, green `#4f5e2c`, Cattail `#4a3222`, Cut `#c2ab7c` |
+| Desert props | Twig `#7d7468` → `#4f4234`, Stump `#8f897d` → `#4f4134`, Heartwood `#8a7a62`, Mud plate `#5a4433` → `#3e2f22`; bloomed Leaf `#4f6a2a`, Moss `#3f5a24`, Sprout `#6f9a34`, Mushroom stem `#d9d2c0`; luminous flowers Magenta, mushrooms Cyan |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
@@ -205,7 +206,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
 364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
-9.9k, the volume module 5.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
+9.9k, the volume module 5.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, desert props 0.2k–4.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -228,6 +229,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Desert props for the opening, each blooming on light quality: dead
+  brush (leafs out, magenta flowers), bleached stumps (damp wood, moss, cyan mushrooms)
+  and curled mud-plate debris (sprouts). Three seeded variants each; blooms open
+  gradually, node by node.
 - **2026-10-31** — Reeds outline the stream segment's banks (6 reeds build a segment):
   dry while the water is muddy, green as it clears.
 - **2026-10-31** — Reeds: a frequent renewable. Clumps of tall reeds with cattail heads,

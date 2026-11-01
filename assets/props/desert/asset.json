@@ -1,0 +1,66 @@
+{
+  "id": "desert_props",
+  "kind": "prop",
+  "families": {
+    "brush": [
+      "models/desert_brush_0.glb#Scene0",
+      "models/desert_brush_1.glb#Scene0",
+      "models/desert_brush_2.glb#Scene0"
+    ],
+    "stump": [
+      "models/desert_stump_0.glb#Scene0",
+      "models/desert_stump_1.glb#Scene0",
+      "models/desert_stump_2.glb#Scene0"
+    ],
+    "debris": [
+      "models/desert_debris_0.glb#Scene0",
+      "models/desert_debris_1.glb#Scene0",
+      "models/desert_debris_2.glb#Scene0"
+    ]
+  },
+  "per_instance": {
+    "variant": "hash(world_seed, instance_id) % variant count",
+    "yaw_deg": [
+      0,
+      360
+    ],
+    "scale": [
+      0.8,
+      1.25
+    ],
+    "tilt_deg": [
+      0,
+      5
+    ]
+  },
+  "bloom": {
+    "value": "0 bleak .. 1 bloomed; follow the local light quality",
+    "nodes": "Bloom_<n>: scale smoothstep(bloom, from, to), from and to in each node's extras",
+    "materials": {
+      "DesertBrush_Twig": [
+        "#7d7468",
+        "#4f4234"
+      ],
+      "DesertStump_Wood": [
+        "#8f897d",
+        "#4f4134"
+      ],
+      "DesertDebris_MudPlate": [
+        "#5a4433",
+        "#3e2f22"
+      ]
+    },
+    "blend": "material base colour lerps bleak -> bloomed with bloom"
+  },
+  "triangles": {
+    "desert_brush_0": 3016,
+    "desert_brush_1": 2872,
+    "desert_brush_2": 4384,
+    "desert_stump_0": 1310,
+    "desert_stump_1": 1658,
+    "desert_stump_2": 1494,
+    "desert_debris_0": 303,
+    "desert_debris_1": 192,
+    "desert_debris_2": 186
+  }
+}
