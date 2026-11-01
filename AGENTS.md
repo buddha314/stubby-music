@@ -117,7 +117,8 @@ docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
-  stubby_recipes/         waveform resources, inventory, recipe book and crafting (no Bevy)
+  stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
+  bevy_stubby_recipes/    the crafting system as a Bevy plugin over stubby_recipes (planned)
 assets/                   runtime assets loaded by Bevy (glTF, textures, shaders)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
@@ -203,6 +204,31 @@ the rows; Codex owns the schema and validator; OpenSpec owns rule types.** Two f
   the JSON only; `cargo test -p stubby_recipes` must pass. No OpenSpec change.
 - **Rule PR:** a new rule type (a field, a trigger, an unlock kind, an accounting
   mode). OpenSpec change first, then schema and validator code, then example rows.
+
+The crafting system (`stubby_recipes`: rules, inventory, recipe book, crafting,
+goals) is **ours, not a community crate**; no Bevy crafting or inventory crate fit
+(`docs/research/crafting-and-inventory-crates.md`). Do not swap one in without an
+OpenSpec change. It is shaped as a **Bevy community plugin** (`add-recipes-bevy-plugin`):
+the Bevy-free core `stubby_recipes`, a thin `bevy_stubby_recipes` plugin the game adds
+with `add_plugins`, and only presentation (HUD, input, screens) in `stubby_game`. Never
+add a Bevy dependency to the core, not even optional; Bevy versions live only in the
+plugin. Use community crates around it (serde, schemars, and as planned
+`bevy_common_assets`, `moonshine-save`).
+
+How to add or change a rule (designer or agent, same steps):
+
+1. Edit the domain file: `items.json`, `resources.json`, `mines.json` or
+   `recipes.json` (goals will be `goals.json`). There is no `catalog.json`; do not
+   recreate it or read rules from anywhere else.
+2. Run `cargo run -p stubby_recipes --bin rules-fmt`: it sorts rows, regenerates
+   `schema/`, appends new IDs to `ids.lock` and reports every error.
+3. `cargo test -p stubby_recipes` passes; open the PR as **Data** in the template.
+
+Never hand-edit `assets/recipes/schema/` or remove lines from `ids.lock`; both are the
+formatter's. Code reads rules only through `stubby_recipes` (`shipped_catalog()`,
+`Rules::load`), never by parsing the files itself. When a rule type changes, update
+the schema code, run `rules-fmt`, and update the files in the same PR. The authoring
+guide for designers is `assets/recipes/README.md` (root `README.md` has the short form).
 
 Rows never hold logic: if a row needs a condition or formula, that is a new rule type.
 IDs are `snake_case` `[a-z0-9_]`, unique across all registries, and part of the save
