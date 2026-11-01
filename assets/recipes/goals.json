@@ -1,0 +1,29 @@
+{
+  "$schema": "schema/goals.schema.json",
+  "format": 1,
+  "goals": [
+    {
+      "id": "build_a_heartbeat",
+      "name": "Build a heartbeat",
+      "description": "Configure the mudpit burbler: patch both cables so it sounds on every beat.",
+      "horizon": "short",
+      "condition": {
+        "kind": "machine_configured",
+        "machine": "mudpit_burbler"
+      }
+    },
+    {
+      "id": "water_the_tree",
+      "name": "Water the tree",
+      "description": "Lead the burbler's stream to a scrub oak.",
+      "horizon": "short",
+      "condition": {
+        "kind": "tree_watered",
+        "mine": "scrub_oak"
+      },
+      "after": [
+        "build_a_heartbeat"
+      ]
+    }
+  ]
+}

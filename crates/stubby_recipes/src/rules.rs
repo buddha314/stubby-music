@@ -21,6 +21,7 @@ pub const RESOURCES: &str = "resources.json";
 pub const MINES: &str = "mines.json";
 pub const RECIPES: &str = "recipes.json";
 pub const MIGRATIONS: &str = "migrations.json";
+pub use crate::goals::GOALS;
 pub const IDS_LOCK: &str = "ids.lock";
 
 /// One problem in the rules, located well enough to fix without searching.
@@ -88,6 +89,7 @@ rules_file!(ResourcesFile, resources, ResourceDefinition);
 rules_file!(MinesFile, mines, MineDefinition);
 rules_file!(RecipesFile, recipes, RecipeDefinition);
 rules_file!(MigrationsFile, migrations, Migration);
+rules_file!(GoalsFile, goals, crate::goals::GoalDefinition);
 
 /// A renamed (`to` set) or removed (`to` null) rule ID. IDs are save-game API: saves
 /// record the migrations they have applied and apply the rest on load.
@@ -111,6 +113,7 @@ pub enum Registry {
     Resources,
     Mines,
     Recipes,
+    Goals,
 }
 impl Registry {
     fn file(self) -> &'static str {
@@ -119,6 +122,7 @@ impl Registry {
             Self::Resources => RESOURCES,
             Self::Mines => MINES,
             Self::Recipes => RECIPES,
+            Self::Goals => GOALS,
         }
     }
 }
@@ -132,6 +136,7 @@ pub struct RulesFiles<'a> {
     pub mines: &'a str,
     pub recipes: &'a str,
     pub migrations: &'a str,
+    pub goals: &'a str,
 }
 
 /// The rules shipped with the game, embedded at build time.
@@ -142,6 +147,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
         mines: include_str!("../../../assets/recipes/mines.json"),
         recipes: include_str!("../../../assets/recipes/recipes.json"),
         migrations: include_str!("../../../assets/recipes/migrations.json"),
+        goals: include_str!("../../../assets/recipes/goals.json"),
     }
 }
 
@@ -150,6 +156,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
 pub struct Rules {
     pub definition: CatalogDefinition,
     pub migrations: Vec<Migration>,
+    pub goals: Vec<crate::goals::GoalDefinition>,
 }
 impl Rules {
     /// Parse every file strictly and validate the set. Reports every problem found.
@@ -162,8 +169,15 @@ impl Rules {
         let recipes = parse::<RecipesFile>(RECIPES, files.recipes, "recipes", &mut errors);
         let migrations =
             parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
-        let (Some(items), Some(resources), Some(mines), Some(recipes), Some(migrations)) =
-            (items, resources, mines, recipes, migrations)
+        let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
+        let (
+            Some(items),
+            Some(resources),
+            Some(mines),
+            Some(recipes),
+            Some(migrations),
+            Some(goals),
+        ) = (items, resources, mines, recipes, migrations, goals)
         else {
             return Err(RulesErrors(errors));
         };
@@ -173,6 +187,7 @@ impl Rules {
             (MINES, mines.format),
             (RECIPES, recipes.format),
             (MIGRATIONS, migrations.format),
+            (GOALS, goals.format),
         ] {
             if format != FORMAT {
                 errors.push(RulesError::new(
@@ -190,11 +205,22 @@ impl Rules {
             recipes: recipes.recipes,
         };
         errors.extend(validate(&definition));
-        errors.extend(validate_migrations(&definition, &migrations.migrations));
+        let rule_ids: BTreeSet<String> = ids(&definition).into_iter().map(|(id, _)| id).collect();
+        errors.extend(crate::goals::validate_goals(
+            &definition,
+            &rule_ids,
+            &goals.goals,
+        ));
+        errors.extend(validate_migrations(
+            &definition,
+            &goals.goals,
+            &migrations.migrations,
+        ));
         if errors.is_empty() {
             Ok(Self {
                 definition,
                 migrations: migrations.migrations,
+                goals: goals.goals,
             })
         } else {
             Err(RulesErrors(errors))
@@ -205,6 +231,7 @@ impl Rules {
         ids(&self.definition)
             .into_iter()
             .map(|(id, _)| id)
+            .chain(self.goals.iter().map(|g| g.id.clone()))
             .collect()
     }
 }
@@ -436,9 +463,11 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
 /// A migration's `from` must be gone and its `to` (if any) must exist.
 pub fn validate_migrations(
     definition: &CatalogDefinition,
+    goals: &[crate::goals::GoalDefinition],
     migrations: &[Migration],
 ) -> Vec<RulesError> {
-    let current: BTreeSet<(String, &str)> = ids(definition).into_iter().collect();
+    let mut current: BTreeSet<(String, &str)> = ids(definition).into_iter().collect();
+    current.extend(goals.iter().map(|g| (g.id.clone(), GOALS)));
     let mut errors = Vec::new();
     let mut seen = BTreeSet::new();
     for migration in migrations {
@@ -545,13 +574,15 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     let recipes = parse::<RecipesFile>(RECIPES, files.recipes, "recipes", &mut errors);
     let migrations =
         parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
+    let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
     let (
         Some(mut items),
         Some(mut resources),
         Some(mut mines),
         Some(mut recipes),
         Some(mut migrations),
-    ) = (items, resources, mines, recipes, migrations)
+        Some(mut goals),
+    ) = (items, resources, mines, recipes, migrations, goals)
     else {
         return Err(RulesErrors(errors));
     };
@@ -565,12 +596,15 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     recipes.recipes.sort_by(|a, b| a.id.cmp(&b.id));
     migrations.schema = schema_ref(MIGRATIONS);
     migrations.migrations.sort_by(|a, b| a.id.cmp(&b.id));
+    // Goals keep their authored order: it is the order the hub offers them in.
+    goals.schema = schema_ref(GOALS);
     Ok(vec![
         (ITEMS, pretty(&items)),
         (RESOURCES, pretty(&resources)),
         (MINES, pretty(&mines)),
         (RECIPES, pretty(&recipes)),
         (MIGRATIONS, pretty(&migrations)),
+        (GOALS, pretty(&goals)),
     ])
 }
 
@@ -583,6 +617,7 @@ pub fn schemas() -> Vec<(String, String)> {
         (MINES, schemars::schema_for!(MinesFile)),
         (RECIPES, schemars::schema_for!(RecipesFile)),
         (MIGRATIONS, schemars::schema_for!(MigrationsFile)),
+        (GOALS, schemars::schema_for!(GoalsFile)),
     ] {
         out.push((schema_ref(file).unwrap_or_default(), pretty(&schema)));
     }
@@ -604,6 +639,7 @@ mod tests {
             "resources" => files.resources = text,
             "mines" => files.mines = text,
             "recipes" => files.recipes = text,
+            "goals" => files.goals = text,
             _ => files.migrations = text,
         }
         files

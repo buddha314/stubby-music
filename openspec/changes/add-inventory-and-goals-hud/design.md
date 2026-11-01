@@ -101,6 +101,31 @@ produced/consumed ledger for throughput goals ("a stream carries N beats"), or a
 query re-evaluated on change for reversible conditions ("light quality ≥ x here").
 A goal that opens late is evaluated against current state when it opens.
 
+### D11. Chores: short-term goals met by a condition
+The first short-term goals are **chores** (as Satisfactory's onboarding steps are), and
+they are not item lists: they complete when something in the world becomes true. So a
+goal has either `requires` (items, delivered, D3) or `condition` (a named game state),
+never both. Conditions are a closed list owned by the schema (a rule type each, added by
+a rule PR, `add-rules-data-conventions` D1); a goal row names one with its arguments.
+The game reports a condition when it changes, as a `ConditionMet` event to the reducer
+(D9); a condition goal completes once, the first time it holds, and stays complete
+(latched, so undoing it later does not reopen the goal).
+
+First conditions:
+- `machine_configured { machine }`: the machine's every `configure.cables` patch is made,
+  so its voice sounds (`add-mudpit-burbler`, "The screen guides the patch").
+- `tree_watered { mine }`: a stream delivers water to a placed tree of that mine. It needs
+  digging (`add-digging`), so its goal can be authored but not completed until then.
+
+First chores, in order (the designer's, 2026-11-01):
+
+| Goal | Kind | Met by |
+| --- | --- | --- |
+| `build_a_heartbeat`, "Build a heartbeat" | short, condition | `machine_configured { machine: mudpit_burbler }` |
+| `water_the_tree`, "Water the tree" (after `build_a_heartbeat`) | short, condition | `tree_watered { mine: scrub_oak }` |
+
+The long-term goal above them is still open.
+
 ### D10. Save shape
 The save holds only IDs and numbers: completed goals, paid amounts per goal and item,
 the active choice per horizon, pins as `(recipe, count)`, recipe-book items, each rules
@@ -145,6 +170,7 @@ upper right, hand items in, watch the next goal open.
   only; counts move to Tab in the same task.
 
 ## Open questions
+- The first long-term goal, which the first chores lead toward.
 - Where goals are handed in: a hub machine in the world (Satisfactory's HUB terminal),
   the burbler, or anywhere. A hub machine is art and design work not yet started.
 - Whether the inventory gets slots and capacity later (Satisfactory has 18 to start).

@@ -1,6 +1,8 @@
 //! Item quantities, resource yields and atomic recipes. No Bevy or audio dependency.
+pub mod goals;
 pub mod rules;
 mod source;
+pub use goals::{Condition, GoalDefinition, Horizon};
 pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
 
