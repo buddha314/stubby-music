@@ -1,5 +1,5 @@
 ## 0. Decisions
-- [ ] 0.1 Where the first clean water comes from (design: open questions)
+- [x] 0.1 Where the first clean water comes from: a filter mini-rack, HPF → pure liquid, LPF → solids/nutrients, controlled via audio (detailed design later, `add-fluid-quality-and-viscosity`)
 - [x] 0.2 Layout: prefabs placed in Jackdaw (`jackdaw/assets/prefabs/`, made with Jackdaw's Save as Prefab)
 - [ ] 0.3 Reconcile `add-desert-opening` discovery-progression (square from a bug; clock is the burbler)
 

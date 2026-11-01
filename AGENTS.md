@@ -37,7 +37,9 @@ and animals by singing or playing music to them. Where life grows, light quality
 rises and the bleak desert blooms (see *Look and feel*). **Streams are staff music**:
 they deliver music to plants and animals as nutrients, the world's own patch cables.
 They start as raw mud from burblers (below) and are cleaned up by other constructors.
-Music is how the world gets better; it is never just decoration.
+Music is how the world gets better; it is never just decoration. **All machines are
+instruments**: every machine is a rack the player patches and plays, controlled by
+audio, as the burbler is.
 
 ### Resources and recipes: the builder-game model
 
@@ -333,8 +335,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
   water is **sheet music**: a wavy staff runs along it and each beat's note rides it
   downstream at the water's speed, so note spacing shows velocity. The
-  mud is **raw**: muddy on purpose, like ore. As other processes are identified,
-  constructors clean it, and the stream's water goes **from muddy to clear**.
+  mud is **raw**: muddy on purpose, like ore. It is cleaned later by a **filter
+  mini-rack** (direction, not yet designed): **high-pass filters separate out pure
+  liquid, low-pass filters separate solids and nutrients**, into separate channels,
+  controlled via audio. The stream's water goes **from muddy to clear**.
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds
   outline every laid segment's banks. They are a frequent renewable, as easy to get as
   leaves in Satisfactory: abundant on wet ground, harvested with E (hold E for nearby
@@ -358,6 +362,13 @@ Keep **https://github.com/jbuehler23/jackdaw.git** as `upstream` for reference a
 selective integration. Develop and publish fixes to the buddha314 fork; do not
 wait for upstream acceptance before using them locally or in this game. Preserve
 this remote convention when fetching, opening PRs, or configuring new checkouts.
+
+**We do not change the editor except to fix bugs, and never adapt it to this game.**
+Game needs (components such as a player start, prefabs, editor-visible markers) live
+in this repository, through Jackdaw's own extension points: reflected components,
+`HiddenInGame`, prefabs. The editor is kept current with upstream and runs
+system-wide through soft links, `~/.cargo/bin/jackdaw` and `~/.cargo/bin/jd` →
+`~/src/jackdaw/target/debug/`; `tools/jackdaw.sh` uses the same build.
 
 ### Fluids and stream progression
 

@@ -10,6 +10,11 @@ add balancing constants or a new machine recipe in this documentation change.
   viscosity and lets it move faster through an otherwise identical stream.
 - Better nutrient delivery and water quality feed production such as scrub-oak
   lightning-bug mines. The mine stays infinite; delivery and processing limit rate.
+- **Cleaning is a filter mini-rack** (direction from the user, 2026-10-31; detailed
+  design later). Like the burbler's configuration rack, it is an instrument controlled
+  via audio: **high-pass filters separate out pure liquid; low-pass filters separate
+  solids and nutrients**, into separate channels (clear water, and solids/nutrients).
+  Do not design another cleaning mechanism.
 - Existing streams carry musical nutrients and pulse at the burbler's BPM, per
   `docs/art/style-guide.md` and `add-mudpit-burbler`. Cleaning has mechanical and
   visual stages; it is more than changing muddy-water opacity.
