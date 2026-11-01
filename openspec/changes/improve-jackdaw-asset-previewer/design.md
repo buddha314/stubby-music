@@ -4,6 +4,9 @@ Reviewed the shared Jackdaw dev/0.20 source:
 
 - src/project_window.rs already uses Tooltip::title plus Hovered on truncated
   filename labels. Labels currently shorten names longer than ten characters.
+  The asset tooltip uses entry.file_name, without directory components. Search
+  results expose their folder separately via attach_folder_caption; scene tabs
+  have a separate path-description convention, which does not apply to asset tiles.
 - crates/jackdaw_feathers/src/tooltip.rs owns the shared hover behavior: 300 ms
   title delay, 1200 ms expanded stage, theme tokens and constrained placement.
   Reuse it; do not create another tooltip timer, popup or placement algorithm.
@@ -20,7 +23,10 @@ Reviewed the shared Jackdaw dev/0.20 source:
 
 Attach a single shared filename tooltip to the interactive tile/row hover surface,
 covering the thumbnail and label. Its title is the exact filesystem filename,
-including extension and Unicode characters. Remove duplicate nested filename
+including extension and Unicode characters, without directory components, following
+the existing asset-browser convention. The list Name column follows the same rule.
+If a future target lacks a filename/path convention, default to filename only for
+readability. Keep existing separate breadcrumbs/folder captions. Remove duplicate nested filename
 tooltips where necessary. Match current tooltip timing, typography, dismissal and
 window-bound placement; wrap long tooltip text rather than truncating its content.
 Do not change operator tooltips elsewhere or introduce asset-specific hover UI.

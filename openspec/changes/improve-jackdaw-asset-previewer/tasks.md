@@ -4,7 +4,7 @@
 
 ## 2. Filename hover
 - [ ] 2.1 Extend the shared filename tooltip to the whole tile/row hover surface, including thumbnail and label, without nested duplicate popovers.
-- [ ] 2.2 Keep complete filenames/extensions/Unicode and existing tooltip timing, theme, wrapping, dismissal and window-bound placement.
+- [ ] 2.2 Follow the asset-browser filename/path convention (currently filename and extension only; default to no path if none exists), preserve Unicode, and reuse existing tooltip timing, theme, wrapping, dismissal and window-bound placement.
 
 ## 3. Detailed list
 - [ ] 3.1 Add a list renderer using existing entries, ThumbnailSlot/cache and file-operation handlers; columns are Thumbnail, Name and Last modified.

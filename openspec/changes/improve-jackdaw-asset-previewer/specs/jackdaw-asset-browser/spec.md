@@ -5,10 +5,18 @@ The Project asset browser SHALL show the complete filesystem filename, including
 its extension, when the user hovers an asset tile or list row, including its
 thumbnail or label. It SHALL reuse Jackdaw's existing tooltip timing, theme,
 placement, wrapping and dismissal conventions and avoid duplicate filename popovers.
+Filename versus path content SHALL follow the existing asset-browser convention:
+filename and extension without directory components. If no applicable convention
+exists, it SHALL default to filename only. Existing folder captions and breadcrumbs
+remain separate. The list Name column SHALL use the same filename-only convention.
 
 #### Scenario: Hovering a truncated gallery entry
 - **WHEN** the user hovers the thumbnail or label of a gallery entry whose displayed filename is shortened
 - **THEN** the standard tooltip reveals the entire filename and extension after the existing hover delay
+
+#### Scenario: Filename versus path
+- **WHEN** the asset is stored in a nested folder
+- **THEN** its filename tooltip and list Name column follow the existing asset-browser convention and show the complete filename with extension, without prepending its folder path
 
 #### Scenario: Long Unicode filename
 - **WHEN** a long filename containing Unicode characters is revealed in a tooltip

@@ -8,7 +8,9 @@ The gallery also provides no detailed listing for comparing file names and dates
 ## What Changes
 
 - Reveal the complete file name, including its extension, on hover using Jackdaw's
-  existing tooltip component, timing, styling and placement conventions.
+  existing tooltip component, timing, styling and placement conventions. Follow
+  its existing filename-only content convention; without an applicable convention,
+  default to no directory path for readability.
 - Add an explicit Gallery / List choice to the existing Project browser toolbar.
 - Keep the current gallery and add list rows with a thumbnail, the full filename,
   and the file's last-modified date/time.
