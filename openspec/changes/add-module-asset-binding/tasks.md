@@ -15,6 +15,8 @@
 - [ ] 2.2 VCO `Light_out` follows the module's output level, once the rack publishes meters (`add-rack-and-spatial-audio` 3.2)
 - [ ] 2.3 Saw and triangle VCOs sound, once the engine has those oscillators
 - [ ] 2.4 On-screen timing: measure that the clock light peaks within 10 ms of each tick in the running game (also closes `add-desert-opening` 4.5)
-- [ ] 2.5 (claimed: Codex, add-jackdaw-live-listen) See it live: run with `--module-demo` (game and Jackdaw) and confirm the clock flashes on the beat you hear
+- [x] 2.5 (Codex, add-jackdaw-live-listen) See it live: run with `--module-demo` (game and Jackdaw) and confirm the clock flashes on the beat you hear
 
   Live listening evidence (2026-10-31): `docs/research/jackdaw-live-listen.md`. The visible clock and audible square share one engine clock; standalone user confirmation and game/Play output captures agree with 120 BPM. Stop/replay verified. Task 2.4 remains open for a measured on-screen 10ms tolerance.
+
+  Post-reboot 20-second 165Hz Play: user confirmed no flicker after the grubby workaround. Bounded live validation is complete.
