@@ -60,7 +60,17 @@ STREAM_BUBBLES = [(0.1, 1.3, 0.26, 1), (-0.6, 1.65, 0.13, 2), (0.6, 0.8, 0.11, 2
 STREAM_WISPS = [(0.1, 1.25, 0.75, 0.15), (-0.45, 1.6, 1.3, 0.11), (0.35, 0.9, 1.85, 0.09)]
 BEAT_FRAMES = 24          # one beat at 24 fps: each bubble's clip lasts 1 s at speed 1
 
+# E opens the configuration screen within this reach (add-mudpit-burbler).
+INTERACT = {
+    "node": "Interact",
+    "key": "E",
+    "range_m": 3.0,
+    "measured": "ground distance from the player to the Interact node, the same reach as E pickups",
+    "prompt": "E | Configure burbler",
+    "priority": "when a pickup is also in reach, the nearer target wins"
+}
 RACK_HP = {"clock": 8, "vco": 8, "volume": 4}
+RACK_KIND = {"clock": "clock", "vco": "vco", "volume": "vca"}   # slot label per place
 RACK_WIDTH = sum(RACK_HP.values()) * HP
 RACK_BASE = 0.30  # module base height in the rack
 RACK_AT = (2.35, -0.25, 0.0)
@@ -586,8 +596,12 @@ class Burbler(ModuleKit):
             "size_metres": self.size,
             "params": {"bpm": {"min": 40.0, "max": 180.0, "default": 90.0,
                                "note": "set per instance from the world seed"}},
-            "configure": {"screen": "eurorack_hud",
-                          "places": [{"place": p, "hp": hp, "fixed": p == "clock"} for p, hp in RACK_HP.items()]},
+            # This machine's rack configurator: its configuration recipe's slots.
+            "configure": {"screen": "eurorack_hud", "hud": "models/hud/rack_frame.glb",
+                          "title": "MUDPIT BURBLER", "interact": INTERACT,
+                          "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p == "clock",
+                                      **({"module": "burbler_clock"} if p == "clock" else {})}
+                                     for p, hp in RACK_HP.items()]},
             "lights": {
                 "Burbler_Glow": {"rest": 0.15, "peak": 1.0, "attack_s": 0.04, "decay_s": 0.45},
                 "Burbler_WispBell": {"rest": 0.0, "peak": 1.0, "attack_s": 0.1, "decay_s": 1.8},

@@ -1,0 +1,69 @@
+{
+  "id": "rack_frame",
+  "model": "models/hud/rack_frame.glb#Scene0",
+  "kind": "hud_rack_frame",
+  "rails": {
+    "nodes": [
+      "RailTop",
+      "RailBottom"
+    ],
+    "length_m": 1.0,
+    "axis": "x",
+    "scale_x_to": "rack width + rail_margin_m",
+    "rail_margin_m": 0.12
+  },
+  "posts": {
+    "nodes": [
+      "PostL",
+      "PostR"
+    ],
+    "x": "+-(rack width / 2 + post_inset_m)",
+    "post_inset_m": 0.1
+  },
+  "rack_width": "sum of the recipe's slot widths, HP x 0.0508 m",
+  "mount": "module base centre at z = 0 on the rack's centre line, faceplate facing -Y",
+  "screen": {
+    "title": "{machine}",
+    "subtitle": "{bpm} BPM  \u00b7  configure",
+    "hints": "turn BPM to set the tempo   \u00b7   drag a component into its slot   \u00b7   drag between jacks to patch   \u00b7   Esc  close",
+    "camera": {
+      "projection": "orthographic",
+      "frame": "the rack's full width and HEIGHT + 0.55 m",
+      "view": "straight on, looking along +Y at the faceplates",
+      "render_layer": "dedicated HUD layer"
+    },
+    "panel": {
+      "color": "#15161a",
+      "alpha": 0.82,
+      "border": "#ffb350",
+      "border_alpha": 0.4,
+      "corner_px": 18
+    },
+    "backdrop": {
+      "blur_px": 14,
+      "dim_color": "#0b0c10",
+      "dim": 0.55
+    },
+    "text": {
+      "title": "#e7e5dd",
+      "subtitle": "#ffb350",
+      "hints": "#adb8d4"
+    },
+    "key_light": {
+      "type": "area",
+      "energy_w": 260,
+      "size_m": 2.0,
+      "color_srgb": "#ffd9b3",
+      "position_m": [
+        -1.2,
+        -2.6,
+        1.9
+      ],
+      "aim_m": [
+        0.0,
+        0.0,
+        0.65
+      ]
+    }
+  }
+}

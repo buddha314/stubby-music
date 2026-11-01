@@ -14,9 +14,12 @@
 
 ## 2. Game (Codex)
 
+The screen, slots, mounting and patching are the common rack (`add-rack-configurations`); the burbler is its first machine, implementing `RackMachine` (header "{bpm} BPM · configure", OUT normalled to the outlet). Its configuration is `configure` in `assets/machines/mudpit_burbler/asset.json`.
+
+
 - [ ] 2.1 `mudpit_burbler` mine definition with output `clock`; seeded per-instance tempo
 - [ ] 2.2 Burbler world placement (relative to the opening's discoveries)
-- [ ] 2.3 Interact (E) opens the configuration screen; Escape closes; cursor and movement handling
+- [ ] 2.3 E within 3 m of the burbler's `Interact` node (the pickups' reach; `configure.interact` in the profile) opens the configuration screen, with the prompt "E | Configure burbler" while in range; the nearer target wins against pickups; Escape closes; cursor and movement handling
 - [ ] 2.4 Configuration HUD: three-place rack, VCO slot from inventory, volume knob; follow `docs/art/hud_mock.png`
 - [ ] 2.4a Register `burbler_clock` and `volume` in `ModuleCatalog` (`synth_modules.rs`); `Knob_bpm` sets the clock (default: the burbler's seeded tempo) and the display shows it; the volume's `trig` fires its built-in envelope into the VCA; drive `Light_level` from the VCA's output level
 - [ ] 2.4b Patch cables in the HUD: drag from a jack to start a cable, drop on a compatible jack to connect, drag a plugged end to move or remove it; seat `patch_plug` at each `Port_`; draw the tube with the profile's elastic curve (`assets/cables/patch_plug/asset.json`); colour by signal (`default_colors`)

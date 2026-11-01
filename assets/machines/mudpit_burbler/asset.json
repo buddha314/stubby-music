@@ -19,23 +19,37 @@
   },
   "configure": {
     "screen": "eurorack_hud",
+    "hud": "models/hud/rack_frame.glb",
+    "interact": {
+      "node": "Interact",
+      "key": "E",
+      "range_m": 3.0,
+      "measured": "ground distance from the player to the Interact node, the same reach as E pickups",
+      "prompt": "E | Configure burbler",
+      "priority": "when a pickup is also in reach, the nearer target wins"
+    },
     "places": [
       {
         "place": "clock",
+        "kind": "clock",
         "hp": 8,
-        "fixed": true
+        "fixed": true,
+        "module": "burbler_clock"
       },
       {
         "place": "vco",
+        "kind": "vco",
         "hp": 8,
         "fixed": false
       },
       {
         "place": "volume",
+        "kind": "vca",
         "hp": 4,
         "fixed": false
       }
-    ]
+    ],
+    "title": "MUDPIT BURBLER"
   },
   "lights": {
     "Burbler_Glow": {

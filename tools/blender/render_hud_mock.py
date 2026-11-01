@@ -1,40 +1,53 @@
-"""Mock of the burbler's configuration HUD (add-mudpit-burbler 1.5).
+"""Mocks of a machine's configuration screen, built from the game's assets and the
+machine's own rack configuration (add-rack-configurations, add-mudpit-burbler 1.5).
 
-Configuring a burbler opens a basic three-place Eurorack over the game, as a
-Satisfactory machine screen does: the burbler's clock (fixed; its BPM knob sets the tempo), a
-VCO slot (here the Square VCO from a lightning bug's square wave) and the volume
-module, in a small rack of titanium rails on a weathered wood frame. Two patch cables
-make the voice: clock GATE to volume TRIG, VCO OUT to volume IN. They are drawn with
-the game's cable rule (`create_patch_cable.cable_curve`). This renders the rack straight on with a transparent background, then
-lays it over a dimmed, blurred desert view with the screen's title and hints.
+E within range of a machine opens its configuration screen over the game, as a
+Satisfactory machine screen does: the world dims and blurs, and a panel shows the
+machine's rack. Every machine has its own rack configurator: the `configure` block in
+its profile lists its slots (component kind, width in HP, fixed or not). The rack is
+assembled from the shared frame, slot outlines and labels (create_hud_rack.py). Here,
+the mudpit burbler's, in two states:
 
-A look reference for the HUD, not a game asset: the game builds the screen itself.
+  hud_mock_empty.png   construction: the built-in clock in place, the VCO and VCA
+                       slots empty, each a labelled outline of what goes there
+  hud_mock.png         built and patched: Square VCO and volume mounted, clock GATE to
+                       volume TRIG, VCO OUT to volume IN, drawn with the game's elastic
+                       cable rule (`create_patch_cable.cable_curve`)
+
+A look reference, not a game asset.
 
 Reproduce: blender -b --factory-startup -P tools/blender/render_hud_mock.py
-Writes docs/art/hud_mock.png (needs ImageMagick).
+Writes docs/art/hud_mock.png and docs/art/hud_mock_empty.png (needs ImageMagick).
 """
 from pathlib import Path
+import json
 import math
 import shutil
 import subprocess
 import sys
 
+import bmesh
 import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from create_clock_lamp import DIGITS  # noqa: E402
+from create_hud_rack import POST_INSET, RAIL_MARGIN  # noqa: E402
+from create_patch_cable import CABLE_RADIUS, COLORS, cable_curve, tube  # noqa: E402
 from module_kit import HEIGHT, HP, PROJECT, model_file  # noqa: E402
-from create_patch_cable import COLORS, CABLE_RADIUS, cable_curve, tube  # noqa: E402
-import bmesh  # noqa: E402
 
+MACHINE = "mudpit_burbler"
+# What the built mock mounts in each non-fixed place (the player's choice in play).
+BUILT = {"vco": "square_vco", "volume": "volume"}
 # (from place, port) -> (to place, port), cable colour
-PATCH = [(("burbler_clock", "gate"), ("volume", "trig"), "verdigris"),
-         (("square_vco", "out"), ("volume", "in"), "rust")]
-
-PLACES = [("burbler_clock", 8), ("square_vco", 8), ("volume", 4)]
+PATCH = [(("clock", "gate"), ("volume", "trig"), "verdigris"),
+         (("vco", "out"), ("volume", "in"), "rust")]
 SHOW_BPM = " 90"
-OUT = PROJECT / "docs/art/hud_mock.png"
+DOCS = PROJECT / "docs/art"
+
+
+def configuration():
+    return json.loads((PROJECT / f"assets/machines/{MACHINE}/asset.json").read_text())["configure"]
 
 
 def linear(hex_srgb):
@@ -42,70 +55,88 @@ def linear(hex_srgb):
     return tuple(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c)
 
 
-def material(name, hex_srgb, metallic=0.0, roughness=0.5):
-    mat = bpy.data.materials.new(name)
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = (*linear(hex_srgb), 1.0)
-    bsdf.inputs["Metallic"].default_value = metallic
-    bsdf.inputs["Roughness"].default_value = roughness
+def cable_material(colour):
+    name = f"HudCable_{colour}"
+    mat = bpy.data.materials.get(name)
+    if mat is None:
+        mat = bpy.data.materials.new(name)
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes["Principled BSDF"]
+        bsdf.inputs["Base Color"].default_value = (*linear(COLORS[colour]), 1.0)
+        bsdf.inputs["Roughness"].default_value = 0.55
     return mat
 
 
-def cable_material(colour):
-    name = f"HudCable_{colour}"
-    return bpy.data.materials.get(name) or material(name, COLORS[colour], roughness=0.55)
+def import_glb(asset):
+    """Import an asset; return its new objects and its root(s)."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(model_file(asset)))
+    new = set(bpy.data.objects) - before
+    return new, [o for o in new if o.parent is None]
 
 
-def box(scene, name, size, location, mat):
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location)
-    obj = bpy.context.active_object
-    obj.name = name
-    obj.scale = size
-    obj.data.materials.append(mat)
-    return obj
+def base(obj):
+    return obj.name.split(".")[0]
 
 
-def main():
-    scene = bpy.context.scene
-    for obj in list(scene.objects):
-        bpy.data.objects.remove(obj)
-    width = sum(hp for _, hp in PLACES) * HP
-    x = -width / 2
+def build_rack(places, built):
+    """The rack for a configuration: frame, then each place mounted or outlined."""
+    width = sum(p["hp"] for p in places) * HP
+    new, _ = import_glb("rack_frame")
+    for obj in new:
+        if base(obj) in ("RailTop", "RailBottom"):
+            obj.scale.x = width + RAIL_MARGIN
+        elif base(obj) == "PostL":
+            obj.location.x = -(width / 2 + POST_INSET)
+        elif base(obj) == "PostR":
+            obj.location.x = width / 2 + POST_INSET
     ports = {}
-    for asset, hp in PLACES:
-        before = set(bpy.data.objects)
-        bpy.ops.import_scene.gltf(filepath=str(model_file(asset)))
-        for obj in set(bpy.data.objects) - before:
-            if obj.name.split(".")[0].startswith("Port_"):
-                ports[(asset, obj.name.split(".")[0][5:])] = obj
-            if obj.parent is None:
-                obj.location.x += x + hp * HP / 2
-            if obj.name.startswith("Display_d"):
-                digit, seg = int(obj.name[9]), obj.name[11]
-                obj.hide_render = SHOW_BPM[digit] == " " or seg not in DIGITS[SHOW_BPM[digit]]
-        x += hp * HP
+    x = -width / 2
+    for p in places:
+        centre = x + p["hp"] * HP / 2
+        module = p.get("module") if p["fixed"] else (BUILT.get(p["place"]) if built else None)
+        if module:
+            new, roots = import_glb(module)
+            for root in roots:
+                root.location.x += centre
+            for obj in new:
+                if base(obj).startswith("Port_"):
+                    ports[(p["place"], base(obj)[5:])] = obj
+                if base(obj).startswith("Display_d"):
+                    digit, seg = int(base(obj)[9]), base(obj)[11]
+                    obj.hide_render = SHOW_BPM[digit] == " " or seg not in DIGITS[SHOW_BPM[digit]]
+        else:
+            new, roots = import_glb(f"slot_outline_{p['hp']}hp")
+            for root in roots:
+                root.location.x += centre
+            bpy.context.view_layer.update()
+            anchor = next(o for o in new if base(o) == "Label")
+            labels, _ = import_glb("slot_labels")
+            for obj in labels:
+                if base(obj).startswith("Label_") and base(obj) != f"Label_{p['kind']}":
+                    for part in [obj] + list(obj.children_recursive):
+                        part.hide_render = True
+            next(o for o in labels if base(o) == f"Label_{p['kind']}").matrix_world = anchor.matrix_world.copy()
+        x += p["hp"] * HP
     bpy.context.view_layer.update()
-    # The patch: a plug seated in each jack, a cable between them.
+    return ports
+
+
+def patch(ports):
     for (src, dst, colour) in PATCH:
         ends = []
         for place in (src, dst):
-            before = set(bpy.data.objects)
-            bpy.ops.import_scene.gltf(filepath=str(model_file("patch_plug")))
-            new = set(bpy.data.objects) - before
-            root = next(o for o in new if o.parent is None)
-            root.matrix_world = ports[place].matrix_world.copy()
+            new, roots = import_glb("patch_plug")
+            roots[0].matrix_world = ports[place].matrix_world.copy()
             bpy.context.view_layer.update()
-            attach = next(o for o in new if o.name.startswith("Cable_attach"))
             for o in new:
-                if o.type == "MESH" and o.name.startswith("PatchCable_Stub"):
+                if o.type == "MESH" and base(o) == "PatchCable_Stub":
                     o.hide_render = True
                 if o.type == "MESH":
-                    for slot in o.material_slots:
-                        if slot.material and slot.material.name.split(".")[0] in ("PatchCable_Cable",
-                                                                                   "PatchCable_Collar"):
-                            slot.material = cable_material(colour)
-            ends.append(attach.matrix_world.translation.copy())
+                    for s in o.material_slots:
+                        if s.material and base(s.material) in ("PatchCable_Cable", "PatchCable_Collar"):
+                            s.material = cable_material(colour)
+            ends.append(next(o for o in new if base(o) == "Cable_attach").matrix_world.translation.copy())
         bm = bmesh.new()
         tube(bm, cable_curve(ends[0], ends[1]), CABLE_RADIUS)
         mesh = bpy.data.meshes.new(f"Cable_{colour}")
@@ -115,23 +146,19 @@ def main():
         cable.data.materials.append(cable_material(colour))
         for face in cable.data.polygons:
             face.use_smooth = True
-        scene.collection.objects.link(cable)
+        bpy.context.scene.collection.objects.link(cable)
 
-    # Lamp mid-flash, as in the module preview.
+
+def render(built, out, hints):
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    config = configuration()
+    ports = build_rack(config["places"], built)
+    if built:
+        patch(ports)
     lamp = bpy.data.materials.get("BurblerClock_Lamp")
-    if lamp:
+    if lamp:   # mid-flash, as in the module preview
         lamp.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 4.0
-
-    # The rack: titanium rails on a weathered wood frame (crude meets high-tech).
-    titanium = material("HudRack_Titanium", "#b8bcc2", metallic=1.0, roughness=0.32)
-    wood = material("HudRack_Wood", "#5a4a3a", roughness=0.9)
-    iron = material("HudRack_Iron", "#5e3a22", metallic=0.5, roughness=0.85)
-    for z in (0.02, HEIGHT - 0.02):
-        box(scene, "Rail", (width + 0.12, 0.05, 0.045), (0, -0.2, z), titanium)
-    for side in (-1, 1):
-        box(scene, "Post", (0.09, 0.32, HEIGHT + 0.36), (side * (width / 2 + 0.1), 0.0, HEIGHT / 2 + 0.02), wood)
-        for z in (0.02, HEIGHT - 0.02):
-            box(scene, "Strap", (0.11, 0.34, 0.05), (side * (width / 2 + 0.1), 0.0, z), iron)
 
     key = bpy.data.objects.new("Key", bpy.data.lights.new("Key", "AREA"))
     key.data.energy, key.data.size, key.data.color = 260, 2.0, (1.0, 0.85, 0.7)
@@ -143,7 +170,6 @@ def main():
     world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.04, 0.045, 0.055, 1)
     world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.5
     scene.world = world
-
     camera = bpy.data.objects.new("Camera", bpy.data.cameras.new("Camera"))
     camera.data.type = "ORTHO"
     camera.data.ortho_scale = HEIGHT + 0.55
@@ -151,35 +177,38 @@ def main():
     camera.rotation_euler = (math.pi / 2, 0, 0)
     scene.collection.objects.link(camera)
     scene.camera = camera
-
     scene.render.engine = "CYCLES"
     scene.cycles.samples = 64
     scene.render.film_transparent = True
-    scene.render.resolution_x, scene.render.resolution_y = 1100, 1100
+    scene.render.resolution_x = scene.render.resolution_y = 1100
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - Medium High Contrast"
-    rack = PROJECT / "docs/art/hud_rack.png"
+    rack = DOCS / "hud_rack.png"
     scene.render.filepath = str(rack)
     bpy.ops.render.render(write_still=True)
 
     magick = shutil.which("magick")
-    backdrop = PROJECT / "docs/art/keys/bleak_dusk.png"
+    backdrop = DOCS / "keys/bleak_dusk.png"
     if magick and backdrop.exists():
         subprocess.run([
             magick, str(backdrop), "-resize", "1920x1080^", "-gravity", "center", "-extent", "1920x1080",
             "-blur", "0x14", "-fill", "#0b0c10", "-colorize", "55%",
-            # the HUD panel: a dark translucent card with a thin amber edge
             "-fill", "#15161ad0", "-stroke", "#ffb35066", "-strokewidth", "2",
             "-draw", "roundrectangle 470,70 1450,1010 18,18", "-stroke", "none",
             "(", str(rack), "-resize", "900x900", ")", "-gravity", "center", "-geometry", "+0+30",
             "-composite",
-            "-gravity", "north", "-fill", "#e7e5dd", "-pointsize", "34", "-annotate", "+0+92",
-            "MUDPIT BURBLER",
+            "-gravity", "north", "-fill", "#e7e5dd", "-pointsize", "34", "-annotate", "+0+92", config["title"],
             "-fill", "#ffb350", "-pointsize", "20", "-annotate", "+0+138", "90 BPM  ·  configure",
-            "-gravity", "south", "-fill", "#adb8d4", "-pointsize", "18", "-annotate", "+0+92",
-            "turn BPM to set the tempo   ·   drag a VCO into the slot   ·   drag between jacks to patch   ·   Esc  close",
-            str(OUT)], check=True)
+            "-gravity", "south", "-fill", "#adb8d4", "-pointsize", "18", "-annotate", "+0+92", hints,
+            str(out)], check=True)
         rack.unlink()
+
+
+def main():
+    render(False, DOCS / "hud_mock_empty.png",
+           "make a VCO and a VCA   ·   drag each into its outlined slot   ·   Esc  close")
+    render(True, DOCS / "hud_mock.png",
+           "turn BPM to set the tempo   ·   drag between jacks to patch   ·   Esc  close")
 
 
 if __name__ == "__main__":
