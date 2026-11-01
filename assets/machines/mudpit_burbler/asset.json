@@ -40,15 +40,26 @@
         "place": "vco",
         "kind": "vco",
         "hp": 8,
-        "fixed": false
+        "fixed": false,
+        "accepts": [
+          {
+            "item": "square_wave",
+            "module": "square_vco"
+          }
+        ]
       },
       {
         "place": "volume",
         "kind": "vca",
         "hp": 4,
-        "fixed": false
+        "fixed": true,
+        "module": "volume"
       }
     ],
+    "normalled_output": {
+      "place": "volume",
+      "port": "out"
+    },
     "title": "MUDPIT BURBLER",
     "cables": [
       {

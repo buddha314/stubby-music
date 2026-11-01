@@ -125,6 +125,24 @@ impl Inventory {
             .iter()
             .map(|(item, count)| (item.as_str(), *count))
     }
+    /// Take `quantity` of `item` out, all or nothing (e.g. a square wave mounted as a
+    /// VCO in a rack slot).
+    pub fn take(&mut self, item: &str, quantity: u32) -> Result<(), RecipeError> {
+        let available = self.quantity(item);
+        if available < quantity {
+            return Err(RecipeError::MissingIngredient {
+                item: item.into(),
+                needed: quantity,
+                available,
+            });
+        }
+        if available == quantity {
+            self.quantities.remove(item);
+        } else {
+            self.quantities.insert(item.into(), available - quantity);
+        }
+        Ok(())
+    }
     fn add(&mut self, item: &str, quantity: u32) -> Result<(), RecipeError> {
         let count = self
             .quantity(item)
