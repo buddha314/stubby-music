@@ -1,25 +1,177 @@
-// Generated floor is a preview proxy. Play runs the shared procedural generator.
-#"Desert opening · seed 42"
-bevy_transform::components::transform::Transform
-bevy_camera::visibility::Visibility::Visible
+// jackdaw 0.20.1-rc.1 | bevy 0.20
 bevy_ecs::hierarchy::Children [
-    #"Procedural mudflat preview"
-    jackdaw_scene_types::types::HiddenInGame
+    #"Desert opening · seed 42"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -0.0792185515165329,
+            y: -0.00000040978193283081055,
+            z: 0.6021318435668945,
+        },
+    }
+    bevy_camera::visibility::Visibility::Visible
+    bevy_ecs::hierarchy::Children [
+        #"Procedural mudflat preview"
+        jackdaw_scene_types::types::HiddenInGame
+        jackdaw_scene_types::types::GltfSource {
+            path: "generated/mudflat.glb",
+            scene_index: 0,
+        }
+        bevy_transform::components::transform::Transform
+        bevy_camera::visibility::Visibility::Visible
+        --
+        #"Desert sun"
+        jackdaw_scene_types::types::HiddenInGame
+        bevy_light::directional_light::DirectionalLight {
+            illuminance: 9500.0,
+            shadow_maps_enabled: true,
+        }
+        bevy_transform::components::transform::Transform {
+            rotation: glam::Quat {
+                x: -0.047,
+                y: -0.247,
+                z: -0.012,
+                w: 0.968,
+            },
+        }
+        bevy_camera::visibility::Visibility::Visible
+        --
+        jackdaw::prefab::components::IsA {
+            source: "prefabs/creatures/lightning_bug.bsn",
+            deleted: [],
+        }
+        jackdaw::prefab::components::PrefabEntityId(0)
+        jackdaw_scene_types::node_id::SceneNodeId(5630431314562324065)
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -6.2706499099731445,
+                y: 0.01666879653930664,
+                z: -18.01686668395996,
+            },
+        }
+        bevy_ecs::hierarchy::Children [
+            jackdaw::prefab::components::PrefabEntityId(1)
+        ]
+    ]
+    --
+    #mudpit_burbler
+    jackdaw_scene_types::node_id::SceneNodeId(2882634828979894752)
     jackdaw_scene_types::types::GltfSource {
-        path: "generated/mudflat.glb",
+        path: "models/machines/mudpit_burbler.glb",
         scene_index: 0,
     }
-    bevy_transform::components::transform::Transform
-    bevy_camera::visibility::Visibility::Visible
-    --
-    #"Desert sun"
-    jackdaw_scene_types::types::HiddenInGame
-    bevy_light::directional_light::DirectionalLight {
-        illuminance: 9500.0,
-        shadow_maps_enabled: true,
-    }
     bevy_transform::components::transform::Transform {
-        rotation: glam::Quat { x: -0.047, y: -0.247, z: -0.012, w: 0.968 },
+        translation: glam::Vec3 {
+            x: -1.4585599899291992,
+            y: -0.002964496612548828,
+            z: -35.110130310058594,
+        },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.8999999761581421,
+            z: 0.0,
+            w: 0.5454691052436829,
+        },
     }
-    bevy_camera::visibility::Visibility::Visible
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984839)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.836110591888428,
+            y: -0.017426662147045135,
+            z: -7.378628730773926,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984840)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 9.249051094055176,
+            y: 0.0028320029377937317,
+            z: -16.884952545166016,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984841)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 14.031987190246582,
+            y: 0.02649528533220291,
+            z: -11.764769554138184,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984842)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -21.030200958251953,
+            y: 0.014786548912525177,
+            z: 7.9905595779418945,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984843)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -17.613489151000977,
+            y: -0.02128308266401291,
+            z: 3.405090808868408,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/lightning_bug.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(6566083793249984844)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -13.984012603759766,
+            y: 0.03298170119524002,
+            z: 16.019393920898438,
+        },
+    }
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
 ]
