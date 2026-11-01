@@ -625,8 +625,10 @@ fn apply_visuals(
                 (params.0.get(&p.param), parts.knobs.get(&p.param))
                 && let Ok(mut t) = transforms.get_mut(entity)
             {
-                // Local +Z points out of the panel, so clockwise as seen is negative.
-                t.rotation = base * Quat::from_rotation_z(-knob_angle(value, p));
+                // glTF export turns Blender's local +Z into +Y: a knob's parts sit along
+                // its local +Y, out of the panel, so it turns about Y (clockwise as seen
+                // from the front is negative).
+                t.rotation = base * Quat::from_rotation_y(-knob_angle(value, p));
             }
         }
     }
