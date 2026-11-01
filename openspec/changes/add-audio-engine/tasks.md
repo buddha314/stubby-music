@@ -41,7 +41,7 @@
 - [x] 5.2 Sample-time → wall-time mapping: each `ClockTick` carries `at`, predicted from an audio-clock snapshot
 - [x] 5.3 Verify a fresh game outputs digital silence (`a_fresh_game_is_silent`)
 - [x] 5.4 Stall test: the engine keeps rendering through a 200 ms game-thread stall (`engine_keeps_running_while_the_game_thread_stalls`)
-- [ ] 5.5 (claimed: Codex, add-jackdaw-live-listen) Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
+- [x] 5.5 (Codex, add-jackdaw-live-listen) Hear the game's audio live: `cargo run -p stubby_game -- --audio-demo` (or F8), and in Jackdaw Play
   Also run with `--module-demo` to check that the clock module's light flashes on the beat you hear (`add-module-asset-binding` 2.5).
   Reconciliation is complete (PR #18); the old branch-overlap blocker is resolved.
   Fixed in worktree: `--module-demo` now auditions clock 8001 and VCO 8002 through an envelope/VCA using that same clock. Do not combine with the independent F8 demo for the timing check.
@@ -49,3 +49,5 @@
   Reboot-safe worktree: `/home/buddha/src/stubby-music-live-listen`, branch `add-jackdaw-live-listen`. User confirmed task 5.5: game and Jackdaw Play listening.
 
   Regression: user reported whole-display flashing during Jackdaw Play, recurring after Stop. Audio checks pass, but live validation is reopened until display stability is established. Test editor and game are closed.
+
+  Post-reboot validation (2026-11-01): dcdebugmask=1040 verified, 20-second 165Hz Play connected and completed, user confirmed no flicker. The bounded stability blocker is cleared; do not claim unbounded stability.

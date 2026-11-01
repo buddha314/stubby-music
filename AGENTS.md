@@ -17,8 +17,9 @@ Rebuild the game/adapter from the moved worktree before testing. Use only
 `tools/jackdaw_timed_test.py` for graphical diagnostics: it has an independent
 20-second kill timer. Begin at fixed 60Hz; then compare 165Hz with automatic
 60Hz recovery. No unbounded graphical launches while the regression is open.
-Do not reboot or log out the user automatically. Task audio-engine 5.5 and the
-flicker change remain open until stable post-reboot Play is validated.
+Do not reboot or log out the user automatically. Post-reboot verification is complete: dcdebugmask=1040 and a 20-second 165Hz
+Play test passed with user-confirmed no flicker. This is bounded validation, not
+a claim of indefinite stability. Keep the watchdog for further graphical tests.
 
 Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 `/home/buddha/.cache/stubby-music-live-listen/evidence/`.
@@ -262,8 +263,9 @@ Several agents work in this repo at once. To avoid stepping on each other:
     allocator (`add-module-asset-binding` 2.1) and `add-rack-and-spatial-audio`.
   - Art hands over data and models, not code: when an asset needs game support, write
     it as a task in the owning change rather than editing the crate.
-  Active Codex investigation: audio-engine 5.5 / module-asset-binding 2.5 in
-  `add-jackdaw-live-listen`; audio passes, whole-display flicker remains open.
+  Codex completed bounded post-reboot validation for audio-engine 5.5 /
+  module-asset-binding 2.5 in `add-jackdaw-live-listen`: user confirmed no flicker
+  during 20-second 165Hz Play. Separate 10ms on-screen timing remains open.
   Use the independent 20-second diagnostic watchdog for graphical tests.
   Update this line when you claim work.
 - **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,

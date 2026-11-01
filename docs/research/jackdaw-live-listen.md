@@ -133,3 +133,18 @@ with 20-second watchdog tests, first 60Hz then a bounded 165Hz comparison that
 restores 60Hz. Keep the flicker regression open until stable Play is validated.
 Earlier statements that no boot settings changed describe the automated
 investigation, before the user's manual grubby application.
+
+## Post-reboot test (2026-11-01)
+
+Running kernel verified dcdebugmask=1040 (0x410), dcfeaturemask=2, with boot
+options amdgpu.sg_display=0 and amdgpu.dcdebugmask=0x410; the old 0x8 override is
+absent. Rebuilt game and adapter from the persistent worktree. The user-requested
+165Hz Play test connected normally, reached running, and was killed by the
+20-second watchdog (controller observed 20.067s). Fixed 60Hz was restored.
+No rendering error appeared in the test log. The user then confirmed **no flicker
+during the test**. This validates the workaround for this bounded 20-second run;
+it does not establish indefinite stability or prove PSR was the sole cause. Report and log are
+preserved in the durable evidence folder with prefix
+`jackdaw-flicker-postreboot-play-165`.
+
+Post-reboot bounded validation is complete. Live-audio task 5.5 and module listening task 2.5 are closed again; the separate on-screen 10ms timing task 2.4 remains open.
