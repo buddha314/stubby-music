@@ -193,6 +193,24 @@ control-rate signal type. Use a nominal ±1.0 range for audio, 1.0 per octave fo
 pitch CV (V/oct), and gates/triggers high above 0.5. Keep these in one place
 (`stubby_audio::signal`) and do not invent per-module conventions.
 
+### Rules are data; the schema is code
+
+Game rules (items, resources, mines, recipes, goals) are JSON rows under
+`assets/recipes/`, interpreted and validated by `stubby_recipes`. **The designer owns
+the rows; Codex owns the schema and validator; OpenSpec owns rule types.** Two flows:
+
+- **Data PR:** a new row or value of an existing type (a recipe, a goal, a yield). Edit
+  the JSON only; `cargo test -p stubby_recipes` must pass. No OpenSpec change.
+- **Rule PR:** a new rule type (a field, a trigger, an unlock kind, an accounting
+  mode). OpenSpec change first, then schema and validator code, then example rows.
+
+Rows never hold logic: if a row needs a condition or formula, that is a new rule type.
+IDs are `snake_case` `[a-z0-9_]`, unique across all registries, and part of the save
+format: rename or remove one only with a row in `assets/recipes/migrations.json`.
+Loading is strict (unknown fields fail) and reports every error with file, ID and
+field. See `openspec/changes/add-rules-data-conventions/` and
+`docs/research/crafting-and-goal-tracking.md`.
+
 ### Procedural generation is seeded and deterministic
 
 All world generation takes an explicit seed and uses seeded RNG

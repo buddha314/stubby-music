@@ -34,14 +34,21 @@ complete), which expresses tiers and phases without a separate concept. Among op
 goals of a horizon, the hub shows the first in file order unless the player picks
 another (D5). A goal whose `after` is unmet is hidden.
 
-### D3. Delivery completes a goal; where is open
-A goal completes when its items are **delivered**: consumed from the inventory in one
-atomic transaction, like `Catalog::craft` (all or nothing, through the same
-`Inventory` methods). `goals.json` and the model do not care where delivery happens.
-Until a hand-in place is designed (see Open questions), the game delivers through a
+### D3. Goals fill by partial delivery; where is open
+Each goal keeps a **paid** amount per required item (Satisfactory's
+`mPaidOffSchematic`, Mindustry's `finishedRequirements`, Stardew's bundle slots). A
+delivery accepts, per item, up to what the goal still needs and what the player holds,
+consumes exactly that through the same path as `Catalog::craft`, and adds it to
+`paid`. Each delivery is one atomic transaction; a goal completes on the delivery that
+leaves nothing unpaid. Paid amounts belong to the goal, so switching the active goal
+loses nothing, and a deep long-term goal can be fed over many trips. Delivered items
+are gone (a sink), so nothing counts twice. Holding items never completes a goal, so a
+square wave stays usable as an instrument until the player chooses to hand it in.
+
+The hub shows, per item, `paid + held / required`, distinguishing paid from held.
+Where delivery happens is open (Open questions); the game delivers through a
 `DeliverGoal` message, so the place can be a machine, a menu or a test later without
-changing the model. Holding the items is not enough: a goal never completes by itself,
-so the player can keep using a collected square wave.
+changing the model.
 
 ### D4. Unlocks feed the recipe book
 `unlocks` are item ids discovered into `RecipeBook` on completion. Buildables join
@@ -77,9 +84,61 @@ completed goals, active choices and pins when saving lands. `bevy_egui` stays
 developer-only. Optional later: `bevy_nested_tooltips` for item tooltips;
 `pyri_tooltip` once it supports Bevy 0.20.
 
+### D9. A pure reducer over a snapshot
+Goal logic is one Bevy-free function, `apply(&Rules, &mut GoalProgress, &GoalEvent) ->
+Vec<GoalOutcome>`: no clock, RNG or I/O. Events are `Deliver(goal)`,
+`Crafted(recipe)`, `Choose(horizon, goal)`, `Pin(recipe, count)`. Outcomes are
+`Paid{goal, item, n}`, `GoalCompleted(goal)` (emitted exactly once), `Opened(goal)`,
+`Discovered(item)`, `PinDone(recipe)`. Duplicate events are harmless: completion is
+latched and paid amounts only rise. Progress is a snapshot, not an event log; no
+shipped game surveyed event-sources quest progress, and tests become tables of events
+and expected outcomes. The game's Bevy systems only translate messages into events
+and outcomes into feedback and HUD updates.
+
+Future goal kinds get an explicit **accounting mode** each, in a rule PR
+(`add-rules-data-conventions` D1): delivered-and-consumed (this change), a
+produced/consumed ledger for throughput goals ("a stream carries N beats"), or a state
+query re-evaluated on change for reversible conditions ("light quality ≥ x here").
+A goal that opens late is evaluated against current state when it opens.
+
+### D10. Save shape
+The save holds only IDs and numbers: completed goals, paid amounts per goal and item,
+the active choice per horizon, pins as `(recipe, count)`, recipe-book items, each rules
+file's `format` and the applied migrations. On load, migrations run first
+(`add-rules-data-conventions` D5); paid amounts or pins naming an ID that no longer
+exists are dropped with a log line and, for pins, player feedback. Pins drop only by
+crafting, never by delivery.
+
+## Implementation plan
+Each step is one PR, small enough to review, in this order. Steps 1–4 need no Bevy.
+
+1. **Rules files and strict loading** (`add-rules-data-conventions` 2–4): domain files
+   with `format`, strict validation with structured errors, canonical format, schema,
+   migrations and `ids.lock`, shipped-rules and golden tests.
+2. **Goal model** (this change 1.1–1.5): `goals.json` definitions and validation, the
+   D9 reducer with partial delivery (D3), pins, `ItemProgress`; event-table tests for
+   every goals-hub scenario. Codex.
+3. **Provisional goals and simulation** (1.6, `add-rules-data-conventions` 4.3): a
+   small `goals.json` from existing items, marked provisional until task 0.2, and the
+   seeded economy simulation that proves it completable. Designer rows; Codex test.
+4. **Mocks** (3.1–3.3), in parallel with 1–3: goals hub and inventory screen mocks,
+   item icons, style guide. Claude.
+5. **Screen mode and Tab inventory** (2.2–2.4, 2.8): the shared overlay mode with the
+   rack screen, the inventory screen, counts out of the text HUD. Codex.
+6. **Goals hub on screen** (2.1, 2.5, 2.6): rules loaded with `bevy_common_assets` and
+   kept on a failed reload, the hub, `DeliverGoal` from a stopgap trigger until 0.1 is
+   decided. Codex.
+7. **Recipe book screen** (2.7): pins and the active-goal choice. Codex.
+8. **Saving** (2.9, `add-rules-data-conventions` 5.2) when `moonshine-save` lands.
+
+The first playable slice is steps 1–6: collect bugs and reeds, see the goal fill in the
+upper right, hand items in, watch the next goal open.
+
 ## Risks / Trade-offs
-- Hand-in place unknown → D3 keeps it behind a message; the first playable build may
-  deliver from the hub itself as a stopgap, which the open question below must settle.
+- Hand-in place unknown → D3 keeps it behind a message; the first playable build
+  delivers from a stopgap trigger (step 6), which the open question below must settle.
+- Partial delivery means a goal can sit half paid → that is the point (deep goals over
+  many trips); the hub shows paid and held apart so the player sees both.
 - Goal content is thin (three items, no recipes yet) → ship the mechanism with a
   small `goals.json` using only existing items; real content follows the machines.
 - Two text HUDs during migration → the bottom-left HUD keeps prompts and feedback

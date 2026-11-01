@@ -1,0 +1,27 @@
+{
+  "$schema": "schema/items.schema.json",
+  "format": 1,
+  "items": [
+    {
+      "id": "clock",
+      "name": "Clock",
+      "description": "Clock resource provided by a mudpit burbler mine."
+    },
+    {
+      "id": "reed",
+      "name": "Reed",
+      "description": "A renewable stream-building ingredient."
+    },
+    {
+      "id": "square_wave",
+      "name": "Square wave",
+      "description": "A square-wave primitive mined from a lightning bug, like coal in a factory builder. Use it in modular-synthesis recipes as a VCO waveform, LFO, or gate.",
+      "waveform": "square",
+      "uses": [
+        "vco",
+        "lfo",
+        "gate"
+      ]
+    }
+  ]
+}

@@ -21,36 +21,56 @@ goal, has no required items, or forms a prerequisite cycle.
 ### Requirement: The hub shows the active goals as items, upper right
 During play the upper right of the screen SHALL show the active long-term goal and the
 active short-term goal, each as its name and its required items, every item with the
-amount held, the amount required and a progress bar. A goal is open when every goal it
+amount already paid into the goal, the amount held, the amount required and a progress
+bar of paid plus held against required. A goal is open when every goal it
 comes after is complete; the active goal of a horizon SHALL be the player's choice if
 they made one, otherwise the first open goal of that horizon in file order. A horizon
 with no open goal SHALL show nothing.
 
 #### Scenario: Progress
-- **WHEN** the active short-term goal needs 4 square waves and the player holds 1
-- **THEN** the hub shows "Square wave 1 / 4" with a low progress bar
+- **WHEN** the active short-term goal needs 4 square waves, none is paid and the player holds 1
+- **THEN** the hub shows square wave at 1 of 4 with a low progress bar
+
+#### Scenario: Paid and held
+- **WHEN** 2 square waves are paid into a goal needing 4 and the player holds 1
+- **THEN** the hub shows 2 paid and 1 held of 4, with a high progress bar
 
 #### Scenario: Enough held
-- **WHEN** the player holds all of a goal's items
+- **WHEN** paid plus held covers all of a goal's items
 - **THEN** each item shows a full bar with a tick, and the goal is not complete until delivered
 
 #### Scenario: Goals not yet open
 - **WHEN** a goal comes after a goal that is not complete
 - **THEN** the hub does not show it
 
-### Requirement: Delivering a goal completes it
-Delivering a goal SHALL consume all of its required items from the inventory in one
-transaction, or none if any is short, then mark the goal complete, discover its
-unlocks in the recipe book and open the goals that come after it. Holding the items
-SHALL NOT complete a goal by itself.
+### Requirement: Goals fill by delivery
+Each goal SHALL keep a paid amount per required item. Delivering to a goal SHALL, for
+each required item, consume from the inventory the lesser of what the goal still needs
+and what the player holds, add it to the goal's paid amount, all in one transaction.
+The goal SHALL complete on the delivery that leaves nothing unpaid, and only then
+SHALL its unlocks be discovered in the recipe book and the goals after it open.
+Completion SHALL be reported exactly once. Holding items SHALL NOT complete a goal,
+and paid amounts SHALL be kept when the player switches the active goal.
 
-#### Scenario: Delivery
-- **WHEN** the player holds 5 square waves and delivers a goal requiring 4
-- **THEN** 1 square wave remains, the goal is complete, its unlocks are in the recipe book and the next goals open
+#### Scenario: Partial delivery
+- **WHEN** a goal needs 4 square waves and 6 reeds, nothing is paid, and the player holds 1 square wave and 10 reeds and delivers
+- **THEN** 1 square wave and 6 reeds are consumed, the goal shows 1 of 4 and 6 of 6 paid, it stays open, and the player keeps 4 reeds
 
-#### Scenario: Short delivery
-- **WHEN** the player delivers a goal while holding fewer items than it requires
-- **THEN** nothing is consumed, the goal stays open, and feedback names the missing items
+#### Scenario: Completing delivery
+- **WHEN** the same goal has 3 square waves left to pay and the player holds 5 and delivers
+- **THEN** 3 are consumed, 2 remain, the goal completes once, its unlocks are in the recipe book and the next goals open
+
+#### Scenario: Nothing to give
+- **WHEN** the player delivers while holding none of the items the goal still needs
+- **THEN** nothing changes and feedback names what the goal still needs
+
+#### Scenario: Switching goals
+- **WHEN** 2 of 4 square waves are paid into a goal and the player makes another goal active, then switches back
+- **THEN** the first goal still shows 2 of 4 paid
+
+#### Scenario: Repeated event
+- **WHEN** the completing delivery's event is applied twice
+- **THEN** the goal is reported complete once and nothing more is consumed
 
 ### Requirement: Goals never end the game
 Completing the last authored goal SHALL NOT end, pause or reset the game. The hub

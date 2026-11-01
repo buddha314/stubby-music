@@ -1,0 +1,5 @@
+{
+  "$schema": "schema/recipes.schema.json",
+  "format": 1,
+  "recipes": []
+}

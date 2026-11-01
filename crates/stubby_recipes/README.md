@@ -2,7 +2,11 @@
 
 A small inventory/resource/recipe model independent of Bevy and audio.
 
-`Catalog::from_json` validates item, world resource and recipe definitions.
+`rules::Rules::load` reads the rules files strictly and reports every problem with
+file, ID and field; `shipped_catalog()` loads the files embedded from
+`assets/recipes/`. `cargo run -p stubby_recipes --bin rules-fmt` formats them,
+regenerates their JSON Schemas and updates `ids.lock` (see `assets/recipes/README.md`).
+`Catalog::from_json` still validates a single-document catalog, for tests.
 `Catalog::harvest` awards a resource yield once per stable world-instance ID,
 using a `HarvestLedger`. `Catalog::missing_ingredients` reports deficits.
 `Catalog::craft` checks all inputs and output quantity overflow before committing
@@ -10,7 +14,8 @@ any inventory changes. Duplicate ingredient lines are summed, not checked
 independently. Failed crafting or harvesting changes neither inventory nor the
 harvest ledger.
 
-Data lives in `assets/recipes/catalog.json`. Lightning bugs yield the
+Data lives in `assets/recipes/` (`items.json`, `resources.json`, `mines.json`,
+`recipes.json`, `migrations.json`). Lightning bugs yield the
 `square_wave` item. This is a waveform resource for recipes, not an automatically
 connected sound source. The production recipe list starts empty: the current entries are raw waveform
 resources, analogous to coal, rather than assumed finished-module recipes. Tests use a clearly test-only output to exercise
@@ -28,7 +33,7 @@ A recipe definition has this shape:
 ```
 
 Both item IDs must exist in the catalog. Quantities must be positive and totals
-must fit `u32`. IDs are nonempty ASCII letters/digits, underscores or hyphens.
+must fit `u32`. IDs are `snake_case` (`[a-z][a-z0-9_]*`), unique across all files.
 There are no crafting durations, machines, persistence or unlock rules yet;
 those can be layered on this transaction boundary.
 
