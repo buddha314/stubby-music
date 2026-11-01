@@ -1,0 +1,10 @@
+{
+  "id": "desert_debris_2",
+  "model": "models/desert_debris_2.glb#Scene0",
+  "kind": "prop",
+  "family": "debris",
+  "variant": 2,
+  "seed": 40,
+  "blooms": 7,
+  "triangles": 186
+}

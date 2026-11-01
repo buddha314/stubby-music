@@ -26,14 +26,26 @@
       "halo": "Port_out_Halo"
     }
   ],
-  "pulse": {
+  "staff": {
+    "node": "Staff",
+    "lines": 5,
+    "spacing_m": 0.12,
+    "height_m": 0.082,
+    "wave": {
+      "amplitude_m": 0.07,
+      "wavelength_m": 2.0,
+      "y": "amplitude * sin(2 pi x / wavelength), x along the segment"
+    },
+    "material": "Stream_Staff",
+    "halo_material": "Stream_StaffHalo"
+  },
+  "notes": {
     "node": "Pulse_0",
     "travel_axis": "+X",
-    "emit": "one per clock tick at the stream's source",
+    "emit": "one note per clock tick at the stream's source, riding the staff downstream",
     "flow_speed_mps": 1.5,
-    "band": "Pulse_0_Band",
-    "note": "Pulse_0_Note",
-    "note_from_clarity": 0.5
+    "spacing": "flow_speed_mps * 60 / bpm metres between notes: velocity reads as spread",
+    "y": "staff wave at the note's x, plus staff_step * spacing_m / 2 (0 = middle line)"
   },
   "clarity": {
     "material": "Stream_Water",
@@ -43,27 +55,60 @@
         "name": "muddy",
         "base_color": "#2a1d13",
         "roughness": 0.5,
-        "alpha": 0.98
+        "alpha": 0.98,
+        "staff_strength": 2.5,
+        "staff_halo": false,
+        "reed_greenness": 0.0
       },
       {
         "at": 0.5,
         "name": "silty",
         "base_color": "#5a4630",
         "roughness": 0.22,
-        "alpha": 0.72
+        "alpha": 0.72,
+        "staff_strength": 5.0,
+        "staff_halo": true,
+        "reed_greenness": 0.5
       },
       {
         "at": 1.0,
         "name": "clear",
         "base_color": "#6f8a88",
         "roughness": 0.04,
-        "alpha": 0.22
+        "alpha": 0.22,
+        "staff_strength": 8.0,
+        "staff_halo": true,
+        "reed_greenness": 1.0
       }
+    ]
+  },
+  "reeds": {
+    "nodes": [
+      "Reeds_L",
+      "Reeds_R"
     ],
-    "staff": {
-      "node": "Staff",
-      "visible_from": 0.6
-    }
+    "built_from": {
+      "item": "reed",
+      "quantity": 6
+    },
+    "greenness": "each stage's reed_greenness: dry while muddy, green when clear",
+    "colors": {
+      "stalk_dry": "#9a8460",
+      "stalk_green": "#5f6e34",
+      "blade_dry": "#8a7552",
+      "blade_green": "#4f5e2c"
+    },
+    "materials": {
+      "Stream_ReedStalk": [
+        "stalk_dry",
+        "stalk_green"
+      ],
+      "Stream_ReedBlade": [
+        "blade_dry",
+        "blade_green"
+      ]
+    },
+    "sway_max_deg": 3.0
   },
   "lights": {
     "Stream_PortHalo": {

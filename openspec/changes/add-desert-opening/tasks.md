@@ -13,6 +13,7 @@
 - [ ] 2.3 Seamless chunk borders (shared edge vertices and normals); seam test
 - [ ] 2.4 Async chunk streaming and despawn around the player
 - [ ] 2.5 Placement of Square VCO (40–120 m, outside its 35 m hearing radius) and Clock (farther, ≤300 m); placement tests across 1,000 seeds
+- [ ] 2.6 Scatter desert props (`assets/props/desert/asset.json`: brush, stumps, mud debris) from the seed, sparse and silhouetted in the haze; bloom each from local light quality
 
 ## 3. Atmosphere
 

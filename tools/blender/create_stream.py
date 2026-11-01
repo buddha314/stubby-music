@@ -8,24 +8,31 @@ exactly): 1 m of water between banked sides, built up from the ground. Flow runs
 along +X; the origin is the inlet's centre on the ground, so segments chain port to
 port. It is subdivided along its length so the game can bend it along a path.
 
-The water goes from muddy to clear as cleaning processes are identified. One water
-surface sits over a pebbled bed; the profile's `clarity` table gives its look at each
-stage, for the game to blend. Five faint luminous staff lines lie on the bed: hidden
-while the water is muddy, revealed as it clears, so a clear stream is staff music.
+The water is sheet music. A five-line staff of luminous lines floats on the surface
+and waves gently from bank to bank along the flow. Each clock tick at the source emits
+a note that rides the staff downstream at the water's speed, so the notes sit
+`flow_speed * 60 / BPM` metres apart: the music visibly moves, and faster water spreads
+it out. The water goes from muddy to clear as cleaning processes are identified; the
+profile's `clarity` table gives its look at each stage, and the staff glows brighter
+and crisper as the water clears.
 
+  Reeds_L, Reeds_R     the reeds outlining each bank: a segment is built from 6 reeds
+                       (add-reeds), and they line it. Dry while the water is muddy,
+                       green as it clears; pivots at the ground, for a gentle sway
   Port_in, Port_out    extras: stream = mud. +X along the flow
   Port_<end>_Halo      upright arch over each end: port highlighting while building
-  Pulse_0              extras: travel_axis, length_m. The game slides it downstream on
-                       each beat: a band of light across the surface while muddy
-                       (`Pulse_0_Band`), a note head on the staff when clear
-                       (`Pulse_0_Note`)
-  Staff                the five staff lines, faded in with clarity
+  Staff                extras: wave_amplitude_m, wavelength_m. Five wavy lines; their
+                       centre sits at y = A sin(2 pi x / wavelength)
+  Pulse_0              extras: travel_axis, length_m. The note template the game spawns
+                       per beat and slides downstream, setting its y to the staff's wave
+                       (plus `staff_step` half-spaces for pitch, 0 = middle line)
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_stream.py
 Writes assets/streams/stream_segment/ (profile and previews: muddy, silty, clear).
 """
 from pathlib import Path
 import math
+import random
 import shutil
 import subprocess
 import sys
@@ -39,21 +46,29 @@ from create_burbler import (  # noqa: E402
     BANK_HEIGHT, BANK_SKIRT, BANK_WIDTH, CHANNEL_HALF_WIDTH, STREAM_MUD_Z, Burbler, linear,
 )
 from module_kit import PROJECT  # noqa: E402
+from create_reeds import COLORS as REED_COLORS, ReedClump  # noqa: E402
 
 LENGTH = 4.0
+FLOW_SPEED = 1.5           # m/s until the fluid simulation supplies it
 WATER_Z = STREAM_MUD_Z
 BED_Z = 0.006
 STAFF_LINES = 5
-STAFF_SPACING = 0.15
+STAFF_SPACING = 0.12       # line to line; the staff spans 0.48 m of the 1 m channel
+STAFF_WAVE = 0.07          # the staff's sideways wave, amplitude in metres
+STAFF_WAVELENGTH = 2.0     # two waves per segment, so it tiles
+STAFF_Z = WATER_Z + 0.012  # floats just above the surface's ripple
+PREVIEW_BPM = 90
 # The water's look at each stage of clarity (sRGB, for the game to blend between).
 # Muddy is 0.98, not 1, so the material exports alpha-blended and can fade to clear.
+# `staff_strength` is the staff lines' emission; their halo shows from silty on.
 CLARITY = [
-    {"at": 0.0, "name": "muddy", "base_color": "#2a1d13", "roughness": 0.5, "alpha": 0.98},
-    {"at": 0.5, "name": "silty", "base_color": "#5a4630", "roughness": 0.22, "alpha": 0.72},
-    {"at": 1.0, "name": "clear", "base_color": "#6f8a88", "roughness": 0.04, "alpha": 0.22},
+    {"at": 0.0, "name": "muddy", "base_color": "#2a1d13", "roughness": 0.5, "alpha": 0.98,
+     "staff_strength": 2.5, "staff_halo": False, "reed_greenness": 0.0},
+    {"at": 0.5, "name": "silty", "base_color": "#5a4630", "roughness": 0.22, "alpha": 0.72,
+     "staff_strength": 5.0, "staff_halo": True, "reed_greenness": 0.5},
+    {"at": 1.0, "name": "clear", "base_color": "#6f8a88", "roughness": 0.04, "alpha": 0.22,
+     "staff_strength": 8.0, "staff_halo": True, "reed_greenness": 1.0},
 ]
-STAFF_VISIBLE_FROM = 0.6   # clarity at which the staff starts to show through
-NOTE_FROM = 0.5            # clarity at which the pulse turns from a band into a note
 
 
 class Stream(Burbler):
@@ -68,6 +83,17 @@ class Stream(Burbler):
         self.bed = self.material("Bed", linear("#6b5a44"), roughness=0.9)
         self.pebble = self.material("Pebble", linear("#7a6c5a"), roughness=0.7)
         self.port_halo = self.translucent("PortHalo", linear("#ffb350"), 1.6, 0.2)
+        amber = linear("#ffb350")
+        self.staff_line = self.material("Staff", amber, emission=amber, strength=CLARITY[0]["staff_strength"])
+        self.staff_halo = self.translucent("StaffHalo", amber, 0.9, 0.1)
+        self.reed_stalk = self.material("ReedStalk", linear(REED_COLORS["stalk_dry"]), roughness=0.8)
+        self.reed_blade = self.material("ReedBlade", linear(REED_COLORS["blade_dry"]), roughness=0.85)
+        self.reed_head = self.material("ReedHead", linear(REED_COLORS["head"]), roughness=0.95)
+
+    @staticmethod
+    def wave(x):
+        """The staff's centre line: tiles, since the segment holds whole wavelengths."""
+        return STAFF_WAVE * math.sin(2 * math.pi * x / STAFF_WAVELENGTH)
 
     @staticmethod
     def ends_fade(x):
@@ -113,29 +139,32 @@ class Stream(Burbler):
             stone.rotation_euler.z = self.rng.uniform(0, math.pi)
 
     def staff(self):
-        """Five lines on the bed, seen only through clear water: a clear stream is staff music."""
-        node = self.node("Staff", (0, 0, 0), visible_from_clarity=STAFF_VISIBLE_FROM)
+        """Five wavy lines floating on the water: the stream is sheet music."""
+        node = self.node("Staff", (0, 0, 0), wave_amplitude_m=STAFF_WAVE, wavelength_m=STAFF_WAVELENGTH,
+                         spacing_m=STAFF_SPACING)
+        n = 48
         for k in range(STAFF_LINES):
-            y = (k - (STAFF_LINES - 1) / 2) * STAFF_SPACING
-            pts = [(LENGTH * i / 24, y, BED_Z + 0.012) for i in range(25)]
-            self.ribbon(f"StaffLine{k}", pts, 0.008, self.glow, parent=node)
-            self.ribbon(f"StaffHalo{k}", [(x, yy, z + 0.002) for x, yy, z in pts], 0.04, self.halo, parent=node)
+            offset = (k - (STAFF_LINES - 1) / 2) * STAFF_SPACING
+            pts = [(LENGTH * i / n, self.wave(LENGTH * i / n) + offset, STAFF_Z) for i in range(n + 1)]
+            self.ribbon(f"StaffLine{k}", pts, 0.009, self.staff_line, parent=node)
+            self.ribbon(f"StaffHalo{k}", [(x, y, z + 0.002) for x, y, z in pts], 0.035, self.staff_halo,
+                        parent=node)
+        return node
+
+    def note(self, name, x, parent=None, step=0):
+        """A quarter note lying on the staff: head on a line, stem toward the +Y bank."""
+        y = self.wave(x) + step * STAFF_SPACING / 2
+        node = self.node(name, (x, y, STAFF_Z + 0.004), parent=parent)
+        head = self.sphere(f"{name}_Head", 0.062, self.wisp_core, (0, 0, 0), node, 14, 7)
+        head.scale = (1.35, 1.0, 0.45)
+        head.rotation_euler.z = 0.45
+        self.sphere(f"{name}_Halo", 0.1, self.halo, (0, 0, 0), node, 14, 7).scale = (1.3, 1.0, 0.5)
+        self.ribbon(f"{name}_Stem", [(0.072, 0.02, 0), (0.072, 3.0 * STAFF_SPACING, 0)], 0.014, self.wisp_core,
+                    parent=node)
+        return node
 
     def pulse(self):
-        node = self.node("Pulse_0", (LENGTH * 0.4, 0, 0), travel_axis="+X", length_m=LENGTH,
-                         note_from_clarity=NOTE_FROM)
-        # Muddy: a soft band of light across the surface.
-        band = self.node("Pulse_0_Band", (0, 0, WATER_Z + 0.006), parent=node)
-        for k, width in enumerate((0.06, 0.16, 0.3)):
-            self.ribbon(f"Pulse_0_Band{k}", [(0, -CHANNEL_HALF_WIDTH + 0.04, 0), (0, CHANNEL_HALF_WIDTH - 0.04, 0)],
-                        width, self.glow if k == 0 else self.halo, parent=band)
-        # Clear: a note head riding the middle staff line.
-        note = self.node("Pulse_0_Note", (0, 0, BED_Z + 0.03), parent=node)
-        head = self.sphere("Pulse_0_NoteHead", 0.045, self.wisp_core, (0, 0, 0), note, 14, 7)
-        head.scale = (1.4, 1.0, 0.7)
-        head.rotation_euler.y = -0.35
-        self.sphere("Pulse_0_NoteHalo", 0.09, self.halo, (0, 0, 0), note, 14, 7)
-        return band, note
+        return self.note("Pulse_0", LENGTH * 0.4, step=0)
 
     def ports(self):
         radius = CHANNEL_HALF_WIDTH + 0.12
@@ -146,17 +175,71 @@ class Stream(Burbler):
             for k, (tube, mat) in enumerate([(0.008, self.glow), (0.03, self.port_halo), (0.07, self.port_halo)]):
                 self.arch(f"Port_{end}_Arch{k}", radius, tube, mat, halo)
 
-    def set_clarity(self, stage, band, note):
+    def reeds(self):
+        """Reeds outline both banks, rising from the waterline up the inner slope. They
+        stay clear of the ends so chained segments do not double up at the joins."""
+        rng = random.Random(19)
+        for side, sign in (("L", 1), ("R", -1)):
+            node = self.node(f"Reeds_{side}", (0, 0, 0), role="outline", sway_max_deg=3.0)
+            stalks, blades, heads = bmesh.new(), bmesh.new(), bmesh.new()
+            x = rng.uniform(0.04, 0.12)
+            while x < LENGTH - 0.06:
+                for _ in range(rng.choice((1, 2, 2, 3))):   # little tufts, not a fence
+                    px = min(max(x + rng.uniform(-0.05, 0.05), 0.03), LENGTH - 0.03)
+                    py = sign * (CHANNEL_HALF_WIDTH + rng.uniform(0.02, 0.2))
+                    base = Vector((px, py, max(self.bank_height(px, py), WATER_Z) - 0.03))
+                    out = Vector((0, sign, 0))
+                    height = rng.uniform(0.45, 1.15)
+                    lean = out * rng.uniform(0.04, 0.2) + Vector((rng.uniform(-0.06, 0.06), 0, 0))
+                    pts = ReedClump.path(base, lean, height, out * rng.uniform(0, 0.08), n=4)
+                    r = rng.uniform(0.006, 0.01)
+                    ReedClump.tube_into(stalks, pts, r, r * 0.25)
+                    if rng.random() < 0.2:
+                        head = bmesh.ops.create_uvsphere(heads, u_segments=6, v_segments=4, radius=1.0)
+                        for v in head["verts"]:
+                            v.co = Vector((v.co.x * r * 2.2, v.co.y * r * 2.2, v.co.z * height * 0.07)) + pts[-2]
+                    if rng.random() < 0.35:
+                        bh = rng.uniform(0.3, 0.7)
+                        drift = Vector((rng.uniform(-0.25, 0.25), sign * rng.uniform(0.1, 0.3), 0))
+                        bpts = ReedClump.path(base, drift, bh, drift * bh * 0.5 - Vector((0, 0, bh * 0.2)), n=4)
+                        ReedClump.blade_into(blades, bpts, rng.uniform(0.02, 0.032))
+                x += rng.uniform(0.12, 0.24)
+            for name, bm, mat in (("Stalks", stalks, self.reed_stalk), ("Blades", blades, self.reed_blade),
+                                  ("Heads", heads, self.reed_head)):
+                mesh = bpy.data.meshes.new(f"Stream_Reed{name}_{side}")
+                bm.to_mesh(mesh)
+                bm.free()
+                obj = self.link(bpy.data.objects.new(f"Stream_Reed{name}_{side}", mesh), mat, node)
+                for face in obj.data.polygons:
+                    face.use_smooth = True
+
+    def set_clarity(self, stage):
         bsdf = self.water.node_tree.nodes["Principled BSDF"]
         bsdf.inputs["Base Color"].default_value = (*linear(stage["base_color"]), 1.0)
         bsdf.inputs["Roughness"].default_value = stage["roughness"]
         bsdf.inputs["Alpha"].default_value = stage["alpha"]
+        self.staff_line.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = \
+            stage["staff_strength"]
+        g = stage["reed_greenness"]
+        for mat, dry, green in ((self.reed_stalk, "stalk_dry", "stalk_green"),
+                                (self.reed_blade, "blade_dry", "blade_green")):
+            c = [a + (b - a) * g for a, b in zip(linear(REED_COLORS[dry]), linear(REED_COLORS[green]))]
+            mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*c, 1.0)
         for obj in bpy.data.objects["Staff"].children:
-            obj.hide_render = stage["at"] < STAFF_VISIBLE_FROM
-        for obj in band.children:
-            obj.hide_render = stage["at"] >= NOTE_FROM
-        for obj in note.children:
-            obj.hide_render = stage["at"] < NOTE_FROM
+            if "StaffHalo" in obj.name:
+                obj.hide_render = not stage["staff_halo"]
+
+    def preview_notes(self, pulse):
+        """Not exported: the notes one burbler at PREVIEW_BPM would have on this segment."""
+        spacing = FLOW_SPEED * 60 / PREVIEW_BPM
+        x, k = LENGTH * 0.4 - spacing, 1
+        while x > 0.15:
+            self.note(f"PreviewNote{k}", x, step=(k * 3) % 5 - 2)
+            x, k = x - spacing, k + 1
+        x = LENGTH * 0.4 + spacing
+        while x < LENGTH - 0.15:
+            self.note(f"PreviewNote{k}", x, step=(k * 3) % 5 - 2)
+            x, k = x + spacing, k + 1
 
     def profile(self):
         return {
@@ -172,32 +255,44 @@ class Stream(Burbler):
             "bendable": {"length_subdivisions": 24},
             "ports": [{"node": "Port_in", "direction": "in", "halo": "Port_in_Halo"},
                       {"node": "Port_out", "direction": "out", "halo": "Port_out_Halo"}],
-            "pulse": {"node": "Pulse_0", "travel_axis": "+X",
-                      "emit": "one per clock tick at the stream's source",
-                      "flow_speed_mps": 1.5, "band": "Pulse_0_Band", "note": "Pulse_0_Note",
-                      "note_from_clarity": NOTE_FROM},
-            "clarity": {"material": "Stream_Water", "stages": CLARITY,
-                        "staff": {"node": "Staff", "visible_from": STAFF_VISIBLE_FROM}},
+            "staff": {"node": "Staff", "lines": STAFF_LINES, "spacing_m": STAFF_SPACING, "height_m": STAFF_Z,
+                      "wave": {"amplitude_m": STAFF_WAVE, "wavelength_m": STAFF_WAVELENGTH,
+                               "y": "amplitude * sin(2 pi x / wavelength), x along the segment"},
+                      "material": "Stream_Staff", "halo_material": "Stream_StaffHalo"},
+            "notes": {"node": "Pulse_0", "travel_axis": "+X",
+                      "emit": "one note per clock tick at the stream's source, riding the staff downstream",
+                      "flow_speed_mps": FLOW_SPEED,
+                      "spacing": "flow_speed_mps * 60 / bpm metres between notes: velocity reads as spread",
+                      "y": "staff wave at the note's x, plus staff_step * spacing_m / 2 (0 = middle line)"},
+            "clarity": {"material": "Stream_Water", "stages": CLARITY},
+            "reeds": {"nodes": ["Reeds_L", "Reeds_R"], "built_from": {"item": "reed", "quantity": 6},
+                      "greenness": "each stage's reed_greenness: dry while muddy, green when clear",
+                      "colors": {k: REED_COLORS[k] for k in ("stalk_dry", "stalk_green", "blade_dry", "blade_green")},
+                      "materials": {"Stream_ReedStalk": ["stalk_dry", "stalk_green"],
+                                    "Stream_ReedBlade": ["blade_dry", "blade_green"]},
+                      "sway_max_deg": 3.0},
             "lights": {"Stream_PortHalo": {"rest": 0.0, "peak": 1.0, "connected": 0.4,
                                            "note": "port highlighting while a stream is extended"}},
         }
 
     def build(self):
         self.channel()
+        self.reeds()
         self.staff()
-        band, note = self.pulse()
+        pulse = self.pulse()
         self.ports()
-        self.set_clarity(CLARITY[0], band, note)  # ships muddy
+        self.set_clarity(CLARITY[0])  # ships muddy
 
         def stage_preview():
             self.stage_preview(resolution=(640, 860))
+            self.preview_notes(pulse)
         report = self.finish(self.profile(), aim=(LENGTH * 0.55, 0, 0.0), camera_location=(-2.9, -2.3, 3.0),
                              before_render=stage_preview, profile_dir="streams")
         if bpy.app.background:  # also render each clarity stage, then tile them
             out = PROJECT / "assets/streams/stream_segment"
             tiles = []
             for stage in CLARITY:
-                self.set_clarity(stage, band, note)
+                self.set_clarity(stage)
                 self.scene.render.filepath = str(out / f"preview_{stage['name']}.png")
                 bpy.ops.render.render(write_still=True, scene=self.scene.name)
                 tiles.append(out / f"preview_{stage['name']}.png")

@@ -24,8 +24,9 @@ They begin as **mud** flowing from a burbler (a gurgling hot-spring mud pot that
 bubbles at a BPM) and **pulse at that BPM**, so a stream is the played sequence laid
 out in space. Raw streams are **muddy on purpose**, like ore. As other processes are
 identified, constructors clean them, and the water goes **from muddy to clear** in
-stages; a clear stream can become brighter and more staff-like (five lines, notes
-carried downstream). Stream assets need a look for each stage. Reeds are their conveyor-belt segments. Ports light a soft
+stages. The water is always sheet music: a wavy five-line staff floats on it and
+each beat's note rides the staff downstream at the water's speed, so note spacing shows
+velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds build streams: 6 reeds make a segment, and reeds outline its banks, dry while muddy and green as it clears. They are as easy to gather as leaves in Satisfactory. Ports light a soft
 halo arch while a stream is being extended from them (Satisfactory's port
 highlighting), and the planned stream shows as a hologram before it is laid.
 
@@ -92,9 +93,14 @@ been made once (2026-10-31, `accents[0]`).
 | Signal (emissive) | Amber `#ffb350`, Clock flash `#ffce89`, Segment `#ff9945`, Bug `#ffffff` |
 | Crude | Sand `#8c7656`, Rust iron `#5e3a22`, Weathered wood `#5a4a3a` |
 | High-tech | Titanium `#b8bcc2`, Graphene `#1a1c1f` |
+| Scrub oak | Bark dormant `#625d57`, alive `#4b4037`, Leaf young `#7b8c3c`, mature `#36412a`, Dry leaf `#7a5a3a`, Bud `#9a6a48`, Catkin `#c8f060` |
+| Reeds | Stalk dry `#9a8460`, green `#5f6e34`, Blade dry `#8a7552`, green `#4f5e2c`, Cattail `#4a3222`, Cut `#c2ab7c` |
+| Desert props | Twig `#7d7468` → `#4f4234`, Stump `#8f897d` → `#4f4134`, Heartwood `#8a7a62`, Mud plate `#5a4433` → `#3e2f22`; bloomed Leaf `#4f6a2a`, Moss `#3f5a24`, Sprout `#6f9a34`, Mushroom stem `#d9d2c0`; luminous flowers Magenta, mushrooms Cyan |
+| Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
-the only signal colour.
+the only signal colour. Build holograms are pale amber, kin to the port arches they snap
+to, and turn red where a plan cannot be laid.
 
 ## Scale
 
@@ -200,7 +206,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
 364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
-9.9k, the volume module 5.1k, the stream segment 7.6k. Nested halo shells are the
+9.9k, the volume module 5.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, desert props 0.2k–4.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -223,6 +229,28 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Desert props for the opening, each blooming on light quality: dead
+  brush (leafs out, magenta flowers), bleached stumps (damp wood, moss, cyan mushrooms)
+  and curled mud-plate debris (sprouts). Three seeded variants each; blooms open
+  gradually, node by node.
+- **2026-10-31** — Reeds outline the stream segment's banks (6 reeds build a segment):
+  dry while the water is muddy, green as it clears.
+- **2026-10-31** — Reeds: a frequent renewable. Clumps of tall reeds with cattail heads,
+  four seeded variants plus per-instance variation; harvested they show cut stubble with
+  pale cut faces, and they grow back. Dry to green on one value. Reed colours added.
+- **2026-10-31** — Scrub oak: six seeded variants of a many-stemmed desert oak, varied
+  again per instance in the game. It starts dormant in winter (grey wood, buds, dry
+  leaves holding on) and one growth value, raised by clean water, takes it through
+  budding and leaf-out to full bloom with hanging luminous catkins, where its bugs
+  come from. Flora colours added to the palette.
+- **2026-10-31** — Streams are sheet music at every stage: the staff floats on the
+  surface and waves from bank to bank (two waves per 4 m segment, so it tiles), and
+  each beat's note rides it downstream at the flow speed. Replaces the staff hidden
+  under muddy water and the band-of-light pulse.
+- **2026-10-31** — Stream hologram: the planned-stream preview, a luminous ghost of
+  the stream segment on the same 24 subdivisions so it bends and chains like the stream
+  it plans. Faint shells, crest and edge lines, half-metre ribs and downstream chevrons;
+  pale amber when valid, red when not. Build colours added to the palette.
 - **2026-10-31** — Stream segment: the burbler's 1 m banked channel as a tileable
   4 m piece. Muddy water hides five luminous staff lines on its bed; as it clears they
   show through and the beat's pulse turns from a band of light into a note on the staff.

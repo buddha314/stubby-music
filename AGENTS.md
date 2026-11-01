@@ -292,10 +292,13 @@ also support timed returns and no replenishment. The shared calendar uses 45-min
 days and 15-minute nights at 1×; bracket keys change simulation speed and backslash
 resets it. Audio pitch and musical clocks remain sample timed. Scrub-oak trees are
 **infinite mines** that will produce fresh finite lightning bugs. A tree's bug
-production increases as water quality and light quality improve. Infinite means
-no finite reserve, not infinite instantaneous output. The source types, catalog
+production increases as water quality and light quality improve. A tree **starts
+dormant** (winter) and escalates to **full bloom as clean water is applied**; bugs
+emerge from its open blooms, so a dormant tree makes none. Trees vary procedurally:
+seeded variants plus per-instance variation from the world seed (`assets/flora/`).
+Infinite means no finite reserve, not infinite instantaneous output. The source types, catalog
 mine definition and editor `MineNode` exist; production rates, quality simulation,
-spawn loops and tree visuals remain deferred in
+spawn loops and placement remain deferred (the tree asset exists) in
 `openspec/changes/add-scrub-oak-production/`. Keep mines separate from E pickup
 queries. The domain chain is scrub oak mine → finite bug → square-wave items.
 
@@ -314,9 +317,14 @@ equivalent of an iron ore node, so the player does not pick it up.
   minimal patch: the burbler's clock triggers the VCO and the volume knob sets its level.
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
+  water is **sheet music**: a wavy staff runs along it and each beat's note rides it
+  downstream at the water's speed, so note spacing shows velocity. The
   mud is **raw**: muddy on purpose, like ore. As other processes are identified,
   constructors clean it, and the stream's water goes **from muddy to clear**.
-- **Reeds are the conveyor belt segments** that streams run along (not yet designed).
+- **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds
+  outline every laid segment's banks. They are a frequent renewable, as easy to get as
+  leaves in Satisfactory: abundant on wet ground, harvested with E (hold E for nearby
+  clumps), cut to stubble, and back after a short interval (`openspec/changes/add-reeds/`).
 - **Port highlighting.** The burbler's mouth carries an upright halo arch, its stream
   port. When the player extends a stream from it, the arch lights to show the
   connection point, as a generator's port does when you drag a conveyor from it in

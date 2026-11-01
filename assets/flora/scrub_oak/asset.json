@@ -1,0 +1,152 @@
+{
+  "id": "scrub_oak",
+  "kind": "mine",
+  "mine": "scrub_oak",
+  "produces": "lightning_bug",
+  "variants": [
+    "models/scrub_oak_0.glb#Scene0",
+    "models/scrub_oak_1.glb#Scene0",
+    "models/scrub_oak_2.glb#Scene0",
+    "models/scrub_oak_3.glb#Scene0",
+    "models/scrub_oak_4.glb#Scene0",
+    "models/scrub_oak_5.glb#Scene0"
+  ],
+  "per_instance": {
+    "variant": "hash(world_seed, instance_id) % variant count",
+    "yaw_deg": [
+      0,
+      360
+    ],
+    "scale": [
+      0.8,
+      1.2
+    ],
+    "height_stretch": [
+      0.9,
+      1.15
+    ],
+    "lean_deg": [
+      0,
+      6
+    ],
+    "sway_phase": [
+      0,
+      1
+    ],
+    "foliage_value_jitter": 0.08,
+    "bloom_tint": [
+      "#c8f060",
+      "#8cd933",
+      "#33ffd9"
+    ]
+  },
+  "growth": {
+    "value": "0 dormant (winter) .. 1 full bloom",
+    "driver": "clean water delivered to the tree: it rises while clean water arrives and eases back without it; muddy water does not wake it",
+    "starts": 0.0,
+    "ramps": {
+      "bark_wakes": [
+        0.0,
+        0.4
+      ],
+      "dead_leaves_fall": [
+        0.08,
+        0.25
+      ],
+      "buds_swell": [
+        0.1,
+        0.3
+      ],
+      "buds_open": [
+        0.42,
+        0.55
+      ],
+      "leaf_out": [
+        0.35,
+        0.65
+      ],
+      "leaf_matures": [
+        0.45,
+        0.8
+      ],
+      "bloom": [
+        0.72,
+        0.97
+      ],
+      "bloom_open_span": 0.03
+    },
+    "ramp": "smoothstep over [from, to] of growth",
+    "nodes": {
+      "Dead_<n>": "scale 1 - ramp(dead_leaves_fall)",
+      "Bud_<n>": "scale (0.4 + 0.6 ramp(buds_swell)) * (1 - ramp(buds_open)); ScrubOak_Bud emission 1.5 * ramp(buds_swell)",
+      "Foliage_<n>": "scale ramp(leaf_out)",
+      "Bloom_<k>": "opens over bloom_open_span starting at bloom.from + (bloom.to - bloom.from) * k / count"
+    },
+    "colors": {
+      "bark_dormant": "#625d57",
+      "bark_alive": "#4b4037",
+      "leaf_young": "#7b8c3c",
+      "leaf_mature": "#36412a",
+      "dead_leaf": "#7a5a3a",
+      "bud": "#9a6a48",
+      "catkin": "#c8f060"
+    },
+    "materials": {
+      "ScrubOak_Bark": "bark_dormant -> bark_alive by ramp(bark_wakes)",
+      "ScrubOak_Leaf": "leaf_young -> leaf_mature by ramp(leaf_matures)"
+    },
+    "preview_stages": {
+      "dormant": 0.0,
+      "budding": 0.3,
+      "leafing": 0.5,
+      "leafed": 0.7,
+      "full_bloom": 1.0
+    }
+  },
+  "sway": {
+    "nodes": "Limb_<n>",
+    "pivot": "node origin (stem base)",
+    "max_deg": 2.5,
+    "phase": "per_instance.sway_phase, plus the limb index"
+  },
+  "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
+  "far_lod": {
+    "distance_m": 45.0,
+    "nodes": [
+      "LOD_Far_Bark",
+      "LOD_Far_Foliage"
+    ],
+    "note": "LOD_Far_Foliage scales with leaf_out; buds, dead leaves and blooms are not drawn far"
+  },
+  "materials": {
+    "ScrubOak_Leaf": "also jittered by per_instance.foliage_value_jitter",
+    "ScrubOak_Catkin": "tinted by per_instance.bloom_tint",
+    "ScrubOak_CatkinHalo": "tinted by per_instance.bloom_tint"
+  },
+  "triangles": {
+    "scrub_oak_0": {
+      "near": 11152,
+      "far": 791
+    },
+    "scrub_oak_1": {
+      "near": 12064,
+      "far": 883
+    },
+    "scrub_oak_2": {
+      "near": 14688,
+      "far": 1130
+    },
+    "scrub_oak_3": {
+      "near": 14116,
+      "far": 1091
+    },
+    "scrub_oak_4": {
+      "near": 14312,
+      "far": 1078
+    },
+    "scrub_oak_5": {
+      "near": 11012,
+      "far": 767
+    }
+  }
+}

@@ -10,13 +10,13 @@ tracked in the owning change.
 
 ## 2. Asset backlog
 
-- [ ] 2.1 Scrub-oak tree for `add-scrub-oak-production`: growth stages bare → bloomed, nodes for bug emission points, parts the game can sway or pulse to music, far LOD
+- [x] 2.1 Scrub-oak tree for `add-scrub-oak-production` (`tools/blender/create_scrub_oak.py`, `assets/flora/`; claimed: claude): dormant (winter) → full bloom on one growth value driven by clean water; six seeded variants plus per-instance variation; nodes for bug emission points, parts the game can sway or pulse to music, far LOD
 - [ ] 2.2 Bloom flora set (replaces the style sheet's stand-in stalks): small plants in the accent palette, music-reactive, lunarpunk-luminous at night
 - [x] 2.2a Stream as staff music: a five-line staff along the water carrying notes downstream as musical nutrients; dry and broken when bleak, flowing and luminous when bloomed; game-drivable note flow (speed, colour, density) so the game can match the music carried — done as the stream segment: staff lines on the bed, revealed as the water clears (`add-mudpit-burbler` 1.7) (claimed: claude)
 - [ ] 2.3 First animal concept: a creature that grows from music, reads as bleak then bloomed
 - [ ] 2.4 Patch cable and jack plug: cable as a spline-friendly segment, plug matching the module jacks
 - [ ] 2.5 Envelope, VCA and Constant module assets on `module_kit`
-- [ ] 2.6 Desert props for the bleak opening: dead brush, bone-dry stumps, cracked-mud debris; each with a bloomed counterpart
+- [x] 2.6 Desert props for the bleak opening: dead brush, bone-dry stumps, cracked-mud debris; each with a bloomed counterpart (`tools/blender/create_desert_props.py`, `assets/props/`) (claimed: claude)
 - [ ] 2.7 Add new flora and props to the style sheet as they land
 - [ ] 2.8 Migrate module lights (VCO LEDs, glyphs, clock lamp) from LED-like to jellyfish/fairy luminescence per the style guide
 - [ ] 2.9 Mudpit burbler and its rack parts: tracked in `add-mudpit-burbler`

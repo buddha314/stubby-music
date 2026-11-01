@@ -46,9 +46,22 @@ sequence along its length in space. Raw mud streams SHALL look muddy; cleaning t
 the job of other constructors, not the burbler. As cleaning processes are added, a
 stream's water SHALL go from muddy to clear in stages.
 
+The water SHALL resemble sheet music: a five-line staff SHALL run along the stream,
+waving gently from bank to bank, at every stage of clarity. Each clock tick SHALL emit
+a note at the stream's source that rides the staff downstream at the stream's flow
+speed, so the spacing between notes shows how fast the water moves.
+
 #### Scenario: Stream pulses at the burbler's tempo
 - **WHEN** a stream is connected to a 90 BPM burbler's outlet
-- **THEN** pulses travel along the stream 1.5 times a second, in time with the clock ticks
+- **THEN** notes enter the stream 1.5 times a second, in time with the clock ticks
+
+#### Scenario: Velocity reads as spacing
+- **WHEN** a 90 BPM stream flows at 1.5 m/s
+- **THEN** its notes ride the staff 1 m apart, and faster water spreads them further
+
+#### Scenario: Muddy water is still sheet music
+- **WHEN** a stream is raw mud
+- **THEN** its staff and notes still show on the surface, dimmer than on clear water
 
 ### Requirement: Port highlighting
 A burbler's stream port SHALL be marked by a soft, upright halo arch over its mouth.

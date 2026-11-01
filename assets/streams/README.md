@@ -1,9 +1,10 @@
 # Streams
 
 Streams carry the music: mud flows from a burbler's mouth and pulses at its BPM, so a
-stream is the played sequence laid out in space. As cleaning processes are identified
-the water goes from muddy to clear, and a clear stream shows the staff lines on its
-bed: a clear stream is staff music. Requirements: `openspec/changes/add-mudpit-burbler/`.
+stream is the played sequence laid out in space. The water is sheet music: a wavy
+staff floats on it, and each beat's note rides the staff downstream at the water's
+speed. As cleaning processes are identified the water goes from muddy to clear and
+the staff glows brighter. Requirements: `openspec/changes/add-mudpit-burbler/`.
 
 ## Stream segment (`tools/blender/create_stream.py`)
 
@@ -21,15 +22,35 @@ sides, built up from the ground. Its bank profile and water height are imported 
 - **Clarity:** one water material, `Stream_Water`, over a pebbled bed. `asset.json`
   lists its look at each stage (`muddy` 0, `silty` 0.5, `clear` 1: sRGB colour,
   roughness, alpha) for the game to blend. It ships muddy (alpha 0.98, so it exports
-  alpha-blended). The `Staff` node's five luminous lines lie on the bed and show from
-  clarity 0.6.
-- **Pulse:** `Pulse_0` slides downstream (+X) on each beat. It shows a band of light
-  across the surface while muddy (`Pulse_0_Band`) and a note head riding the staff once
-  clear (`Pulse_0_Note`, from clarity 0.5).
+  alpha-blended). Each stage also sets the staff's glow (`staff_strength`, halo from silty).
+- **Staff:** five luminous lines (`Staff`, material `Stream_Staff`) float just above
+  the water at every clarity. Their centre waves sideways, y = 0.07 sin(2πx / 2 m), so
+  a segment holds two whole waves and tiles.
+- **Reeds:** a segment costs 6 reeds, and reeds outline both banks (`Reeds_L`,
+  `Reeds_R`, pivots at the ground for a gentle sway), clear of the ends so joins do not
+  double up. They go from dry to green with clarity (`reed_greenness` per stage).
+- **Notes:** `Pulse_0` is a quarter note lying on the staff. The game spawns one per
+  clock tick at the source and slides it downstream (+X) at `flow_speed_mps`, setting
+  its y to the staff wave plus `staff_step` half-spaces for pitch. Notes sit
+  `flow_speed_mps × 60 / BPM` apart, so velocity reads as spread (1 m at 90 BPM and
+  1.5 m/s, as in the previews).
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream.py
 ```
 
-Still to come: the stream hologram (the planned stream, shown while extending) and
-reeds, the conveyor-belt segments streams run along.
+## Stream hologram (`tools/blender/create_stream_hologram.py`)
+
+![valid, invalid](stream_hologram/preview_states.png)
+
+The planned stream, shown while the player extends one: a luminous ghost of the
+segment on the same 24 subdivisions, so the game bends and chains it the same way.
+`Flow` chevrons scroll downstream (+X, wrapping every `spacing_m`); the game tints every
+`StreamHologram_*` material by the profile's `states` (valid `#ffd39a`, invalid
+`#ff5a46`). `preview_extending.png` shows it running on from a laid stream.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream_hologram.py
+```
+
+Still to come: reeds, the conveyor-belt segments streams run along.
