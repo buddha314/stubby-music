@@ -30,9 +30,9 @@
     "greenness_jitter": 0.1
   },
   "states": {
-    "standing": "Standing shown, Stubble hidden",
-    "harvested": "Standing hidden, Stubble shown",
-    "regrowing": "both shown; Standing scale.z from regrow.from_scale to 1 over the interval (optional)"
+    "standing": "Standing scale 1, Stubble scale 0 (as shipped)",
+    "harvested": "Standing scale 0, Stubble scale 1",
+    "regrowing": "Stubble scale 1; Standing scale (1, 1, z), z from regrow.from_scale to 1 over the interval"
   },
   "regrow": {
     "from_scale": 0.08571428571428572,
@@ -69,7 +69,8 @@
   "interact": "Interact",
   "far_lod": {
     "distance_m": 30.0,
-    "node": "LOD_Far"
+    "file": "models/reed_clump_<k>_LOD1.glb",
+    "note": "Jackdaw LodGroup level 1"
   },
   "triangles": {
     "reed_clump_0": {

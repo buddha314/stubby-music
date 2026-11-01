@@ -34,3 +34,6 @@ opt-level = 3
 [dev-dependencies]
 gltf = "~1.4"
 tempfile = "~3.27"
+jackdaw_bsn = { path = "/home/buddha/src/jackdaw/crates/jackdaw_bsn" }
+jackdaw_prefab = { path = "/home/buddha/src/jackdaw/crates/jackdaw_prefab" }
+jackdaw_scene_types = { path = "/home/buddha/src/jackdaw/crates/jackdaw_scene_types" }

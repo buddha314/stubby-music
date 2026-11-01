@@ -54,6 +54,28 @@ Audio: Play runs the game's audio engine too. The run configuration
 audible clock); in either configuration F8 toggles it. Click into the Play panel
 first, so keys reach the game rather than the editor.
 
+## Placing world assets
+
+Every world asset has a prefab under `assets/prefabs/`: `flora/` (scrub oaks, reed
+clumps), `props/` (desert brush, stumps, mud debris), `machines/` (the mudpit
+burbler) and `streams/` (a stream segment). Drag one from the Project window into
+the viewport to place an instance; move, rotate and scale it like any entity.
+
+- Each prefab names its model with a `GltfSource` (under `models/`, the shared
+  runtime models). Oaks and reed clumps also carry a `LodGroup`: the model up close,
+  the `<name>_LOD1.glb` beside it far off.
+- Models ship in their starting pose, set by node scale so they look right before any
+  game code runs: oaks dormant, reed clumps standing, props bleak, streams muddy.
+- Scrub oaks carry `MineNode`. Give every placed oak its own `instance` (the prefab's
+  `scrub_oak-<k>` is only a default), since the harvest ledger keys on it.
+- Reed clumps and the burbler place as models for now; their game components arrive
+  with the catalog work in `add-reeds` and `add-mudpit-burbler`.
+
+The prefabs are generated from the asset profiles; after adding or changing an asset,
+run `python3 tools/jackdaw_prefabs.py`. `cargo test --test prefabs` (from this folder)
+loads every prefab the way the editor does and fails on an unknown type, a missing
+model or a missing LOD level.
+
 ## Live listen
 
 Choose **Live listen: clock + square** in the editor's run configurations, then
