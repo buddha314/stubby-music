@@ -96,6 +96,7 @@ been made once (2026-10-31, `accents[0]`).
 | Scrub oak | Bark dormant `#625d57`, alive `#4b4037`, Leaf young `#7b8c3c`, mature `#36412a`, Dry leaf `#7a5a3a`, Bud `#9a6a48`, Catkin `#c8f060` |
 | Reeds | Stalk dry `#9a8460`, green `#5f6e34`, Blade dry `#8a7552`, green `#4f5e2c`, Cattail `#4a3222`, Cut `#c2ab7c` |
 | Desert props | Twig `#7d7468` → `#4f4234`, Stump `#8f897d` → `#4f4134`, Heartwood `#8a7a62`, Mud plate `#5a4433` → `#3e2f22`; bloomed Leaf `#4f6a2a`, Moss `#3f5a24`, Sprout `#6f9a34`, Mushroom stem `#d9d2c0`; luminous flowers Magenta, mushrooms Cyan |
+| Patch cables | Rust `#9c3b2a`, Ochre `#b8892f`, Verdigris `#3f7a6e`, Slate `#4b5a78`, Bone `#cfc6b2` (not emissive) |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
@@ -209,7 +210,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
 364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
-9.9k, the volume module 5.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, desert props 0.2k–4.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
+9.9k, the volume module 6.1k, the patch plug 1.1k, the stream segment 12.0k with its reed outline, the stream hologram 5.4k, the reed clump 1.4k–1.7k, desert props 0.2k–4.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -232,6 +233,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Patch cable: a general plug (titanium sleeve, knurled graphene grip,
+  coloured collar) and a fully elastic VCV Rack-style cable the game draws. The burbler
+  clock gains a BPM knob and the volume module a TRIG jack; the HUD mock shows the
+  voice patched with two cables. Cable colours added to the palette.
 - **2026-10-31** — Desert props for the opening, each blooming on light quality: dead
   brush (leafs out, magenta flowers), bleached stumps (damp wood, moss, cyan mushrooms)
   and curled mud-plate debris (sprouts). Three seeded variants each; blooms open

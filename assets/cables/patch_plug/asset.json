@@ -1,0 +1,41 @@
+{
+  "id": "patch_plug",
+  "model": "models/cables/patch_plug.glb#Scene0",
+  "kind": "patch_plug",
+  "fits": {
+    "port_node": "Port_<port>",
+    "hole_radius_m": 0.0175,
+    "seat": "give the plug root the port's transform"
+  },
+  "attach_node": "Cable_attach",
+  "cable": {
+    "radius_m": 0.016,
+    "sides": 10,
+    "material": "PatchCable_Cable",
+    "elastic": true,
+    "curve": "VCV Rack's: quadratic Bezier between the two Cable_attach points, control point = midpoint + down * (1 - tension) * (slump_base_m + span). No fixed length. Reference: cable_curve() in tools/blender/create_patch_cable.py",
+    "tension": 0.5,
+    "tension_range": [
+      0.0,
+      1.0
+    ],
+    "slump_base_m": 0.508,
+    "down": "world down (-Y in Bevy); on a HUD rack, the screen's down"
+  },
+  "colors": {
+    "rust": "#9c3b2a",
+    "ochre": "#b8892f",
+    "verdigris": "#3f7a6e",
+    "slate": "#4b5a78",
+    "bone": "#cfc6b2"
+  },
+  "tint": [
+    "PatchCable_Cable",
+    "PatchCable_Collar"
+  ],
+  "default_colors": {
+    "gate": "verdigris",
+    "audio": "rust",
+    "cv": "ochre"
+  }
+}

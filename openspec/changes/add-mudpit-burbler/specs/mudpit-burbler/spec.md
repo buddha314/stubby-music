@@ -26,18 +26,44 @@ cursor SHALL be free and player movement SHALL stop.
 
 ### Requirement: Three-place rack
 The configuration screen SHALL be a HUD over the game view, like a Satisfactory machine
-screen, showing a basic Eurorack with three places: the burbler's clock,
-built in and not removable; one VCO slot; and a volume knob standing in for a full
-VCA. The clock, a VCO placed in the slot and the volume knob SHALL form one voice: the
-clock triggers the VCO through a fixed envelope and the volume knob sets its level.
+screen, showing a basic Eurorack with three places: the burbler's clock, built in and
+not removable; one VCO slot; and a volume module (a VCA with a built-in envelope). The
+VCO slot SHALL accept a VCO made from a square wave, the lightning bug's yield.
 
-#### Scenario: First voice
-- **WHEN** the player places a Square VCO in the slot and raises the volume
-- **THEN** the VCO sounds on every burbler beat at that level
+#### Scenario: Square VCO from a bug
+- **WHEN** the player holds square-wave items and drags one into the VCO slot
+- **THEN** a Square VCO occupies the slot and one square wave leaves the inventory
 
 #### Scenario: Empty slot
 - **WHEN** no VCO is placed
 - **THEN** the burbler still keeps time visibly and makes no tone
+
+### Requirement: Settable tempo
+The clock SHALL have a BPM knob setting the burbler's BPM, starting at the burbler's
+own seeded tempo, and its display SHALL show the BPM the knob sets. The burbler's
+bubbles, its stream's notes and the clock's lamp SHALL all follow that BPM.
+
+#### Scenario: Changing tempo
+- **WHEN** the player turns the BPM knob from 90 to 120 BPM
+- **THEN** the display reads 120, and the bubbles, lamp and stream notes follow 120 BPM
+
+### Requirement: Patched with cables
+The voice SHALL be patched by the player with patch cables, dragged from jack to jack:
+the clock's GATE to the volume's TRIG, and the VCO's OUT to the volume's IN. The
+volume's OUT SHALL be normalled to the burbler's outlet. Cables SHALL be fully elastic,
+as in VCV Rack: no fixed length, drooping by one tension setting.
+
+#### Scenario: First voice
+- **WHEN** a Square VCO is in the slot, GATE is patched to TRIG and OUT to IN
+- **THEN** the VCO sounds on every beat at the volume's level, out of the burbler
+
+#### Scenario: Unpatched
+- **WHEN** the VCO is in the slot but no cable reaches the volume's IN
+- **THEN** the burbler keeps time and makes no tone
+
+#### Scenario: Stretching a cable
+- **WHEN** the player drags a cable end anywhere on the screen
+- **THEN** the cable stretches to follow it with no length limit
 
 ### Requirement: Mud stream outlet
 A burbler SHALL have an outlet from which a stream of raw mud can be connected. A

@@ -3,12 +3,17 @@
 Configuring a mudpit burbler opens a basic three-place Eurorack: the burbler's own
 clock, a VCO slot and a volume module. The VCOs already exist; these are the other two.
 
-- `burbler_clock` (8HP, engine `Clock`): the burbler's beat. Its tempo belongs to the
-  burbler, so there is no tempo knob: a read-only BPM display, a jellyfish-bell lamp
-  that flashes on the beat, and GATE and PHASE outputs. Its crown is a row of bubbles.
-- `volume` (4HP, engine `Vca`): one large knob setting `gain`, IN and OUT jacks, and a
-  soft ring of light around the knob. Its CV input is driven inside the HUD voice by a
-  hidden envelope, so it has no jack. Its crown is a rising wedge.
+- `burbler_clock` (8HP, engine `Clock`): the burbler's beat. A BPM knob sets `bpm`
+  (it starts at the burbler's own seeded tempo), a BPM display reads it, a
+  jellyfish-bell lamp flashes on the beat, and GATE and PHASE are its outputs. Its
+  crown is a row of bubbles.
+- `volume` (4HP, engine `Vca` with a built-in envelope): one large knob setting `gain`,
+  TRIG, IN and OUT jacks, and a soft ring of light around the knob. A trigger at TRIG
+  fires the envelope that opens it; the player patches the clock's GATE there. Its
+  crown is a rising wedge.
+
+The player patches the voice with cables (`create_patch_cable.py`): clock GATE to
+volume TRIG, VCO OUT to volume IN. Volume OUT is normalled to the burbler's outlet.
 
 Both are drawn in the style guide's newer language: crude meets high-tech (a weathered
 wood case and rusted iron hardware behind a titanium faceplate, outputs on graphene),
@@ -156,7 +161,7 @@ def build_burbler_clock():
     kit.side_glyphs(bubble_glyph(0.0, 1.0, 0.11), lamp_mat)
     kit.title("BURBLER")
 
-    # Read-only tempo: the burbler sets it, so there is no knob.
+    # Tempo: the display reads the BPM knob below it.
     display_z, digit_w, digit_h, stroke, gap = 1.09, 0.08, 0.13, 0.014, 0.025
     kit.box("DisplayWindow", (0.33, 0.004, 0.19), (0, PANEL_FRONT - 0.002, display_z), window_mat)
     display = bpy.data.objects.new("Display", None)
@@ -174,10 +179,12 @@ def build_burbler_clock():
             obj.parent = display
             obj.location = (x, PANEL_FRONT - 0.0055, z)
             lit[(digit, seg)] = obj
-    kit.label("BpmLabel", "BPM", (0.12, PANEL_FRONT - 0.0005, display_z - 0.125), size=0.03)
+
+    kit.knob("bpm", 0.84, "BPM", param_min=30.0, param_max=240.0, taper="linear", rotation_degrees=300.0,
+             default="burbler")
 
     # The beat lamp: a jellyfish bell on the faceplate, its tendrils trailing below.
-    lamp_z = 0.82
+    lamp_z = 0.58
     lamp = bpy.data.objects.new("Lamp", None)
     lamp.empty_display_type = "CIRCLE"
     lamp.empty_display_size = 0.07
@@ -197,12 +204,12 @@ def build_burbler_clock():
                 v.co.x *= 1 + 0.1 * math.sin(8 * angle)
                 v.co.y *= 1 + 0.1 * math.sin(8 * angle)
             v.co.z *= 0.6
-    kit.sphere("LampBell", 0.08, lamp_mat, lamp, shape=bell, segments=24, rings=10)
-    kit.sphere("LampCore", 0.026, lamp_mat, lamp, location=(0, 0, 0.02))
+    kit.sphere("LampBell", 0.07, lamp_mat, lamp, shape=bell, segments=24, rings=10)
+    kit.sphere("LampCore", 0.023, lamp_mat, lamp, location=(0, 0, 0.018))
     # No outer halo shell here: on the flat faceplate it reads as a disc and hides the
     # bell's scalloped rim. The game's bloom gives the lamp its halo.
     for k, x in enumerate((-0.045, -0.015, 0.015, 0.045)):
-        pts = [(x + 0.012 * math.sin(j * 1.1 + k), lamp_z - 0.07 - j * 0.017) for j in range(9)]
+        pts = [(x * 0.85 + 0.01 * math.sin(j * 1.1 + k), lamp_z - 0.06 - j * 0.016) for j in range(5)]
         kit.trace(f"LampTendril{k}", pts, "xz", PANEL_FRONT - 0.0025, 0.006, lamp_mat)
 
     kit.output_patch(0.27, 0.30)
@@ -223,9 +230,10 @@ def build_burbler_clock():
         "silhouette": "bubble_crown",
         "ports": [{"node": "Port_gate", "port": "gate", "direction": "out"},
                   {"node": "Port_phase", "port": "phase", "direction": "out"}],
-        "params": [],
-        "tempo": {"param": "bpm", "source": "burbler", "editable": False,
-                  "note": "the burbler instance sets bpm; there is no knob"},
+        "params": [{"node": "Knob_bpm", "param": "bpm", "min": 30.0, "max": 240.0, "taper": "linear",
+                    "rotation_degrees": 300.0, "default": "the burbler's seeded tempo"}],
+        "tempo": {"param": "bpm", "source": "Knob_bpm", "editable": True,
+                  "note": "starts at the burbler instance's seeded tempo; the display shows the knob's value"},
         "lights": [{"node": "Light_gate", "light": "gate", "rest_strength": 0.0, "peak_strength": 8.0},
                    {"node": "Light_phase", "light": "phase", "rest_strength": 0.0, "peak_strength": 8.0}],
         "display": {"node": "Display", "shows": "bpm", "digits": 3, "segments": SEGMENTS,
@@ -261,15 +269,19 @@ def build_volume():
     kit.ring("LevelRingHalo", 0.093, 0.012, kit.glow_halo, ring)
     kit.ring("LevelRingHaloOuter", 0.093, 0.017, kit.glow_halo, ring)
 
-    kit.jack("in", "in", 0.47, "IN")
+    kit.jack("trig", "in", 0.5, "TRIG")
+    kit.jack("in", "in", 0.36, "IN")
     kit.output_patch(0.2, 0.2)
     kit.jack("out", "out", 0.2, "OUT", on_patch=True)
 
     profile = kit.profile({
         "silhouette": "rising_wedge",
-        "ports": [{"node": "Port_in", "port": "in", "direction": "in"},
-                  {"node": "Port_out", "port": "out", "direction": "out"}],
-        "internal_ports": [{"port": "cv", "note": "driven by the HUD voice's hidden envelope; no jack"}],
+        "ports": [{"node": "Port_trig", "port": "trig", "direction": "in",
+                   "note": "fires the built-in envelope that opens the VCA"},
+                  {"node": "Port_in", "port": "in", "direction": "in"},
+                  {"node": "Port_out", "port": "out", "direction": "out",
+                   "normalled_to": "the burbler's outlet when nothing is patched"}],
+        "envelope": {"built_in": True, "trigger": "trig", "note": "fixed shape; engine Envelope -> Vca cv"},
         "params": [{"node": "Knob_gain", "param": "gain", "min": 0.0, "max": 1.0, "taper": "linear",
                     "rotation_degrees": 300.0}],
         "lights": [{"node": "Light_level", "light": "level", "rest_strength": 0.0, "peak_strength": 6.0}],
