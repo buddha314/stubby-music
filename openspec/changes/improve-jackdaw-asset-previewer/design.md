@@ -52,9 +52,10 @@ Let long names wrap and row height grow so the name is never replaced by ellipsi
 keep the date column readable. Reuse theme spacing and selection/hover treatments.
 Directories retain their existing folder icons and navigation behavior.
 
-Use an existing Jackdaw date/time formatter where one exists; otherwise use a
-consistent local-time display such as YYYY-MM-DD HH:mm and make its timezone
-clear through the column's standard tooltip. Do not add relative-age timers.
+No existing asset date formatter was found. Use the already-resolved chrono crate
+for YYYY-MM-DD HH:mm UTC, explicitly labelling every timestamp. This keeps dates
+unambiguous without new timezone discovery dependencies or custom calendar code.
+Do not add relative-age timers.
 Read modified time with the existing directory scan/refresh path and cache it in
 entry metadata. Do not stat every row every frame. If metadata is unavailable or
 a file disappears during refresh, show an em dash and retain existing fail-soft
@@ -74,3 +75,13 @@ watchdog on an unused port and verifies project/executable identity before comma
 No blanket workspace tests or new test infrastructure. Implement in a Jackdaw
 worktree and publish only to buddha314. Promote shared binaries and update the
 game's compatibility pin only after the editor is idle and validation passes.
+
+
+## Implementation workstream
+
+Codex implementation branch: buddha314/jackdaw feat/asset-browser-views, based on
+dev/0.20 including the verified thumbnail-layer fix. Existing segmented controls,
+list-row/ListBox widgets, ThumbnailSlot/cache, tooltip renderer and file actions
+are reused. One focused regression covers view/state retention, missing timestamps,
+full hover data, and Unicode filenames. Shared source/binary promotion remains a
+separate idle-editor step after the bounded UI review.
