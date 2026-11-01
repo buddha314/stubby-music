@@ -20,6 +20,18 @@
     "x": "+-(rack width / 2 + post_inset_m)",
     "post_inset_m": 0.1
   },
+  "cable_comb": {
+    "node": "CableComb",
+    "on": "PostR",
+    "slots": 4,
+    "slot_node": "Comb_{n}",
+    "plug_rest": [
+      "Comb_{n}_PlugA",
+      "Comb_{n}_PlugB"
+    ],
+    "stored_cable": "quadratic Bezier from PlugA's Cable_attach to PlugB's, its control point raised so the curve passes over Comb_{n}",
+    "fill": "the machine's configure.cables, in order; a cable taken to patch leaves its slot, and unplugging both ends hangs it back"
+  },
   "rack_width": "sum of the recipe's slot widths, HP x 0.0508 m",
   "mount": "module base centre at z = 0 on the rack's centre line, faceplate facing -Y",
   "screen": {

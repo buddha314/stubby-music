@@ -601,7 +601,10 @@ class Burbler(ModuleKit):
                           "title": "MUDPIT BURBLER", "interact": INTERACT,
                           "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p == "clock",
                                       **({"module": "burbler_clock"} if p == "clock" else {})}
-                                     for p, hp in RACK_HP.items()]},
+                                     for p, hp in RACK_HP.items()],
+                          # One spare cable per patch the voice needs, hanging on the comb.
+                          "cables": [{"color": "verdigris", "for": "clock GATE -> volume TRIG"},
+                                     {"color": "rust", "for": "VCO OUT -> volume IN"}]},
             "lights": {
                 "Burbler_Glow": {"rest": 0.15, "peak": 1.0, "attack_s": 0.04, "decay_s": 0.45},
                 "Burbler_WispBell": {"rest": 0.0, "peak": 1.0, "attack_s": 0.1, "decay_s": 1.8},
