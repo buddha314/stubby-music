@@ -77,13 +77,39 @@ as in VCV Rack: no fixed length, drooping by one tension setting.
 - **WHEN** the VCO is in the slot but no cable reaches the volume's IN
 - **THEN** the burbler keeps time and makes no tone
 
+#### Scenario: Half patched
+- **WHEN** GATE is patched to TRIG but the VCO's OUT is not patched to IN
+- **THEN** the burbler makes no tone and its stream shows no notes
+
+### Requirement: The screen guides the patch
+Sound SHALL begin only when every cable in the machine's configuration is patched,
+and the screen SHALL make that easy to understand: each patch still to make SHALL show
+as a ghost cable between its two jacks in the build-ghost colour; the two jacks a
+hanging cable is for SHALL pulse in that cable's colour, while other jacks rest; the
+hint line SHALL name the next step ("1 of 2 · take the green cable · patch GATE to
+TRIG"). Completing the last patch SHALL start the sound and the stream's notes on the
+next beat, settle the pods, and show the configuration's `patched_hint`.
+
+#### Scenario: First step
+- **WHEN** the VCO and volume are mounted and nothing is patched
+- **THEN** ghost cables show GATE to TRIG and OUT to IN, GATE and TRIG pulse green, OUT and IN pulse red, and the hint reads step 1 of 2
+
+#### Scenario: Second step
+- **WHEN** the green cable joins GATE to TRIG
+- **THEN** its ghost and pods go out, the red cable's remain, and the hint reads step 2 of 2
+
+#### Scenario: Patch complete
+- **WHEN** the red cable joins the VCO's OUT to the volume's IN
+- **THEN** on the next beat the burbler sounds and its stream's notes begin, the pods rest, and the hint reads that the burbler plays on every beat
+
 #### Scenario: Stretching a cable
 - **WHEN** the player drags a cable end anywhere on the screen
 - **THEN** the cable stretches to follow it with no length limit
 
 ### Requirement: Mud stream outlet
 A burbler SHALL have an outlet from which a stream of raw mud can be connected. A
-connected stream SHALL pulse at the burbler's BPM, so the stream presents the played
+connected stream SHALL pulse at the burbler's BPM once the burbler's voice sounds (before
+the patch is complete the stream lies quiet), so the stream presents the played
 sequence along its length in space. Raw mud streams SHALL look muddy; cleaning them is
 the job of other constructors, not the burbler. As cleaning processes are added, a
 stream's water SHALL go from muddy to clear in stages.

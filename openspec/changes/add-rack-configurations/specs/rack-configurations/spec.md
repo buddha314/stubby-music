@@ -44,12 +44,13 @@ one to patch. Unplugging both ends of a cable SHALL hang it back on the comb.
 - **THEN** that cable leaves the comb and its other end follows the pointer
 
 ### Requirement: Patch pods pulse while waiting for a cable
-Each jack's halo (`Jack_<port>_Halo`) SHALL pulse while the jack is unpatched and the
-rack has a spare cable on its comb or in hand, and SHALL rest once the jack is patched.
+Each jack's halo (`Jack_<port>_Halo`) SHALL pulse, in the cable's colour, while a spare
+cable that the machine's configuration assigns to that jack is still unpatched; other
+jacks' halos SHALL rest, and a halo SHALL rest once its jack is patched.
 
 #### Scenario: Inviting the patch
 - **WHEN** a VCO and the volume are mounted and no cable is patched
-- **THEN** the patchable jacks' halos pulse
+- **THEN** the jacks the burbler's cables are for pulse, each in its cable's colour, and the rest stay dark
 
 #### Scenario: Patched
 - **WHEN** a cable joins two jacks
