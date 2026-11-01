@@ -1,0 +1,54 @@
+// Diagnostic fixture referencing saved prefabs; not the production opening layout.
+#"Bug"
+jackdaw::prefab::components::IsA { source: "prefabs/creatures/lightning_bug.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 4.5 } }
+bevy_ecs::hierarchy::Children [
+    #"Lightning bug hover"
+    jackdaw::prefab::components::PrefabEntityId(1)
+    stubby_jackdaw::desert::resources::ResourceNode { resource: "lightning_bug", instance: "review-bug", collected: false }
+    stubby_jackdaw::desert::pulse::PulseFollower { clock: 51 }
+]
+
+--
+
+#"Clock"
+jackdaw::prefab::components::IsA { source: "prefabs/modules/clock_lamp.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: 4.0 } }
+
+--
+
+#"Square"
+jackdaw::prefab::components::IsA { source: "prefabs/modules/square_vco.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: 4.0 } }
+
+--
+
+#"Burbler"
+jackdaw::prefab::components::IsA { source: "prefabs/machines/mudpit_burbler.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -4.0, y: 0.0, z: 1.0 } }
+
+--
+
+#"Reeds"
+jackdaw::prefab::components::IsA { source: "prefabs/flora/reed_clump_0.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 2.0, y: 0.0, z: 3.0 } }
+
+--
+
+#"Oak"
+jackdaw::prefab::components::IsA { source: "prefabs/flora/scrub_oak_0.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 6.0, y: 0.0, z: -4.0 } }
+stubby_jackdaw::desert::resources::MineNode { mine: "scrub_oak", instance: "review-oak" }
+
+--
+
+#"Brush"
+jackdaw::prefab::components::IsA { source: "prefabs/props/desert_brush_0.bsn", deleted: [] }
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -3.0, y: 0.0, z: -4.0 } }

@@ -16,6 +16,7 @@ stubby_audio = { path = "../crates/stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["3d", "ui"] }
 jackdaw_runtime = { path = "/home/buddha/src/jackdaw/crates/jackdaw_runtime", features = ["pie"] }
+jackdaw_scene_types = { path = "/home/buddha/src/jackdaw/crates/jackdaw_scene_types" }
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
@@ -36,4 +37,3 @@ gltf = "~1.4"
 tempfile = "~3.27"
 jackdaw_bsn = { path = "/home/buddha/src/jackdaw/crates/jackdaw_bsn" }
 jackdaw_prefab = { path = "/home/buddha/src/jackdaw/crates/jackdaw_prefab" }
-jackdaw_scene_types = { path = "/home/buddha/src/jackdaw/crates/jackdaw_scene_types" }

@@ -63,6 +63,29 @@ be collected, and a placed scrub oak is a mine.
 - **WHEN** two placed prefabs share an `instance` ID
 - **THEN** the game reports the duplicate instead of silently merging their harvest state
 
+#### Scenario: Placed modules
+- **WHEN** an authored module prefab appears after scene loading
+- **THEN** its existing profile drives its engine module, lights, display and knobs exactly once without replacing its authored transform
+
+#### Scenario: Reload and removal
+- **WHEN** a bound prefab is removed or its source changes
+- **THEN** its helper entities and audio nodes are retired and any replacement binds once
+
+### Requirement: Prefab presentation and hover hooks
+Placed prefabs SHALL expose their existing authored animations and visual state through shared runtime components. Musical animation SHALL follow audio sample-clock events; nonmusical sway SHALL follow simulation time. Aim hover SHALL emit enter/leave events, and E use SHALL emit an interaction event with the selected instance identity.
+
+#### Scenario: Burbler animation
+- **WHEN** a placed burbler's clock ticks
+- **THEN** its named bubble clips follow that clock's phase and configured division
+
+#### Scenario: Hover transitions
+- **WHEN** the player's aim moves onto and off a placed interactive asset
+- **THEN** contextual feedback updates and exactly one enter and leave event are emitted per transition
+
+#### Scenario: Visual state
+- **WHEN** a placed oak, reed or prop's visual state changes
+- **THEN** its named nodes update independently of other instances, preserving authored transforms
+
 ### Requirement: Placed player start
 The opening scene SHALL set where the player starts with a placed player start: the
 player SHALL begin at its position on the ground, facing its yaw. Without one, the

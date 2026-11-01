@@ -21,12 +21,14 @@ use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 /// Profiles embedded at build time, as the lightning bug's is, so the game and the
 /// Jackdaw adapter read identical data.
-const PROFILES: [&str; 5] = [
+const PROFILES: [&str; 7] = [
     include_str!("../../../assets/modules/square_vco/asset.json"),
     include_str!("../../../assets/modules/saw_vco/asset.json"),
     include_str!("../../../assets/modules/triangle_vco/asset.json"),
     include_str!("../../../assets/modules/sine_vco/asset.json"),
     include_str!("../../../assets/modules/clock_lamp/asset.json"),
+    include_str!("../../../assets/modules/burbler_clock/asset.json"),
+    include_str!("../../../assets/modules/volume/asset.json"),
 ];
 
 #[derive(Debug, Clone, Deserialize)]
@@ -154,6 +156,23 @@ struct ShowcaseAudio {
     patched: bool,
 }
 
+#[derive(SystemSet, Debug, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct ModuleEngine;
+pub(crate) fn unbind_module(world: &mut World, entity: Entity) {
+    if let Some(light) = world
+        .get::<ModuleParts>(entity)
+        .and_then(|parts| parts.point_light)
+    {
+        world.despawn(light);
+    }
+    world.entity_mut(entity).remove::<(
+        SynthModule,
+        EngineModule,
+        SentParams,
+        ModuleParts,
+        ModuleLights,
+    )>();
+}
 impl Plugin for SynthModulesPlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<PulseBusPlugin>() {
@@ -162,7 +181,7 @@ impl Plugin for SynthModulesPlugin {
         app.init_resource::<ModuleCatalog>().add_systems(
             Update,
             (
-                (add_to_engine, send_param_changes, remove_from_engine),
+                (add_to_engine, send_param_changes, remove_from_engine).in_set(ModuleEngine),
                 audition_showcase,
                 update_lights.after(PulseReceive),
                 (find_parts, apply_visuals).chain(),
@@ -297,6 +316,9 @@ fn engine_kind(profile: &ModuleProfile, params: &ModuleParams) -> Option<ModuleK
         "Clock" => ModuleKind::Clock {
             bpm: get("bpm", 120.0),
         },
+        "Vca" => ModuleKind::Vca {
+            gain: get("gain", 0.7),
+        },
         // Saw and triangle oscillators don't exist in the engine yet.
         _ => return None,
     })
@@ -363,13 +385,13 @@ fn remove_from_engine(
     mut ids: Local<HashMap<Entity, ModuleId>>,
     live: Query<(Entity, &SynthModule), With<EngineModule>>,
 ) {
-    for (entity, module) in &live {
-        ids.insert(entity, module.id);
-    }
     for entity in removed.read() {
         if let (Some(id), Some(synth)) = (ids.remove(&entity), &synth) {
             synth.send(Command::RemoveModule { id });
         }
+    }
+    for (entity, module) in &live {
+        ids.insert(entity, module.id);
     }
 }
 

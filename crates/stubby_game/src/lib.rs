@@ -5,6 +5,10 @@ pub mod audio;
 pub mod calendar;
 pub mod controls;
 pub mod export;
+pub mod module_ids;
+pub mod prefab_presentation;
+mod prefab_review;
+pub mod prefabs;
 pub mod pulse;
 pub mod resources;
 mod review;
@@ -31,8 +35,10 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
+            prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,
             review::ReplenishmentReviewPlugin,
+            prefab_review::PrefabReviewPlugin,
             controls::PlayerControlsPlugin,
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
@@ -44,7 +50,7 @@ impl Plugin for DesertPlugin {
 }
 
 #[derive(Resource)]
-struct WorldSeed(u64);
+pub struct WorldSeed(pub u64);
 
 fn mud_texture(seed: u64) -> (Image, Image) {
     let size = 1024;

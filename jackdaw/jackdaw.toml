@@ -22,3 +22,7 @@ args = ["--seed=42", "--module-demo"]
 [[run]]
 name = "Review: dusk and replenishment"
 args = ["--seed=42", "--replenishment-review=/tmp/stubby-replenishment-review"]
+
+[[run]]
+name = "Review: placed prefab runtime"
+args = ["--seed=42", "--scene=review_prefab_runtime.bsn", "--prefab-review=/tmp/stubby-prefab-review"]
