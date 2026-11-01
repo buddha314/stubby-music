@@ -1,0 +1,15 @@
+{
+  "id": "scrub_oak_3",
+  "model": "models/scrub_oak_3.glb#Scene0",
+  "kind": "mine",
+  "mine": "scrub_oak",
+  "produces": "lightning_bug",
+  "variant": 3,
+  "seed": 41,
+  "limbs": 4,
+  "blooms": 18,
+  "triangles": {
+    "near": 14116,
+    "far": 1091
+  }
+}

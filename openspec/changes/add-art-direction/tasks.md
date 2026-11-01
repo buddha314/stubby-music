@@ -10,7 +10,7 @@ tracked in the owning change.
 
 ## 2. Asset backlog
 
-- [ ] 2.1 Scrub-oak tree for `add-scrub-oak-production`: growth stages bare → bloomed, nodes for bug emission points, parts the game can sway or pulse to music, far LOD
+- [x] 2.1 Scrub-oak tree for `add-scrub-oak-production` (`tools/blender/create_scrub_oak.py`, `assets/flora/`; claimed: claude): dormant (winter) → full bloom on one growth value driven by clean water; six seeded variants plus per-instance variation; nodes for bug emission points, parts the game can sway or pulse to music, far LOD
 - [ ] 2.2 Bloom flora set (replaces the style sheet's stand-in stalks): small plants in the accent palette, music-reactive, lunarpunk-luminous at night
 - [x] 2.2a Stream as staff music: a five-line staff along the water carrying notes downstream as musical nutrients; dry and broken when bleak, flowing and luminous when bloomed; game-drivable note flow (speed, colour, density) so the game can match the music carried — done as the stream segment: staff lines on the bed, revealed as the water clears (`add-mudpit-burbler` 1.7) (claimed: claude)
 - [ ] 2.3 First animal concept: a creature that grows from music, reads as bleak then bloomed

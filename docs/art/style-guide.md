@@ -93,6 +93,7 @@ been made once (2026-10-31, `accents[0]`).
 | Signal (emissive) | Amber `#ffb350`, Clock flash `#ffce89`, Segment `#ff9945`, Bug `#ffffff` |
 | Crude | Sand `#8c7656`, Rust iron `#5e3a22`, Weathered wood `#5a4a3a` |
 | High-tech | Titanium `#b8bcc2`, Graphene `#1a1c1f` |
+| Scrub oak | Bark dormant `#625d57`, alive `#4b4037`, Leaf young `#7b8c3c`, mature `#36412a`, Dry leaf `#7a5a3a`, Bud `#9a6a48`, Catkin `#c8f060` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
@@ -203,7 +204,7 @@ asset test: `cargo test -p stubby_game --test module_assets`.
 
 Current models, for scale: VCOs 4.6k–7.8k triangles, the clock 6.7k, the lightning bug
 364, the mudpit burbler 14.9k (the rig concept 14.7k), the burbler clock
-9.9k, the volume module 5.1k, the stream segment 7.6k, the stream hologram 5.4k. Nested halo shells are the
+9.9k, the volume module 5.1k, the stream segment 7.6k, the stream hologram 5.4k, the scrub oak 11.0k–14.7k (far LOD ≤ 1.1k). Nested halo shells are the
 expensive part of soft light; keep their resolution as low as still reads round.
 
 | Asset | Triangles | Materials |
@@ -226,6 +227,11 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-10-31** — Scrub oak: six seeded variants of a many-stemmed desert oak, varied
+  again per instance in the game. It starts dormant in winter (grey wood, buds, dry
+  leaves holding on) and one growth value, raised by clean water, takes it through
+  budding and leaf-out to full bloom with hanging luminous catkins, where its bugs
+  come from. Flora colours added to the palette.
 - **2026-10-31** — Streams are sheet music at every stage: the staff floats on the
   surface and waves from bank to bank (two waves per 4 m segment, so it tiles), and
   each beat's note rides it downstream at the flow speed. Replaces the staff hidden

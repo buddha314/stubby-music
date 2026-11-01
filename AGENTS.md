@@ -288,10 +288,13 @@ See `docs/research/firebug-audio-and-yields.md` for duration and mining research
 
 Loose lightning bugs are **exhaustible** and collected once. Scrub-oak trees are
 **infinite mines** that will produce fresh finite lightning bugs. A tree's bug
-production increases as water quality and light quality improve. Infinite means
-no finite reserve, not infinite instantaneous output. The source types, catalog
+production increases as water quality and light quality improve. A tree **starts
+dormant** (winter) and escalates to **full bloom as clean water is applied**; bugs
+emerge from its open blooms, so a dormant tree makes none. Trees vary procedurally:
+seeded variants plus per-instance variation from the world seed (`assets/flora/`).
+Infinite means no finite reserve, not infinite instantaneous output. The source types, catalog
 mine definition and editor `MineNode` exist; production rates, quality simulation,
-spawn loops and tree visuals remain deferred in
+spawn loops and placement remain deferred (the tree asset exists) in
 `openspec/changes/add-scrub-oak-production/`. Keep mines separate from E pickup
 queries. The domain chain is scrub oak mine → finite bug → square-wave items.
 
