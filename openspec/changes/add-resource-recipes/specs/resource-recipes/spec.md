@@ -1,6 +1,6 @@
 ## ADDED Requirements
 ### Requirement: Lightning bug resource yield
-A lightning bug SHALL provide the configured quantity of square_wave items (initially two) when collected. A world instance SHALL yield at most once. Holding a square-wave item SHALL NOT automatically make sound or change other bugs' clocks.
+A lightning bug SHALL provide the configured quantity of square_wave items (initially two) when collected. A world instance SHALL yield at most once per availability period. Holding a square-wave item SHALL NOT automatically make sound or change other bugs' clocks.
 #### Scenario: Collect a bug
 - **WHEN** the player collects an uncollected lightning bug in interaction range
 - **THEN** inventory gains the configured square_wave quantity, the instance is marked collected, and its model, ground pulse, light and audio voice are removed without affecting other bugs
@@ -26,7 +26,7 @@ The lightning bug SHALL represent a mineable raw resource analogous to coal in a
 - **THEN** the recipe book still lists Square wave and its VCO, LFO and gate roles
 
 ### Requirement: Familiar builder interaction keys
-Collection SHALL use E. Holding E SHALL allow successive nearby resource pickups while each instance still yields at most once. Collection SHALL NOT move the camera vertically. The recipe book SHALL use O, keeping Q and F reserved for future building and dismantling.
+Collection SHALL use E. Holding E SHALL allow successive nearby resource pickups while each instance still yields at most once per availability period. Collection SHALL NOT move the camera vertically. The recipe book SHALL use O, keeping Q and F reserved for future building and dismantling.
 #### Scenario: Hold interaction while moving
 - **WHEN** E remains held as an uncollected resource comes within interaction range
 - **THEN** it can be collected without a new key press and cannot yield twice

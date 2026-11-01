@@ -4,7 +4,7 @@ Lightning bugs are a game resource: they provide square-wave items that players 
 ## What Changes
 - Add data-defined item, resource yield and recipe definitions.
 - Add engine-independent inventory and atomic crafting operations with clear errors for missing ingredients and invalid recipes.
-- Make lightning bugs harvestable once per instance and add their square-wave yield to player inventory.
+- Make lightning bugs harvestable once per availability period of each instance and add their square-wave yield to player inventory.
 - Keep recipe data independent of DSP nodes; consuming a waveform item does not automatically connect an audible oscillator.
 
 ## Capabilities

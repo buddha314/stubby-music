@@ -2,10 +2,12 @@
 compile_error!("The dev feature enables dynamic linking; omit it for release builds.");
 
 pub mod audio;
+pub mod calendar;
 pub mod controls;
 pub mod export;
 pub mod pulse;
 pub mod resources;
+mod review;
 mod sky;
 pub mod synth_modules;
 mod terrain;
@@ -29,6 +31,8 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
+            calendar::CalendarPlugin,
+            review::ReplenishmentReviewPlugin,
             controls::PlayerControlsPlugin,
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
@@ -188,6 +192,7 @@ fn setup(
         ..default()
     });
     commands.spawn((
+        calendar::Sunlight,
         DirectionalLight {
             color: Color::srgb(1., 0.71, 0.43),
             illuminance: 9500.,

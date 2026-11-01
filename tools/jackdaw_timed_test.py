@@ -82,6 +82,7 @@ def main():
     parser.add_argument('--refresh', type=int, choices=(60, 165), default=60)
     parser.add_argument('--adapter', help='Bevy WGPU_ADAPTER_NAME substring')
     parser.add_argument('--play', action='store_true')
+    parser.add_argument('--review', action='store_true', help='Run the opt-in dusk/replenishment review')
     parser.add_argument('--reset-output', action='store_true', help='Force display power-cycle after a 60Hz test too')
     parser.add_argument('--name', default='baseline')
     parser.add_argument('--command', nargs=argparse.REMAINDER,
@@ -100,7 +101,7 @@ def main():
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
     output = Path('/tmp') / f'jackdaw-flicker-{args.name}.log'
     report = {'name': args.name, 'limit_seconds': args.seconds,
-              'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play}
+              'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play or args.review, 'review': args.review}
     process = None
     display_changed = False
     test_manifest = None
@@ -114,10 +115,12 @@ def main():
                 raise RuntimeError('Test port already has an editor; refusing to touch it')
             report['mode'] = display_mode(args.refresh)
             display_changed = True
-            if args.play:
+            if args.play or args.review:
                 block = '[[run]]\nname = "Live listen: clock + square"\nargs = ["--seed=42", "--module-demo"]\n'
+                if args.review:
+                    block = '[[run]]\nname = "Review: dusk and replenishment"\nargs = ["--seed=42", "--replenishment-review=/tmp/stubby-replenishment-review"]\n'
                 if block not in original:
-                    raise RuntimeError('Live-listen run config missing')
+                    raise RuntimeError('Requested review/live-listen run config missing')
                 remainder = original.replace('\n' + block, '')
                 at = remainder.index('[[run]]')
                 test_manifest = remainder[:at] + block + '\n' + remainder[at:]
@@ -135,7 +138,9 @@ def main():
                         status = rpc('jackdaw/status')
                         if not states or states[-1] != status['pie']:
                             states.append(status['pie'])
-                        if args.play and not played:
+                        if (args.play or args.review) and not played:
+                            if args.review:
+                                rpc('jackdaw/call_operator', {'id': 'window.resize_panel', 'params': {'window_id': 'jackdaw.game', 'height': 600.0}})
                             rpc('jackdaw/call_operator', {'id': 'pie.play'})
                             played = True
                     except (OSError, RuntimeError, ValueError):

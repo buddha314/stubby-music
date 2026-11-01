@@ -61,6 +61,9 @@ impl Plugin for PulseBusPlugin {
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PulseReceive;
 
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub(super) struct BugEffects;
+
 #[derive(Resource, Default)]
 pub struct PulseBus {
     pending: Vec<SamplePulse>,
@@ -147,7 +150,7 @@ impl Plugin for LightningBugPlugin {
         app.insert_resource(PulseSeed(self.seed))
             .register_type::<PulseFollower>()
             .add_systems(Startup, initialize)
-            .add_systems(PostUpdate, remove_collected_bugs)
+            .add_systems(PostUpdate, suppress_collected_bugs.in_set(BugEffects))
             .add_systems(
                 Update,
                 (update_click_gains, animate, capture_pulse_preview)
@@ -259,29 +262,47 @@ fn initialize(world: &mut World) {
 }
 
 // Run after collection's Update systems, so no depleted cue survives the frame.
-fn remove_collected_bugs(
-    mut commands: Commands,
-    mut collected: MessageReader<super::resources::ResourceCollected>,
-    bugs: Query<(Entity, &BugInstance)>,
+#[allow(clippy::type_complexity)] // Each effect has a different set of rendering components.
+fn suppress_collected_bugs(
+    nodes: Query<(&BugInstance, &super::resources::ResourceNode)>,
+    mut effects: Query<(
+        &BugInstance,
+        Option<&mut Visibility>,
+        Option<&mut PointLight>,
+        Option<&MeshMaterial3d<StandardMaterial>>,
+    )>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     synth: Option<Res<Synth>>,
 ) {
-    for event in collected.read() {
-        for index in 0..BUG_POSITIONS.len() {
-            if event.instance != format!("lightning_bug-{index}") {
+    for (index, node) in &nodes {
+        if !node.collected {
+            continue;
+        }
+        for (instance, visibility, light, material) in &mut effects {
+            if instance.0 != index.0 {
                 continue;
             }
-            for (entity, instance) in &bugs {
-                if instance.0 == index {
-                    commands.entity(entity).despawn();
-                }
+            if material.is_none()
+                && light.is_none()
+                && let Some(mut visibility) = visibility
+            {
+                *visibility = Visibility::Hidden;
             }
-            if let Some(synth) = &synth {
-                let (oscillator, envelope, vca) = voice_ids(index);
-                // Disconnect the output first, then remove its source nodes.
-                for id in [vca, oscillator, envelope, ModuleId(bug_clock(index))] {
-                    synth.send(Command::RemoveModule { id });
-                }
+            if let Some(mut light) = light {
+                light.intensity = 0.;
             }
+            if let Some(handle) = material
+                && let Some(mut material) = materials.get_mut(&handle.0)
+            {
+                material.base_color.set_alpha(0.);
+            }
+        }
+        if let Some(synth) = &synth {
+            synth.send(Command::SetParam {
+                module: voice_ids(index.0).2,
+                param: "gain",
+                value: 0.,
+            });
         }
     }
 }
@@ -466,33 +487,108 @@ mod tests {
     use super::*;
     use std::time::Duration;
     #[test]
-    fn collecting_removes_only_that_bugs_model_light_and_shadow() {
+    fn dormant_bug_retains_source_and_restores_all_effects() {
         let mut app = App::new();
-        app.add_message::<super::super::resources::ResourceCollected>()
-            .add_systems(PostUpdate, remove_collected_bugs);
-        let mut removed = Vec::new();
-        for _ in 0..3 {
-            let root = app.world_mut().spawn(BugInstance(0)).id();
-            app.world_mut().spawn(ChildOf(root));
-            removed.push(root);
-        }
-        let other = app.world_mut().spawn(BugInstance(1)).id();
+        app.init_resource::<Assets<StandardMaterial>>()
+            .init_resource::<PulseBus>()
+            .insert_resource(
+                serde_json::from_str::<BugAsset>(include_str!(
+                    "../../../assets/creatures/lightning_bug/asset.json"
+                ))
+                .unwrap(),
+            )
+            .add_systems(Update, animate)
+            .add_systems(PostUpdate, suppress_collected_bugs.in_set(BugEffects));
+        let follower = || PulseFollower {
+            clock: bug_clock(0),
+        };
+        let bug = app
+            .world_mut()
+            .spawn((
+                BugInstance(0),
+                super::super::resources::ResourceNode {
+                    collected: true,
+                    ..default()
+                },
+                FlashVisual,
+                follower(),
+                Transform::default(),
+                Visibility::Visible,
+            ))
+            .id();
+        let light = app
+            .world_mut()
+            .spawn((
+                BugInstance(0),
+                FlashLight,
+                follower(),
+                PointLight::default(),
+            ))
+            .id();
+        let material = app
+            .world_mut()
+            .resource_mut::<Assets<StandardMaterial>>()
+            .add(StandardMaterial::default());
+        app.world_mut().spawn((
+            BugInstance(0),
+            FlashShadow,
+            follower(),
+            MeshMaterial3d(material.clone()),
+        ));
+        let other = app
+            .world_mut()
+            .spawn((BugInstance(1), Visibility::Visible))
+            .id();
+        let pulse = || SamplePulse {
+            clock: bug_clock(0),
+            sample_time: 1,
+            at: Instant::now() - Duration::from_millis(30),
+        };
+        app.world_mut().resource_mut::<PulseBus>().queue(pulse());
         app.world_mut()
-            .write_message(super::super::resources::ResourceCollected {
-                instance: "lightning_bug-0".into(),
-                yields: Vec::new(),
-            });
+            .resource_mut::<PulseBus>()
+            .advance(Instant::now());
         app.update();
-        for entity in removed {
-            assert!(app.world().get_entity(entity).is_err());
-        }
-        assert!(app.world().get_entity(other).is_ok());
         assert_eq!(
-            app.world_mut()
-                .query::<&ChildOf>()
-                .iter(app.world())
-                .count(),
-            0
+            *app.world().get::<Visibility>(bug).unwrap(),
+            Visibility::Hidden
+        );
+        assert_eq!(app.world().get::<PointLight>(light).unwrap().intensity, 0.);
+        assert_eq!(
+            app.world()
+                .resource::<Assets<StandardMaterial>>()
+                .get(&material)
+                .unwrap()
+                .base_color
+                .alpha(),
+            0.
+        );
+        assert_eq!(
+            *app.world().get::<Visibility>(other).unwrap(),
+            Visibility::Visible
+        );
+        app.world_mut()
+            .get_mut::<super::super::resources::ResourceNode>(bug)
+            .unwrap()
+            .collected = false;
+        app.world_mut().resource_mut::<PulseBus>().queue(pulse());
+        app.world_mut()
+            .resource_mut::<PulseBus>()
+            .advance(Instant::now());
+        app.update();
+        assert_eq!(
+            *app.world().get::<Visibility>(bug).unwrap(),
+            Visibility::Visible
+        );
+        assert!(app.world().get::<PointLight>(light).unwrap().intensity > 0.);
+        assert!(
+            app.world()
+                .resource::<Assets<StandardMaterial>>()
+                .get(&material)
+                .unwrap()
+                .base_color
+                .alpha()
+                > 0.
         );
     }
 

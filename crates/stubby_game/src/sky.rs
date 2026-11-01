@@ -9,7 +9,6 @@ use bevy::{
 pub fn desert_sky() -> Image {
     let size = 128;
     // Bevy samples cubemaps in left-handed space (world Z is negated).
-    let sun = Vec3::new(-0.48, 0.075, 0.87).normalize();
     let mut data = Vec::with_capacity(size * size * 6 * 8);
     for face in 0..6 {
         for y in 0..size {
@@ -31,9 +30,6 @@ pub fn desert_sky() -> Image {
                 if d.y < 0. {
                     rgb = horizon.lerp(Vec3::new(0.13, 0.09, 0.06), (-d.y * 3.).min(1.));
                 }
-                let alignment = d.dot(sun).max(0.);
-                rgb += Vec3::new(1.0, 0.56, 0.19)
-                    * (alignment.powf(24.) * 0.65 + alignment.powf(1500.) * 12.);
                 for c in [rgb.x, rgb.y, rgb.z, 1.] {
                     data.extend_from_slice(&half::f16::from_f32(c).to_le_bytes());
                 }

@@ -3,7 +3,7 @@
 The domain SHALL distinguish exhaustible resource instances from infinite mine instances with stable definition and instance IDs.
 #### Scenario: Finite pickup
 - **WHEN** an exhaustible lightning-bug object is successfully harvested
-- **THEN** its configured item stacks are granted once and it becomes collected
+- **THEN** its configured item stacks are granted once in its current availability period and it becomes collected
 #### Scenario: Infinite mine
 - **WHEN** a scrub-oak mine object is created or inspected
 - **THEN** it is classified as an infinite mine and has no finite depletion counter

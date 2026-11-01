@@ -67,3 +67,21 @@ At the default 120 BPM, listen for two bursts per second and watch the clock lam
 Stop Play to stop its audio; play again to verify it starts cleanly. Audio uses the
 game child's default output device, not an editor audio bridge. This check does
 not establish the separate 10ms on-screen timing requirement.
+
+## Bounded dusk and replenishment review
+
+Build the adapter, then run:
+
+```sh
+python3 tools/jackdaw_timed_test.py --review --seconds 20 --refresh 60 --name replenishment-review
+```
+
+The watchdog stops the editor and game within 20 seconds. The opt-in review starts
+five game minutes before sunset at 64×, collects one bug, waits for the next night,
+collects it again, and exercises slower/faster/reset controls. It writes screenshots
+and `events.jsonl` under `/tmp/stubby-replenishment-review/`. Look for a successful
+`complete` event and inventory 0 → 2 → 4, with no inventory change on replenishment.
+Use the watchdog when testing the review run configuration.
+
+Normal play uses `[`/`]` for slower/faster simulation and `\` for 1×.
+Music pitch, clock tempo and flash envelopes retain their audio timing.
