@@ -62,3 +62,20 @@ be collected, and a placed scrub oak is a mine.
 #### Scenario: Duplicate instance IDs
 - **WHEN** two placed prefabs share an `instance` ID
 - **THEN** the game reports the duplicate instead of silently merging their harvest state
+
+### Requirement: Placed player start
+The opening scene SHALL set where the player starts with a placed player start: the
+player SHALL begin at its position on the ground, facing its yaw. Without one, the
+player SHALL start where the game places it today.
+
+#### Scenario: Placed start
+- **WHEN** a player start is placed in the opening scene and Play begins
+- **THEN** the player stands at the marker, on the ground, facing the marker's direction
+
+#### Scenario: No start placed
+- **WHEN** the scene has no player start
+- **THEN** the player starts at the game's default spot, as before
+
+#### Scenario: Marker hidden in play
+- **WHEN** the game is running
+- **THEN** the player start's marker model is not drawn

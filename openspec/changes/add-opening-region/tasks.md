@@ -25,3 +25,5 @@
 - [ ] 2.2 Placement constraint tests across 1,000 seeds (silent spawn, oak distance, affordable first stream)
 - [ ] 2.3 Starting conditions: winter, dormant oaks, light quality 0
 - [ ] 2.4 Wire the loop end to end once its parts land: bug → burbler voice → stream → oak growth → bug production
+- [ ] 2.7 Placed player start (Codex; design "Player start"): a `PlayerStart` marker component (reflected, registered, inspector category "Actor"); an `On<Insert<PlayerStart>>` observer reads its world `GlobalTransform` (Jackdaw's `insert_observer_global_transform.rs` shows it is final at scene load) and moves the `controls::Player` camera there, on the ground, facing its yaw; fall back to `controls::spawn_transform()` when none is placed; warn on more than one; a test that the opening scene's start is more than 35 m from every bug. No new crate, no editor change.
+- [ ] 2.7a Player start marker (Claude, after 2.7): a small marker model (footprint ring plus facing arrow, readable in the viewport), and a prefab made in Jackdaw with Save as Prefab: the marker glb, `HiddenInGame`, `PlayerStart`, under `prefabs/actors/`

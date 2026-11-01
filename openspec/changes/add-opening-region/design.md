@@ -58,6 +58,42 @@ placed entities is the first game task (2.5).
    raises light quality, and the region blooms outward: props bloom and the storm eases.
 6. The player keeps extending: more streams, more oaks, new sources further out.
 
+## Player start
+
+The player's starting point is placed in the opening scene, like Unreal's
+`PlayerStart`, Unity's spawn point and Godot's `Marker3D`. Jackdaw has no single-player
+start built in, and we do not add one to the editor. Its documented pattern is a
+game-defined marker component (its own docs use `PlayerSpawn`, in the "Actor" category)
+that the game reads at load.
+
+- **Component (game):** `PlayerStart`, a reflected marker, registered like `MineNode`,
+  with `#[reflect(Component, Default, @EditorCategory::new("Actor"))]` so the
+  inspector files it under Actor. Its transform is the start: position, plus yaw for
+  the facing.
+- **Reading it:** an `On<Insert<PlayerStart>>` observer. Jackdaw's runtime test
+  `insert_observer_global_transform.rs` proves an insert observer sees the marker's
+  final world `GlobalTransform` during `.bsn` scene load, including when it is nested
+  under a parent. Use that world transform, never the local one.
+- **Placing the player:** move the existing `controls::Player` camera to the marker,
+  snapped to the terrain (`controls::spawn_transform` already does height + eye
+  height), facing the marker's yaw. Pitch and roll are ignored, and the
+  controller's look state is reset to match.
+- **No marker:** keep today's `controls::spawn_transform()` at (0, ground, 6), so the
+  standalone game and empty scenes behave as now.
+- **More than one:** warn and use the first, or the one with `default: true`. Do not
+  pick at random.
+- **Seen in the editor, not in the game:** the prefab carries a small marker model
+  with `HiddenInGame`, the same component the floor preview uses. Jackdaw also offers
+  `SkipSerialization` for helper meshes spawned by code, which this does not need.
+- **Constraint:** the start must keep the opening silent, more than 35 m from every
+  bug (Placement constraints). A test loads the opening scene and checks the distance.
+
+References, none of which needs a new crate: Bevy observers (`On<Insert<T>>`); Jackdaw
+`HiddenInGame`, `EditorCategory` and the insert-observer test above;
+`jackdaw_multiplayer::SpawnPoint` (zone and tag fields) as a shape to grow into if
+named or multiple starts are ever needed. It is not used directly, since it belongs to
+Jackdaw's multiplayer module.
+
 ## Open questions
 - **The first clean water comes from a filter mini-rack** (decided in direction, designed
   later; `add-fluid-quality-and-viscosity`): high-pass filters separate pure liquid,
