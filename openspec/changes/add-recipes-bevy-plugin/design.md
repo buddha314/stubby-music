@@ -21,6 +21,16 @@ pure core and a thin Bevy adapter in one repo; Bevy-bound cores churn or go stal
   screens stay in the game, as plugins in this space leave presentation to the game);
   timed production and machines (they will build on this, not in this change).
 
+## Scope as built: thin
+The user asked for a thin plugin for a prototype (2026-11-01). Built: D1, and D2 for
+the catalog, inventory, messages and the harvest/craft systems. Deferred until they are
+needed: inventories as components (D3), reflection wrappers (D4), the item extension
+(D5), hot reload, and replenishment (it stays in the game, which owns the nodes and
+the calendar). `ResourceNode` and `MineNode` stay in the game: Jackdaw prefabs name
+them by type path. Jackdaw's adapter builds the game against the editor's Bevy
+revision, so it compiles the plugin's single source file as a module (the
+`embedded_recipes_plugin` feature) rather than depending on the crate.
+
 ## Decisions
 
 ### D1. Two crates, one direction

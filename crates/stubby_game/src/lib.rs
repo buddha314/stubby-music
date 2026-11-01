@@ -1,6 +1,14 @@
 #[cfg(all(feature = "dev", not(debug_assertions)))]
 compile_error!("The dev feature enables dynamic linking; omit it for release builds.");
 
+// The crafting system, as a Bevy plugin. Jackdaw's adapter builds the game against the
+// editor's Bevy revision, so there the plugin's source is compiled in as a module.
+#[cfg(not(feature = "embedded_recipes_plugin"))]
+pub use bevy_stubby_recipes as recipes_plugin;
+#[cfg(feature = "embedded_recipes_plugin")]
+#[path = "../../bevy_stubby_recipes/src/lib.rs"]
+pub mod recipes_plugin;
+
 pub mod audio;
 pub mod calendar;
 pub mod controls;
