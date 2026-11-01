@@ -14,8 +14,8 @@ so they never bunch or cross), and the whole ribbon waves from bank to bank, the
 travelling downstream at the water's speed. Each clock tick at the source emits a note
 that rides the staff downstream at that speed, so notes sit `flow_speed * 60 / BPM`
 metres apart and stay on the same crest of the moving ribbon. Every `beats_per_bar`
-ticks a bar line rides down with them, so measures are `beats_per_bar` beats long at
-the clock's BPM: faster water spreads the music out, a faster clock packs it in. The water goes from muddy to clear as cleaning processes are identified; the
+ticks (4 by default; it will be configurable) a bar line rides down with them, so
+measures are `beats_per_bar` beats long at the clock's BPM: faster water spreads the music out, a faster clock packs it in. The water goes from muddy to clear as cleaning processes are identified; the
 profile's `clarity` table gives its look at each stage, and the staff glows brighter
 and crisper as the water clears.
 
@@ -64,7 +64,7 @@ STAFF_SPACING = 0.12       # line to line; the staff spans 0.48 m of the 1 m cha
 STAFF_WAVE = 0.07          # the staff's sideways wave, amplitude in metres
 STAFF_WAVELENGTH = 2.0     # two waves per segment, so it tiles
 STAFF_Z = WATER_Z + 0.012  # floats just above the surface's ripple
-BEATS_PER_BAR = 4
+BEATS_PER_BAR = 4          # the default; becomes a clock setting later
 FLOW_FPS = 24              # frames of the baked Staff_Flow clip per second
 PREVIEW_BPM = 90
 # The water's look at each stage of clarity (sRGB, for the game to blend between).
@@ -355,10 +355,13 @@ class Stream(Burbler):
                                   "along its normal (0 = middle line); notes move with the wave, so each "
                                   "stays on its crest",
                       "yaw": "atan of the centre line's slope"},
-            "bars": {"node": "Bar_0", "beats_per_bar": BEATS_PER_BAR,
+            "bars": {"node": "Bar_0",
+                     "beats_per_bar": {"default": BEATS_PER_BAR, "configurable": True,
+                                       "note": "4 for now; will come from the clock's settings"},
                      "emit": "one bar line every beats_per_bar clock ticks, on the downbeat",
                      "offset": "half a note spacing downstream of the downbeat note (between measures)",
-                     "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock",
+                     "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock; "
+                                "read beats_per_bar at runtime, never hard-code 4",
                      "position": "the ribbon's centre line at its x, square to it (yaw as notes)"},
             "clarity": {"material": "Stream_Water", "stages": CLARITY},
             "reeds": {"nodes": ["Reeds_L", "Reeds_R"], "built_from": {"item": "reed", "quantity": 6},

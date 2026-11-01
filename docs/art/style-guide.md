@@ -239,7 +239,8 @@ Before an asset ships:
 - **2026-11-01** — The stream's staff is a ribbon: its five lines keep a fixed spacing
   along the wave's normal (no bunching or crossing), and the wave travels downstream
   with the water (morph targets + a looping `Staff_Flow` clip). Bar lines ride with the
-  notes, one every four beats, so measures follow the clock's BPM.
+  notes, one per bar (4 beats by default, configurable later), so measures follow the
+  clock's BPM.
 - **2026-11-01** — The field recorder, the player's collecting device: a handheld X/Y
   recorder at real size under a dusty fur windguard (shell fur: alpha-clipped shells cut
   from one baked strand texture; the shells cast no shadows). Record light and meter in

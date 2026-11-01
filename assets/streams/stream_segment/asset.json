@@ -62,10 +62,14 @@
   },
   "bars": {
     "node": "Bar_0",
-    "beats_per_bar": 4,
+    "beats_per_bar": {
+      "default": 4,
+      "configurable": true,
+      "note": "4 for now; will come from the clock's settings"
+    },
     "emit": "one bar line every beats_per_bar clock ticks, on the downbeat",
     "offset": "half a note spacing downstream of the downbeat note (between measures)",
-    "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock",
+    "spacing": "beats_per_bar * flow_speed_mps * 60 / bpm metres: measures follow the clock; read beats_per_bar at runtime, never hard-code 4",
     "position": "the ribbon's centre line at its x, square to it (yaw as notes)"
   },
   "clarity": {

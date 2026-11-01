@@ -395,8 +395,8 @@ equivalent of an iron ore node, so the player does not pick it up.
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
   water is **sheet music**: a staff ribbon runs along it, its lines a fixed distance
   apart and its wave travelling downstream; each beat's note rides it at the water's
-  speed, so note spacing shows velocity, and a bar line every four beats keeps
-  measures in time with the clock's BPM. The
+  speed, so note spacing shows velocity, and a bar line every bar (4 beats by
+  default, configurable later) keeps measures in time with the clock's BPM. The
   mud is **raw**: muddy on purpose, like ore. It is cleaned later by a **filter
   mini-rack** (direction, not yet designed): **high-pass filters separate out pure
   liquid, low-pass filters separate solids and nutrients**, into separate channels,
