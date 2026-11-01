@@ -9,10 +9,16 @@ assembled from the shared frame, slot outlines and labels (create_hud_rack.py). 
 the mudpit burbler's, in two states:
 
   hud_mock_empty.png   construction: the built-in clock in place, the VCO and VCA
-                       slots empty, each a labelled outline of what goes there
-  hud_mock.png         built and patched: Square VCO and volume mounted, clock GATE to
-                       volume TRIG, VCO OUT to volume IN, drawn with the game's elastic
-                       cable rule (`create_patch_cable.cable_curve`)
+                       slots empty, each a labelled outline of what goes there; the
+                       burbler's two spare cables hang on the rack's cable comb
+  hud_mock_ready.png   built, not patched (step 1): Square VCO and volume mounted, both
+                       cables on the comb; each needed patch drawn as a ghost cable, and
+                       the two jacks each cable is for pulse in that cable's colour
+  hud_mock_step2.png   GATE to TRIG patched; the red cable still hangs, its ghost and
+                       its two pods still show
+  hud_mock.png         patched: clock GATE to volume TRIG, VCO OUT to volume IN, drawn
+                       with the game's elastic cable rule (`create_patch_cable.cable_curve`);
+                       the comb is empty and the pods rest
 
 A look reference, not a game asset.
 
@@ -39,9 +45,13 @@ from module_kit import HEIGHT, HP, PROJECT, model_file  # noqa: E402
 MACHINE = "mudpit_burbler"
 # What the built mock mounts in each non-fixed place (the player's choice in play).
 BUILT = {"vco": "square_vco", "volume": "volume"}
-# (from place, port) -> (to place, port), cable colour
-PATCH = [(("clock", "gate"), ("volume", "trig"), "verdigris"),
-         (("vco", "out"), ("volume", "in"), "rust")]
+GHOST = "#ffd39a"   # the palette's build colour, as for slot outlines
+
+
+def patches():
+    """The machine's spare cables as ((from place, port), (to place, port), colour)."""
+    return [((c["from"]["place"], c["from"]["port"]), (c["to"]["place"], c["to"]["port"]), c["color"])
+            for c in configuration().get("cables", [])]
 SHOW_BPM = " 90"
 DOCS = PROJECT / "docs/art"
 
@@ -83,6 +93,8 @@ def build_rack(places, built):
     """The rack for a configuration: frame, then each place mounted or outlined."""
     width = sum(p["hp"] for p in places) * HP
     new, _ = import_glb("rack_frame")
+    comb = {base(o): o for o in new if base(o).startswith("Comb_")}
+    halos = {}
     for obj in new:
         if base(obj) in ("RailTop", "RailBottom"):
             obj.scale.x = width + RAIL_MARGIN
@@ -102,6 +114,8 @@ def build_rack(places, built):
             for obj in new:
                 if base(obj).startswith("Port_"):
                     ports[(p["place"], base(obj)[5:])] = obj
+                if "_JackHalo" in base(obj):
+                    halos.setdefault((p["place"], base(obj).rsplit("_", 1)[1]), []).append(obj)
                 if base(obj).startswith("Display_d"):
                     digit, seg = int(base(obj)[9]), base(obj)[11]
                     obj.hide_render = SHOW_BPM[digit] == " " or seg not in DIGITS[SHOW_BPM[digit]]
@@ -119,43 +133,116 @@ def build_rack(places, built):
             next(o for o in labels if base(o) == f"Label_{p['kind']}").matrix_world = anchor.matrix_world.copy()
         x += p["hp"] * HP
     bpy.context.view_layer.update()
-    return ports
+    return ports, comb, halos
 
 
-def patch(ports):
-    for (src, dst, colour) in PATCH:
-        ends = []
-        for place in (src, dst):
-            new, roots = import_glb("patch_plug")
-            roots[0].matrix_world = ports[place].matrix_world.copy()
-            bpy.context.view_layer.update()
-            for o in new:
-                if o.type == "MESH" and base(o) == "PatchCable_Stub":
-                    o.hide_render = True
-                if o.type == "MESH":
-                    for s in o.material_slots:
-                        if s.material and base(s.material) in ("PatchCable_Cable", "PatchCable_Collar"):
-                            s.material = cable_material(colour)
-            ends.append(next(o for o in new if base(o) == "Cable_attach").matrix_world.translation.copy())
+def plug_at(matrix, colour):
+    """A patch plug placed at `matrix`; returns its cable attach point."""
+    new, roots = import_glb("patch_plug")
+    roots[0].matrix_world = matrix.copy()
+    bpy.context.view_layer.update()
+    for o in new:
+        if o.type == "MESH" and base(o) == "PatchCable_Stub":
+            o.hide_render = True
+        if o.type == "MESH":
+            for s in o.material_slots:
+                if s.material and base(s.material) in ("PatchCable_Cable", "PatchCable_Collar"):
+                    s.material = cable_material(colour)
+    return next(o for o in new if base(o) == "Cable_attach").matrix_world.translation.copy()
+
+
+def cable_mesh(points, colour):
+    bm = bmesh.new()
+    tube(bm, points, CABLE_RADIUS)
+    mesh = bpy.data.meshes.new(f"Cable_{colour}")
+    bm.to_mesh(mesh)
+    bm.free()
+    cable = bpy.data.objects.new(f"Cable_{colour}", mesh)
+    cable.data.materials.append(cable_material(colour))
+    for face in cable.data.polygons:
+        face.use_smooth = True
+    bpy.context.scene.collection.objects.link(cable)
+
+
+def hang(comb, colours):
+    """Spare cables on the comb: draped over a slot, both plugs hanging tip down."""
+    for n, colour in enumerate(colours):
+        a = plug_at(comb[f"Comb_{n}_PlugA"].matrix_world, colour)
+        b = plug_at(comb[f"Comb_{n}_PlugB"].matrix_world, colour)
+        top = comb[f"Comb_{n}"].matrix_world.translation
+        # Quadratic Bezier whose control point lifts the curve over the slot.
+        c = 2 * top - (a + b) / 2 + Vector((0, 0, 0.03))
+        n_pts = 32
+        pts = [a * (1 - t) ** 2 + c * 2 * (1 - t) * t + b * t * t for t in (i / n_pts for i in range(n_pts + 1))]
+        cable_mesh(pts, colour)
+
+
+def patch(ports, cables):
+    for (src, dst, colour) in cables:
+        ends = [plug_at(ports[place].matrix_world, colour) for place in (src, dst)]
+        cable_mesh(cable_curve(ends[0], ends[1]), colour)
+
+
+def glow(name, colour, strength, alpha):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    c = (*linear(colour), 1.0)
+    bsdf.inputs["Base Color"].default_value = c
+    bsdf.inputs["Emission Color"].default_value = c
+    bsdf.inputs["Emission Strength"].default_value = strength
+    bsdf.inputs["Alpha"].default_value = alpha
+    mat.surface_render_method = "BLENDED"
+    return mat
+
+
+def ghost(ports, cables):
+    """Each patch still to make, as a faint ghost cable between its two jacks."""
+    mat = glow("HudGhostCable", GHOST, 1.5, 0.22)
+    for (src, dst, _) in cables:
+        a, b = (ports[p].matrix_world.translation.copy() for p in (src, dst))
         bm = bmesh.new()
-        tube(bm, cable_curve(ends[0], ends[1]), CABLE_RADIUS)
-        mesh = bpy.data.meshes.new(f"Cable_{colour}")
+        tube(bm, cable_curve(a, b), CABLE_RADIUS * 0.7)
+        mesh = bpy.data.meshes.new("GhostCable")
         bm.to_mesh(mesh)
         bm.free()
-        cable = bpy.data.objects.new(f"Cable_{colour}", mesh)
-        cable.data.materials.append(cable_material(colour))
-        for face in cable.data.polygons:
-            face.use_smooth = True
-        bpy.context.scene.collection.objects.link(cable)
+        obj = bpy.data.objects.new("GhostCable", mesh)
+        obj.data.materials.append(mat)
+        bpy.context.scene.collection.objects.link(obj)
 
 
-def render(built, out, hints):
+def pods(halos, cables):
+    """Only the jacks a hanging cable is for pulse, in that cable's colour; the rest rest."""
+    for objs in halos.values():
+        for o in objs:
+            o.hide_render = True
+    for (src, dst, colour) in cables:
+        mat = glow(f"HudPod_{colour}", COLORS[colour], 3.0, 0.45)
+        for place in (src, dst):
+            for o in halos.get(place, []):
+                o.hide_render = False
+                o.data = o.data.copy()
+                o.data.materials.clear()
+                o.data.materials.append(mat)
+
+
+def render(built, patched, out, hints):
+    """`patched`: how many of the machine's cables are patched, in step order."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     config = configuration()
-    ports = build_rack(config["places"], built)
+    ports, comb, halos = build_rack(config["places"], built)
+    cables = patches()
+    done, waiting = cables[:patched], cables[patched:]
+    patch(ports, done)
+    hang(comb, [c for (_, _, c) in waiting])
     if built:
-        patch(ports)
+        ghost(ports, waiting)
+        pods(halos, waiting)
+    else:
+        for objs in halos.values():
+            for o in objs:
+                o.hide_render = True
     lamp = bpy.data.materials.get("BurblerClock_Lamp")
     if lamp:   # mid-flash, as in the module preview
         lamp.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 4.0
@@ -205,10 +292,14 @@ def render(built, out, hints):
 
 
 def main():
-    render(False, DOCS / "hud_mock_empty.png",
+    config = configuration()
+    steps = [c["hint"] for c in config.get("cables", [])]
+    n = len(steps)
+    render(False, 0, DOCS / "hud_mock_empty.png",
            "make a VCO and a VCA   ·   drag each into its outlined slot   ·   Esc  close")
-    render(True, DOCS / "hud_mock.png",
-           "turn BPM to set the tempo   ·   drag between jacks to patch   ·   Esc  close")
+    render(True, 0, DOCS / "hud_mock_ready.png", f"1 of {n}  ·  {steps[0]}   ·   Esc  close")
+    render(True, 1, DOCS / "hud_mock_step2.png", f"2 of {n}  ·  {steps[1]}   ·   Esc  close")
+    render(True, n, DOCS / "hud_mock.png", f"{config['patched_hint']}   ·   turn BPM to set the tempo   ·   Esc  close")
 
 
 if __name__ == "__main__":

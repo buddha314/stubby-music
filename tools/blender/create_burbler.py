@@ -83,6 +83,36 @@ def linear(hex_srgb):
     return tuple(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c)
 
 
+CABLES = [
+    {
+        "color": "verdigris",
+        "from": {
+            "place": "clock",
+            "port": "gate"
+        },
+        "to": {
+            "place": "volume",
+            "port": "trig"
+        },
+        "step": 1,
+        "hint": "take the green cable  ·  patch GATE to TRIG"
+    },
+    {
+        "color": "rust",
+        "from": {
+            "place": "vco",
+            "port": "out"
+        },
+        "to": {
+            "place": "volume",
+            "port": "in"
+        },
+        "step": 2,
+        "hint": "take the red cable  ·  patch OUT to IN"
+    }
+]
+
+
 class Burbler(ModuleKit):
     folder = "machines"
 
@@ -601,7 +631,14 @@ class Burbler(ModuleKit):
                           "title": "MUDPIT BURBLER", "interact": INTERACT,
                           "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p == "clock",
                                       **({"module": "burbler_clock"} if p == "clock" else {})}
-                                     for p, hp in RACK_HP.items()]},
+                                     for p, hp in RACK_HP.items()],
+                          # One spare cable per patch the voice needs, hanging on the comb. Each
+                          # names the jacks it joins, so the screen can guide the player: ghost
+                          # patches, pods pulsing in the cable's colour, one hint per step.
+                          "cables": CABLES,
+                          "patched_hint": "patched  ·  the burbler plays on every beat",
+                          "sound": "starts only when every cable here is patched; the stream's "
+                                   "notes start with it"},
             "lights": {
                 "Burbler_Glow": {"rest": 0.15, "peak": 1.0, "attack_s": 0.04, "decay_s": 0.45},
                 "Burbler_WispBell": {"rest": 0.0, "peak": 1.0, "attack_s": 0.1, "decay_s": 1.8},

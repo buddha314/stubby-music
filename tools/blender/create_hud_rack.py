@@ -16,6 +16,9 @@ Three generic assets, so racks can grow without new art:
                         recipe's width plus `rail_margin_m`; put the posts at
                         +-(width / 2 + post_inset_m). Modules mount on the rails with
                         their base centre at z = 0 and faceplates facing -Y.
+                        CableComb on PostR: every rack's small cable comb. Spare
+                        cables hang over its `Comb_<n>` slots, plugs down at
+                        `Comb_<n>_PlugA` / `_PlugB`, until the player takes one to patch.
   slot_outline_<hp>hp   one per common width: the outline of an empty slot, drawn at
                         the faceplate in the build-ghost colour. `Label` marks where
                         the slot's label goes.
@@ -42,6 +45,9 @@ RAIL = (0.05, 0.045)          # depth, height
 POST = (0.09, 0.32)           # width, depth
 RAIL_MARGIN = 0.12            # rails run past the modules by half this each side
 POST_INSET = 0.1              # post centres sit this far outside the modules
+COMB_SLOTS = 4                # cables a comb can hold
+COMB_PITCH = 0.06            # slot to slot
+COMB_Z = HEIGHT - 0.16        # the comb's top edge, on the right post
 HP_SIZES = (4, 6, 8, 10, 12, 14, 16)
 INSET = 0.075                 # outline edges sit inside the rails' shadow
 GHOST = "#ffd39a"             # the palette's build colour (Build: valid)
@@ -110,6 +116,19 @@ def build_rack_frame():
         kit.box(f"{name}Wood", (POST[0], POST[1], HEIGHT + 0.36), (0, 0, HEIGHT / 2 + 0.02), wood).parent = post
         for k, z in enumerate((0.02, HEIGHT - 0.02)):
             kit.box(f"{name}Strap{k}", (0.11, 0.34, 0.05), (0, 0, z), iron).parent = post
+    # The cable comb: a short iron bar out of the right post, teeth up; cables drape over
+    # the gaps between teeth with both plugs hanging down in front.
+    comb = kit.node_at("CableComb", (POST[0] / 2, -0.17, COMB_Z), bpy.data.objects["PostR"],
+                       slots=COMB_SLOTS, holds="spare patch cables")
+    length = COMB_PITCH * COMB_SLOTS + 0.02
+    kit.box("CombBar", (length, 0.035, 0.026), (length / 2, 0, -0.013), iron).parent = comb
+    for k in range(COMB_SLOTS + 1):
+        kit.box(f"CombTooth{k}", (0.011, 0.035, 0.04), (0.01 + k * COMB_PITCH, 0, 0.02), iron).parent = comb
+    for n in range(COMB_SLOTS):
+        x = 0.01 + (n + 0.5) * COMB_PITCH
+        slot = kit.node_at(f"Comb_{n}", (x, 0, 0.012), comb, slot=n)
+        kit.node_at(f"Comb_{n}_PlugA", (-0.008, -0.025, -0.46), slot, rest="plug tip down")
+        kit.node_at(f"Comb_{n}_PlugB", (0.008, -0.05, -0.54), slot, rest="plug tip down")
     # Preview only: lay it out for a 20 HP rack, as the burbler's.
     width = 20 * HP
     bpy.data.objects["RailBottom"].scale.x = bpy.data.objects["RailTop"].scale.x = 1.0
@@ -124,6 +143,12 @@ def build_rack_frame():
                          "scale_x_to": "rack width + rail_margin_m", "rail_margin_m": RAIL_MARGIN},
                "posts": {"nodes": ["PostL", "PostR"], "x": "+-(rack width / 2 + post_inset_m)",
                          "post_inset_m": POST_INSET},
+               "cable_comb": {"node": "CableComb", "on": "PostR", "slots": COMB_SLOTS,
+                              "slot_node": "Comb_{n}", "plug_rest": ["Comb_{n}_PlugA", "Comb_{n}_PlugB"],
+                              "stored_cable": "quadratic Bezier from PlugA's Cable_attach to PlugB's, its "
+                                              "control point raised so the curve passes over Comb_{n}",
+                              "fill": "the machine's configure.cables, in order; a cable taken to patch "
+                                      "leaves its slot, and unplugging both ends hangs it back"},
                "rack_width": "sum of the recipe's slot widths, HP x 0.0508 m",
                "mount": "module base centre at z = 0 on the rack's centre line, faceplate facing -Y",
                "screen": SCREEN}

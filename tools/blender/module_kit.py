@@ -7,7 +7,8 @@ user's open Blender (e.g. through MCP), where `finish` writes only the .blend.
 
 Game-facing parts are named empties with glTF extras: `Port_<port>` (cable sockets,
 local +Z out of the panel), `Knob_<param>` (rotates about local Z), and
-`Light_<light>` (emissive strength follows the rack's light value).
+`Light_<light>` (emissive strength follows the rack's light value), and
+`Jack_<port>_Halo` (a soft ring around each jack, pulsed while it waits for a cable).
 
 Light follows the style guide's luminescence rule: jellyfish and fairies, not LEDs. A
 light is a bright opaque core inside translucent shells (`soft_light`), a glyph is a
@@ -345,6 +346,12 @@ class ModuleKit:
         self.cylinder(f"Bushing_{port}", 0.024, 0.02, (0, front - 0.01, z), self.brass_mat, segments=24)
         self.cylinder(f"Hole_{port}", 0.0175, 0.022, (0, front - 0.0115, z), self.hole_mat, segments=24)
         self.socket(f"Port_{port}", (0, front - 0.022, z), port=port, direction=direction, signal="audio_or_cv")
+        # The patch pod's halo: a soft ring around the nut the game pulses while the jack
+        # waits for a cable, so the player sees where to patch.
+        halo = self.socket(f"Jack_{port}_Halo", (0, front - 0.004, z), port=port, pulse="until_patched",
+                           rest_strength=0.0, peak_strength=2.0, period_s=1.2)
+        self.ring(f"JackHalo_{port}", 0.041, 0.006, self.halo(), halo)
+        self.ring(f"JackHaloOuter_{port}", 0.044, 0.011, self.halo(), halo)
         mat = self.inverted_print_mat if on_patch else None
         self.label(f"{port.capitalize()}Label", text, (0, front - 0.0015, z + 0.065), mat=mat)
 

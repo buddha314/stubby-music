@@ -76,7 +76,9 @@ Use **O** for the recipe book/codex. **H** brings up the field recorder and puts
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
 milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
-Goals guide; they never end the game. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+Goals guide; they never end the game. The first chores (short-term goals met by a condition, not items) are
+**Build a heartbeat** (configure the burbler so it sounds), then **Water the tree** (lead
+its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`). WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it.
 
 ### The opening
@@ -385,7 +387,12 @@ equivalent of an iron ore node, so the player does not pick it up.
   square wave from a lightning bug makes a Square VCO), and a **volume** module (a VCA
   with a built-in envelope). The player **patches the voice with cables**: clock GATE →
   volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. Patch cables
-  are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`).
+  are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). Every rack has a small
+  **cable comb** holding the machine's spare cables (the burbler: two), and each jack's
+  halo (patch pod) **pulses** in its cable's colour while it waits for a cable. **Sound
+  begins only when every cable is patched**, and the screen guides it: ghost cables show
+  the patches still to make, and the hint line names each step. The stream's notes start
+  with the sound.
 - **Every machine gets a rack, and all racks share one implementation**: a common
   `Rack` plus a per-machine `RackMachine` trait. Each machine's configurator is data, a
   configuration recipe of slots by component kind and width; empty slots show labelled
