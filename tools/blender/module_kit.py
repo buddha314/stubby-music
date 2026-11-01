@@ -70,6 +70,22 @@ class ModuleKit:
             self.root[key] = value
         self.root["scale"] = f"eurorack_3u_{hp}hp_x10"
 
+    def export_lod(self, objects, level=1):
+        """Move `objects` out of the asset into `<asset_id>_LOD<level>.glb` beside it,
+        the file Jackdaw's LodGroup (and the game) loads as that level of detail."""
+        if bpy.app.background:
+            # The glTF exporter switches the window to the scene it exports, which
+            # segfaults while Blender's default scene is still around (5.3 alpha).
+            # `finish` drops the other scenes anyway; do it before this export too.
+            if bpy.context.window:
+                bpy.context.window.scene = self.scene
+            for other in list(bpy.data.scenes):
+                if other != self.scene:
+                    bpy.data.scenes.remove(other)
+            export_scene(self.scene, PROJECT / f"assets/models/{self.asset_id}_LOD{level}.glb", only=objects)
+        for obj in objects:
+            bpy.data.objects.remove(obj, do_unlink=True)
+
     # ------------------------------------------------------------ primitives
 
     def material(self, name, color, metallic=0.0, roughness=0.5, emission=None, strength=0.0):

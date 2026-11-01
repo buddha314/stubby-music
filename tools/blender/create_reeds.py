@@ -18,7 +18,11 @@ Game-facing nodes, per variant:
   Sway_<n>             groups of stalks under Standing, pivot at the ground: rock them
                        gently, each with its own phase
   Stubble              the cut stalks, shown while harvested and regrowing
-  LOD_Far              crossed strips (extras: lod = far), shown beyond `far_lod_m`
+  Far LOD              crossed strips in `reed_clump_<k>_LOD1.glb` beside it (Jackdaw's
+                       LodGroup convention), shown beyond `far_lod_m`
+
+The glb ships standing with Stubble at scale 0, so it shows correctly wherever it is
+placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_reeds.py
            (`-- 2` for one variant, `-- montage` for the lineup)
@@ -200,6 +204,9 @@ class ReedClump(Burbler):
                 child.hide_render = not visible
         show(standing, state != "harvested")
         show(stubble, state != "standing")
+        # Node scale carries the state into the glb: hidden render flags do not export.
+        stubble.scale = (1, 1, 1) if state != "standing" else (0, 0, 0)
+        standing.scale = (1, 1, 1) if state != "harvested" else (0, 0, 0)
         standing.scale.z = regrow if state == "regrowing" else 1.0
         for mat, dry, green in ((self.stalk, "stalk_dry", "stalk_green"), (self.blade, "blade_dry", "blade_green")):
             c = [x + (y - x) * greenness for x, y in zip(linear(COLORS[dry]), linear(COLORS[green]))]
@@ -209,7 +216,7 @@ class ReedClump(Burbler):
         standing, stubble = self.build_clump()
         lod = self.far_lod()
         near, far = self.triangles(), self.triangles(far=True)
-        lod.hide_render = True
+        self.export_lod([lod])
         self.set_state(standing, stubble, "standing")
         profile = {"id": self.asset_id, "model": f"models/{self.asset_id}.glb#Scene0", "kind": "resource",
                    "resource": "reed", "variant": self.index, "seed": self.seed,
@@ -248,9 +255,9 @@ def write_profile():
         "variants": [p["model"] for p in profiles],
         "per_instance": PER_INSTANCE,
         "states": {
-            "standing": "Standing shown, Stubble hidden",
-            "harvested": "Standing hidden, Stubble shown",
-            "regrowing": "both shown; Standing scale.z from regrow.from_scale to 1 over the interval (optional)",
+            "standing": "Standing scale 1, Stubble scale 0 (as shipped)",
+            "harvested": "Standing scale 0, Stubble scale 1",
+            "regrowing": "Stubble scale 1; Standing scale (1, 1, z), z from regrow.from_scale to 1 over the interval",
         },
         "regrow": {"from_scale": STUBBLE_HEIGHT / 1.4, "axis": "Z", "node": "Standing"},
         "greenness": {"value": "0 dry .. 1 green; follow the local water or light quality, as the game decides",
@@ -260,7 +267,8 @@ def write_profile():
         "sway": {"nodes": "Sway_<n>", "pivot": "ground", "max_deg": 4.0,
                  "phase": "per_instance.sway_phase plus the group index; follows the wind"},
         "interact": "Interact",
-        "far_lod": {"distance_m": FAR_LOD_M, "node": "LOD_Far"},
+        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/reed_clump_<k>_LOD1.glb",
+                    "note": "Jackdaw LodGroup level 1"},
         "triangles": {p["id"]: p["triangles"] for p in profiles},
     }
     (OUT / "asset.json").write_text(json.dumps(profile, indent=2) + "\n")

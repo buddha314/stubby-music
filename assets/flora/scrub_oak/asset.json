@@ -112,11 +112,12 @@
   "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
   "far_lod": {
     "distance_m": 45.0,
+    "file": "models/scrub_oak_<k>_LOD1.glb",
     "nodes": [
-      "LOD_Far_Bark",
-      "LOD_Far_Foliage"
+      "ScrubOak_LOD_Far_Bark",
+      "ScrubOak_LOD_Far_Foliage_Node"
     ],
-    "note": "LOD_Far_Foliage scales with leaf_out; buds, dead leaves and blooms are not drawn far"
+    "note": "Jackdaw LodGroup level 1. ScrubOak_LOD_Far_Foliage_Node ships at scale 0 and scales with leaf_out; buds, dead leaves and blooms are not drawn far"
   },
   "materials": {
     "ScrubOak_Leaf": "also jittered by per_instance.foliage_value_jitter",

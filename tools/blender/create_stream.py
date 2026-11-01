@@ -228,6 +228,7 @@ class Stream(Burbler):
         for obj in bpy.data.objects["Staff"].children:
             if "StaffHalo" in obj.name:
                 obj.hide_render = not stage["staff_halo"]
+                obj.scale = (1, 1, 1) if stage["staff_halo"] else (0, 0, 0)   # exports the stage too
 
     def preview_notes(self, pulse):
         """Not exported: the notes one burbler at PREVIEW_BPM would have on this segment."""
