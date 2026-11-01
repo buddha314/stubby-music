@@ -16,7 +16,7 @@ tracked in the owning change.
 - [ ] 2.3 First animal concept: a creature that grows from music, reads as bleak then bloomed
 - [ ] 2.4 Patch cable and jack plug: cable as a spline-friendly segment, plug matching the module jacks
 - [ ] 2.5 Envelope, VCA and Constant module assets on `module_kit`
-- [ ] 2.6 Desert props for the bleak opening: dead brush, bone-dry stumps, cracked-mud debris; each with a bloomed counterpart
+- [x] 2.6 Desert props for the bleak opening: dead brush, bone-dry stumps, cracked-mud debris; each with a bloomed counterpart (`tools/blender/create_desert_props.py`, `assets/props/`) (claimed: claude)
 - [ ] 2.7 Add new flora and props to the style sheet as they land
 - [ ] 2.8 Migrate module lights (VCO LEDs, glyphs, clock lamp) from LED-like to jellyfish/fairy luminescence per the style guide
 - [ ] 2.9 Mudpit burbler and its rack parts: tracked in `add-mudpit-burbler`

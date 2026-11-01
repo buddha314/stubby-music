@@ -1,0 +1,10 @@
+{
+  "id": "desert_brush_1",
+  "model": "models/desert_brush_1.glb#Scene0",
+  "kind": "prop",
+  "family": "brush",
+  "variant": 1,
+  "seed": 14,
+  "blooms": 26,
+  "triangles": 2872
+}

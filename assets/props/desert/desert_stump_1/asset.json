@@ -1,0 +1,10 @@
+{
+  "id": "desert_stump_1",
+  "model": "models/desert_stump_1.glb#Scene0",
+  "kind": "prop",
+  "family": "stump",
+  "variant": 1,
+  "seed": 19,
+  "blooms": 11,
+  "triangles": 1658
+}
