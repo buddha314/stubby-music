@@ -41,7 +41,7 @@ complete voice: a clock, a VCO and a volume control.
 
 ## Impact
 
-- Art: `tools/blender/create_burbler.py`, `assets/models/mudpit_burbler.glb`,
+- Art: `tools/blender/create_burbler.py`, `assets/models/machines/mudpit_burbler.glb`,
   `assets/machines/mudpit_burbler/`.
 - Game: a new mine definition (`stubby_recipes`), an interaction and UI screen, and
   an engine patch per configured burbler (`stubby_game`). Uses the existing Clock,

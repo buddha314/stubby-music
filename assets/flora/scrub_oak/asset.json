@@ -4,12 +4,12 @@
   "mine": "scrub_oak",
   "produces": "lightning_bug",
   "variants": [
-    "models/scrub_oak_0.glb#Scene0",
-    "models/scrub_oak_1.glb#Scene0",
-    "models/scrub_oak_2.glb#Scene0",
-    "models/scrub_oak_3.glb#Scene0",
-    "models/scrub_oak_4.glb#Scene0",
-    "models/scrub_oak_5.glb#Scene0"
+    "models/flora/scrub_oak/scrub_oak_0.glb#Scene0",
+    "models/flora/scrub_oak/scrub_oak_1.glb#Scene0",
+    "models/flora/scrub_oak/scrub_oak_2.glb#Scene0",
+    "models/flora/scrub_oak/scrub_oak_3.glb#Scene0",
+    "models/flora/scrub_oak/scrub_oak_4.glb#Scene0",
+    "models/flora/scrub_oak/scrub_oak_5.glb#Scene0"
   ],
   "per_instance": {
     "variant": "hash(world_seed, instance_id) % variant count",
@@ -112,7 +112,7 @@
   "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
   "far_lod": {
     "distance_m": 45.0,
-    "file": "models/scrub_oak_<k>_LOD1.glb",
+    "file": "models/flora/scrub_oak/scrub_oak_<k>_LOD1.glb",
     "nodes": [
       "ScrubOak_LOD_Far_Bark",
       "ScrubOak_LOD_Far_Foliage_Node"

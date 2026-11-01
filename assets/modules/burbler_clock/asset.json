@@ -1,6 +1,6 @@
 {
   "id": "burbler_clock",
-  "model": "models/burbler_clock.glb#Scene0",
+  "model": "models/modules/burbler_clock.glb#Scene0",
   "module_kind": "Clock",
   "scale": "eurorack_3u_8hp_x10",
   "size_metres": {

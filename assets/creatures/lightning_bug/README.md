@@ -4,8 +4,8 @@ The first creature asset is a white flash with an insect silhouette. Its body,
 wings and light are completely hidden between pulses. No idle glow or continuous sound is
 emitted. The flash attacks in 15 ms and decays to zero over a total of 180 ms.
 
-- Source: `assets-src/blender/lightning_bug.blend` (metres, isolated asset scene).
-- Runtime: `assets/models/lightning_bug.glb`, with a `white_flash` scale animation.
+- Source: `assets-src/blender/creatures/lightning_bug.blend` (metres, isolated asset scene).
+- Runtime: `assets/models/creatures/lightning_bug.glb`, with a `white_flash` scale animation.
 - Profile: `asset.json`. The game embeds this profile at build time.
 - Preview: `preview.png` shows the flash at its peak; scrub frames 1–19 in Blender
   to see it collapse to invisibility at 60 FPS.
@@ -19,7 +19,7 @@ Rebuild from the repository root:
 Or export an edited source:
 
 ```sh
-~/.local/bin/blender -b assets-src/blender/lightning_bug.blend -P tools/blender/export_gltf.py
+~/.local/bin/blender -b assets-src/blender/creatures/lightning_bug.blend -P tools/blender/export_gltf.py
 ```
 
 The opening includes three lightning bugs, each with its own RandomClock (IDs 1–3). `stubby_audio` runs

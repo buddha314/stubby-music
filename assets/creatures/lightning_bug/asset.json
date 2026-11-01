@@ -1,6 +1,6 @@
 {
   "id": "lightning_bug",
-  "model": "models/lightning_bug.glb#Scene0",
+  "model": "models/creatures/lightning_bug.glb#Scene0",
   "preview_animation": "white_flash",
   "colour_linear": [
     1.0,

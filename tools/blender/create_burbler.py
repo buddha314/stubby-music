@@ -38,7 +38,7 @@ import bpy
 from mathutils import Vector, noise
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from module_kit import HEIGHT, HP, PROJECT, ModuleKit, run  # noqa: E402
+from module_kit import HEIGHT, HP, PROJECT, ModuleKit, model_file, run  # noqa: E402
 
 POOL_RADIUS = 1.15
 POOL_Z = 0.12
@@ -74,6 +74,8 @@ def linear(hex_srgb):
 
 
 class Burbler(ModuleKit):
+    folder = "machines"
+
     def __init__(self, asset_id, kind="Burbler"):
         super().__init__(kind, asset_id, hp=sum(RACK_HP.values()))
         for key in ("module_kind", "scale"):
@@ -577,7 +579,7 @@ class Burbler(ModuleKit):
         nodes = sorted(o.name for o in self.collection.objects if o.type == "EMPTY")
         return {
             "id": self.asset_id,
-            "model": f"models/{self.asset_id}.glb#Scene0",
+            "model": f"{self.model_ref}#Scene0",
             "kind": "mine",
             "mine": "mudpit_burbler",
             "produces": "clock",
@@ -619,8 +621,7 @@ class Burbler(ModuleKit):
         self.scene.frame_set(20)
         # Looking up the stream from beyond its mouth: the stream runs up the frame.
         return self.finish(self.profile(), aim=(0.0, 0.5, 0.1), camera_location=(1.0, -7.0, 5.0),
-                           before_render=lambda: self.stage_preview(resolution=(900, 1200)),
-                           profile_dir="machines")
+                           before_render=lambda: self.stage_preview(resolution=(900, 1200)))
 
     def build_rig(self):
         self.size = {"width": 5.2, "depth": 4.4, "height": 2.4}
@@ -633,8 +634,7 @@ class Burbler(ModuleKit):
         self.rack()
         return self.finish(self.profile(), aim=(0.55, -0.2, 0.95), camera_location=(0.9, -9.2, 3.5),
                            before_render=lambda: self.stage_preview(
-                               {"Slot_clock": "clock_lamp", "Slot_vco": "square_vco"}),
-                           profile_dir="machines")
+                               {"Slot_clock": "clock_lamp", "Slot_vco": "square_vco"}))
 
     def stage_preview(self, slots=None, resolution=(1280, 800)):
         """Not exported: ground, light, bloom, and stand-in modules in any slots."""
@@ -643,7 +643,7 @@ class Burbler(ModuleKit):
         for slot, model in (slots or {}).items():
             before = set(bpy.data.objects)
             with bpy.context.temp_override(scene=self.scene, view_layer=self.scene.view_layers[0]):
-                bpy.ops.import_scene.gltf(filepath=str(PROJECT / f"assets/models/{model}.glb"))
+                bpy.ops.import_scene.gltf(filepath=str(model_file(model)))
             target = bpy.data.objects[slot].matrix_world
             for obj in set(bpy.data.objects) - before:
                 if obj.name not in self.scene.objects:

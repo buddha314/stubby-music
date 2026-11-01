@@ -1,6 +1,6 @@
 {
   "id": "saw_vco",
-  "model": "models/saw_vco.glb#Scene0",
+  "model": "models/modules/saw_vco.glb#Scene0",
   "module_kind": "SawVco",
   "waveform": "saw",
   "scale": "eurorack_3u_8hp_x10",

@@ -1,6 +1,6 @@
 {
   "id": "stream_segment",
-  "model": "models/stream_segment.glb#Scene0",
+  "model": "models/streams/stream_segment.glb#Scene0",
   "kind": "stream_segment",
   "length_m": 4.0,
   "flow_axis": "+X",

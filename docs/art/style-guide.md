@@ -184,8 +184,11 @@ and their glTF extras:
 | `Lamp` | a module's main lamp (the clock's flash) |
 | `Display`, `Display_d<n>_<seg>` | a seven-segment display and its segments |
 
-Files: `assets-src/blender/<id>.blend`, `assets/models/<id>.glb`,
-`assets/modules/<id>/{asset.json,preview.png,preview_far.png}`. Ids are `snake_case`.
+Files, grouped by category folder (`creatures`, `flora/<family>`, `machines`, `modules`,
+`props/<family>`, `streams`), the same folder in each tree:
+`assets-src/blender/<folder>/<id>.blend`, `assets/models/<folder>/<id>.glb` (with any
+`<id>_LOD1.glb` beside it), and `assets/<folder>/<id>/{asset.json,preview.png,preview_far.png}`.
+Ids are `snake_case`.
 
 ## Pipeline
 

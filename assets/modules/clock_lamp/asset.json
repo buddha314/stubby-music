@@ -1,6 +1,6 @@
 {
   "id": "clock_lamp",
-  "model": "models/clock_lamp.glb#Scene0",
+  "model": "models/modules/clock_lamp.glb#Scene0",
   "module_kind": "Clock",
   "scale": "eurorack_3u_8hp_x10",
   "size_metres": {

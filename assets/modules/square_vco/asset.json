@@ -1,6 +1,6 @@
 {
   "id": "square_vco",
-  "model": "models/square_vco.glb#Scene0",
+  "model": "models/modules/square_vco.glb#Scene0",
   "module_kind": "SquareVco",
   "waveform": "square",
   "scale": "eurorack_3u_8hp_x10",

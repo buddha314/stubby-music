@@ -5,7 +5,7 @@ before anything on top). Every module comes from a generator script in
 `tools/blender/`, which is the source of truth. The scripts share
 `tools/blender/module_kit.py` (materials, case, knobs, jacks, labels, glyph strokes,
 preview and export). It writes the `.blend` to
-`assets-src/blender/`, the `.glb` to `assets/models/`, and `asset.json`,
+`assets-src/blender/modules/`, the `.glb` to `assets/models/modules/`, and `asset.json`,
 `preview.png` and `preview_far.png` (the same view from about 12 m) here.
 
 ## Clock (`tools/blender/create_clock_lamp.py`)

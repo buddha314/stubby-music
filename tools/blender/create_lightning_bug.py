@@ -105,7 +105,7 @@ def build():
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - Medium High Contrast"
     scene.view_settings.exposure = -11
-    source = PROJECT / "assets-src/blender/lightning_bug.blend"
+    source = PROJECT / "assets-src/blender/creatures/lightning_bug.blend"
     source.parent.mkdir(parents=True, exist_ok=True)
     if bpy.app.background:
         # In a dedicated headless process, save a normal, directly openable project.
@@ -115,12 +115,12 @@ def build():
             if other != scene:
                 bpy.data.scenes.remove(other)
         bpy.ops.wm.save_as_mainfile(filepath=str(source), check_existing=False)
-        export_scene(scene, PROJECT / "assets/models/lightning_bug.glb")
+        export_scene(scene, PROJECT / "assets/models/creatures/lightning_bug.glb")
     else:
         # Never save the user's whole session or switch their viewport scene.
         # Export in a dedicated background process after this MCP build finishes.
         bpy.data.libraries.write(str(source), {scene}, fake_user=True)
-    return {"scene": scene.name, "source": str(source), "model": str(PROJECT / "assets/models/lightning_bug.glb"),
+    return {"scene": scene.name, "source": str(source), "model": str(PROJECT / "assets/models/creatures/lightning_bug.glb"),
             "animation": "white_flash", "objects": len(collection.objects)}
 
 

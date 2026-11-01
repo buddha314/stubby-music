@@ -22,7 +22,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from create_clock_lamp import DIGITS  # noqa: E402
-from module_kit import HEIGHT, HP, PROJECT  # noqa: E402
+from module_kit import HEIGHT, HP, PROJECT, model_file  # noqa: E402
 
 PLACES = [("burbler_clock", 8), ("square_vco", 8), ("volume", 4)]
 SHOW_BPM = " 90"
@@ -61,7 +61,7 @@ def main():
     x = -width / 2
     for asset, hp in PLACES:
         before = set(bpy.data.objects)
-        bpy.ops.import_scene.gltf(filepath=str(PROJECT / f"assets/models/{asset}.glb"))
+        bpy.ops.import_scene.gltf(filepath=str(model_file(asset)))
         for obj in set(bpy.data.objects) - before:
             if obj.parent is None:
                 obj.location.x += x + hp * HP / 2

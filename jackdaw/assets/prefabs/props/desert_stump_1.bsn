@@ -3,4 +3,4 @@ jackdaw::prefab::components::Prefab
 jackdaw::prefab::components::PrefabEntityId(0)
 bevy_transform::components::transform::Transform
 bevy_camera::visibility::Visibility::Visible
-jackdaw_scene_types::types::GltfSource { path: "models/desert_stump_1.glb", scene_index: 0 }
+jackdaw_scene_types::types::GltfSource { path: "models/props/desert/desert_stump_1.glb", scene_index: 0 }

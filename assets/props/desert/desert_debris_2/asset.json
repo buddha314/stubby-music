@@ -1,6 +1,6 @@
 {
   "id": "desert_debris_2",
-  "model": "models/desert_debris_2.glb#Scene0",
+  "model": "models/props/desert/desert_debris_2.glb#Scene0",
   "kind": "prop",
   "family": "debris",
   "variant": 2,

@@ -1,6 +1,6 @@
 {
   "id": "desert_stump_0",
-  "model": "models/desert_stump_0.glb#Scene0",
+  "model": "models/props/desert/desert_stump_0.glb#Scene0",
   "kind": "prop",
   "family": "stump",
   "variant": 0,

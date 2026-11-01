@@ -1,6 +1,6 @@
 {
   "id": "stream_hologram",
-  "model": "models/stream_hologram.glb#Scene0",
+  "model": "models/streams/stream_hologram.glb#Scene0",
   "kind": "stream_hologram",
   "previews": "stream_segment",
   "length_m": 4.0,

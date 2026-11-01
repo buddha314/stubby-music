@@ -37,7 +37,7 @@ from create_burbler import (  # noqa: E402
     BANK_SKIRT, BANK_WIDTH, CHANNEL_HALF_WIDTH, Burbler, linear,
 )
 from create_stream import BED_Z, LENGTH, WATER_Z, Stream  # noqa: E402
-from module_kit import PROJECT  # noqa: E402
+from module_kit import PROJECT, model_file  # noqa: E402
 
 NX = 24                  # the segment's length subdivisions, so both bend alike
 RIB_SPACING = 0.5        # cross-section ribs along the plan
@@ -60,6 +60,8 @@ LAYERS = {
 
 
 class StreamHologram(Stream):
+    folder = "streams"
+
     def __init__(self):
         Burbler.__init__(self, "stream_hologram", kind="StreamHologram")
         for key in ("mine", "produces"):
@@ -136,7 +138,7 @@ class StreamHologram(Stream):
     def profile(self):
         return {
             "id": self.asset_id,
-            "model": f"models/{self.asset_id}.glb#Scene0",
+            "model": f"{self.model_ref}#Scene0",
             "kind": "stream_hologram",
             "previews": "stream_segment",
             "length_m": LENGTH,
@@ -158,7 +160,7 @@ class StreamHologram(Stream):
         """Preview only: a laid, muddy stream_segment ending where the plan begins."""
         before = set(bpy.data.objects)
         with bpy.context.temp_override(scene=self.scene, view_layer=self.scene.view_layers[0]):
-            bpy.ops.import_scene.gltf(filepath=str(PROJECT / "assets/models/stream_segment.glb"))
+            bpy.ops.import_scene.gltf(filepath=str(model_file("stream_segment")))
         for obj in set(bpy.data.objects) - before:
             if obj.name not in self.scene.objects:
                 self.scene.collection.objects.link(obj)
@@ -177,8 +179,7 @@ class StreamHologram(Stream):
         def stage():
             self.stage_preview(resolution=(640, 860))
         aim, cam = (LENGTH * 0.55, 0, 0.0), (-2.9, -2.3, 3.0)
-        report = self.finish(self.profile(), aim=aim, camera_location=cam, before_render=stage,
-                             profile_dir="streams")
+        report = self.finish(self.profile(), aim=aim, camera_location=cam, before_render=stage)
         if bpy.app.background:
             out = PROJECT / "assets/streams/stream_hologram"
             tiles = []

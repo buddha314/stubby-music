@@ -1,6 +1,6 @@
 {
   "id": "triangle_vco",
-  "model": "models/triangle_vco.glb#Scene0",
+  "model": "models/modules/triangle_vco.glb#Scene0",
   "module_kind": "TriangleVco",
   "waveform": "triangle",
   "scale": "eurorack_3u_8hp_x10",

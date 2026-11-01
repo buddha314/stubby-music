@@ -67,12 +67,12 @@ stream segment). Drag one from the Project window into the viewport to place an
 instance; move, rotate and scale it like any entity. Prefabs are ordinary editor
 assets: open one to edit it, and every instance follows.
 
-**Making a prefab for a new asset:** drag its `.glb` from `models/` into the viewport,
+**Making a prefab for a new asset:** drag its `.glb` from `models/<category>/` into the viewport,
 add its components in the inspector (a `LodGroup` if it has a `_LOD1.glb`, and its
 game component, such as `MineNode`), then right-click it in the hierarchy and choose
 **Save as Prefab**, saving under `prefabs/<group>/`.
 
-- Each prefab names its model with a `GltfSource` (under `models/`, the shared
+- Each prefab names its model with a `GltfSource` (under `models/<category>/`, the shared
   runtime models). Oaks and reed clumps also carry a `LodGroup`: the model up close,
   the `<name>_LOD1.glb` beside it far off.
 - Models ship in their starting pose, set by node scale so they look right before any
