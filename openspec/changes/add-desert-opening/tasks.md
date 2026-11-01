@@ -19,7 +19,10 @@
 - [ ] 3.1 Seeded `StormIntensity` gust curve with guaranteed troughs every 20–40 s
 - [ ] 3.2 Volumetric fog bound to storm intensity
 - [ ] 3.3 Camera-following sand particles (`bevy_hanabi`, CPU fallback if incompatible)
-- [ ] 3.4 `Mood` resource, authored curves asset, eased mapping to grading/fog/light/storm
+- [ ] 3.4 `TimeOfDay` resource and cycle; load and hot-reload `assets/lighting/lighting_keys.json`; interpolate the time keys (wrapping night → dawn) into sun, ambient, fog, sky, exposure and emissive gain
+- [ ] 3.5 Light quality field: sparse 10 m cubic cells, value and target in [0, 1], eased; trilinear sample at a point; tests for locality and easing
+- [ ] 3.6 Blend bleak and bloomed keys by the light quality sampled at the camera; storm intensity falls as light quality rises
+- [ ] 3.7 Per-cell light quality in materials: ground tint and flora emission (the `accents` in the keys file)
 
 ## 4. Player and discovery
 
@@ -29,7 +32,7 @@
 - [ ] 4.4 Clock gating (not collectable before the square) and cue toward the square
 - [ ] 4.5 Clock light driven by audio tick display-time prediction; verify ≤10 ms offset
   Progress: the clock module's light flashes are scheduled from each tick's predicted instant (`add-module-asset-binding`, PR #17). Open: the ≤10 ms on-screen measurement (`add-module-asset-binding` 2.4).
-- [ ] 4.6 Mood increases on each discovery
+- [ ] 4.6 Plant and animal density sets light quality cell targets (first source: scrub oak, `add-scrub-oak-production`); growth itself comes from music played nearby, specified with the flora
 
 ## 5. Initial visual scene increment
 

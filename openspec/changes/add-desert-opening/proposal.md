@@ -9,8 +9,9 @@ asset pipeline every later visual depends on.
 
 - Seeded procedural generation of a cracked-mud desert flat, streamed in chunks.
 - A silent windstorm: GPU blowing sand, volumetric fog, and gusts that vary visibility.
-- A global mood value that moves the visuals from oppressive toward cheerful as the
-  player progresses.
+- A global day/night cycle, and a local **light quality** field (10 m cells, driven
+  mostly by plant density) that blends the look from bleak and hazy toward
+  solarpunk by day and lunarpunk by night.
 - Discovery flow: hear and find the Square VCO (the first sound in the game, audible only within range), then the Clock, which
   appears as a pulsating light synced to the audio clock.
 - A Blender → glTF export pipeline for props and modules.
@@ -19,7 +20,7 @@ asset pipeline every later visual depends on.
 
 ### New Capabilities
 - `world-generation`: seeded, chunked, deterministic terrain and placement of discoverables.
-- `atmosphere`: sandstorm, fog, lighting, and the mood progression that drives them.
+- `atmosphere`: sandstorm, fog, lighting, the day/night cycle, and the light-quality field that drives the bleak-to-bloomed look.
 - `discovery-progression`: the ordered discovery of the first modules and its effects.
 - `asset-pipeline`: Blender source files, headless glTF export, and runtime loading.
 
