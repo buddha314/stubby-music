@@ -1,0 +1,12 @@
+{
+  "id": "player_start_marker",
+  "model": "models/actors/player_start_marker.glb#Scene0",
+  "kind": "editor_marker",
+  "marks": "PlayerStart (add-opening-region 2.7)",
+  "hidden_in_game": true,
+  "origin": "on the ground at the footprint's centre",
+  "forward": "-Z in Bevy (the arrow); the player faces the marker's yaw",
+  "eye_height_m": 1.65,
+  "footprint_radius_m": 0.4,
+  "color": "#ffd39a"
+}
