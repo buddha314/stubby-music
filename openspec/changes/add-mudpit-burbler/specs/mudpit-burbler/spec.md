@@ -42,7 +42,7 @@ stop.
 ### Requirement: Three-place rack
 The configuration screen SHALL be a HUD over the game view, like a Satisfactory machine
 screen, showing a basic Eurorack with three places: the burbler's clock, built in and
-not removable; one VCO slot; and a volume module (a VCA with a built-in envelope), also
+not removable; one VCO slot; and a volume module (a VCA opened directly by TRIG while the gate is high, with no envelope, so the voice stays square), also
 built in. The VCO slot SHALL accept a VCO made from a square wave, the lightning bug's
 yield: the player inserts it, and one square wave leaves the inventory.
 

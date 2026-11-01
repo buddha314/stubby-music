@@ -22,4 +22,4 @@ Full mounting, patching, knob interaction and backdrop blur remain unfinished.
 Do not treat this initial view as completion of those tasks.
 - [ ] 2.10 Drag patching: drag a plug from the comb or a jack and drop it on a jack (now: click one jack, then the other)
 - [x] 2.11 (claimed: claude) Relevant-inventory strip on the rack screen (number keys 1-0, click) and the rest of the inventory; starter inventory of 10 patch cables (`start.json`); comb cables free
-- [ ] 2.12 Player patch cables: patch with an inventory cable between any compatible jacks (uses one; unplugging returns it)
+- [x] 2.12 (claimed: claude) Player patch cables: patch with an inventory cable between any compatible jacks, an output then an input (uses one; unplugging returns it). A comb cable is taken by clicking it (or dragging it onto a jack); its plugs and tube are children of their comb slot so they follow the fitted frame. Bird-nest cables (crafting) remain future work
