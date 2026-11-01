@@ -10,6 +10,9 @@ edition = "2024"
 # Selected by the recorded Jackdaw revision; Cargo.lock pins its matching engine dependencies.
 [workspace.dependencies]
 bevy = { version = "=0.20.0", default-features = false }
+# Physics (AGENTS.md stack). Mesh colliders for shapes primitives cannot fit (pool, banks, dug
+# channels); prefer primitives. debug-plugin draws colliders when enabled.
+avian3d = { version = "~0.8.0", default-features = false, features = ["3d", "parry-f32", "parallel", "collider-from-mesh", "debug-plugin"] }
 
 [profile.dev]
 debug = 0

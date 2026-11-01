@@ -15,6 +15,7 @@ stubby_audio = { path = "../stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]
+avian3d.workspace = true
 half = "~2.7.1"
 serde_json = "~1.0"
 png = "~0.18"
