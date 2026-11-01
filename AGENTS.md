@@ -393,10 +393,14 @@ equivalent of an iron ore node, so the player does not pick it up.
   begins only when every cable is patched**, and the screen guides it: ghost cables show
   the patches still to make, and the hint line names each step. The stream's notes start
   with the sound.
-- **Every machine gets a rack, and all racks share one implementation**: a common
-  `Rack` plus a per-machine `RackMachine` trait. Each machine's configurator is data, a
-  configuration recipe of slots by component kind and width; empty slots show labelled
-  outlines of what goes there (`add-rack-configurations`, `assets/hud/`).
+- **Every machine gets a rack, and all racks share one implementation** (`rack.rs`,
+  `machine_config.rs`): this is the general pattern. A machine is data, its profile's
+  `configure` block: places (fixed modules, or what an open place accepts from the
+  inventory), spare cables (colour, the two jacks, a hint), the normalled output. A
+  module is one entry in `rack.rs` (its engine parts, internal wiring, jack → engine
+  port). The engine patch is exactly the patched cables; completing them sends
+  `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,
+  design "The rack pattern as built").
 - **Mud streams carry the music.** Streams of mud flow from a burbler's outlet and
   **pulse at its BPM**, so a stream is the played sequence, laid out in space. The
   water is **sheet music**: a staff ribbon runs along it, its lines a fixed distance

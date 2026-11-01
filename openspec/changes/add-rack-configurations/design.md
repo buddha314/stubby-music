@@ -76,6 +76,28 @@ stretch), `slot_outline_<hp>hp` for 4–16 HP in the build-ghost colour, `slot_l
 its `KINDS`. Mocks: `docs/art/hud_mock_empty.png` (construction), `hud_mock.png`
 (built and patched), rendered from these assets and the burbler's configuration.
 
+## The rack pattern as built (2026-11-01)
+Every machine is configured the same way, so the rack is general and machines differ
+only in data:
+- **Machine data** (`assets/machines/<id>/asset.json`, `configure`): `places` (kind, HP,
+  fixed module or what an open place `accepts`: an inventory item that becomes a module),
+  `cables` (each spare cable's colour, the two jacks it joins, its step hint),
+  `normalled_output`, `patched_hint`.
+- **Module data** (`rack.rs`, `parts` / `internal` / `jack`): the engine modules a rack
+  module is built from, its internal connections, and which engine port each panel jack
+  is. A new module adds one entry to each.
+- **State** (`RackState` on the placed machine): what the player mounted, which cables
+  are patched. The engine patch is rebuilt from it on every change, and is exactly the
+  cables, so a half-patched voice is silent without special cases. Completing every
+  cable sends `MachineConfigured` once (the "Build a heartbeat" chore listens for it).
+- **Screen** (`machine_config.rs`): the rack's models drawn by a camera straight onto the
+  window (so mesh picking reaches the jacks), parts on its layer by `Propagate`, guidance
+  from the data: ghost cables, colour-tinted pulsing pods, the step hint.
+
+Interim choices, to revisit: patching is click a jack, then the other (drag comes with
+direct cable dragging); mounting is a button under the rack; the `RackMachine` trait of
+D-section tasks is replaced by data, since no machine has needed behaviour of its own.
+
 ## Open questions
 - Which component kinds come next, and their widths (VCF first, for the water rack).
 - Whether slots can accept more than one kind (for example any oscillator).

@@ -20,6 +20,7 @@ pub mod module_ids;
 pub mod prefab_presentation;
 mod prefab_review;
 pub mod prefabs;
+pub mod rack;
 pub mod pulse;
 pub mod resources;
 mod review;
@@ -48,6 +49,7 @@ impl Plugin for DesertPlugin {
             resources::ResourceRecipesPlugin,
             inventory_screen::InventoryScreenPlugin,
             hand::HandPlugin,
+            rack::RackPlugin,
             prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,
             review::ReplenishmentReviewPlugin,

@@ -71,6 +71,10 @@ INTERACT = {
 }
 RACK_HP = {"clock": 8, "vco": 8, "volume": 4}
 RACK_KIND = {"clock": "clock", "vco": "vco", "volume": "vca"}   # slot label per place
+# Built into the burbler's rack; the player adds only the VCO (designer, 2026-11-01).
+RACK_FIXED = {"clock": "burbler_clock", "volume": "volume"}
+# What the player can mount in an open place: an inventory item, consumed, becomes a module.
+RACK_ACCEPTS = {"vco": [{"item": "square_wave", "module": "square_vco"}]}
 RACK_WIDTH = sum(RACK_HP.values()) * HP
 RACK_BASE = 0.30  # module base height in the rack
 RACK_AT = (2.35, -0.25, 0.0)
@@ -629,9 +633,13 @@ class Burbler(ModuleKit):
             # This machine's rack configurator: its configuration recipe's slots.
             "configure": {"screen": "eurorack_hud", "hud": "models/hud/rack_frame.glb",
                           "title": "MUDPIT BURBLER", "interact": INTERACT,
-                          "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p == "clock",
-                                      **({"module": "burbler_clock"} if p == "clock" else {})}
+                          "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p in RACK_FIXED,
+                                      **({"module": RACK_FIXED[p]} if p in RACK_FIXED else {}),
+                                      **({"accepts": RACK_ACCEPTS[p]} if p in RACK_ACCEPTS else {})}
                                      for p, hp in RACK_HP.items()],
+                          # The voice's output, normalled to the burbler's outlet (the speakers
+                          # until streams carry it).
+                          "normalled_output": {"place": "volume", "port": "out"},
                           # One spare cable per patch the voice needs, hanging on the comb. Each
                           # names the jacks it joins, so the screen can guide the player: ghost
                           # patches, pods pulsing in the cable's colour, one hint per step.
