@@ -1,5 +1,28 @@
 # Flora
 
+## Reeds (`tools/blender/create_reeds.py`)
+
+![dry, harvested, regrowing, green](reeds/states.png)
+
+The stream's ingredient: **6 reeds build one stream segment**, and reeds then outline
+the segment's banks (`openspec/changes/add-reeds/`). A frequent renewable, as easy to
+get as leaves in Satisfactory. A clump
+is a stand of tall reeds with a few cattail heads. Harvesting it with E cuts it to
+stubble; it returns after the catalog's short replenishment interval, and the game may
+scale `Standing` up from stubble height to show it coming back. Greenness (0 dry,
+1 green) recolours stalks and blades.
+
+![variants](reeds/lineup.png)
+
+Four seeded variants (`models/reed_clump_<k>.glb`) plus per-instance scale, height,
+yaw, sway phase and greenness from the world seed and instance ID. Nodes: `Interact`,
+`Standing` (with `Sway_0..2`, pivots at the ground), `Stubble`, `LOD_Far` (crossed
+strips, beyond 30 m). 1.4k–1.7k triangles near, 6 far; contract in `reeds/asset.json`.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_reeds.py
+```
+
 ## Scrub oak (`tools/blender/create_scrub_oak.py`)
 
 ![dormant to full bloom](scrub_oak/growth.png)

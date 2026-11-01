@@ -1,0 +1,12 @@
+{
+  "id": "reed_clump_0",
+  "model": "models/reed_clump_0.glb#Scene0",
+  "kind": "resource",
+  "resource": "reed",
+  "variant": 0,
+  "seed": 5,
+  "triangles": {
+    "near": 1392,
+    "far": 6
+  }
+}

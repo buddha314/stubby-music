@@ -1,0 +1,92 @@
+{
+  "id": "reed_clump",
+  "kind": "resource",
+  "resource": "reed",
+  "renewable": "frequent: harvest cuts the clump to stubble; it returns after the catalog's replenishment interval (a short elapsed-time policy, add-resource-replenishment)",
+  "variants": [
+    "models/reed_clump_0.glb#Scene0",
+    "models/reed_clump_1.glb#Scene0",
+    "models/reed_clump_2.glb#Scene0",
+    "models/reed_clump_3.glb#Scene0"
+  ],
+  "per_instance": {
+    "variant": "hash(world_seed, instance_id) % variant count",
+    "yaw_deg": [
+      0,
+      360
+    ],
+    "scale": [
+      0.85,
+      1.2
+    ],
+    "height_stretch": [
+      0.85,
+      1.2
+    ],
+    "sway_phase": [
+      0,
+      1
+    ],
+    "greenness_jitter": 0.1
+  },
+  "states": {
+    "standing": "Standing shown, Stubble hidden",
+    "harvested": "Standing hidden, Stubble shown",
+    "regrowing": "both shown; Standing scale.z from regrow.from_scale to 1 over the interval (optional)"
+  },
+  "regrow": {
+    "from_scale": 0.08571428571428572,
+    "axis": "Z",
+    "node": "Standing"
+  },
+  "greenness": {
+    "value": "0 dry .. 1 green; follow the local water or light quality, as the game decides",
+    "colors": {
+      "stalk_dry": "#9a8460",
+      "stalk_green": "#5f6e34",
+      "blade_dry": "#8a7552",
+      "blade_green": "#4f5e2c",
+      "head": "#4a3222",
+      "cut": "#c2ab7c"
+    },
+    "materials": {
+      "ReedClump_Stalk": [
+        "stalk_dry",
+        "stalk_green"
+      ],
+      "ReedClump_Blade": [
+        "blade_dry",
+        "blade_green"
+      ]
+    }
+  },
+  "sway": {
+    "nodes": "Sway_<n>",
+    "pivot": "ground",
+    "max_deg": 4.0,
+    "phase": "per_instance.sway_phase plus the group index; follows the wind"
+  },
+  "interact": "Interact",
+  "far_lod": {
+    "distance_m": 30.0,
+    "node": "LOD_Far"
+  },
+  "triangles": {
+    "reed_clump_0": {
+      "near": 1392,
+      "far": 6
+    },
+    "reed_clump_1": {
+      "near": 1720,
+      "far": 6
+    },
+    "reed_clump_2": {
+      "near": 1684,
+      "far": 6
+    },
+    "reed_clump_3": {
+      "near": 1592,
+      "far": 6
+    }
+  }
+}
