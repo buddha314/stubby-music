@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ItemsFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ItemDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "items"
+  ],
+  "$defs": {
+    "ItemDefinition": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SignalUse"
+          }
+        },
+        "waveform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Waveform"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "SignalUse": {
+      "type": "string",
+      "enum": [
+        "vco",
+        "lfo",
+        "gate"
+      ]
+    },
+    "Waveform": {
+      "type": "string",
+      "enum": [
+        "square"
+      ]
+    }
+  }
+}

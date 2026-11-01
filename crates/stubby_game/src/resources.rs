@@ -165,7 +165,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
                 },
             ));
         });
-    match Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")) {
+    match stubby_recipes::shipped_catalog() {
         Ok(catalog) => commands.insert_resource(RecipeCatalog(catalog)),
         Err(error) => error!("Recipe catalog failed validation: {error}"),
     }
@@ -480,8 +480,7 @@ mod tests {
     use super::*;
     #[test]
     fn night_return_restores_existing_pickup_without_free_items() {
-        let catalog =
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap();
+        let catalog = stubby_recipes::shipped_catalog().unwrap();
         let mut player = PlayerInventory::default();
         let mut node = ResourceNode::default();
         let mut source = node.source_object();
@@ -531,13 +530,11 @@ mod tests {
     #[test]
     fn mine_objects_are_authorable_but_not_finite_collection_nodes() {
         let mut app = App::new();
-        app.insert_resource(RecipeCatalog(
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap(),
-        ))
-        .init_resource::<PlayerInventory>()
-        .init_resource::<ButtonInput<KeyCode>>()
-        .add_message::<ResourceCollected>()
-        .add_systems(Update, collect_nearby);
+        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
+            .init_resource::<PlayerInventory>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .add_message::<ResourceCollected>()
+            .add_systems(Update, collect_nearby);
         app.world_mut()
             .spawn((Camera3d::default(), Transform::default()));
         let tree = app
@@ -610,13 +607,11 @@ mod tests {
     #[test]
     fn holding_e_collects_new_resources_while_f_is_not_collect() {
         let mut app = App::new();
-        app.insert_resource(RecipeCatalog(
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap(),
-        ))
-        .init_resource::<PlayerInventory>()
-        .init_resource::<ButtonInput<KeyCode>>()
-        .add_message::<ResourceCollected>()
-        .add_systems(Update, collect_nearby);
+        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
+            .init_resource::<PlayerInventory>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .add_message::<ResourceCollected>()
+            .add_systems(Update, collect_nearby);
         let camera = app
             .world_mut()
             .spawn((Camera3d::default(), Transform::default()))
@@ -686,13 +681,11 @@ mod tests {
     #[test]
     fn interaction_collects_only_one_nearby_instance_and_cannot_duplicate_it() {
         let mut app = App::new();
-        app.insert_resource(RecipeCatalog(
-            Catalog::from_json(include_str!("../../../assets/recipes/catalog.json")).unwrap(),
-        ))
-        .init_resource::<PlayerInventory>()
-        .init_resource::<ButtonInput<KeyCode>>()
-        .add_message::<ResourceCollected>()
-        .add_systems(Update, collect_nearby);
+        app.insert_resource(RecipeCatalog(stubby_recipes::shipped_catalog().unwrap()))
+            .init_resource::<PlayerInventory>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .add_message::<ResourceCollected>()
+            .add_systems(Update, collect_nearby);
         app.world_mut()
             .spawn((Camera3d::default(), Transform::default()));
         app.world_mut().spawn((

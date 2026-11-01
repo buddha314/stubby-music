@@ -1,0 +1,12 @@
+{
+  "$schema": "schema/migrations.schema.json",
+  "format": 1,
+  "migrations": [
+    {
+      "id": "2026_11_resource_clock_to_clock_source",
+      "registry": "resources",
+      "from": "clock",
+      "to": "clock_source"
+    }
+  ]
+}

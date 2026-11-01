@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RecipesFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "recipes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RecipeDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "recipes"
+  ],
+  "$defs": {
+    "RecipeDefinition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Stack"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Stack"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "inputs",
+        "outputs"
+      ]
+    },
+    "Stack": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "quantity"
+      ]
+    }
+  }
+}

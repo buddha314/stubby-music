@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MinesFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "mines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MineDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "mines"
+  ],
+  "$defs": {
+    "MineDefinition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "produces_resource": {
+          "description": "A resource definition ID, not an item ID. Each produced bug is finite.",
+          "type": "string"
+        },
+        "productivity_factors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProductivityFactor"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "produces_resource"
+      ]
+    },
+    "ProductivityFactor": {
+      "type": "string",
+      "enum": [
+        "water_quality",
+        "light_quality"
+      ]
+    }
+  }
+}
