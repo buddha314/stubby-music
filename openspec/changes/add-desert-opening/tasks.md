@@ -29,7 +29,12 @@
 ## 4. Player and discovery
 
 - [ ] 4.1 Resolve camera question (first- vs third-person) in design.md
-- [ ] 4.2 Player controller and camera
+- [ ] 4.2 Player controller and camera: the long-term stack (user, 2026-11-01; see `docs/research/player-controller-and-physics.md`)
+- [ ] 4.2a Physics: add `avian3d` 0.8 (Jackdaw's physics engine); the terrain as a heightfield collider from the same seeded generator as its mesh
+- [ ] 4.2b Player on `bevy-tnua` 0.33 + `bevy-tnua-avian3d` 0.13: capsule body, walk/sprint/jump/crouch, camera at 1.65 m (1.0 m crouched), our mouse look; replace the hand-written movement in `controls.rs`, keeping its keys, speeds and tests as the acceptance bar
+- [ ] 4.2c Input on `bevy_enhanced_input` 0.27: actions for movement and the AGENTS.md control map (E, O, Q, F, Tab, B, WASD, Shift, Space, C), a gameplay context and a rack-screen context (cursor free, movement off)
+- [ ] 4.2d Jackdaw physics module: `[modules] physics = true` in `jackdaw/jackdaw.toml` with `jackdaw_avian_integration`; static colliders (`AvianCollider`, `RigidBody::Static`) on the prefabs the player must not walk through: oak trunks, the burbler's banks, stumps, modules. Reeds, brush, debris and bugs get none. No editor change
+- [ ] 4.2e Debug camera: Bevy's built-in `free_camera` (`bevy_camera_controller` feature), dev builds only
 - [ ] 4.3 Square emission: spatialized, audible only within 35 m, follows camera yaw; visual ripple as fallback; discovery adds it to the patch without a gap
 - [ ] 4.4 Clock gating (not collectable before the square) and cue toward the square
 - [ ] 4.5 Clock light driven by audio tick display-time prediction; verify ≤10 ms offset
