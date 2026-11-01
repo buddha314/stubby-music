@@ -56,10 +56,21 @@ first, so keys reach the game rather than the editor.
 
 ## Placing world assets
 
-Every world asset has a prefab under `assets/prefabs/`: `flora/` (scrub oaks, reed
-clumps), `props/` (desert brush, stumps, mud debris), `machines/` (the mudpit
-burbler) and `streams/` (a stream segment). Drag one from the Project window into
-the viewport to place an instance; move, rotate and scale it like any entity.
+Levels are built from **prefabs**, the usual editor workflow: the art pipeline
+delivers a model (`.glb`, plus a `_LOD1.glb` where it has a far level), a prefab wraps
+it with its gameplay components, and level design places prefabs.
+
+The prefabs live under `assets/prefabs/`: `flora/` (scrub oaks, reed clumps),
+`props/` (desert brush, stumps, mud debris), `creatures/` (the lightning bug),
+`modules/` (VCOs, clock lamp), `machines/` (the mudpit burbler) and `streams/` (a
+stream segment). Drag one from the Project window into the viewport to place an
+instance; move, rotate and scale it like any entity. Prefabs are ordinary editor
+assets: open one to edit it, and every instance follows.
+
+**Making a prefab for a new asset:** drag its `.glb` from `models/` into the viewport,
+add its components in the inspector (a `LodGroup` if it has a `_LOD1.glb`, and its
+game component, such as `MineNode`), then right-click it in the hierarchy and choose
+**Save as Prefab**, saving under `prefabs/<group>/`.
 
 - Each prefab names its model with a `GltfSource` (under `models/`, the shared
   runtime models). Oaks and reed clumps also carry a `LodGroup`: the model up close,
@@ -71,10 +82,9 @@ the viewport to place an instance; move, rotate and scale it like any entity.
 - Reed clumps and the burbler place as models for now; their game components arrive
   with the catalog work in `add-reeds` and `add-mudpit-burbler`.
 
-The prefabs are generated from the asset profiles; after adding or changing an asset,
-run `python3 tools/jackdaw_prefabs.py`. `cargo test --test prefabs` (from this folder)
-loads every prefab the way the editor does and fails on an unknown type, a missing
-model or a missing LOD level.
+`cargo test --test prefabs` (from this folder) loads every prefab the way the editor
+does and fails on an unknown type, a missing model or a missing LOD level. Run it
+after adding or editing prefabs.
 
 ## Live listen
 
