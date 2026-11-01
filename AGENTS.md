@@ -197,10 +197,12 @@ testable by asserting identical output for identical seeds.
 ## Blender asset pipeline
 
 - Blender is installed at `~/.local/bin/blender`.
-- Sources live in `assets-src/blender/`. Export to **glTF binary (`.glb`)** into
-  `assets/models/`. Bevy loads `.glb`, never `.blend`.
+- Sources live in `assets-src/blender/<category>/`. Export to **glTF binary (`.glb`)**
+  into the same folder under `assets/models/` (`creatures`, `flora/<family>`,
+  `machines`, `modules`, `props/<family>`, `streams`), each far LOD beside its model.
+  Bevy loads `.glb`, never `.blend`.
 - Export headlessly and reproducibly with a script, not by hand:
-  `blender -b assets-src/blender/<file>.blend -P tools/blender/export_gltf.py`.
+  `blender -b assets-src/blender/<category>/<file>.blend -P tools/blender/export_gltf.py`.
 - Apply transforms before export. Use metres, +Y up in Bevy (the glTF exporter
   converts from Blender's +Z up).
 - Keep the stylised look in materials Bevy can actually render: PBR base

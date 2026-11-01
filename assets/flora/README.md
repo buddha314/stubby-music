@@ -17,7 +17,7 @@ scale `Standing` up from stubble height to show it coming back. Greenness (0 dry
 
 ![variants](reeds/lineup.png)
 
-Four seeded variants (`models/reed_clump_<k>.glb`) plus per-instance scale, height,
+Four seeded variants (`models/flora/reeds/reed_clump_<k>.glb`) plus per-instance scale, height,
 yaw, sway phase and greenness from the world seed and instance ID. Nodes: `Interact`,
 `Standing` (with `Sway_0..2`, pivots at the ground), `Stubble` (ships at scale 0), and
 the far LOD in `reed_clump_<k>_LOD1.glb` (crossed strips, beyond 30 m). 1.4k–1.7k triangles near, 6 far; contract in `reeds/asset.json`.
@@ -46,7 +46,7 @@ Two layers, so no two trees in the world match:
 
 1. **Variants.** The generator grows each tree from a seed: stem count and lean,
    branch splits, angles and lengths, leaf clusters, dry leaves, bloom positions and
-   their opening order. Six seeds are exported as `models/scrub_oak_<k>.glb`.
+   their opening order. Six seeds are exported as `models/flora/scrub_oak/scrub_oak_<k>.glb`.
 2. **Per instance (game).** Each placed tree picks a variant with
    `hash(world_seed, instance_id) % 6` and draws scale, height stretch, yaw, lean,
    sway phase, leaf value jitter and bloom tint from `per_instance` in

@@ -26,7 +26,7 @@ placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_reeds.py
            (`-- 2` for one variant, `-- montage` for the lineup)
-Writes assets/models/reed_clump_<k>.glb and assets/flora/reeds/.
+Writes assets/models/flora/reeds/reed_clump_<k>(_LOD1).glb and assets/flora/reeds/.
 """
 from pathlib import Path
 import json
@@ -62,6 +62,8 @@ PER_INSTANCE = {
 
 
 class ReedClump(Burbler):
+    folder = "flora/reeds"
+
     def __init__(self, index):
         self.index, self.seed = index, VARIANTS[index]
         Burbler.__init__(self, f"reed_clump_{index}", kind="ReedClump")
@@ -218,14 +220,13 @@ class ReedClump(Burbler):
         near, far = self.triangles(), self.triangles(far=True)
         self.export_lod([lod])
         self.set_state(standing, stubble, "standing")
-        profile = {"id": self.asset_id, "model": f"models/{self.asset_id}.glb#Scene0", "kind": "resource",
+        profile = {"id": self.asset_id, "model": f"{self.model_ref}#Scene0", "kind": "resource",
                    "resource": "reed", "variant": self.index, "seed": self.seed,
                    "triangles": {"near": near, "far": far}}
 
         def stage():
             self.stage_preview(resolution=(420, 560))
-        report = self.finish(profile, aim=(0, 0, 0.7), camera_location=(1.4, -3.6, 1.3), before_render=stage,
-                             profile_dir="flora/reeds")
+        report = self.finish(profile, aim=(0, 0, 0.7), camera_location=(1.4, -3.6, 1.3), before_render=stage)
         if bpy.app.background:
             out = OUT / self.asset_id
             for name, args in PREVIEWS.items():
@@ -267,7 +268,7 @@ def write_profile():
         "sway": {"nodes": "Sway_<n>", "pivot": "ground", "max_deg": 4.0,
                  "phase": "per_instance.sway_phase plus the group index; follows the wind"},
         "interact": "Interact",
-        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/reed_clump_<k>_LOD1.glb",
+        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/flora/reeds/reed_clump_<k>_LOD1.glb",
                     "note": "Jackdaw LodGroup level 1"},
         "triangles": {p["id"]: p["triangles"] for p in profiles},
     }

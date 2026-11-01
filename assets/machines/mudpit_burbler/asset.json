@@ -1,6 +1,6 @@
 {
   "id": "mudpit_burbler",
-  "model": "models/mudpit_burbler.glb#Scene0",
+  "model": "models/machines/mudpit_burbler.glb#Scene0",
   "kind": "mine",
   "mine": "mudpit_burbler",
   "produces": "clock",

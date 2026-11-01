@@ -72,6 +72,8 @@ CLARITY = [
 
 
 class Stream(Burbler):
+    folder = "streams"
+
     def __init__(self):
         super().__init__("stream_segment", kind="Stream")
         for key in ("mine", "produces"):
@@ -245,7 +247,7 @@ class Stream(Burbler):
     def profile(self):
         return {
             "id": self.asset_id,
-            "model": f"models/{self.asset_id}.glb#Scene0",
+            "model": f"{self.model_ref}#Scene0",
             "kind": "stream_segment",
             "length_m": LENGTH,
             "flow_axis": "+X",
@@ -288,7 +290,7 @@ class Stream(Burbler):
             self.stage_preview(resolution=(640, 860))
             self.preview_notes(pulse)
         report = self.finish(self.profile(), aim=(LENGTH * 0.55, 0, 0.0), camera_location=(-2.9, -2.3, 3.0),
-                             before_render=stage_preview, profile_dir="streams")
+                             before_render=stage_preview)
         if bpy.app.background:  # also render each clarity stage, then tile them
             out = PROJECT / "assets/streams/stream_segment"
             tiles = []

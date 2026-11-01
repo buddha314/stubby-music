@@ -37,7 +37,20 @@ def fit(points, cycles, centre_u, centre_z, half, amp):
     return [(centre_u + half * (2 * t / cycles - 1), centre_z + amp * v) for t, v in points]
 
 
+def model_file(asset_id):
+    """The exported model for `asset_id`, wherever its category folder puts it."""
+    found = sorted((PROJECT / "assets/models").rglob(f"{asset_id}.glb"))
+    if not found:
+        raise FileNotFoundError(f"no assets/models/**/{asset_id}.glb")
+    return found[0]
+
+
 class ModuleKit:
+    # Category folder shared by the model (assets/models/<folder>/), its Blender
+    # source (assets-src/blender/<folder>/) and its profile and previews
+    # (assets/<folder>/<asset_id>/). LODs sit beside their model.
+    folder = "modules"
+
     def __init__(self, kind, asset_id, hp=8, **root_props):
         self.kind = kind  # also the name prefix, e.g. "SquareVco"
         self.asset_id = asset_id
@@ -82,7 +95,8 @@ class ModuleKit:
             for other in list(bpy.data.scenes):
                 if other != self.scene:
                     bpy.data.scenes.remove(other)
-            export_scene(self.scene, PROJECT / f"assets/models/{self.asset_id}_LOD{level}.glb", only=objects)
+            export_scene(self.scene, PROJECT / f"assets/models/{self.folder}/{self.asset_id}_LOD{level}.glb",
+                         only=objects)
         for obj in objects:
             bpy.data.objects.remove(obj, do_unlink=True)
 
@@ -281,13 +295,17 @@ class ModuleKit:
 
     # ------------------------------------------------------------ output
 
-    def finish(self, profile, aim=(0, 0, 0.66), camera_location=(1.05, -2.15, 1.25), before_render=None,
-               profile_dir="modules"):
+    @property
+    def model_ref(self):
+        """The model's path as the game and Jackdaw load it (relative to assets/)."""
+        return f"models/{self.folder}/{self.asset_id}.glb"
+
+    def finish(self, profile, aim=(0, 0, 0.66), camera_location=(1.05, -2.15, 1.25), before_render=None):
         """Preview lighting and camera, then save the .blend, export the .glb, write
         asset.json, and render preview.png and preview_far.png (about 12 m away).
         `before_render` runs after export, to stage the preview without changing the
-        exported model (e.g. showing one reading on a display). `profile_dir` is the folder
-        under assets/ for the profile and previews: "modules", or "machines" for mines."""
+        exported model (e.g. showing one reading on a display). Everything lands under the
+        kit's `folder`."""
         scene = self.scene
         world = bpy.data.worlds.new(f"{self.kind}_PreviewWorld")
         world.use_nodes = True
@@ -314,9 +332,10 @@ class ModuleKit:
         scene.view_settings.view_transform = "AgX"
         scene.view_settings.look = "AgX - Medium High Contrast"
 
-        source = PROJECT / f"assets-src/blender/{self.asset_id}.blend"
-        model = PROJECT / f"assets/models/{self.asset_id}.glb"
-        preview = PROJECT / f"assets/{profile_dir}/{self.asset_id}/preview.png"
+        source = PROJECT / f"assets-src/blender/{self.folder}/{self.asset_id}.blend"
+        model = PROJECT / f"assets/models/{self.folder}/{self.asset_id}.glb"
+        preview = PROJECT / f"assets/{self.folder}/{self.asset_id}/preview.png"
+        model.parent.mkdir(parents=True, exist_ok=True)
         source.parent.mkdir(parents=True, exist_ok=True)
         if bpy.app.background:
             if bpy.context.window:
@@ -346,7 +365,7 @@ class ModuleKit:
     def base_profile(self, extra_height=0.0):
         return {
             "id": self.asset_id,
-            "model": f"models/{self.asset_id}.glb#Scene0",
+            "model": f"{self.model_ref}#Scene0",
             "module_kind": self.kind,
             "scale": self.root["scale"],
             "size_metres": {"width": self.width, "height": HEIGHT + extra_height,

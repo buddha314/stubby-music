@@ -43,7 +43,7 @@ is placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_scrub_oak.py
            (or `-- 3` for one variant; `-- montage` rebuilds the lineup only)
-Writes assets/models/scrub_oak_<k>.glb and assets/flora/scrub_oak/ (profiles,
+Writes assets/models/flora/scrub_oak/scrub_oak_<k>(_LOD1).glb and assets/flora/scrub_oak/ (profiles,
 previews per variant and stage, and the lineup).
 """
 from pathlib import Path
@@ -95,6 +95,8 @@ PER_INSTANCE = {
 
 
 class ScrubOak(Burbler):
+    folder = "flora/scrub_oak"
+
     def __init__(self, index):
         self.index, self.seed = index, VARIANTS[index]
         Burbler.__init__(self, f"scrub_oak_{index}", kind="ScrubOak")
@@ -319,7 +321,7 @@ class ScrubOak(Burbler):
     def profile(self, near, far):
         return {
             "id": self.asset_id,
-            "model": f"models/{self.asset_id}.glb#Scene0",
+            "model": f"{self.model_ref}#Scene0",
             "kind": "mine",
             "mine": "scrub_oak",
             "produces": "lightning_bug",
@@ -347,7 +349,7 @@ class ScrubOak(Burbler):
         def stage():
             self.stage_preview(resolution=(520, 720))
         report = self.finish(self.profile(near, far), aim=(0, 0, 1.35), camera_location=(2.7, -8.8, 2.5),
-                             before_render=stage, profile_dir="flora/scrub_oak")
+                             before_render=stage)
         if bpy.app.background:
             out = OUT / self.asset_id
             for name, g in STAGES.items():
@@ -404,7 +406,7 @@ def write_profile():
         "sway": {"nodes": "Limb_<n>", "pivot": "node origin (stem base)", "max_deg": 2.5,
                  "phase": "per_instance.sway_phase, plus the limb index"},
         "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
-        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/scrub_oak_<k>_LOD1.glb",
+        "far_lod": {"distance_m": FAR_LOD_M, "file": "models/flora/scrub_oak/scrub_oak_<k>_LOD1.glb",
                     "nodes": ["ScrubOak_LOD_Far_Bark", "ScrubOak_LOD_Far_Foliage_Node"],
                     "note": "Jackdaw LodGroup level 1. ScrubOak_LOD_Far_Foliage_Node ships at scale 0 and scales "
                             "with leaf_out; buds, dead leaves and blooms are not drawn far"},

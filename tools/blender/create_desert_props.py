@@ -21,7 +21,7 @@ Variation: seeded variants here; per-instance scale, yaw and tilt in the game.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_desert_props.py
            (`-- brush 1` for one prop, `-- montage` for the sheets)
-Writes assets/models/desert_<family>_<k>.glb and assets/props/desert/.
+Writes assets/models/props/desert/desert_<family>_<k>.glb and assets/props/desert/.
 """
 from pathlib import Path
 import json
@@ -62,6 +62,8 @@ def ramp(x, a, b):
 
 
 class Prop(Burbler):
+    folder = "props/desert"
+
     def __init__(self, family, index):
         self.family, self.index = family, index
         self.seed = FAMILIES[family][index]
@@ -289,14 +291,13 @@ class Prop(Burbler):
         aim, cam = getattr(self, self.family)()
         tris = self.triangles()
         self.set_bloom(0.0)   # ships bleak
-        profile = {"id": self.asset_id, "model": f"models/{self.asset_id}.glb#Scene0", "kind": "prop",
+        profile = {"id": self.asset_id, "model": f"{self.model_ref}#Scene0", "kind": "prop",
                    "family": self.family, "variant": self.index, "seed": self.seed,
                    "blooms": len(self.blooms), "triangles": tris}
 
         def stage():
             self.stage_preview(resolution=(420, 420))
-        report = self.finish(profile, aim=aim, camera_location=cam, before_render=stage,
-                             profile_dir="props/desert")
+        report = self.finish(profile, aim=aim, camera_location=cam, before_render=stage)
         if bpy.app.background:
             for name, b in (("bleak", 0.0), ("bloomed", 1.0)):
                 self.set_bloom(b)

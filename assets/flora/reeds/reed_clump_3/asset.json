@@ -1,6 +1,6 @@
 {
   "id": "reed_clump_3",
-  "model": "models/reed_clump_3.glb#Scene0",
+  "model": "models/flora/reeds/reed_clump_3.glb#Scene0",
   "kind": "resource",
   "resource": "reed",
   "variant": 3,

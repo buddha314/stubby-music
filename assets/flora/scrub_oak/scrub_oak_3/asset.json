@@ -1,6 +1,6 @@
 {
   "id": "scrub_oak_3",
-  "model": "models/scrub_oak_3.glb#Scene0",
+  "model": "models/flora/scrub_oak/scrub_oak_3.glb#Scene0",
   "kind": "mine",
   "mine": "scrub_oak",
   "produces": "lightning_bug",

@@ -1,6 +1,6 @@
 {
   "id": "desert_brush_2",
-  "model": "models/desert_brush_2.glb#Scene0",
+  "model": "models/props/desert/desert_brush_2.glb#Scene0",
   "kind": "prop",
   "family": "brush",
   "variant": 2,

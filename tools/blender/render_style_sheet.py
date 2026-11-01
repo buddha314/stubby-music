@@ -22,6 +22,8 @@ import bpy
 from mathutils import Vector
 
 PROJECT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT / "tools/blender"))
+from module_kit import model_file  # noqa: E402
 KEYS = json.loads((PROJECT / "assets/lighting/lighting_keys.json").read_text())
 MODELS = ["square_vco", "saw_vco", "triangle_vco", "sine_vco", "clock_lamp"]
 SPACING = 0.85
@@ -46,7 +48,7 @@ def build_lineup(scene):
     for i, name in enumerate(MODELS):
         before = set(bpy.data.objects)
         with bpy.context.temp_override(scene=scene, view_layer=scene.view_layers[0]):
-            bpy.ops.import_scene.gltf(filepath=str(PROJECT / f"assets/models/{name}.glb"))
+            bpy.ops.import_scene.gltf(filepath=str(model_file(name)))
         x = (i - (len(MODELS) - 1) / 2) * SPACING
         for obj in set(bpy.data.objects) - before:
             if obj.name not in scene.objects:

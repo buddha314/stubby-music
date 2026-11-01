@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 fn model(name: &str) -> gltf::Gltf {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../assets/models")
+        .join("../../assets/models/modules")
         .join(name);
     gltf::Gltf::open(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
 }

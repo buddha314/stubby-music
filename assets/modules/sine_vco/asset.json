@@ -1,6 +1,6 @@
 {
   "id": "sine_vco",
-  "model": "models/sine_vco.glb#Scene0",
+  "model": "models/modules/sine_vco.glb#Scene0",
   "module_kind": "SineVco",
   "waveform": "sine",
   "scale": "eurorack_3u_8hp_x10",

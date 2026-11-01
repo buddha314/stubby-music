@@ -1,6 +1,6 @@
 {
   "id": "volume",
-  "model": "models/volume.glb#Scene0",
+  "model": "models/modules/volume.glb#Scene0",
   "module_kind": "Vca",
   "scale": "eurorack_3u_4hp_x10",
   "size_metres": {

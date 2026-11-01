@@ -4,10 +4,10 @@
   "resource": "reed",
   "renewable": "frequent: harvest cuts the clump to stubble; it returns after the catalog's replenishment interval (a short elapsed-time policy, add-resource-replenishment)",
   "variants": [
-    "models/reed_clump_0.glb#Scene0",
-    "models/reed_clump_1.glb#Scene0",
-    "models/reed_clump_2.glb#Scene0",
-    "models/reed_clump_3.glb#Scene0"
+    "models/flora/reeds/reed_clump_0.glb#Scene0",
+    "models/flora/reeds/reed_clump_1.glb#Scene0",
+    "models/flora/reeds/reed_clump_2.glb#Scene0",
+    "models/flora/reeds/reed_clump_3.glb#Scene0"
   ],
   "per_instance": {
     "variant": "hash(world_seed, instance_id) % variant count",
@@ -69,7 +69,7 @@
   "interact": "Interact",
   "far_lod": {
     "distance_m": 30.0,
-    "file": "models/reed_clump_<k>_LOD1.glb",
+    "file": "models/flora/reeds/reed_clump_<k>_LOD1.glb",
     "note": "Jackdaw LodGroup level 1"
   },
   "triangles": {
