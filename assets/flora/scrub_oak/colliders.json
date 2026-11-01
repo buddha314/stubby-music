@@ -1,0 +1,95 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/flora/scrub_oak/scrub_oak_0.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.858,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/flora/scrub_oak/scrub_oak_1.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.933,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/flora/scrub_oak/scrub_oak_2.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 1.148,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/flora/scrub_oak/scrub_oak_3.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.989,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/flora/scrub_oak/scrub_oak_4.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.98,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "models/flora/scrub_oak/scrub_oak_5.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.679,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

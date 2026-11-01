@@ -1,0 +1,9 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "models/streams/stream_segment.glb": {
+      "walk_through": true,
+      "why": "low banks under the step height; the player wades across"
+    }
+  }
+}
