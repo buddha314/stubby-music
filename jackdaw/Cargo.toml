@@ -12,6 +12,7 @@ dev = ["bevy/dynamic_linking"]
 embedded_recipes_plugin = []
 
 [dependencies]
+jackdaw_prefab = { path = "../../jackdaw/crates/jackdaw_prefab" }
 stubby_recipes = { path = "../crates/stubby_recipes" }
 stubby_audio = { path = "../crates/stubby_audio" }
 serde = { version = "~1.0", features = ["derive"] }
@@ -28,4 +29,3 @@ png = "~0.18"
 gltf = "~1.4"
 tempfile = "~3.27"
 jackdaw_bsn = { path = "../../jackdaw/crates/jackdaw_bsn" }
-jackdaw_prefab = { path = "../../jackdaw/crates/jackdaw_prefab" }
