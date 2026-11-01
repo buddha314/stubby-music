@@ -1,0 +1,76 @@
+{
+  "id": "stream_segment",
+  "model": "models/stream_segment.glb#Scene0",
+  "kind": "stream_segment",
+  "length_m": 4.0,
+  "flow_axis": "+X",
+  "width_m": 1.0,
+  "size_metres": {
+    "length": 4.0,
+    "width": 3.16,
+    "height": 0.36
+  },
+  "tileable": true,
+  "bendable": {
+    "length_subdivisions": 24
+  },
+  "ports": [
+    {
+      "node": "Port_in",
+      "direction": "in",
+      "halo": "Port_in_Halo"
+    },
+    {
+      "node": "Port_out",
+      "direction": "out",
+      "halo": "Port_out_Halo"
+    }
+  ],
+  "pulse": {
+    "node": "Pulse_0",
+    "travel_axis": "+X",
+    "emit": "one per clock tick at the stream's source",
+    "flow_speed_mps": 1.5,
+    "band": "Pulse_0_Band",
+    "note": "Pulse_0_Note",
+    "note_from_clarity": 0.5
+  },
+  "clarity": {
+    "material": "Stream_Water",
+    "stages": [
+      {
+        "at": 0.0,
+        "name": "muddy",
+        "base_color": "#2a1d13",
+        "roughness": 0.5,
+        "alpha": 0.98
+      },
+      {
+        "at": 0.5,
+        "name": "silty",
+        "base_color": "#5a4630",
+        "roughness": 0.22,
+        "alpha": 0.72
+      },
+      {
+        "at": 1.0,
+        "name": "clear",
+        "base_color": "#6f8a88",
+        "roughness": 0.04,
+        "alpha": 0.22
+      }
+    ],
+    "staff": {
+      "node": "Staff",
+      "visible_from": 0.6
+    }
+  },
+  "lights": {
+    "Stream_PortHalo": {
+      "rest": 0.0,
+      "peak": 1.0,
+      "connected": 0.4,
+      "note": "port highlighting while a stream is extended"
+    }
+  }
+}

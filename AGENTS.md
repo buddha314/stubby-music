@@ -243,6 +243,9 @@ Several agents work in this repo at once. To avoid stepping on each other:
   - Art hands over data and models, not code: when an asset needs game support, write
     it as a task in the owning change rather than editing the crate.
   Update this line when you claim work.
+- **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,
+  the stream and the base audio component are in the game, start iterating on the
+  opening scene itself rather than on parts.
 - Fast iteration: enable Bevy's `dynamic_linking` feature for dev builds only,
   never in release.
 

@@ -12,7 +12,7 @@ tracked in the owning change.
 
 - [ ] 2.1 Scrub-oak tree for `add-scrub-oak-production`: growth stages bare → bloomed, nodes for bug emission points, parts the game can sway or pulse to music, far LOD
 - [ ] 2.2 Bloom flora set (replaces the style sheet's stand-in stalks): small plants in the accent palette, music-reactive, lunarpunk-luminous at night
-- [ ] 2.2a Stream as staff music: a five-line staff along the water carrying notes downstream as musical nutrients; dry and broken when bleak, flowing and luminous when bloomed; game-drivable note flow (speed, colour, density) so the game can match the music carried
+- [x] 2.2a Stream as staff music: a five-line staff along the water carrying notes downstream as musical nutrients; dry and broken when bleak, flowing and luminous when bloomed; game-drivable note flow (speed, colour, density) so the game can match the music carried — done as the stream segment: staff lines on the bed, revealed as the water clears (`add-mudpit-burbler` 1.7) (claimed: claude)
 - [ ] 2.3 First animal concept: a creature that grows from music, reads as bleak then bloomed
 - [ ] 2.4 Patch cable and jack plug: cable as a spline-friendly segment, plug matching the module jacks
 - [ ] 2.5 Envelope, VCA and Constant module assets on `module_kit`

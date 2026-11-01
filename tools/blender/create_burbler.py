@@ -74,8 +74,8 @@ def linear(hex_srgb):
 
 
 class Burbler(ModuleKit):
-    def __init__(self, asset_id):
-        super().__init__("Burbler", asset_id, hp=sum(RACK_HP.values()))
+    def __init__(self, asset_id, kind="Burbler"):
+        super().__init__(kind, asset_id, hp=sum(RACK_HP.values()))
         for key in ("module_kind", "scale"):
             del self.root[key]
         self.root["kind"] = "mine"
@@ -120,7 +120,7 @@ class Burbler(ModuleKit):
     # ------------------------------------------------------------ helpers
 
     def mesh_obj(self, name, fill, mat, location=(0, 0, 0), parent=None, smooth=True):
-        obj = self.link(bpy.data.objects.new(f"Burbler_{name}", self.mesh_from(name, fill)), mat, parent)
+        obj = self.link(bpy.data.objects.new(f"{self.kind}_{name}", self.mesh_from(name, fill)), mat, parent)
         obj.location = location
         if smooth:
             for face in obj.data.polygons:
@@ -653,7 +653,7 @@ class Burbler(ModuleKit):
                 if obj.name.startswith("Display_d"):  # read 090, not 888
                     digit, seg = int(obj.name[9]), obj.name[11]
                     obj.hide_render = seg not in ("abcdef", "abcdfg", "abcdef")[digit]
-        key = bpy.data.objects["Burbler_PreviewKey"]
+        key = bpy.data.objects[f"{self.kind}_PreviewKey"]
         key.data.energy = 900
         key.data.size = 3.0
         key.location = (-3.0, -4.5, 4.5)

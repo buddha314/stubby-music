@@ -6,7 +6,7 @@
 - [x] 1.3 Burbler clock panel module for the clock place: read-only BPM display, jellyfish-bell beat lamp, GATE/PHASE with soft lights (`tools/blender/create_hud_modules.py`, `burbler_clock`) (claimed: claude)
 - [x] 1.4 Volume module: one large `gain` knob in a soft level ring, IN/OUT, engine `Vca` (`volume`) (claimed: claude)
 - [x] 1.5 Configuration HUD look: a basic Eurorack framed as a Satisfactory-style HUD (`docs/art/hud_mock.png`, `tools/blender/render_hud_mock.py`) (claimed: claude)
-- [ ] 1.7 Stream segment asset: nodes for the BPM pulse to travel along, and a look per clarity stage from muddy to clear
+- [x] 1.7 Stream segment asset: tileable, bendable 4 m channel; ports with halo arches; `Pulse_0` (band when muddy, note when clear); clarity stages muddy/silty/clear; staff lines revealed as it clears (`tools/blender/create_stream.py`, `assets/streams/`) (claimed: claude)
 - [ ] 1.8 Reeds as conveyor-belt segments (needs its own change once designed)
 - [ ] 1.9 Stream hologram: the planned-stream preview shown while extending (separate asset)
 - [ ] 1.6 Asset test for the burbler glb's nodes and extras, like `module_assets.rs`
@@ -20,4 +20,4 @@
 - [ ] 2.4a Register `burbler_clock` and `volume` in `ModuleCatalog` (`synth_modules.rs`); the clock's bpm comes from the burbler, not a knob; drive `Light_level` from the VCA's output level
 - [ ] 2.5 Engine patch per burbler: Clock → fixed Envelope → VCA (level = volume) ← VCO
 - [ ] 2.6 Drive the asset from clock ticks: play each `Bubble_<n>_Burble` at BPM/60/division, phase-locked; wisps, steam, motes
-- [ ] 2.7 Mud streams from `Outlet_0`: pulse at the BPM along the stream; port highlighting on `Outlet_0_Halo` while extending, softer once connected; hologram preview while planning
+- [ ] 2.7 Mud streams from `Outlet_0`: lay `stream_segment` along the planned path (bend it; chain `Port_out` to `Port_in`); emit a `Pulse_0` per clock tick that flows downstream (`flow_speed_mps`); blend `Stream_Water` and the pulse band/note by clarity; port highlighting on the halo arches while extending, softer once connected; hologram preview while planning
