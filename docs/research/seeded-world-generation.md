@@ -264,6 +264,207 @@ covers a collected resource and a built stream when those saves exist; a bounded
 visual comparison checks preview/Play alignment. No broad test matrix or test
 infrastructure is justified for this research-only commit.
 
+## Operator runbook: reproduce and compare a world
+
+This separates **commands supported today** from the **planned world workflow**.
+It is an operational reference, not a record that these commands were executed
+for this documentation change. Do not run every step for every small edit.
+
+### 1. Freeze the inputs in an isolated worktree
+
+Use your own warm worktree off the intended game revision and its own build
+cache. Save the scene in Jackdaw before taking a copy. Never switch, pull into,
+edit or launch diagnostics against another agent's live checkout. Record any
+relevant uncommitted scene/model/catalog changes as actual archived files; a
+commit ID or checksum cannot reconstruct content that was never retained.
+
+From that worktree:
+
+```bash
+python3 tools/check_jackdaw_versions.py --binaries
+git status --short
+world_review_dir="$(mktemp -d /tmp/stubby-worldgen-review.XXXXXX)"
+git rev-parse HEAD > "$world_review_dir/game-revision.txt"
+git -C /home/buddha/src/jackdaw rev-parse HEAD > "$world_review_dir/editor-revision.txt"
+cp jackdaw/compatibility.json "$world_review_dir/compatibility.json"
+cp jackdaw/assets/scene.bsn "$world_review_dir/scene.bsn"
+sha256sum Cargo.lock jackdaw/assets/scene.bsn > "$world_review_dir/input-checksums.txt"
+```
+
+The copied scene protects the layout used for the experiment; it is not a full
+archive of models, rules or save state. Use clean committed content or archive
+those relevant inputs too. If the compatibility guard fails, resolve the selected
+source/compiler/binary set through [the version policy](jackdaw-version-policy.md);
+do not rewrite the pin to suppress the mismatch. Do not rebuild the shared editor
+while someone is using it.
+
+### 2. Exercise the existing headless terrain exporter
+
+Current support: numeric `--seed=<u64>` and `--export=<directory>` in the standalone
+entry point. This exports the finite mudflat mesh, albedo, normal map and seed
+record without creating a window or starting the audio engine. Build once using
+the worktree's cache, then reuse that executable:
+
+```bash
+cargo build -p stubby_game --bin stubby_game --locked
+target/debug/stubby_game --seed=42 --export="$world_review_dir/a"
+target/debug/stubby_game --seed=42 --export="$world_review_dir/b"
+target/debug/stubby_game --seed=43 --export="$world_review_dir/c"
+```
+
+Each output directory contains `mudflat.glb`, `mud.png`, `mud-normal.png` and
+`seed.txt`. Confirm the seed records before comparing:
+
+```bash
+cat "$world_review_dir/a/seed.txt" "$world_review_dir/b/seed.txt" "$world_review_dir/c/seed.txt"
+(cd "$world_review_dir/a" && sha256sum mudflat.glb mud.png mud-normal.png) > "$world_review_dir/a.sha256"
+(cd "$world_review_dir/b" && sha256sum mudflat.glb mud.png mud-normal.png) > "$world_review_dir/b.sha256"
+(cd "$world_review_dir/c" && sha256sum mudflat.glb mud.png mud-normal.png) > "$world_review_dir/c.sha256"
+diff -u "$world_review_dir/a.sha256" "$world_review_dir/b.sha256"
+diff -u "$world_review_dir/a.sha256" "$world_review_dir/c.sha256"
+```
+
+Expected: seed records are 42, 42, 43; A/B have identical content hashes; A/C
+differ in generated geometry and/or texture content. The second `diff` normally
+returns exit status 1 because a difference is expected. Do not interpret that as
+a failed build. A changed `seed.txt` alone is not evidence of a changed landscape.
+This experiment establishes repeatability of the current CPU export for the
+recorded environment, not a cross-platform contract or complete world generation.
+
+Keep this export outside the runtime asset folder initially. To inspect one in the
+editor, copy the **whole selected export**, including both PNG dependencies, into
+the isolated project's generated preview directory. Do not replace the live
+project's preview or scene. Record which export was installed for that inspection.
+
+### 3. Inspect preview and Play with the bounded diagnostic
+
+Use only `tools/jackdaw_timed_test.py` for graphical diagnostics. Check that its
+configured endpoint is unused and that the target project is your worktree.
+Before sending remote commands, verify both the reported project path and the
+process executable; a reachable port alone is insufficient.
+
+```bash
+python3 tools/jackdaw_timed_test.py --seconds 20 --refresh 60 --name worldgen-preview
+```
+
+That command inspects the editor; it does not select a new game seed. The existing
+`--play`, `--prefabs` and `--review` switches select specific diagnostic presets.
+In particular, `--play` currently moves the seed-42 live-listen preset to the
+front. Do not claim an arbitrary seed or copied scene was tested merely because
+Play connected. The current helper has no general world-config selector; add one
+through the implementation proposal before using it for arbitrary-world reviews.
+Its custom-command option is documented for watchdog self-tests, not as a way
+to bypass compatibility or endpoint checks.
+
+If the adapter needs rebuilding for the selected content, run the existing
+`tools/jackdaw.sh build` once before the diagnostic; do not rebuild the editor or
+run a workspace suite just because a seed changed. Preserve the independent
+20-second kill timer and 60 Hz recovery for every later graphical review.
+
+Compare the actual chosen seed/configuration and authored layout, not camera
+position or screenshots alone. Current prefab placements remain authored even
+when the terrain seed changes. Pixel hashes of rendered screenshots are not the
+world identity and need not be stable across GPUs or lighting times.
+
+### 4. Planned creation/resume/share workflow
+
+These steps require the future implementation; no new CLI flags are implied:
+
+1. Load a validated world configuration; resolve preset values and matching
+   generator, layout and rules revisions. Reject malformed or unsupported input.
+2. Generate the initial placement data and a preview from the same configuration.
+   Validate opening reachability/resource constraints before accepting it.
+3. Confirm the configuration, create the world, and store it with the new save.
+   Previewing, streaming or loading does not choose another seed.
+4. On resume, load the saved configuration and mutable state together. Preserve
+   collection/replenishment, constructed streams, growth and rack patches.
+5. For a fresh reproduction, share the configuration and its content/version
+   references. For an already-developed world, share the save as well.
+6. If a matching generator is unavailable, use the chosen migration policy or
+   report the incompatibility. Do not silently substitute new rules or seed 42.
+
+### 5. Record the result and diagnose mismatches
+
+Retain the configuration/seed, game and editor revisions, layout/rules content,
+commands and exit status, output hashes, selected run preset, and any diagnostic
+report/screenshots. For a future placement fixture, compare canonical resource
+records and transforms, excluding transient ECS IDs, wall-clock timestamps,
+GPU resources and audio playback instants.
+
+| Symptom | First check | Response |
+| --- | --- | --- |
+| Seed appears to have no effect | `seed.txt`, exact `--seed=...` argument, selected run preset and binary | Current invalid CLI values can fall back to 42; distinguish terrain changes from fixed prefab placements |
+| Editor and Play differ | Export/config selected for the editor, runtime seed and saved scene revision | Refresh only the isolated preview from matching inputs; do not reposition authored assets to hide drift |
+| Same seed differs between machines/builds | Generator, settings, content and dependency revisions | Compare placement/export data before attributing a difference to graphics |
+| Region request order changes placement | RNG ownership, candidate ordering and shared mutable generation state | Reproduce with the same small fixture and fix the order dependency |
+| Collected bugs or constructions return after loading | Saved deltas, stable resource keys and calendar state | Treat this as a persistence/identity issue, not a new-seed feature |
+| Boundary discontinuity appears after an update | Region ownership and old/new generator versions | Apply the chosen migration/old-generator policy; retain player modifications |
+
+## Implementation outline: a small hybrid generator
+
+This is a proposed work breakdown for a later OpenSpec change. It does not change
+the accepted authored-opening approach or authorize implementation in this docs
+commit. Start with the smallest useful seeded variation, not a replacement world
+engine, new framework or custom RNG.
+
+| Phase | Deliverable and likely touchpoints | Completion evidence |
+| --- | --- | --- |
+| 0. Agree the contract | OpenSpec proposal linked to `add-opening-region`; choose which resources/scatter vary and which placements stay authored | Example configuration and explicit initial-world versus save-state promise |
+| 1. Configuration | Small shared game-side configuration module using existing serde/JSON; common parsing for `crates/stubby_game/src/main.rs`, `jackdaw/src/main.rs` and export | Invalid seeds fail clearly; both entry points resolve the same configuration; copy/import round-trip retains concrete settings |
+| 2. Placement data | A pure generation module under `crates/stubby_game/src/`, reusing current terrain functions and a documented RNG/noise library where needed | One focused fixture covers repeated generation, changed seed and reordered region requests |
+| 3. Runtime/preview integration | Use existing prefab binding, authored `SceneNodeId`/`PrefabEntityId` support and native model/LOD pipeline; extend `export.rs` and the bounded diagnostic selector | Preview and Play identify the same configuration and placement set |
+| 4. Persistence | Initial configuration plus stable-keyed resource/construction deltas, through the game's chosen save boundary | Resume preserves one representative collection and construction case once that save support exists |
+| 5. Selection and iteration | In-game seed/configuration selection, preview and sharing; retain existing controls and data-driven resources | One bounded review demonstrates a repeatable new-world choice without altering authored opening assets |
+
+### Data flow and ownership
+
+The proposed flow is:
+
+```text
+validated world configuration + versioned authored layout/catalog
+    -> deterministic terrain/placement data
+    -> opening constraint checks
+    -> existing prefab/runtime binding and preview export
+    -> mutable game simulation
+    -> configuration + saved deltas/snapshots
+```
+
+A possible generation boundary is `generate_region(config, region_coord)` returning
+placement records or an explicit failure. This is an illustrative boundary, not an
+existing API. Prefer a small module in the existing game crate; a separate crate
+is not justified until there is an actual sharing requirement. Do not pass ECS
+queries, render handles, audio devices or frame `Time` into the generation logic.
+
+Generated records need a resource/prefab identifier, deterministic placement key,
+transform and initial gameplay metadata. Keep authored native IDs intact. Define
+generated keys and their migration rules in the proposal before connecting them
+to inventory/collection saves; never use transient entity indices as save keys.
+Keep the bug's ground pivot and hover child arrangement and the existing resource
+catalog/yield semantics. Do not invent new waveform sources or machine recipes.
+
+Reuse the current `WorldSeed`, coordinate hash and existing `PulseClock` interfaces
+where applicable. If a new random stream is needed, select and pin an established
+implementation with documented reproducibility behavior. Resource timing remains
+independent per bug, with audio-rate timing handled by the existing audio module.
+World generation, fluid transport and saves stay off the realtime audio callback.
+
+World selection is game functionality. Jackdaw remains the shared general editor:
+authored prefabs, reflected metadata and its existing extension points are enough.
+Do not add a game-specific generator or asset-placement panel to the editor.
+
+### First implementation slice and stop condition
+
+Start by carrying one explicit configuration through both entry points and export,
+with a clearly recorded seed and layout revision. Preserve every authored opening
+placement. Add one approved seeded scatter/resource-placement pass only after its
+kind and opening constraints are chosen. Use the same result for preview and Play.
+
+Stop that slice when a copied configuration recreates its initial placement data
+and the opening remains playable. Streamed terrain, extra biomes, compressed world
+codes, multiplayer lockstep and exhaustive cross-platform replay are later choices.
+Keep validation focused: extend the same placement fixture for new guarantees and
+run save or bounded graphical checks only when the changed behavior needs them.
+
 ## Decisions still open
 
 - Which parts vary first: terrain, resources, plant variants, or only scatter?
