@@ -62,6 +62,7 @@ impl Plugin for RecipesPlugin {
             .add_message::<ResourceCollected>()
             .add_message::<CraftRequest>()
             .add_message::<CraftCompleted>()
+            .add_message::<InventoryFull>()
             .add_systems(
                 Update,
                 (apply_harvests, apply_crafts)
@@ -109,6 +110,13 @@ pub struct CraftRequest {
     pub recipe: String,
 }
 
+/// Something could not go into the player's inventory: no box had room for `item`
+/// (the inventory is 16 boxes of up to 100). Nothing was taken or changed.
+#[derive(Message, Clone)]
+pub struct InventoryFull {
+    pub item: String,
+}
+
 /// A craft succeeded.
 #[derive(Message, Clone)]
 pub struct CraftCompleted {
@@ -121,6 +129,7 @@ fn apply_harvests(
     catalog: Option<Res<RecipeCatalog>>,
     mut player: ResMut<PlayerInventory>,
     mut collected: MessageWriter<ResourceCollected>,
+    mut full: MessageWriter<InventoryFull>,
 ) {
     let Some(catalog) = catalog else {
         requests.clear();
@@ -154,6 +163,10 @@ fn apply_harvests(
                     instance: source.instance_id().into(),
                     yields,
                 });
+            }
+            Err(RecipeError::InventoryFull(item)) => {
+                feedback.clear();
+                full.write(InventoryFull { item });
             }
             Err(error) => *feedback = error.to_string(),
         }
