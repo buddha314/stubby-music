@@ -18,23 +18,37 @@ book, rack screen), and closing it SHALL recapture the cursor.
 - **WHEN** the recipe book is open and the player presses Tab
 - **THEN** the recipe book closes and the inventory screen opens
 
-### Requirement: The inventory screen lists items from the catalog
-The screen SHALL list every item the player holds, and every item in the recipe book
-the player holds none of, by its catalog name, with its quantity, description and
-signal uses. Discovered items with quantity zero SHALL be shown as known but empty.
-No item name or id SHALL be hardcoded in the screen.
+### Requirement: The inventory is sixteen boxes of one hundred
+The player's inventory SHALL hold 16 boxes, and a box SHALL hold up to 100 items of one
+kind; an item held in larger numbers SHALL fill as many boxes as it needs. Adding items
+that would need more than 16 boxes SHALL fail without changing the inventory (all or
+nothing), so a collection or craft that does not fit takes nothing.
+
+#### Scenario: More than a box
+- **WHEN** the player holds 250 reeds
+- **THEN** they fill three boxes: 100, 100 and 50
+
+#### Scenario: Full
+- **WHEN** all 16 boxes are in use and the player collects an item that needs another box
+- **THEN** the collection fails and the inventory is unchanged
+
+### Requirement: The inventory screen shows the boxes
+The screen SHALL show the 16 boxes as a grid, filled in order with the icon of what each
+holds and its count; the rest SHALL be empty boxes. Items the player holds none of SHALL
+NOT be shown, not even as placeholders. Hovering a filled box SHALL show the item's
+catalog name. No item name or id SHALL be hardcoded in the screen.
 
 #### Scenario: Items held
 - **WHEN** the player holds 2 square waves and 6 reeds and opens the inventory
-- **THEN** the screen shows "Square wave" × 2 with its description and uses (VCO, LFO, Gate) and "Reed" × 6
+- **THEN** two boxes show the square wave and reed icons with 2 and 6, and the other 14 are empty
 
-#### Scenario: Known but used up
+#### Scenario: Used up
 - **WHEN** the player has discovered square wave and holds none
-- **THEN** the screen shows "Square wave" as known with quantity 0
+- **THEN** no box shows a square wave
 
 #### Scenario: New catalog item
 - **WHEN** a new item is added to the catalog and the player collects it
-- **THEN** it appears on the screen without code changes
+- **THEN** it appears in a box, named on hover, without code changes
 
 ### Requirement: Item counts leave the text HUD
 The bottom-left text HUD SHALL no longer list item counts; it SHALL keep the

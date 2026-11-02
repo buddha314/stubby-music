@@ -110,7 +110,14 @@ pub enum RecipeError {
     },
     #[error("inventory quantity overflow for {0}")]
     InventoryOverflow(String),
+    #[error("inventory full: no box free for {0}")]
+    InventoryFull(String),
 }
+
+/// Boxes in the player's inventory (Satisfactory-style slots).
+pub const INVENTORY_BOXES: u32 = 16;
+/// How many of one kind of item a box holds.
+pub const BOX_STACK: u32 = 100;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Inventory {
@@ -124,6 +131,20 @@ impl Inventory {
         self.quantities
             .iter()
             .map(|(item, count)| (item.as_str(), *count))
+    }
+    /// The inventory as boxes, in item order: each holds up to `BOX_STACK` of one kind.
+    pub fn boxes(&self) -> impl Iterator<Item = (&str, u32)> {
+        self.items().flat_map(|(item, count)| {
+            (0..count.div_ceil(BOX_STACK))
+                .map(move |k| (item, (count - k * BOX_STACK).min(BOX_STACK)))
+        })
+    }
+    /// Boxes in use.
+    pub fn boxes_used(&self) -> u32 {
+        self.quantities
+            .values()
+            .map(|n| n.div_ceil(BOX_STACK))
+            .sum()
     }
     /// Add stacks (e.g. the starter inventory), all or nothing.
     pub fn grant(&mut self, stacks: &[Stack]) -> Result<(), RecipeError> {
@@ -157,6 +178,10 @@ impl Inventory {
             .quantity(item)
             .checked_add(quantity)
             .ok_or_else(|| RecipeError::InventoryOverflow(item.into()))?;
+        let before = self.quantity(item).div_ceil(BOX_STACK);
+        if self.boxes_used() - before + count.div_ceil(BOX_STACK) > INVENTORY_BOXES {
+            return Err(RecipeError::InventoryFull(item.into()));
+        }
         self.quantities.insert(item.into(), count);
         Ok(())
     }
@@ -618,7 +643,7 @@ mod tests {
         let mut object = catalog.source("lightning_bug", "bug-1").unwrap();
         let before = object.clone();
         let mut inventory = Inventory::default();
-        inventory.add("square_wave", u32::MAX).unwrap();
+        inventory.quantities.insert("square_wave".into(), u32::MAX);
         let mut ledger = HarvestLedger::default();
         assert!(
             catalog
@@ -684,12 +709,30 @@ mod tests {
         assert!(Catalog::new(definition).is_err());
     }
     #[test]
+    fn the_inventory_holds_sixteen_boxes_of_one_hundred() {
+        let mut inventory = Inventory::default();
+        inventory.add("reed", 250).unwrap();
+        let boxes: Vec<_> = inventory.boxes().collect();
+        assert_eq!(boxes, [("reed", 100), ("reed", 100), ("reed", 50)]);
+        inventory.add("reed", 1250).unwrap();
+        assert_eq!(inventory.boxes_used(), INVENTORY_BOXES - 1);
+        inventory.add("square_wave", 100).unwrap();
+        assert!(matches!(
+            inventory.add("clock", 1),
+            Err(RecipeError::InventoryFull(_))
+        ));
+        assert!(matches!(
+            inventory.add("reed", 1),
+            Err(RecipeError::InventoryFull(_))
+        ));
+    }
+    #[test]
     fn output_overflow_rolls_back_inputs_and_harvest_ledger() {
         let catalog = Catalog::new(fixture()).unwrap();
         let mut inventory = Inventory::default();
         let mut ledger = HarvestLedger::default();
         inventory.add("square_wave", 2).unwrap();
-        inventory.add("test_module", u32::MAX).unwrap();
+        inventory.quantities.insert("test_module".into(), u32::MAX);
         let before = inventory.clone();
         assert!(matches!(
             catalog.craft("test_recipe", &mut inventory),

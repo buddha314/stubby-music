@@ -12,7 +12,6 @@ use super::{
     controls::{Screen, ScreenMode},
     machine_config::{
         CombNode, JackHit, JackRef, PodMesh, PortNode, Profiles, RackActions, RackConfiguration,
-        RackHint,
     },
     module_ids::ModuleIds,
     prefabs::{AssetClock, PlacedAsset},
@@ -99,9 +98,9 @@ impl Plugin for RackPlugin {
                     number_keys,
                     comb_parts_pickable,
                     live_parts_unpickable,
+                    tint_plugs,
                     clear_feedback_on_open,
                     patch_engine,
-                    guidance,
                     pods,
                     draw_cables,
                     live_cable,
@@ -339,10 +338,9 @@ fn mount_buttons(
     // The player's inventory, Satisfactory-style: a "Relevant" strip of what this rack's
     // open places accept (number keys 1-0 insert them, as does a click), then the rest
     // of what you carry, dimmed.
-    let relevant: Vec<_> = relevant(config, state);
+    let relevant: Vec<_> = relevant(config, state, &player.items);
     let amber = Color::srgb(1., 0.7, 0.31);
     let muted = Color::srgb(0.55, 0.53, 0.49);
-    let ink = Color::srgb(0.95, 0.94, 0.89);
     let text = |value: String, size: f32, color: Color| {
         (
             Text::new(value),
@@ -392,79 +390,31 @@ fn mount_buttons(
                     area.spawn(text("Relevant".into(), 15., muted));
                     area.spawn((row(), Pickable::IGNORE))
                         .with_children(|strip| {
-                            for (index, (place, accept)) in relevant.iter().enumerate() {
+                            for (place, accept) in &relevant {
                                 let count = player.items.quantity(&accept.item);
-                                let have = count > 0;
-                                let action = if have {
-                                    format!(
-                                        "drag into the {1} slot (or click) to insert a {0}",
-                                        module_name(&accept.module),
-                                        place.kind.to_uppercase(),
-                                    )
-                                } else {
-                                    format!(
-                                        "collect a {} to make a {}",
-                                        name(&accept.item).to_lowercase(),
-                                        module_name(&accept.module)
-                                    )
-                                };
-                                let mut tile = strip.spawn((
+                                let mut cell = strip.spawn((
                                     Node {
-                                        flex_direction: FlexDirection::Column,
-                                        padding: UiRect::axes(px(10), px(6)),
-                                        row_gap: px(4),
                                         border: UiRect::all(px(1)),
-                                        max_width: px(300),
                                         ..default()
                                     },
-                                    BorderColor::all(if have {
-                                        amber.with_alpha(0.8)
-                                    } else {
-                                        muted.with_alpha(0.4)
-                                    }),
-                                    BackgroundColor(Color::srgba(0.09, 0.085, 0.075, 0.95)),
-                                ));
-                                tile.with_children(|tile| {
-                                    tile.spawn((row(), Pickable::IGNORE)).with_children(|head| {
-                                        head.spawn((
-                                            item_icon(&server, &accept.item),
-                                            super::inventory_screen::ItemName(name(&accept.item)),
-                                            Node {
-                                                width: px(48),
-                                                height: px(48),
-                                                ..default()
-                                            },
-                                            if have {
-                                                BackgroundColor(Color::NONE)
-                                            } else {
-                                                BackgroundColor(Color::srgba(0., 0., 0., 0.5))
-                                            },
-                                        ));
-                                        head.spawn(text(
-                                            format!(
-                                                "[{}]  {}",
-                                                (index + 1) % 10,
-                                                name(&accept.item)
-                                            ),
-                                            19.,
-                                            if have { ink } else { muted },
-                                        ));
-                                    });
-                                    tile.spawn(text(
-                                        format!("x {count}"),
-                                        18.,
-                                        if have { amber } else { muted },
-                                    ));
-                                    tile.spawn(text(action, 14., if have { amber } else { muted }));
-                                });
-                                if have {
-                                    tile.insert(MountButton {
+                                    BorderColor::all(amber.with_alpha(0.8)),
+                                    MountButton {
                                         machine,
                                         place: place.place.clone(),
                                         item: accept.item.clone(),
                                         module: accept.module.clone(),
-                                    });
-                                }
+                                    },
+                                ));
+                                cell.with_children(|cell| {
+                                    icon_slot(
+                                        cell,
+                                        Some(&server),
+                                        &accept.item,
+                                        &name(&accept.item),
+                                        count,
+                                        64.,
+                                    );
+                                });
                             }
                         });
                 });
@@ -472,7 +422,7 @@ fn mount_buttons(
             // The rest of what you carry, as icon slots (Satisfactory's inventory panel).
             let others: Vec<_> = player
                 .items
-                .items()
+                .boxes()
                 .filter(|(id, _)| !relevant.iter().any(|(_, a)| a.item == *id))
                 .collect();
             if !others.is_empty() {
@@ -506,6 +456,7 @@ fn mount_buttons(
 fn relevant<'a>(
     config: &'a RackConfiguration,
     state: &RackState,
+    held: &stubby_recipes::Inventory,
 ) -> Vec<(
     &'a super::machine_config::RackPlace,
     &'a super::machine_config::Accept,
@@ -515,6 +466,8 @@ fn relevant<'a>(
         .iter()
         .filter(|p| !p.fixed && !state.mounted.contains_key(&p.place))
         .flat_map(|p| p.accepts.iter().map(move |a| (p, a)))
+        // Only what the player holds: an item you have none of is not shown.
+        .filter(|(_, a)| held.quantity(&a.item) > 0)
         .take(10)
         .collect()
 }
@@ -551,7 +504,7 @@ fn number_keys(
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
-    let Some((place, accept)) = relevant(config, &state)
+    let Some((place, accept)) = relevant(config, &state, &player.items)
         .get(index)
         .map(|(p, a)| (p.place.clone(), (*a).clone()))
     else {
@@ -996,6 +949,38 @@ fn comb_parts_pickable(
     }
 }
 
+/// On a plug model's root: its cable's material. The plug glb ships one sleeve colour;
+/// its sleeve and cable stub take the cable's colour instead, as in VCV Rack.
+#[derive(Component)]
+struct PlugColour(Handle<StandardMaterial>);
+
+fn tint_plugs(
+    mut commands: Commands,
+    meshes: Query<(Entity, &ChildOf), (With<Mesh3d>, Without<PlugTinted>)>,
+    names: Query<&Name>,
+    parents: Query<&ChildOf>,
+    colours: Query<&PlugColour>,
+) {
+    for (entity, parent) in &meshes {
+        let Ok(name) = names.get(parent.parent()) else {
+            continue;
+        };
+        if !matches!(name.as_str(), "PatchCable_Sleeve" | "PatchCable_Stub" | "PatchCable_Relief") {
+            continue;
+        }
+        if let Some(PlugColour(material)) = parents
+            .iter_ancestors(entity)
+            .find_map(|a| colours.get(a).ok())
+        {
+            commands
+                .entity(entity)
+                .insert((MeshMaterial3d(material.clone()), PlugTinted));
+        }
+    }
+}
+#[derive(Component)]
+struct PlugTinted;
+
 /// The live cable's plug model must never take a click meant for the jack under it.
 fn live_parts_unpickable(
     mut commands: Commands,
@@ -1038,68 +1023,6 @@ fn direction(mounted: &HashMap<String, String>, j: &JackRef) -> Option<bool> {
 }
 
 // ------------------------------------------------------------------ guidance
-
-fn guidance(
-    screens: Res<ScreenMode>,
-    profiles: Res<Profiles>,
-    held: Res<HeldCable>,
-    player: Res<PlayerInventory>,
-    racks: Query<(&PlacedAsset, &RackState)>,
-    mut hints: Query<&mut Text, With<RackHint>>,
-) {
-    let Some((asset, state)) = open_rack(&screens).and_then(|e| racks.get(e).ok()) else {
-        return;
-    };
-    let Some(config) = profiles.0.get(&asset.asset) else {
-        return;
-    };
-    let missing = config
-        .places
-        .iter()
-        .find(|p| !p.fixed && !state.mounted.contains_key(&p.place));
-    let n = config.cables.len();
-    let text = if let Some(cable) = held.cable.and_then(|i| config.cables.get(i)) {
-        let other = match &held.first {
-            None => format!(
-                "click or drag {} to {}",
-                cable.from.port.to_uppercase(),
-                cable.to.port.to_uppercase()
-            ),
-            Some(first) => {
-                let rest = if first == &cable.from {
-                    &cable.to
-                } else {
-                    &cable.from
-                };
-                format!("now click or drop on {}", rest.port.to_uppercase())
-            }
-        };
-        format!("{} cable in hand  |  {other}", colour_name(&cable.color))
-    } else if let Some(place) = missing {
-        format!("insert a module in the {} slot", place.kind.to_uppercase())
-    } else if let Some(i) = state.patched.iter().position(|p| !p) {
-        format!(
-            "{} of {n}  |  {}",
-            i + 1,
-            config.cables[i].hint.replace('·', "|")
-        )
-    } else {
-        format!(
-            "{}  |  patch more with your own cables: an output, then an input",
-            config.patched_hint.replace('·', "|")
-        )
-    };
-    let text = if player.feedback.is_empty() {
-        text
-    } else {
-        format!("{text}\n{}", player.feedback)
-    };
-    for mut hint in &mut hints {
-        if hint.0 != text {
-            hint.0 = text.clone();
-        }
-    }
-}
 
 fn cable_color(name: &str) -> Color {
     match name {
@@ -1173,15 +1096,42 @@ struct CableVisual;
 
 const CABLE_RADIUS: f32 = 0.016;
 
-/// The cable in hand, drawn as VCV Rack draws a cable being patched: from the jack its
-/// first end is in to the pointer, sagging with the same elastic curve as a patched one,
-/// with a plug on the free end. Rebuilt each frame while a cable is in hand.
+/// The cable in hand, drawn as VCV Rack draws a cable being patched, and alive: it is
+/// a small spring simulation, so it swings after the pointer instead of snapping.
+/// Taken from the comb, it hangs from the pointer (one plug at the pointer, the cable
+/// looping down to the other, which swings); once one end is in a jack, it runs from
+/// that jack to the pointer with the same elastic sag as a patched cable, the sag
+/// springing after every move. The plugs are the cable's own patch_plug models.
 #[derive(Component)]
 struct LiveCable;
 
-#[allow(clippy::too_many_arguments)] // Reads the hand, the rack's sockets, the camera and pointer.
+/// The live cable's moving parts: the curve's middle and (while hanging from the
+/// pointer) its swinging far end, each a damped spring toward where gravity rests it.
+#[derive(Default)]
+struct CableSim {
+    colours: HashMap<String, Handle<StandardMaterial>>,
+    plugs: [Option<Entity>; 2],
+    started: bool,
+    mid: (Vec3, Vec3),
+    end: (Vec3, Vec3),
+}
+impl CableSim {
+    fn spring(point: &mut (Vec3, Vec3), target: Vec3, dt: f32) {
+        const STIFFNESS: f32 = 70.;
+        const DAMPING: f32 = 7.;
+        let (x, v) = point;
+        *v += ((target - *x) * STIFFNESS - *v * DAMPING) * dt;
+        *x += *v * dt;
+    }
+}
+
+/// How far the far plug hangs below the pointer while a cable is carried.
+const HANG_M: f32 = 0.32;
+
+#[allow(clippy::too_many_arguments, clippy::type_complexity)] // Reads the hand, the rack's sockets, the camera and pointer.
 fn live_cable(
     mut commands: Commands,
+    time: Res<Time>,
     server: Res<AssetServer>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
@@ -1194,59 +1144,85 @@ fn live_cable(
         &bevy::picking::pointer::PointerId,
         &bevy::picking::pointer::PointerLocation,
     )>,
-    old: Query<Entity, With<LiveCable>>,
+    old: Query<Entity, (With<LiveCable>, With<Mesh3d>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut colours: Local<HashMap<String, Handle<StandardMaterial>>>,
-    mut plug: Local<Option<Entity>>,
+    mut sim: Local<CableSim>,
 ) {
-    old.iter()
-        .filter(|e| Some(*e) != *plug)
-        .for_each(|e| commands.entity(e).despawn());
-    let hide_plug = |commands: &mut Commands, plug: &mut Option<Entity>| {
-        if let Some(e) = plug.take() {
-            commands.entity(e).despawn();
+    old.iter().for_each(|e| commands.entity(e).despawn());
+    let clear = |commands: &mut Commands, sim: &mut CableSim| {
+        for plug in sim.plugs.iter_mut() {
+            if let Some(e) = plug.take() {
+                commands.entity(e).despawn();
+            }
         }
+        sim.started = false;
     };
     let config = open_rack(&screens)
         .and_then(|m| racks.get(m).ok())
         .and_then(|a| profiles.0.get(&a.asset));
+    let port = |j: &JackRef| {
+        ports
+            .iter()
+            .find(|(p, _)| &p.0 == j)
+            .map(|(_, t)| t.translation())
+    };
     // The anchored end: a comb cable's first jack, or the first jack of one of your own.
-    let anchor = held.first.as_ref().or(selection.0.as_ref());
-    let (Some(config), Some(anchor), Ok((camera, eye))) = (config, anchor, hud.single()) else {
-        hide_plug(&mut commands, &mut plug);
+    let anchor = held.first.as_ref().or(selection.0.as_ref()).and_then(port);
+    let carrying = held.cable.is_some() || anchor.is_some();
+    let (Some(config), true, Ok((camera, eye))) = (config, carrying, hud.single()) else {
+        clear(&mut commands, &mut sim);
         return;
     };
-    let colour = held
-        .cable
-        .and_then(|i| config.cables.get(i))
-        .map_or("bone".to_string(), |c| c.color.clone());
-    let Some(a) = ports
-        .iter()
-        .find(|(p, _)| &p.0 == anchor)
-        .map(|(_, t)| t.translation())
-    else {
-        hide_plug(&mut commands, &mut plug);
+    // The pointer, on the plane of the jacks, facing the camera.
+    let Some(plane) = anchor.or_else(|| ports.iter().next().map(|(_, t)| t.translation())) else {
+        clear(&mut commands, &mut sim);
         return;
     };
-    let Some(b) = pointers
+    let Some(pointer) = pointers
         .iter()
         .find(|(id, _)| **id == bevy::picking::pointer::PointerId::Mouse)
         .and_then(|(_, l)| l.location.as_ref())
         .and_then(|l| camera.viewport_to_world(eye, l.position).ok())
         .and_then(|ray| {
-            // On the plane of the jacks, facing the camera.
             let normal = eye.forward().as_vec3();
             let d = ray.direction.dot(normal);
             (d.abs() > 1e-4)
-                .then(|| ray.origin + ray.direction * ((a - ray.origin).dot(normal) / d))
+                .then(|| ray.origin + ray.direction * ((plane - ray.origin).dot(normal) / d))
         })
     else {
-        hide_plug(&mut commands, &mut plug);
+        clear(&mut commands, &mut sim);
         return;
     };
+    let dt = time.delta_secs().min(1. / 30.);
+    // Ends: anchored (jack -> pointer) or carried (pointer -> swinging far plug).
+    let (a, end_target) = match anchor {
+        Some(a) => (a, pointer),
+        None => (pointer, pointer + Vec3::NEG_Y * HANG_M),
+    };
+    if !sim.started {
+        sim.started = true;
+        sim.mid = ((a + end_target) / 2., Vec3::ZERO);
+        sim.end = (end_target, Vec3::ZERO);
+    }
+    let b = if anchor.is_some() {
+        sim.end = (pointer, Vec3::ZERO);
+        pointer
+    } else {
+        CableSim::spring(&mut sim.end, end_target, dt);
+        sim.end.0
+    };
+    // Where gravity rests the middle: VCV Rack's sag for this span.
+    let rest = (a + b) / 2.
+        + Vec3::NEG_Y * 0.5 * (0.508 + a.distance(b)) * if anchor.is_some() { 1. } else { 0.25 };
+    CableSim::spring(&mut sim.mid, rest, dt);
+    let colour = held
+        .cable
+        .and_then(|i| config.cables.get(i))
+        .map_or("bone".to_string(), |c| c.color.clone());
     let layer = bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER);
-    let material = colours
+    let material = sim
+        .colours
         .entry(colour.clone())
         .or_insert_with(|| {
             materials.add(StandardMaterial {
@@ -1258,29 +1234,41 @@ fn live_cable(
         .clone();
     commands.spawn((
         LiveCable,
-        Mesh3d(meshes.add(tube(&cable_curve(a, b), CABLE_RADIUS))),
-        MeshMaterial3d(material),
+        Mesh3d(meshes.add(tube(&bezier(a, sim.mid.0, b), CABLE_RADIUS))),
+        MeshMaterial3d(material.clone()),
         layer.clone(),
         Pickable::IGNORE,
     ));
-    // The free plug hangs from the pointer, tip down, as in VCV Rack.
-    let at = Transform::from_translation(b);
-    match *plug {
-        Some(e) => {
-            commands.entity(e).insert(at);
-        }
-        None => {
-            *plug = Some(
-                commands
-                    .spawn((
-                        LiveCable,
-                        WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
-                        at,
-                        bevy::app::Propagate(layer),
-                        Pickable::IGNORE,
-                    ))
-                    .id(),
-            );
+    // Plugs: at the pointer (and, while carried, the swinging far end), tip down.
+    let ends: Vec<Vec3> = if anchor.is_some() {
+        vec![b]
+    } else {
+        vec![a, b]
+    };
+    for (k, plug) in sim.plugs.iter_mut().enumerate() {
+        match (ends.get(k), *plug) {
+            (Some(at), Some(e)) => {
+                commands.entity(e).insert(Transform::from_translation(*at));
+            }
+            (Some(at), None) => {
+                *plug = Some(
+                    commands
+                        .spawn((
+                            LiveCable,
+                            WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
+                            PlugColour(material.clone()),
+                            Transform::from_translation(*at),
+                            bevy::app::Propagate(layer.clone()),
+                            Pickable::IGNORE,
+                        ))
+                        .id(),
+                );
+            }
+            (None, Some(e)) => {
+                commands.entity(e).despawn();
+                *plug = None;
+            }
+            (None, None) => {}
         }
     }
 }
@@ -1368,8 +1356,8 @@ fn draw_cables(
         machine,
         state.version,
         (layout.element_sum() * 1000.) as usize,
-        // A cable with one end plugged in is in hand (`live_cable`), not on the comb.
-        held.cable.filter(|_| held.first.is_some()),
+        // A cable in hand is drawn by `live_cable`, not on the comb.
+        held.cable,
     );
     if *drawn == Some(key) {
         return;
@@ -1466,7 +1454,7 @@ fn draw_cables(
                 CombCable(index),
                 Pickable::default(),
                 Mesh3d(meshes.add(tube(&bezier(a, c, b), CABLE_RADIUS * 1.6))),
-                MeshMaterial3d(mat),
+                MeshMaterial3d(mat.clone()),
                 layer.clone(),
                 ChildOf(slot_entity),
             ));
@@ -1475,6 +1463,7 @@ fn draw_cables(
                     CableVisual,
                     CombCable(index),
                     WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
+                    PlugColour(mat.clone()),
                     plug.1,
                     bevy::app::Propagate(layer.clone()),
                     ChildOf(slot_entity),

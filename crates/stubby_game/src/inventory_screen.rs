@@ -5,7 +5,6 @@
 //! catalog; nothing here names an item. Items the recipe book knows but the player holds
 //! none of stay listed, dimmed. Opening and closing go through `controls::ScreenMode`.
 use bevy::prelude::*;
-use stubby_recipes::SignalUse;
 
 use super::controls::{Screen, ScreenMode};
 use super::resources::{PlayerInventory, RecipeCatalog};
@@ -14,7 +13,6 @@ const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.94);
 const BACKDROP: Color = Color::srgba(0.0, 0.0, 0.0, 0.45);
 const TILE: Color = Color::srgba(0.09, 0.085, 0.075, 1.0);
 const EDGE: Color = Color::srgb(0.42, 0.29, 0.13);
-const AMBER: Color = Color::srgb(1.0, 0.70, 0.31);
 const INK: Color = Color::srgb(0.95, 0.94, 0.89);
 const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
 
@@ -180,7 +178,7 @@ fn spawn(mut commands: Commands) {
                 BackgroundColor(PANEL),
                 BorderColor::all(EDGE),
                 Node {
-                    width: px(760),
+                    width: px(4. * (SLOT_PX + 12.) + 48.),
                     max_height: percent(80),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(px(24)),
@@ -217,18 +215,6 @@ fn show(screens: Res<ScreenMode>, mut root: Query<&mut Visibility, With<Inventor
     }
 }
 
-fn uses(item_uses: &[SignalUse]) -> String {
-    item_uses
-        .iter()
-        .map(|u| match u {
-            SignalUse::Vco => "VCO",
-            SignalUse::Lfo => "LFO",
-            SignalUse::Gate => "Gate",
-        })
-        .collect::<Vec<_>>()
-        .join(" | ")
-}
-
 /// Rebuild the tiles when the screen opens or the inventory changes while it is open.
 fn fill(
     mut commands: Commands,
@@ -248,69 +234,44 @@ fn fill(
     let (Ok(grid), Some(catalog)) = (grid.single(), catalog) else {
         return;
     };
-    let mut ids: Vec<&str> = player.items.items().map(|(id, _)| id).collect();
-    ids.extend(player.book.items());
-    ids.sort_unstable();
-    ids.dedup();
-
+    // Satisfactory's inventory: 16 boxes, each holding up to 100 of one kind, filled in
+    // order by what you hold; the rest are empty. Nothing you hold none of is shown.
+    let held: Vec<(&str, u32)> = player.items.boxes().collect();
     commands.entity(grid).despawn_related::<Children>();
     commands.entity(grid).with_children(|grid| {
-        if ids.is_empty() {
-            grid.spawn(text(
-                "Nothing yet. Listen for a lightning bug and press E to collect.",
-                17.,
-                MUTED,
-            ));
-        }
-        for id in ids {
-            let Some(item) = catalog.0.item(id) else {
-                continue;
-            };
-            let count = player.items.quantity(id);
-            let (ink, accent) = if count > 0 {
-                (INK, AMBER)
-            } else {
-                (MUTED, MUTED)
-            };
+        for index in 0..stubby_recipes::INVENTORY_BOXES as usize {
             grid.spawn((
                 BackgroundColor(TILE),
-                BorderColor::all(if count > 0 { EDGE } else { TILE }),
+                BorderColor::all(EDGE),
                 Node {
-                    width: px(346),
-                    min_height: px(96),
-                    column_gap: px(12),
-                    padding: UiRect::all(px(10)),
+                    width: px(SLOT_PX),
+                    height: px(SLOT_PX),
+                    padding: UiRect::all(px(6)),
                     border: UiRect::all(px(1)),
                     ..default()
                 },
             ))
-            .with_children(|tile| {
-                icon_slot(tile, server.as_deref(), id, &item.name, count, 76.);
-                tile.spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: px(4),
-                    flex_shrink: 1.,
-                    ..default()
-                })
-                .with_children(|words| {
-                    words.spawn(text(item.name.clone(), 19., ink));
-                    words.spawn(text(format!("x {count}"), 16., accent));
-                    if !item.uses.is_empty() {
-                        words.spawn(text(uses(&item.uses), 14., accent));
-                    }
-                    words.spawn(text(item.description.clone(), 13., MUTED));
-                });
+            .with_children(|slot| {
+                if let Some((id, count)) = held.get(index) {
+                    let name = catalog
+                        .0
+                        .item(id)
+                        .map_or(id.to_string(), |i| i.name.clone());
+                    icon_slot(slot, server.as_deref(), id, &name, *count, SLOT_PX - 14.);
+                }
             });
         }
     });
 }
+
+const SLOT_PX: f32 = 88.;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn tab_opens_the_inventory_and_lists_held_items_by_catalog_name() {
+    fn tab_opens_the_inventory_and_shows_only_held_items_by_catalog_name() {
         let mut app = App::new();
         app.add_plugins(super::super::recipes_plugin::RecipesPlugin::default())
             .init_resource::<ButtonInput<KeyCode>>()
@@ -319,21 +280,25 @@ mod tests {
             .add_systems(PreUpdate, super::super::controls::toggle_screens);
         app.world_mut()
             .resource_mut::<PlayerInventory>()
-            .book
-            .discover("reed");
+            .items
+            .grant(&[stubby_recipes::Stack {
+                item: "reed".into(),
+                quantity: 6,
+            }])
+            .unwrap();
         app.update();
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::Tab);
         app.update();
         app.update();
-        let texts: Vec<String> = app
+        let named: Vec<String> = app
             .world_mut()
-            .query::<&Text>()
+            .query::<&ItemName>()
             .iter(app.world())
-            .map(|t| t.0.clone())
+            .map(|n| n.0.clone())
             .collect();
-        assert!(texts.iter().any(|t| t == "Reed"), "{texts:?}");
-        assert!(texts.iter().any(|t| t == "x 0"), "{texts:?}");
+        // The starter patch cables and the reeds: only held items, named by the catalog.
+        assert_eq!(named, ["Patch cable", "Reed"]);
     }
 }

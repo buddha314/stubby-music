@@ -15,7 +15,7 @@ struct Review {
     next: f32,
     hovers: usize,
     uses: usize,
-    captured: [bool; 7],
+    captured: [bool; 8],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
@@ -42,11 +42,12 @@ impl Review {
         self.rack_loaded && self.rack_step < RACK_STEPS
     }
 }
-/// Drag the square wave's tile onto the VCO slot; take the green cable from the comb and
-/// drag it from GATE to TRIG (VCV Rack's gesture); take the red one, click OUT, move the
-/// pointer partway (the live cable follows it: screenshot), click IN; then the patched
-/// screenshot. Only what the rack shows is patched (AGENTS.md).
-const RACK_STEPS: usize = 8;
+/// Drag the square wave's icon onto the VCO slot; take the green cable from the comb and
+/// carry it over the rack (it hangs from the pointer: screenshot), then drag it from GATE
+/// to TRIG (VCV Rack's gesture); take the red one, click OUT, move the pointer partway
+/// (the live cable follows: screenshot), click IN; then the patched screenshot. Only
+/// what the rack shows is patched (AGENTS.md).
+const RACK_STEPS: usize = 9;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
     fn build(&self, app: &mut App) {
@@ -62,7 +63,7 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 7],
+            captured: [false; 8],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
@@ -72,7 +73,7 @@ impl Plugin for PrefabReviewPlugin {
             paused: 0.,
             rack_step: 0,
             // Let the rack's models load before the first click and screenshot.
-            rack_wait: 0.5,
+            rack_wait: 0.3,
             release: false,
             press_at: Vec2::ZERO,
             drag_to: None,
@@ -294,7 +295,9 @@ fn observe(
         && !review.captured[5]
     {
         Some((5, "rack-open.png"))
-    } else if review.rack_step == 6 && review.rack_wait < 0.1 && !review.captured[6] {
+    } else if review.rack_step == 3 && review.rack_wait < -0.3 && !review.captured[7] {
+        Some((7, "rack-carry-cable.png"))
+    } else if review.rack_step == 7 && review.rack_wait < -0.3 && !review.captured[6] {
         Some((6, "rack-live-cable.png"))
     } else if review.rack_step >= RACK_STEPS && !review.captured[4] {
         Some((4, "rack-patched.png"))
@@ -434,6 +437,12 @@ fn drive_rack(
     if review.rack_wait > 0. {
         return;
     }
+    // Hold a screenshot step until its shot is taken, however slow the frames are.
+    if (review.rack_step == 3 && !review.captured[7])
+        || (review.rack_step == 7 && !review.captured[6])
+    {
+        return;
+    }
     let jack = |place: &str, port: &str| {
         let (camera, transform) = hud.single().ok()?;
         let (_, world) = jacks
@@ -471,23 +480,31 @@ fn drive_rack(
             false,
         ),
         1 => (comb(0), None, false),
-        2 => (jack("clock", "gate"), jack("volume", "trig"), false),
-        3 => (comb(1), None, false),
-        4 => (jack("vco", "out"), None, false),
-        5 => (
+        // Carry the green cable over the rack: it hangs from the pointer (screenshot).
+        2 => (
+            jack("clock", "gate")
+                .zip(jack("volume", "trig"))
+                .map(|(a, b)| (a + b) / 2.),
+            None,
+            true,
+        ),
+        3 => (jack("clock", "gate"), jack("volume", "trig"), false),
+        4 => (comb(1), None, false),
+        5 => (jack("vco", "out"), None, false),
+        6 => (
             jack("vco", "out")
                 .zip(jack("volume", "in"))
                 .map(|(a, b)| (a + b) / 2. + Vec2::new(60., 40.)),
             None,
             true,
         ),
-        6 => (jack("volume", "in"), None, false),
+        7 => (jack("volume", "in"), None, false),
         _ => (None, None, false),
     };
     if step + 1 < RACK_STEPS {
         // Wait (briefly) for the target to exist: the VCO's jacks appear once it is mounted.
         let Some(position) = point else { return };
-        if step == 0 && drag.is_none() || step == 2 && drag.is_none() {
+        if step == 0 && drag.is_none() || step == 3 && drag.is_none() {
             return;
         }
         input.write(PointerInput::new(
@@ -516,5 +533,5 @@ fn drive_rack(
             "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.clone()),"own":state.map(|s| s.own.len())}),
     );
     review.rack_step += 1;
-    review.rack_wait = 0.25;
+    review.rack_wait = 0.12;
 }
