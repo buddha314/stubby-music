@@ -3,5 +3,5 @@
 mod desert;
 pub use desert::{
     DesertPlugin, WorldSeed, audio, calendar, controls, export, machine_config,
-    prefab_presentation, prefabs, pulse, resources, synth_modules,
+    prefab_presentation, prefabs, pulse, resources, synth_modules, world_generation,
 };

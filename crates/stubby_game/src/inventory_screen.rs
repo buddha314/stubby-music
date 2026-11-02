@@ -360,10 +360,10 @@ mod tests {
     fn a_full_inventory_shows_the_notice_then_it_goes() {
         let mut app = App::new();
         app.add_plugins(bevy::time::TimePlugin)
-            .add_message::<super::recipes_plugin::InventoryFull>()
+            .add_message::<super::super::recipes_plugin::InventoryFull>()
             .add_systems(Update, inventory_full_notice);
         app.world_mut()
-            .write_message(super::recipes_plugin::InventoryFull {
+            .write_message(super::super::recipes_plugin::InventoryFull {
                 item: "reed".into(),
             });
         app.update();
