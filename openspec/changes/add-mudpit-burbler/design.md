@@ -42,7 +42,7 @@ burbler's BPM; following a stream is following the music. Its water is sheet mus
 wavy five-line staff floats on it, and each beat sends a note riding the staff
 downstream at the water's speed, so note spacing shows velocity. Each 4 m stream segment is built from 6 reeds (`add-reeds`) and outlined by reeds on its banks,
 the conveyor-belt segments (a later change). Extending one works like dragging a
-conveyor from a generator: the port arch highlights and a hologram shows the plan. Raw mud is muddy by design; cleaning is
+conveyor from a generator: the port halo appears and a hologram shows the plan. Raw mud is muddy by design; cleaning is
 a later constructor's job, taking the water from muddy to clear in stages as processes
 are identified, which gives the bleak-to-bloomed arc a production chain.
 
@@ -57,7 +57,7 @@ glTF extras for what the game drives:
 | `Steam_<n>` (extras: `rise_m`, `life_s`) | drift up slowly |
 | `Mote_<n>` | wander slowly; brightness breathes with the beat |
 | `Outlet_0` (extras: `stream`, `pulse`) | the stream port at the mouth; +X points along the flow |
-| `Outlet_0_Halo` | the upright port arch: peak while a stream is being extended from here (port highlighting), `connected` level and breathing at the BPM once attached, dark otherwise |
+| `Outlet_0_Halo` | the port halo in the stream's cross-section; ships at scale 0 and is shown (lit at peak) only while a connection is attempted here (`port_highlight`) |
 | `Interact` (extras: `action: configure`) | where E opens the configuration HUD |
 
 Luminous materials are separate and stably named (`Burbler_Glow`, `Burbler_GlowHalo`,

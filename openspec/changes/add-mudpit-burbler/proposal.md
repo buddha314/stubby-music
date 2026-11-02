@@ -19,7 +19,7 @@ complete voice: a clock, a VCO and a volume control.
 - **Mud streams** flow from the burbler's outlet and pulse at its BPM: the stream is
   the played sequence, laid out in space. Raw mud stays muddy; other constructors
   clean it. **Reeds** will be the conveyor-belt segments (a later change).
-- **Port highlighting**: an upright halo arch over the burbler's mouth lights while a
+- **Port highlighting**: a halo in the stream's cross-section at the burbler's mouth appears only while a
   stream is being extended from it, as in Satisfactory; a holographic preview of the
   planned stream is its own asset.
 - **Shape**: an organically round mud pool with a ~1 m stream leaving it between

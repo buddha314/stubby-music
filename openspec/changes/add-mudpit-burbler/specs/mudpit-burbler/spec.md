@@ -133,21 +133,20 @@ speed, so the spacing between notes shows how fast the water moves.
 - **THEN** its staff and notes still show on the surface, dimmer than on clear water
 
 ### Requirement: Port highlighting
-A burbler's stream port SHALL be marked by a soft, upright halo arch over its mouth.
-The arch SHALL light while the player is extending a stream from that port, to show
-the connection point, in the manner of Satisfactory's port highlighting when a conveyor
-is dragged from a generator. Once a stream is connected, the arch SHALL stay softly lit
-and breathe at the BPM; otherwise it SHALL be dark.
+A stream port (a burbler's mouth, either end of a stream segment) SHALL be marked by a
+soft halo in the stream's own cross-section: across the bed and up both banked sides.
+The halo SHALL appear only while the player is attempting a connection at that port, to
+show the connection point, in the manner of Satisfactory's port highlighting when a
+conveyor is dragged from a generator. At all other times, connected or not, it SHALL
+not be visible. The asset ships the halo hidden (node scale 0).
 
-#### Scenario: Extending a stream
+#### Scenario: Attempting a connection
 - **WHEN** the player starts extending a stream near a burbler
-- **THEN** the burbler's port arch lights as the snap point
+- **THEN** the burbler's port halo appears and lights as the snap point, in the stream's shape
 
-#### Scenario: Connected and free
-- **WHEN** a stream is connected to the port
-- **THEN** the arch stays softly lit, breathing at the BPM
-- **WHEN** the stream is removed and the player is not building
-- **THEN** the arch is dark
+#### Scenario: Not connecting
+- **WHEN** the player is not attempting a connection at the port, whether or not a stream is connected
+- **THEN** the halo is not visible
 
 ### Requirement: Stream hologram
 While the player extends a stream, the planned stream SHALL show as a holographic
@@ -156,7 +155,7 @@ asset, separate from the burbler.
 
 #### Scenario: Planning a stream
 - **WHEN** the player drags a stream out from the port
-- **THEN** a holographic stream follows the planned path and snaps to the port arch
+- **THEN** a holographic stream follows the planned path and snaps to the port halo
 
 ### Requirement: The beat is visible
 The burbler's bubbles SHALL burst on its beat and subdivisions, and luminous wisps
@@ -183,4 +182,4 @@ luminescence, not LED-like points.
 
 #### Scenario: Asset contract
 - **WHEN** the burbler glb is loaded
-- **THEN** it contains the bubbles, ripples, wisps, steam, port node, port arch and interact node with their extras
+- **THEN** it contains the bubbles, ripples, wisps, steam, port node, port halo and interact node with their extras

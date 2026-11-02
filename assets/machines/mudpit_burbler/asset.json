@@ -20,6 +20,7 @@
   "configure": {
     "screen": "eurorack_hud",
     "hud": "models/hud/rack_frame.glb",
+    "title": "MUDPIT BURBLER",
     "interact": {
       "node": "Interact",
       "key": "E",
@@ -60,7 +61,6 @@
       "place": "volume",
       "port": "out"
     },
-    "title": "MUDPIT BURBLER",
     "cables": [
       {
         "color": "verdigris",
@@ -120,10 +120,9 @@
     "Burbler_OutletHalo": {
       "rest": 0.0,
       "peak": 1.0,
-      "connected": 0.4,
       "attack_s": 0.05,
       "decay_s": 0.5,
-      "note": "0 normally; peak while a stream is being extended from here (the snap point); 'connected' once attached, breathing at the BPM"
+      "note": "hidden (scale 0) except while a connection is attempted here, when it lights at peak"
     }
   },
   "nodes": [

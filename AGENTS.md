@@ -429,10 +429,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   outline every laid segment's banks. They are a frequent renewable, as easy to get as
   leaves in Satisfactory: abundant on wet ground, harvested with E (hold E for nearby
   clumps), cut to stubble, and back after a short interval (`openspec/changes/add-reeds/`).
-- **Port highlighting.** The burbler's mouth carries an upright halo arch, its stream
-  port. When the player extends a stream from it, the arch lights to show the
-  connection point, as a generator's port does when you drag a conveyor from it in
-  Satisfactory; it stays softly lit once connected.
+- **Port highlighting.** Every stream port (the burbler's mouth, each end of a stream
+  segment) carries a halo in the **stream's cross-section** (bed and both banks). It
+  appears **only while the player is attempting a connection** there, as a generator's
+  port does when you drag a conveyor from it in Satisfactory; otherwise it is hidden
+  (shipped at node scale 0; shown while `AssetState::port_highlight`).
 - **Stream hologram.** While extending, the planned stream shows as a holographic
   preview, like a Satisfactory conveyor before it is built. That is its own asset,
   separate from the burbler.
