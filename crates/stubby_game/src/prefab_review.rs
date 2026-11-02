@@ -17,10 +17,12 @@ struct Review {
     frames: u32,
     /// Seconds the first drag has been held over the slot (for its screenshot).
     held_drag: f32,
+    /// When the review sent its one inventory-full notice (main-timeline seconds).
+    full_sent: Option<f32>,
     sampled_at: Option<std::time::Instant>,
     hovers: usize,
     uses: usize,
-    captured: [bool; 9],
+    captured: [bool; 10],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
@@ -68,7 +70,7 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 9],
+            captured: [false; 10],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
@@ -81,6 +83,7 @@ impl Plugin for PrefabReviewPlugin {
             rack_wait: 0.3,
             frames: 0,
             held_drag: 0.,
+            full_sent: None,
             sampled_at: None,
             release: false,
             press_at: Vec2::ZERO,
@@ -304,7 +307,9 @@ fn observe(
         );
         review.next = elapsed + 0.25;
     }
-    let capture = if review.held_drag > 0.4 && !review.captured[8] {
+    let capture = if review.full_sent.is_some_and(|t| elapsed > t + 0.4) && !review.captured[9] {
+        Some((9, "inventory-full.png"))
+    } else if review.held_drag > 0.4 && !review.captured[8] {
         Some((8, "rack-drag-item.png"))
     } else if elapsed > 1.3 && !review.captured[0] {
         Some((0, "initial.png"))
@@ -333,6 +338,13 @@ fn observe(
         && let Ok(target) = cameras.single()
     {
         review.captured[index] = true;
+        // After the patched rack, show the inventory-full notice once (screenshot).
+        if index == 4 {
+            commands.write_message(super::recipes_plugin::InventoryFull {
+                item: "reed".into(),
+            });
+            review.full_sent = Some(elapsed);
+        }
         commands
             .spawn(bevy::render::view::screenshot::Screenshot(target.clone()))
             .observe(bevy::render::view::screenshot::save_to_disk(

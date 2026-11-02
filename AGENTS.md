@@ -424,7 +424,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   stream's notes start with the sound.
 - **Inventory: 16 boxes, 100 of one kind per box** (`stubby_recipes::INVENTORY_BOXES`,
   `BOX_STACK`); adds that do not fit fail all or nothing. The Tab screen is the 16 boxes,
-  filled in order; empty boxes stay blank, and nothing held at zero is shown.
+  filled in order; empty boxes stay blank, and nothing held at zero is shown. Anything
+  that cannot fit sends `InventoryFull` (`bevy_stubby_recipes`) and shows Satisfactory's
+  **INVENTORY FULL** banner (red, with the item's icon, under the reticle or under an
+  open machine window), fading after about 2 s; nothing is taken or lost.
 - **Every machine gets a rack, and all racks share one implementation** (`rack.rs`,
   `machine_config.rs`): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the

@@ -442,26 +442,36 @@ fn setup(mut commands: Commands) {
     });
 }
 
-/// The rack's area on screen: the window's middle panel, in what the game draws into
-/// (the window when run alone, an image when Jackdaw's Play hosts it), at the rack's
-/// aspect, centred in the panel.
+/// The rack's area on screen: the window's whole middle panel, in what the game draws
+/// into (the window when run alone, an image when Jackdaw's Play hosts it). The camera
+/// fits the rack to it (`frame_rack`).
 fn rack_viewport(target: UVec2) -> Viewport {
     let (w, h) = (target.x as f32, target.y as f32);
     let (l, t, cw, ch) = layout::CENTRE;
-    let (pw, ph) = (cw * w - 8., ch * h - 8.);
-    let (vw, vh) = if pw / ph > 1.25 {
-        (ph * 1.25, ph)
-    } else {
-        (pw, pw / 1.25)
-    };
     Viewport {
-        physical_position: UVec2::new(
-            (l * w + (cw * w - vw) / 2.) as u32,
-            (t * h + (ch * h - vh) / 2.) as u32,
-        ),
-        physical_size: UVec2::new(vw.max(1.) as u32, vh.max(1.) as u32),
+        physical_position: UVec2::new((l * w + 2.) as u32, (t * h + 2.) as u32),
+        physical_size: UVec2::new((cw * w - 4.).max(1.) as u32, (ch * h - 4.).max(1.) as u32),
         ..default()
     }
+}
+
+/// Fit the rack camera to the rack: the modules (`width`), the frame's posts either side
+/// and the cable comb to the right of the right post, with a small margin, so the rack
+/// fills the middle panel whatever its size.
+fn frame_rack(width: f32, projection: &mut Projection, transform: &mut Transform) {
+    const MARGIN: f32 = 0.06;
+    let (left, right) = (-(width / 2. + 0.16), width / 2. + 0.1 + 0.045 + 0.3);
+    let (bottom, top) = (-0.04, 1.34);
+    let centre = Vec2::new((left + right) / 2., (bottom + top) / 2.);
+    *transform = Transform::from_xyz(centre.x, HUD_Y + centre.y, 4.)
+        .looking_at(Vec3::new(centre.x, HUD_Y + centre.y, 0.), Vec3::Y);
+    *projection = Projection::Orthographic(OrthographicProjection {
+        scaling_mode: ScalingMode::AutoMin {
+            min_width: right - left + 2. * MARGIN,
+            min_height: top - bottom + 2. * MARGIN,
+        },
+        ..OrthographicProjection::default_3d()
+    });
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
@@ -477,7 +487,7 @@ fn sync_view(
         Option<&super::rack::RackState>,
     )>,
     windows: Query<&Window, With<PrimaryWindow>>,
-    mut cameras: Query<&mut Camera, With<RackHudCamera>>,
+    mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<RackHudCamera>>,
     mut panels: Query<&mut Visibility, With<Panel>>,
     mut headers: Query<&mut Text, With<Header>>,
 ) {
@@ -492,7 +502,7 @@ fn sync_view(
             Visibility::Hidden
         };
     }
-    if let Ok(mut camera) = cameras.get_mut(view.camera) {
+    if let Ok((mut camera, _, _)) = cameras.get_mut(view.camera) {
         camera.is_active = machine.is_some();
         if let Some(size) = camera.physical_target_size().or_else(|| {
             windows
@@ -536,6 +546,9 @@ fn sync_view(
         return;
     };
     let width: f32 = config.places.iter().map(|place| place.hp as f32 * HP).sum();
+    if let Ok((_, mut projection, mut transform)) = cameras.get_mut(view.camera) {
+        frame_rack(width, &mut projection, &mut transform);
+    }
     let root = commands
         .spawn((
             Transform::from_xyz(0., HUD_Y, 0.),

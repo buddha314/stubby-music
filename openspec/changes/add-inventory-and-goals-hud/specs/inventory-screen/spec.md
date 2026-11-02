@@ -30,7 +30,7 @@ nothing), so a collection or craft that does not fit takes nothing.
 
 #### Scenario: Full
 - **WHEN** all 16 boxes are in use and the player collects an item that needs another box
-- **THEN** the collection fails and the inventory is unchanged
+- **THEN** the collection fails, the inventory is unchanged, and an "INVENTORY FULL" notice with the item's icon shows briefly, as in Satisfactory
 
 ### Requirement: The inventory screen shows the boxes
 The screen SHALL show the 16 boxes as a grid, filled in order with the icon of what each

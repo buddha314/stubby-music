@@ -868,13 +868,17 @@ fn press_jack(
     }
     // One of the player's own cables at this jack: back into the inventory.
     if let Some(i) = state.own.iter().position(|(a, b)| a == jack || b == jack) {
-        state.own.remove(i);
-        state.version += 1;
-        selection.0 = None;
         let back = player.items.grant(&[Stack {
             item: PATCH_CABLE.into(),
             quantity: 1,
         }]);
+        // No room for it: the cable stays patched rather than being lost.
+        if back.is_err() {
+            return;
+        }
+        state.own.remove(i);
+        state.version += 1;
+        selection.0 = None;
         player.feedback = match back {
             Ok(()) => format!(
                 "Patch cable back in your inventory ({}).",
