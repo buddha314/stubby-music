@@ -15,7 +15,7 @@ struct Review {
     next: f32,
     hovers: usize,
     uses: usize,
-    captured: [bool; 6],
+    captured: [bool; 7],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
@@ -28,6 +28,8 @@ struct Review {
     rack_wait: f32,
     release: bool,
     press_at: Vec2,
+    /// A drag in progress: where the pointer moves (still pressed) before it is released.
+    drag_to: Option<Vec2>,
     rack_configured: bool,
 }
 impl Review {
@@ -40,8 +42,10 @@ impl Review {
         self.rack_loaded && self.rack_step < RACK_STEPS
     }
 }
-/// Mount; take the green cable from the comb, GATE, TRIG; take the red one, OUT, IN;
-/// then the patched screenshot. Only what the rack shows is patched (AGENTS.md).
+/// Drag the square wave's tile onto the VCO slot; take the green cable from the comb and
+/// drag it from GATE to TRIG (VCV Rack's gesture); take the red one, click OUT, move the
+/// pointer partway (the live cable follows it: screenshot), click IN; then the patched
+/// screenshot. Only what the rack shows is patched (AGENTS.md).
 const RACK_STEPS: usize = 8;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
@@ -58,7 +62,7 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 6],
+            captured: [false; 7],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
@@ -71,6 +75,7 @@ impl Plugin for PrefabReviewPlugin {
             rack_wait: 0.5,
             release: false,
             press_at: Vec2::ZERO,
+            drag_to: None,
             rack_configured: false,
         })
         .add_systems(Startup, start.after(super::setup))
@@ -289,6 +294,8 @@ fn observe(
         && !review.captured[5]
     {
         Some((5, "rack-open.png"))
+    } else if review.rack_step == 6 && review.rack_wait < 0.1 && !review.captured[6] {
+        Some((6, "rack-live-cable.png"))
     } else if review.rack_step >= RACK_STEPS && !review.captured[4] {
         Some((4, "rack-patched.png"))
     } else if review.stage >= 8 && !review.captured[2] {
@@ -357,6 +364,7 @@ fn drive_rack(
     windows: Query<(Entity, &Window), With<bevy::window::PrimaryWindow>>,
     hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
     jacks: Query<(&super::machine_config::JackHit, &GlobalTransform)>,
+    slots: Query<(&super::machine_config::SlotHit, &GlobalTransform)>,
     plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
     buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
     racks: Query<&super::rack::RackState>,
@@ -399,6 +407,18 @@ fn drive_rack(
         target: target.clone(),
         position,
     };
+    if let Some(to) = review.drag_to.take() {
+        // A drag: move (still pressed) to the drop point, then release there.
+        input.write(PointerInput::new(
+            PointerId::Mouse,
+            at(to),
+            PointerAction::Move {
+                delta: to - review.press_at,
+            },
+        ));
+        review.press_at = to;
+        return;
+    }
     if review.release {
         // Second frame of a click: lift the button where it went down.
         let position = review.press_at;
@@ -432,31 +452,59 @@ fn drive_rack(
             .world_to_viewport(transform, at.translation() + Vec3::Y * 0.03)
             .ok()
     };
+    let slot = || {
+        let (camera, transform) = hud.single().ok()?;
+        let (_, world) = slots.iter().next()?;
+        camera
+            .world_to_viewport(transform, world.translation())
+            .ok()
+    };
     let step = review.rack_step;
-    let point = match step {
-        0 => buttons
-            .iter()
-            .next()
-            .map(|(t, node)| t.translation * node.inverse_scale_factor()),
-        1 => comb(0),
-        2 => jack("clock", "gate"),
-        3 => jack("volume", "trig"),
-        4 => comb(1),
-        5 => jack("vco", "out"),
-        6 => jack("volume", "in"),
-        _ => None,
+    // (press here, then drag to, or None for a click), or a pointer move only.
+    let (point, drag, hover) = match step {
+        0 => (
+            buttons
+                .iter()
+                .next()
+                .map(|(t, node)| t.translation * node.inverse_scale_factor()),
+            slot(),
+            false,
+        ),
+        1 => (comb(0), None, false),
+        2 => (jack("clock", "gate"), jack("volume", "trig"), false),
+        3 => (comb(1), None, false),
+        4 => (jack("vco", "out"), None, false),
+        5 => (
+            jack("vco", "out")
+                .zip(jack("volume", "in"))
+                .map(|(a, b)| (a + b) / 2. + Vec2::new(60., 40.)),
+            None,
+            true,
+        ),
+        6 => (jack("volume", "in"), None, false),
+        _ => (None, None, false),
     };
     if step + 1 < RACK_STEPS {
         // Wait (briefly) for the target to exist: the VCO's jacks appear once it is mounted.
         let Some(position) = point else { return };
-        for action in [
-            PointerAction::Move { delta: Vec2::ZERO },
-            PointerAction::Press(PointerButton::Primary),
-        ] {
-            input.write(PointerInput::new(PointerId::Mouse, at(position), action));
+        if step == 0 && drag.is_none() || step == 2 && drag.is_none() {
+            return;
         }
-        review.release = true;
-        review.press_at = position;
+        input.write(PointerInput::new(
+            PointerId::Mouse,
+            at(position),
+            PointerAction::Move { delta: Vec2::ZERO },
+        ));
+        if !hover {
+            input.write(PointerInput::new(
+                PointerId::Mouse,
+                at(position),
+                PointerAction::Press(PointerButton::Primary),
+            ));
+            review.release = true;
+            review.press_at = position;
+            review.drag_to = drag;
+        }
     }
     let state = racks.iter().next();
     write(

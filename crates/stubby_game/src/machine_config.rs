@@ -131,9 +131,14 @@ pub(crate) struct PortNode(pub JackRef);
 /// A node of the rack frame's cable comb (`Comb_<n>`, `Comb_<n>_PlugA/B`).
 #[derive(Component, Clone)]
 pub(crate) struct CombNode(pub String);
+/// An empty place's slot outline mesh on the rack screen: a drop target for modules.
+#[derive(Component, Clone)]
+pub(crate) struct SlotHit(pub String);
 enum SceneKind {
     Frame,
     Module,
+    /// An empty place's outline (its place).
+    Slot(String),
     Label(String),
 }
 #[derive(Resource)]
@@ -345,10 +350,10 @@ fn setup(mut commands: Commands) {
 fn rack_viewport(target: UVec2) -> Viewport {
     let (w, h) = (target.x, target.y);
     // Leaves the bottom quarter for the step hint and the inventory tiles.
-    let height = (h as f32 * 0.6) as u32;
+    let height = (h as f32 * 0.56) as u32;
     let width = (height as f32 * 1.25).min(w as f32 * 0.9) as u32;
     Viewport {
-        physical_position: UVec2::new((w - width) / 2, (h as f32 * 0.11) as u32),
+        physical_position: UVec2::new((w - width) / 2, (h as f32 * 0.1) as u32),
         physical_size: UVec2::new(width.max(1), height.max(1)),
         ..default()
     }
@@ -490,7 +495,7 @@ fn sync_view(
                 Transform::from_xyz(center, 0., 0.),
                 Visibility::Inherited,
                 HudScene {
-                    kind: SceneKind::Module,
+                    kind: SceneKind::Slot(place.place.clone()),
                     width,
                     place: None,
                 },
@@ -581,6 +586,11 @@ fn prepare_parts(
                         _ => (),
                     }
                 }
+            }
+            SceneKind::Slot(place) if is_mesh => {
+                commands
+                    .entity(entity)
+                    .insert((SlotHit(place.clone()), Pickable::default()));
             }
             SceneKind::Label(selected)
                 if name.as_str().starts_with("Label_") && name.as_str() != selected =>
