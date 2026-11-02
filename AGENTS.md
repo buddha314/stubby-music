@@ -399,11 +399,18 @@ equivalent of an iron ore node, so the player does not pick it up.
   halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's
   cables are free; the player starts with 10 patch cables (`start.json`) for their own
   patches, and later makes them from discarded bird nests. The rack screen shows a
-  Satisfactory-style **Relevant** inventory strip: boxes of the items an open slot
-  accepts that the player **holds** (nothing held, nothing shown), each its icon and count
+  **Layout follows Satisfactory's craft bench** (`machine_config::layout`): a framed window
+  with a title bar; on the left a **Relevant** list of the items an open slot accepts that
+  the player **holds** (nothing held, nothing shown); the rack in the middle panel; the
+  inventory's 16 boxes on the right (an item that fits an open slot drags from its box
+  too); key prompts under the window. Each item shows its icon and count
   (`assets/ui/icons/<item_id>.png`, from `tools/icons/make_item_icons.py`; hover names the
   item), **dragged into its slot** (or clicked, or keys 1-0). Cables follow **VCV Rack**:
-  drag from a jack (or a comb cable) and drop on the other, or click each. The cable in
+  drag from a jack (or a comb cable) and drop on the other, or click each. **Any cable
+  joins any output to any free input**; a comb cable's configured jacks are only the
+  suggested patch (the ghosts and pods), and the voice completes when those patches exist
+  by whichever cables. Within 40 px of a jack it can enter, the cable **snaps**: the plug
+  shows in the jack, and letting go plugs it in. The cable in
   hand is **shown, animated, never described**: taken from the comb it leaves the comb and
   hangs from the pointer, swinging (a damped spring); with one end in a jack it runs to the
   pointer with the same elastic sag, springing after each move; plugs take the cable's
@@ -421,7 +428,7 @@ equivalent of an iron ore node, so the player does not pick it up.
 - **Every machine gets a rack, and all racks share one implementation** (`rack.rs`,
   `machine_config.rs`): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the
-  inventory), spare cables (colour, the two jacks, a hint), the normalled output. A
+  inventory), spare cables (colour, the suggested patch, a hint), the normalled output. A
   module is one entry in `rack.rs` (its engine parts, internal wiring, jack → engine
   port). The engine patch is exactly the patched cables; completing them sends
   `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,

@@ -30,8 +30,10 @@ use stubby_recipes::Stack;
 pub struct RackState {
     /// Place -> module asset, for places the player filled (fixed places are in the profile).
     pub mounted: HashMap<String, String>,
-    /// Per spare cable in the profile: patched yet?
-    pub patched: Vec<bool>,
+    /// Per comb cable in the profile: the (output, input) it joins, if patched. A comb
+    /// cable goes between any output and any input, as in VCV Rack; the profile's jacks
+    /// for it are only the patch the screen suggests.
+    pub patched: Vec<Option<(JackRef, JackRef)>>,
     /// The player's own cables (output jack, input jack), each one patch cable from the
     /// inventory; unplugging returns it.
     pub own: Vec<(JackRef, JackRef)>,
@@ -39,8 +41,20 @@ pub struct RackState {
     pub version: u32,
 }
 impl RackState {
-    pub fn complete(&self) -> bool {
-        !self.patched.is_empty() && self.patched.iter().all(|p| *p)
+    /// Every patched connection, comb cables and the player's own.
+    pub fn connections(&self) -> impl Iterator<Item = &(JackRef, JackRef)> {
+        self.patched.iter().flatten().chain(&self.own)
+    }
+    pub fn joins(&self, from: &JackRef, to: &JackRef) -> bool {
+        self.connections().any(|(f, t)| f == from && t == to)
+    }
+    /// An input takes one cable; an output may feed several.
+    pub fn input_taken(&self, input: &JackRef) -> bool {
+        self.connections().any(|(_, t)| t == input)
+    }
+    /// Every patch the machine's voice needs is made, by whichever cables.
+    pub fn complete(&self, config: &RackConfiguration) -> bool {
+        !config.cables.is_empty() && config.cables.iter().all(|c| self.joins(&c.from, &c.to))
     }
 }
 
@@ -107,6 +121,7 @@ impl Plugin for RackPlugin {
                     pods,
                     draw_cables,
                     live_cable,
+                    snap_release,
                 )
                     .chain()
                     .after(super::machine_config::MachineInteractionSet),
@@ -214,12 +229,7 @@ fn plan(
         let (part, port) = jack(module, &j.port)?;
         Some(PortRef::new(*ids.get(&(j.place.clone(), part))?, port))
     };
-    for (cable, patched) in config.cables.iter().zip(&state.patched) {
-        if *patched && let (Some(from), Some(to)) = (port(&cable.from), port(&cable.to)) {
-            commands.push(Command::Connect { from, to });
-        }
-    }
-    for (from, to) in &state.own {
+    for (from, to) in state.connections() {
         if let (Some(from), Some(to)) = (port(from), port(to)) {
             commands.push(Command::Connect { from, to });
         }
@@ -244,7 +254,7 @@ fn attach(
         if let Some(config) = profiles.0.get(&asset.asset) {
             commands.entity(entity).insert((
                 RackState {
-                    patched: vec![false; config.cables.len()],
+                    patched: vec![None; config.cables.len()],
                     ..default()
                 },
                 RackEngine::default(),
@@ -284,7 +294,7 @@ fn patch_engine(
             }
         }
         engine.owned = owned;
-        if state.complete() && !engine.configured {
+        if state.complete(config) && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });
         }
@@ -318,14 +328,18 @@ fn mount_buttons(
     catalog: Option<Res<RecipeCatalog>>,
     racks: Query<(&PlacedAsset, &RackState)>,
     actions: Query<Entity, With<RackActions>>,
+    boxes: Query<Entity, With<super::machine_config::RackInventory>>,
     mut last: Local<Option<(Entity, u32, u32)>>,
 ) {
-    let Ok(area) = actions.single() else { return };
+    let (Ok(area), Ok(grid)) = (actions.single(), boxes.single()) else {
+        return;
+    };
     let Some((machine, (asset, state))) =
         open_rack(&screens).and_then(|e| racks.get(e).ok().map(|r| (e, r)))
     else {
         if last.take().is_some() {
             commands.entity(area).despawn_related::<Children>();
+            commands.entity(grid).despawn_related::<Children>();
         }
         return;
     };
@@ -335,6 +349,7 @@ fn mount_buttons(
     }
     *last = Some((machine, state.version, held));
     commands.entity(area).despawn_related::<Children>();
+    commands.entity(grid).despawn_related::<Children>();
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
@@ -361,97 +376,82 @@ fn mount_buttons(
             .and_then(|c| c.0.item(id))
             .map_or(id.to_string(), |i| i.name.clone())
     };
-    let row = || Node {
-        column_gap: px(10),
-        align_items: AlignItems::Center,
-        ..default()
+    let mount = |place: &super::machine_config::RackPlace,
+                 accept: &super::machine_config::Accept| {
+        MountButton {
+            machine,
+            place: place.place.clone(),
+            item: accept.item.clone(),
+            module: accept.module.clone(),
+        }
     };
-    // Relevant and Inventory side by side, as Satisfactory's panels sit.
-    let section = || {
-        (
-            Node {
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::FlexStart,
-                row_gap: px(4),
-                ..default()
-            },
-            Pickable::IGNORE,
-        )
-    };
-    commands.entity(area).with_children(|outer| {
-        let mut sections = outer.spawn((
-            Node {
-                column_gap: px(28),
-                align_items: AlignItems::FlexStart,
-                ..default()
-            },
-            Pickable::IGNORE,
-        ));
-        sections.with_children(|sections| {
-            if !relevant.is_empty() {
-                sections.spawn(section()).with_children(|area| {
-                    area.spawn(text("Relevant".into(), 15., muted));
-                    area.spawn((row(), Pickable::IGNORE))
-                        .with_children(|strip| {
-                            for (place, accept) in &relevant {
-                                let count = player.items.quantity(&accept.item);
-                                let mut cell = strip.spawn((
-                                    Node {
-                                        border: UiRect::all(px(1)),
-                                        ..default()
-                                    },
-                                    BorderColor::all(amber.with_alpha(0.8)),
-                                    MountButton {
-                                        machine,
-                                        place: place.place.clone(),
-                                        item: accept.item.clone(),
-                                        module: accept.module.clone(),
-                                    },
-                                ));
-                                cell.with_children(|cell| {
-                                    icon_slot(
-                                        cell,
-                                        Some(&server),
-                                        &accept.item,
-                                        &name(&accept.item),
-                                        count,
-                                        64.,
-                                    );
-                                });
-                            }
-                        });
-                });
+    // Left: what fits an open slot, as Satisfactory's list (icon, name, count); drag a
+    // row into its slot, or click it, or press its number.
+    commands.entity(area).with_children(|list| {
+        for (place, accept) in &relevant {
+            let count = player.items.quantity(&accept.item);
+            list.spawn((
+                Node {
+                    column_gap: px(10),
+                    align_items: AlignItems::Center,
+                    padding: UiRect::axes(px(8), px(4)),
+                    ..default()
+                },
+                BackgroundColor(amber.with_alpha(0.9)),
+                mount(place, accept),
+            ))
+            .with_children(|row| {
+                row.spawn((
+                    item_icon(&server, &accept.item),
+                    super::inventory_screen::ItemName(name(&accept.item)),
+                    Node {
+                        width: px(36),
+                        height: px(36),
+                        ..default()
+                    },
+                ));
+                row.spawn((
+                    text(name(&accept.item), 18., Color::srgb(0.1, 0.08, 0.05)),
+                    Node {
+                        flex_grow: 1.,
+                        ..default()
+                    },
+                ));
+                row.spawn(text(
+                    format!("[{count}]"),
+                    15.,
+                    Color::srgb(0.1, 0.08, 0.05),
+                ));
+            });
+        }
+    });
+    // Right: the inventory, 16 boxes; an item that fits an open slot can be dragged
+    // from its box into the rack.
+    commands.entity(grid).with_children(|grid| {
+        let held: Vec<_> = player.items.boxes().collect();
+        for index in 0..stubby_recipes::INVENTORY_BOXES as usize {
+            let mut cell = grid.spawn((
+                Node {
+                    width: px(64),
+                    height: px(64),
+                    padding: UiRect::all(px(4)),
+                    border: UiRect::all(px(1)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgb(0.11, 0.1, 0.09)),
+                BorderColor::all(muted.with_alpha(0.5)),
+                Pickable::IGNORE,
+            ));
+            let Some((id, count)) = held.get(index) else {
+                continue;
+            };
+            if let Some((place, accept)) = relevant.iter().find(|(_, a)| a.item == *id) {
+                cell.insert((mount(place, accept), Pickable::default()));
             }
-            // The rest of what you carry, as icon slots (Satisfactory's inventory panel).
-            let others: Vec<_> = player
-                .items
-                .boxes()
-                .filter(|(id, _)| !relevant.iter().any(|(_, a)| a.item == *id))
-                .collect();
-            if !others.is_empty() {
-                sections.spawn(section()).with_children(|area| {
-                    area.spawn(text("Inventory".into(), 15., muted));
-                    area.spawn((row(), Pickable::IGNORE))
-                        .with_children(|strip| {
-                            for (id, n) in others {
-                                strip
-                                    .spawn((
-                                        Node {
-                                            flex_direction: FlexDirection::Column,
-                                            align_items: AlignItems::Center,
-                                            row_gap: px(2),
-                                            ..default()
-                                        },
-                                        Pickable::IGNORE,
-                                    ))
-                                    .with_children(|cell| {
-                                        icon_slot(cell, Some(&server), id, &name(id), n, 48.);
-                                    });
-                            }
-                        });
-                });
-            }
-        });
+            cell.with_children(|cell| {
+                icon_slot(cell, Some(&server), id, &name(id), *count, 56.);
+            });
+        }
     });
 }
 
@@ -828,39 +828,39 @@ fn press_jack(
     held: &mut HeldCable,
     player: &mut PlayerInventory,
 ) {
-    let cable_at = |j: &JackRef| {
-        config
-            .cables
-            .iter()
-            .position(|c| &c.from == j || &c.to == j)
+    let mounted = modules(config, state);
+    // A cable joins an output to a free input, whichever end goes in first.
+    let orient = |a: &JackRef, b: &JackRef, state: &RackState| {
+        let (from, to) = match (direction(&mounted, a), direction(&mounted, b)) {
+            (Some(true), Some(false)) => (a.clone(), b.clone()),
+            (Some(false), Some(true)) => (b.clone(), a.clone()),
+            _ => return None,
+        };
+        (!state.input_taken(&to)).then_some((from, to))
     };
-    // A cable taken from the comb: its first end, then its second.
+    // A cable taken from the comb: its first end, then its second, any output to any input.
     if let Some(i) = held.cable {
-        let cable = &config.cables[i];
-        if &cable.from != jack && &cable.to != jack {
-            player.feedback = format!(
-                "The {} cable goes from {} to {}.",
-                colour_name(&cable.color),
-                cable.from.port.to_uppercase(),
-                cable.to.port.to_uppercase()
-            );
-            return;
-        }
         match held.first.take() {
             None => held.first = Some(jack.clone()),
-            Some(first) if &first != jack => {
-                state.patched[i] = true;
-                state.version += 1;
-                held.cable = None;
-                player.feedback.clear();
-            }
+            Some(first) if &first != jack => match orient(&first, jack, state) {
+                Some(link) => {
+                    state.patched[i] = Some(link);
+                    state.version += 1;
+                    held.cable = None;
+                }
+                // Not an output and a free input: keep it in hand.
+                None => held.first = Some(first),
+            },
             Some(first) => held.first = Some(first),
         }
         return;
     }
     // A patched comb cable at this jack: back onto the comb.
-    if let Some(i) = cable_at(jack).filter(|&i| state.patched[i]) {
-        state.patched[i] = false;
+    if let Some(i) = state.patched.iter().position(|p| {
+        p.as_ref()
+            .is_some_and(|(from, to)| from == jack || to == jack)
+    }) {
+        state.patched[i] = None;
         state.version += 1;
         selection.0 = None;
         player.feedback = "Cable back on the comb.".into();
@@ -892,41 +892,21 @@ fn press_jack(
         selection.0 = Some(first);
         return;
     }
-    let mounted = modules(config, state);
-    // An input takes one cable; an output may feed several.
-    let input_taken = |j: &JackRef| {
-        state.own.iter().any(|(_, to)| to == j)
-            || config
-                .cables
-                .iter()
-                .zip(&state.patched)
-                .any(|(c, p)| *p && &c.to == j)
+    let Some((from, to)) = orient(&first, jack, state) else {
+        return;
     };
-    // The comb cable these two jacks are for, if any.
+    // Jack to jack: the comb's free cable for this patch if it has one, else your own.
     if let Some(i) = config
         .cables
         .iter()
-        .position(|c| (c.from == first && &c.to == jack) || (&c.from == jack && c.to == first))
-        && mounted.contains_key(&config.cables[i].from.place)
-        && mounted.contains_key(&config.cables[i].to.place)
-        && !input_taken(&config.cables[i].to)
+        .zip(&state.patched)
+        .position(|(c, p)| p.is_none() && c.from == from && c.to == to)
     {
-        state.patched[i] = true;
+        state.patched[i] = Some((from, to));
         state.version += 1;
         return;
     }
-    // Otherwise, a cable of the player's own: an output to a free input.
-    let (from, to) = match (direction(&mounted, &first), direction(&mounted, jack)) {
-        (Some(true), Some(false)) => (first, jack.clone()),
-        (Some(false), Some(true)) => (jack.clone(), first),
-        _ => {
-            player.feedback = "A cable joins an output to an input; follow the glow.".into();
-            return;
-        }
-    };
-    if input_taken(&to) {
-        player.feedback = "That input already has a cable.".into();
-    } else if player.items.take(PATCH_CABLE, 1).is_ok() {
+    if player.items.take(PATCH_CABLE, 1).is_ok() {
         state.own.push((from, to));
         state.version += 1;
         player.feedback = format!(
@@ -953,7 +933,7 @@ fn take_cable(
     let Some(state) = open_rack(&screens).and_then(|e| racks.get(e).ok()) else {
         return;
     };
-    if !state.patched.get(*i).copied().unwrap_or(true) {
+    if state.patched.get(*i).is_some_and(Option::is_none) {
         held.cable = Some(*i);
         held.first = None;
         selection.0 = None;
@@ -975,7 +955,7 @@ fn drag_cable(
     let Some(state) = open_rack(&screens).and_then(|e| racks.get(e).ok()) else {
         return;
     };
-    if !state.patched.get(*i).copied().unwrap_or(true) {
+    if state.patched.get(*i).is_some_and(Option::is_none) {
         held.cable = Some(*i);
         held.first = None;
         selection.0 = None;
@@ -1131,7 +1111,7 @@ fn snap_on_plug(
     mut next: Local<u32>,
 ) {
     for (machine, state) in &racks {
-        let now = state.patched.iter().filter(|p| **p).count() + state.own.len();
+        let now = state.connections().count();
         let before = plugged.insert(machine, now).unwrap_or(now);
         if now > before
             && let Some(synth) = &synth
@@ -1168,14 +1148,6 @@ fn clear_feedback_on_open(
     if opened.read().next().is_some() {
         player.feedback.clear();
         *held = HeldCable::default();
-    }
-}
-
-fn colour_name(colour: &str) -> &str {
-    match colour {
-        "verdigris" => "green",
-        "rust" => "red",
-        other => other,
     }
 }
 
@@ -1228,9 +1200,8 @@ fn pods(
         let waiting = config
             .cables
             .iter()
-            .zip(&state.patched)
-            .find(|(c, p)| ready && !**p && (c.from == pod.0 || c.to == pod.0));
-        let Some((cable, _)) = waiting else {
+            .find(|c| ready && !state.joins(&c.from, &c.to) && (c.from == pod.0 || c.to == pod.0));
+        let Some(cable) = waiting else {
             visibility.set_if_neq(Visibility::Hidden);
             continue;
         };
@@ -1259,6 +1230,96 @@ fn pods(
 struct CableVisual;
 
 const CABLE_RADIUS: f32 = 0.016;
+
+/// How near (in screen pixels) the pointer must come to a jack for the cable in hand
+/// to snap to it, as in VCV Rack.
+const SNAP_PX: f32 = 40.;
+
+/// The jack the cable in hand would go into from `pointer` (target coordinates): the
+/// nearest within `SNAP_PX` that makes a valid patch from what is already plugged in
+/// (its first end, or your selected jack), or any jack while no end is in yet.
+#[allow(clippy::too_many_arguments)] // The hand, the rack and the screen.
+fn snap_target(
+    pointer: Vec2,
+    camera: &Camera,
+    eye: &GlobalTransform,
+    config: &RackConfiguration,
+    state: &RackState,
+    held: &HeldCable,
+    selection: &PatchSelection,
+    ports: &Query<(&PortNode, &GlobalTransform)>,
+) -> Option<(JackRef, Vec3)> {
+    let anchor = held.first.as_ref().or(selection.0.as_ref());
+    if held.cable.is_none() && anchor.is_none() {
+        return None;
+    }
+    let mounted = modules(config, state);
+    let valid = |j: &JackRef| match anchor {
+        None => direction(&mounted, j).is_some(),
+        Some(a) if a == j => false,
+        Some(a) => match (direction(&mounted, a), direction(&mounted, j)) {
+            (Some(true), Some(false)) => !state.input_taken(j),
+            (Some(false), Some(true)) => !state.input_taken(a),
+            _ => false,
+        },
+    };
+    ports
+        .iter()
+        .filter(|(p, _)| valid(&p.0))
+        .filter_map(|(p, t)| {
+            let at = camera.world_to_viewport(eye, t.translation()).ok()?;
+            let d = at.distance(pointer);
+            (d <= SNAP_PX).then(|| (d, p.0.clone(), t.translation()))
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .map(|(_, j, at)| (j, at))
+}
+
+/// Letting go near a valid jack plugs the cable in there, even off the jack itself
+/// (a direct hit on a jack is already handled by picking).
+#[allow(clippy::too_many_arguments)] // The release, the hand, the rack and the screen.
+fn snap_release(
+    mut inputs: MessageReader<bevy::picking::pointer::PointerInput>,
+    hovers: Res<bevy::picking::hover::HoverMap>,
+    jacks: Query<(), With<JackHit>>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    ports: Query<(&PortNode, &GlobalTransform)>,
+    mut hand: (
+        ResMut<HeldCable>,
+        ResMut<PatchSelection>,
+        ResMut<PlayerInventory>,
+    ),
+    mut racks: Query<(&PlacedAsset, &mut RackState)>,
+) {
+    use bevy::picking::pointer::{PointerAction, PointerButton, PointerId};
+    let Some(at) = inputs
+        .read()
+        .filter(|i| {
+            i.pointer_id == PointerId::Mouse
+                && matches!(i.action, PointerAction::Release(PointerButton::Primary))
+        })
+        .last()
+        .map(|i| i.location.position)
+    else {
+        return;
+    };
+    let on_jack = hovers
+        .get(&PointerId::Mouse)
+        .is_some_and(|h| h.keys().any(|e| jacks.contains(*e)));
+    let (Ok((camera, eye)), false) = (hud.single(), on_jack) else {
+        return;
+    };
+    let (held, selection, player) = (&mut *hand.0, &mut *hand.1, &mut *hand.2);
+    on_rack(&screens, &profiles, &mut racks, |config, state| {
+        if let Some((jack, _)) =
+            snap_target(at, camera, eye, config, state, held, selection, &ports)
+        {
+            press_jack(&jack, config, state, selection, held, player);
+        }
+    });
+}
 
 /// The cable in hand, drawn as VCV Rack draws a cable being patched, and alive: it is
 /// a small spring simulation, so it swings after the pointer instead of snapping.
@@ -1304,7 +1365,7 @@ fn live_cable(
     profiles: Res<Profiles>,
     held: Res<HeldCable>,
     selection: Res<PatchSelection>,
-    racks: Query<&PlacedAsset>,
+    racks: Query<(&PlacedAsset, &RackState)>,
     ports: Query<(&PortNode, &GlobalTransform)>,
     hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
     pointers: Query<(
@@ -1325,9 +1386,8 @@ fn live_cable(
         }
         sim.started = false;
     };
-    let config = open_rack(&screens)
-        .and_then(|m| racks.get(m).ok())
-        .and_then(|a| profiles.0.get(&a.asset));
+    let rack = open_rack(&screens).and_then(|m| racks.get(m).ok());
+    let config = rack.and_then(|(a, _)| profiles.0.get(&a.asset));
     let port = |j: &JackRef| {
         ports
             .iter()
@@ -1346,11 +1406,13 @@ fn live_cable(
         clear(&mut commands, &mut sim);
         return;
     };
-    let Some(pointer) = pointers
+    let screen = pointers
         .iter()
         .find(|(id, _)| **id == bevy::picking::pointer::PointerId::Mouse)
         .and_then(|(_, l)| l.location.as_ref())
-        .and_then(|l| camera.viewport_to_world(eye, l.position).ok())
+        .map(|l| l.position);
+    let Some(mut pointer) = screen
+        .and_then(|p| camera.viewport_to_world(eye, p).ok())
         .and_then(|ray| {
             let normal = eye.forward().as_vec3();
             let d = ray.direction.dot(normal);
@@ -1361,6 +1423,15 @@ fn live_cable(
         clear(&mut commands, &mut sim);
         return;
     };
+    // Near a jack it can go into, the plug snaps onto it (VCV Rack): what you see is
+    // where it will go when you let go.
+    if let (Some((_, state)), Some(screen)) = (rack, screen)
+        && let Some((_, at)) = snap_target(
+            screen, camera, eye, config, state, &held, &selection, &ports,
+        )
+    {
+        pointer = at;
+    }
     let dt = time.delta_secs().min(1. / 30.);
     // The plug at the pointer points into the panel, as VCV Rack draws a plug: seen
     // head-on, its round end sits exactly where it will go in, and the cable leaves its
@@ -1587,24 +1658,30 @@ fn draw_cables(
             ..default()
         });
         let ends = (port(&cable.from), port(&cable.to));
-        if *patched {
-            if let (Some(a), Some(b)) = ends {
+        if let Some((from, to)) = patched {
+            if let (Some(a), Some(b)) = (port(from), port(to)) {
                 commands.spawn((
                     CableVisual,
                     Mesh3d(meshes.add(tube(&cable_curve(a, b), CABLE_RADIUS))),
-                    MeshMaterial3d(mat),
+                    MeshMaterial3d(mat.clone()),
                     layer.clone(),
                 ));
             }
-            continue;
         }
-        if ready && let (Some(a), Some(b)) = ends {
+        // The ghost of the suggested patch, until some cable makes it.
+        if ready
+            && !state.joins(&cable.from, &cable.to)
+            && let (Some(a), Some(b)) = ends
+        {
             commands.spawn((
                 CableVisual,
                 Mesh3d(meshes.add(tube(&cable_curve(a, b), CABLE_RADIUS * 0.7))),
                 MeshMaterial3d(ghost.clone()),
                 layer.clone(),
             ));
+        }
+        if patched.is_some() {
+            continue;
         }
         let index = config
             .cables
@@ -1668,7 +1745,7 @@ mod tests {
         let profiles = Profiles::default();
         let config = &profiles.0["mudpit_burbler"];
         let mut state = RackState {
-            patched: vec![false; config.cables.len()],
+            patched: vec![None; config.cables.len()],
             ..default()
         };
         state.mounted.insert("vco".into(), "square_vco".into());
@@ -1685,10 +1762,16 @@ mod tests {
         };
         // The normalled output only: no tone.
         assert_eq!(connections(&state), 1);
-        state.patched = vec![true, false];
-        assert!(!state.complete());
-        state.patched = vec![true, true];
-        assert!(state.complete());
+        let link =
+            |c: &super::super::machine_config::RackCable| Some((c.from.clone(), c.to.clone()));
+        state.patched = vec![link(&config.cables[0]), None];
+        assert!(!state.complete(config));
+        state.patched = vec![link(&config.cables[0]), link(&config.cables[1])];
+        assert!(state.complete(config));
+        // A comb cable goes anywhere: the red one making the GATE -> TRIG patch and the
+        // green one OUT -> IN still completes the voice.
+        state.patched = vec![link(&config.cables[1]), link(&config.cables[0])];
+        assert!(state.complete(config));
         assert_eq!(connections(&state), 3, "GATE->TRIG and OUT->IN added");
     }
 
@@ -1703,7 +1786,11 @@ mod tests {
         let profiles = Profiles::default();
         let config = &profiles.0["mudpit_burbler"];
         let mut patched = RackState {
-            patched: vec![true; config.cables.len()],
+            patched: config
+                .cables
+                .iter()
+                .map(|c| Some((c.from.clone(), c.to.clone())))
+                .collect(),
             ..default()
         };
         patched.mounted.insert("vco".into(), "square_vco".into());

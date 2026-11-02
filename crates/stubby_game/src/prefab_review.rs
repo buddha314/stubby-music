@@ -48,11 +48,11 @@ impl Review {
     }
 }
 /// Drag the square wave's icon onto the VCO slot; take the green cable from the comb and
-/// carry it over the rack (it hangs from the pointer: screenshot), then drag it from GATE
-/// to TRIG (VCV Rack's gesture); take the red one, click OUT, move the pointer partway
-/// (the live cable follows: screenshot), click IN; then the patched screenshot. Only
-/// what the rack shows is patched (AGENTS.md).
-const RACK_STEPS: usize = 9;
+/// carry it over the rack (screenshot); click just beside the VCO's OUT and the volume's
+/// IN (comb cables go anywhere and snap to a jack within reach); take the red one, click
+/// beside GATE, move partway (the live cable: screenshot), click beside TRIG; then the
+/// patched screenshot. Only what the rack shows is patched (AGENTS.md).
+const RACK_STEPS: usize = 10;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
     fn build(&self, app: &mut App) {
@@ -318,7 +318,7 @@ fn observe(
         Some((5, "rack-open.png"))
     } else if review.rack_step == 3 && review.rack_wait < -0.3 && !review.captured[7] {
         Some((7, "rack-carry-cable.png"))
-    } else if review.rack_step == 7 && review.rack_wait < -0.3 && !review.captured[6] {
+    } else if review.rack_step == 8 && review.rack_wait < -0.3 && !review.captured[6] {
         Some((6, "rack-live-cable.png"))
     } else if review.rack_step >= RACK_STEPS && !review.captured[4] {
         Some((4, "rack-patched.png"))
@@ -467,7 +467,7 @@ fn drive_rack(
     }
     // Hold a screenshot step until its shot is taken, however slow the frames are.
     if (review.rack_step == 3 && !review.captured[7])
-        || (review.rack_step == 7 && !review.captured[6])
+        || (review.rack_step == 8 && !review.captured[6])
     {
         return;
     }
@@ -497,6 +497,8 @@ fn drive_rack(
             .ok()
     };
     let step = review.rack_step;
+    // Beside a jack, inside the snap reach but off the jack itself.
+    let near = |p: Vec2| p + Vec2::new(22., 14.);
     // (press here, then drag to, or None for a click), or a pointer move only.
     let (point, drag, hover) = match step {
         0 => (
@@ -510,29 +512,32 @@ fn drive_rack(
         1 => (comb(0), None, false),
         // Carry the green cable over the rack: it hangs from the pointer (screenshot).
         2 => (
-            jack("clock", "gate")
-                .zip(jack("volume", "trig"))
+            jack("vco", "out")
+                .zip(jack("volume", "in"))
                 .map(|(a, b)| (a + b) / 2.),
             None,
             true,
         ),
-        3 => (jack("clock", "gate"), jack("volume", "trig"), false),
-        4 => (comb(1), None, false),
-        5 => (jack("vco", "out"), None, false),
-        6 => (
-            jack("vco", "out")
-                .zip(jack("volume", "in"))
+        // A comb cable goes anywhere, and snaps: the green one, clicked just beside the
+        // VCO's OUT and then beside IN (off the jacks), makes OUT -> IN.
+        3 => (jack("vco", "out").map(near), None, false),
+        4 => (jack("volume", "in").map(near), None, false),
+        5 => (comb(1), None, false),
+        6 => (jack("clock", "gate").map(near), None, false),
+        7 => (
+            jack("clock", "gate")
+                .zip(jack("volume", "trig"))
                 .map(|(a, b)| (a + b) / 2. + Vec2::new(60., 40.)),
             None,
             true,
         ),
-        7 => (jack("volume", "in"), None, false),
+        8 => (jack("volume", "trig").map(near), None, false),
         _ => (None, None, false),
     };
     if step + 1 < RACK_STEPS {
         // Wait (briefly) for the target to exist: the VCO's jacks appear once it is mounted.
         let Some(position) = point else { return };
-        if step == 0 && drag.is_none() || step == 3 && drag.is_none() {
+        if step == 0 && drag.is_none() {
             return;
         }
         input.write(PointerInput::new(
@@ -558,7 +563,7 @@ fn drive_rack(
             "window":[window.width(), window.height(), window.scale_factor()],
             "hovered":hovers.get(&PointerId::Mouse).map(|h| h.keys().map(|e| names.get(*e).map(|(n, jack, ui)| format!("{:?} jack={jack} ui={ui}", n.map(Name::as_str))).unwrap_or_default()).collect::<Vec<_>>()),
             "held":held.cable,
-            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.clone()),"own":state.map(|s| s.own.len())}),
+            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.iter().map(Option::is_some).collect::<Vec<_>>()),"own":state.map(|s| s.own.len())}),
     );
     review.rack_step += 1;
     review.rack_wait = 0.12;
