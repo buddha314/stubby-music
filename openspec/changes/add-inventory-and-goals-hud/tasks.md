@@ -32,5 +32,5 @@ lands first, so `goals.json` follows its conventions (format, IDs, strict loadin
 
 ## 3. Art (Claude)
 - [ ] 3.1 Mock of the goals hub and the inventory screen in the HUD style of `docs/art/hud_mock.png` (`docs/art/goals_hub_mock.png`, `docs/art/inventory_mock.png`), with the four progress-bar states in signal amber
-- [ ] 3.2 Item icons rendered from the models (square wave from the lightning bug, reed, clock) into `assets/hud/icons/`, named by item id, with a fallback icon; list them in a data file Codex can read
+- [x] 3.2 (claimed: claude) Item icons: glyphs in the rack panel's line style (not model renders), `tools/icons/make_item_icons.py` → `assets/ui/icons/<item_id>.png`, found by item id (no data file); shown on the Tab inventory and the rack's Relevant/Inventory strips, with the item name on hover. No fallback icon yet: an item without one shows its count on a blank slot
 - [ ] 3.3 Style guide section for HUD panels and progress bars

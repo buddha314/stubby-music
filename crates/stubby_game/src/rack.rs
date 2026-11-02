@@ -80,9 +80,17 @@ impl Plugin for RackPlugin {
             .init_resource::<HeldCable>()
             .add_observer(take_cable)
             .add_observer(drop_cable)
+            .add_observer(drag_cable)
+            .add_observer(drag_from_jack)
+            .add_observer(drop_on_jack)
+            .init_resource::<DraggedJack>()
             .add_message::<MachineConfigured>()
             .add_observer(click_jack)
             .add_observer(press_mount)
+            .add_observer(start_item_drag)
+            .add_observer(move_item_drag)
+            .add_observer(end_item_drag)
+            .add_observer(drop_item)
             .add_systems(
                 Update,
                 (
@@ -90,11 +98,13 @@ impl Plugin for RackPlugin {
                     mount_buttons,
                     number_keys,
                     comb_parts_pickable,
+                    live_parts_unpickable,
                     clear_feedback_on_open,
                     patch_engine,
                     guidance,
                     pods,
                     draw_cables,
+                    live_cable,
                 )
                     .chain()
                     .after(super::machine_config::MachineInteractionSet),
@@ -299,6 +309,7 @@ pub(crate) struct MountButton {
 /// One button per open place the player can fill from the inventory.
 fn mount_buttons(
     mut commands: Commands,
+    server: Res<AssetServer>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
     player: Res<PlayerInventory>,
@@ -354,80 +365,140 @@ fn mount_buttons(
         align_items: AlignItems::Center,
         ..default()
     };
-    commands.entity(area).with_children(|area| {
-        if !relevant.is_empty() {
-            area.spawn(text("Relevant".into(), 15., muted));
-            area.spawn((row(), Pickable::IGNORE))
-                .with_children(|strip| {
-                    for (index, (place, accept)) in relevant.iter().enumerate() {
-                        let count = player.items.quantity(&accept.item);
-                        let have = count > 0;
-                        let action = if have {
-                            format!(
-                                "insert a {} in the {} slot",
-                                module_name(&accept.module),
-                                place.kind.to_uppercase()
-                            )
-                        } else {
-                            format!(
-                                "collect a {} to make a {}",
-                                name(&accept.item).to_lowercase(),
-                                module_name(&accept.module)
-                            )
-                        };
-                        let mut tile = strip.spawn((
-                            Node {
-                                flex_direction: FlexDirection::Column,
-                                padding: UiRect::axes(px(14), px(10)),
-                                row_gap: px(4),
-                                border: UiRect::all(px(1)),
-                                min_width: px(260),
-                                ..default()
-                            },
-                            BorderColor::all(if have {
-                                amber.with_alpha(0.8)
-                            } else {
-                                muted.with_alpha(0.4)
-                            }),
-                            BackgroundColor(Color::srgba(0.09, 0.085, 0.075, 0.95)),
-                        ));
-                        tile.with_children(|tile| {
-                            tile.spawn(text(
-                                format!("[{}]  {}", (index + 1) % 10, name(&accept.item)),
-                                19.,
-                                if have { ink } else { muted },
-                            ));
-                            tile.spawn(text(
-                                format!("x {count}"),
-                                24.,
-                                if have { amber } else { muted },
-                            ));
-                            tile.spawn(text(action, 14., if have { amber } else { muted }));
+    // Relevant and Inventory side by side, as Satisfactory's panels sit.
+    let section = || {
+        (
+            Node {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                row_gap: px(4),
+                ..default()
+            },
+            Pickable::IGNORE,
+        )
+    };
+    commands.entity(area).with_children(|outer| {
+        let mut sections = outer.spawn((
+            Node {
+                column_gap: px(28),
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            Pickable::IGNORE,
+        ));
+        sections.with_children(|sections| {
+            if !relevant.is_empty() {
+                sections.spawn(section()).with_children(|area| {
+                    area.spawn(text("Relevant".into(), 15., muted));
+                    area.spawn((row(), Pickable::IGNORE))
+                        .with_children(|strip| {
+                            for (index, (place, accept)) in relevant.iter().enumerate() {
+                                let count = player.items.quantity(&accept.item);
+                                let have = count > 0;
+                                let action = if have {
+                                    format!(
+                                        "drag into the {1} slot (or click) to insert a {0}",
+                                        module_name(&accept.module),
+                                        place.kind.to_uppercase(),
+                                    )
+                                } else {
+                                    format!(
+                                        "collect a {} to make a {}",
+                                        name(&accept.item).to_lowercase(),
+                                        module_name(&accept.module)
+                                    )
+                                };
+                                let mut tile = strip.spawn((
+                                    Node {
+                                        flex_direction: FlexDirection::Column,
+                                        padding: UiRect::axes(px(10), px(6)),
+                                        row_gap: px(4),
+                                        border: UiRect::all(px(1)),
+                                        max_width: px(300),
+                                        ..default()
+                                    },
+                                    BorderColor::all(if have {
+                                        amber.with_alpha(0.8)
+                                    } else {
+                                        muted.with_alpha(0.4)
+                                    }),
+                                    BackgroundColor(Color::srgba(0.09, 0.085, 0.075, 0.95)),
+                                ));
+                                tile.with_children(|tile| {
+                                    tile.spawn((row(), Pickable::IGNORE)).with_children(|head| {
+                                        head.spawn((
+                                            item_icon(&server, &accept.item),
+                                            super::inventory_screen::ItemName(name(&accept.item)),
+                                            Node {
+                                                width: px(48),
+                                                height: px(48),
+                                                ..default()
+                                            },
+                                            if have {
+                                                BackgroundColor(Color::NONE)
+                                            } else {
+                                                BackgroundColor(Color::srgba(0., 0., 0., 0.5))
+                                            },
+                                        ));
+                                        head.spawn(text(
+                                            format!(
+                                                "[{}]  {}",
+                                                (index + 1) % 10,
+                                                name(&accept.item)
+                                            ),
+                                            19.,
+                                            if have { ink } else { muted },
+                                        ));
+                                    });
+                                    tile.spawn(text(
+                                        format!("x {count}"),
+                                        18.,
+                                        if have { amber } else { muted },
+                                    ));
+                                    tile.spawn(text(action, 14., if have { amber } else { muted }));
+                                });
+                                if have {
+                                    tile.insert(MountButton {
+                                        machine,
+                                        place: place.place.clone(),
+                                        item: accept.item.clone(),
+                                        module: accept.module.clone(),
+                                    });
+                                }
+                            }
                         });
-                        if have {
-                            tile.insert(MountButton {
-                                machine,
-                                place: place.place.clone(),
-                                item: accept.item.clone(),
-                                module: accept.module.clone(),
-                            });
-                        }
-                    }
                 });
-        }
-        let others: Vec<_> = player
-            .items
-            .items()
-            .filter(|(id, _)| !relevant.iter().any(|(_, a)| a.item == *id))
-            .map(|(id, n)| format!("{} x {n}", name(id)))
-            .collect();
-        if !others.is_empty() {
-            area.spawn(text(
-                format!("Inventory:  {}", others.join("   ")),
-                15.,
-                muted,
-            ));
-        }
+            }
+            // The rest of what you carry, as icon slots (Satisfactory's inventory panel).
+            let others: Vec<_> = player
+                .items
+                .items()
+                .filter(|(id, _)| !relevant.iter().any(|(_, a)| a.item == *id))
+                .collect();
+            if !others.is_empty() {
+                sections.spawn(section()).with_children(|area| {
+                    area.spawn(text("Inventory".into(), 15., muted));
+                    area.spawn((row(), Pickable::IGNORE))
+                        .with_children(|strip| {
+                            for (id, n) in others {
+                                strip
+                                    .spawn((
+                                        Node {
+                                            flex_direction: FlexDirection::Column,
+                                            align_items: AlignItems::Center,
+                                            row_gap: px(2),
+                                            ..default()
+                                        },
+                                        Pickable::IGNORE,
+                                    ))
+                                    .with_children(|cell| {
+                                        icon_slot(cell, Some(&server), id, &name(id), n, 48.);
+                                    });
+                            }
+                        });
+                });
+            }
+        });
     });
 }
 
@@ -508,13 +579,7 @@ fn press_mount(
     mut player: ResMut<PlayerInventory>,
     mut racks: Query<&mut RackState>,
 ) {
-    let target = click.entity;
-    let Some(mount) = buttons.get(target).ok().or_else(|| {
-        parents
-            .get(target)
-            .ok()
-            .and_then(|p| buttons.get(p.parent()).ok())
-    }) else {
+    let Some(mount) = mount_of(click.entity, &buttons, &parents) else {
         return;
     };
     let Ok(mut state) = racks.get_mut(mount.machine) else {
@@ -532,12 +597,159 @@ fn press_mount(
     }
 }
 
+use super::inventory_screen::{icon_slot, item_icon};
+
+/// The icon following the pointer while an item is dragged from the Relevant strip.
+#[derive(Component)]
+struct DragGhost;
+
+/// The mount button a pointer event landed on (the tile or one of its children).
+fn mount_of<'a>(
+    entity: Entity,
+    buttons: &'a Query<&MountButton>,
+    parents: &Query<&ChildOf>,
+) -> Option<&'a MountButton> {
+    std::iter::once(entity)
+        .chain(parents.iter_ancestors(entity))
+        .find_map(|e| buttons.get(e).ok())
+}
+
+const GHOST_PX: f32 = 56.;
+
+/// Dragging a Relevant tile picks up its item: its icon follows the pointer.
+fn start_item_drag(
+    drag: On<bevy::picking::events::PointerDragStart>,
+    mut commands: Commands,
+    server: Res<AssetServer>,
+    buttons: Query<&MountButton>,
+    parents: Query<&ChildOf>,
+    ghosts: Query<Entity, With<DragGhost>>,
+) {
+    let Some(mount) = mount_of(drag.entity, &buttons, &parents) else {
+        return;
+    };
+    ghosts.iter().for_each(|g| commands.entity(g).despawn());
+    let at = drag.pointer.position - Vec2::splat(GHOST_PX / 2.);
+    commands.spawn((
+        DragGhost,
+        item_icon(&server, &mount.item),
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(at.x),
+            top: px(at.y),
+            width: px(GHOST_PX),
+            height: px(GHOST_PX),
+            ..default()
+        },
+        GlobalZIndex(100),
+        Pickable::IGNORE,
+    ));
+}
+
+fn move_item_drag(
+    drag: On<bevy::picking::events::PointerDrag>,
+    mut ghosts: Query<&mut Node, With<DragGhost>>,
+) {
+    let at = drag.pointer.position - Vec2::splat(GHOST_PX / 2.);
+    for mut node in &mut ghosts {
+        node.left = px(at.x);
+        node.top = px(at.y);
+    }
+}
+
+fn end_item_drag(
+    _drag: On<bevy::picking::events::PointerDragEnd>,
+    mut commands: Commands,
+    ghosts: Query<Entity, With<DragGhost>>,
+) {
+    ghosts.iter().for_each(|g| commands.entity(g).despawn());
+}
+
+/// Dropping a Relevant item on its empty slot mounts the module, Satisfactory-style.
+fn drop_item(
+    drop: On<bevy::picking::events::PointerDragDrop>,
+    slots: Query<&super::machine_config::SlotHit>,
+    buttons: Query<&MountButton>,
+    parents: Query<&ChildOf>,
+    mut player: ResMut<PlayerInventory>,
+    mut racks: Query<&mut RackState>,
+) {
+    let (Ok(slot), Some(mount)) = (
+        slots.get(drop.entity),
+        mount_of(drop.dropped, &buttons, &parents),
+    ) else {
+        return;
+    };
+    if slot.0 != mount.place {
+        player.feedback = format!("A {} does not fit there.", module_name(&mount.module));
+        return;
+    }
+    let Ok(mut state) = racks.get_mut(mount.machine) else {
+        return;
+    };
+    if !state.mounted.contains_key(&mount.place) && player.items.take(&mount.item, 1).is_ok() {
+        state
+            .mounted
+            .insert(mount.place.clone(), mount.module.clone());
+        state.version += 1;
+        player.feedback = format!("Mounted a {}.", module_name(&mount.module));
+    }
+}
+
 // ------------------------------------------------------------------ patching
 
 /// Click one jack, then the other: if a spare cable joins those two, it is patched.
 /// Clicking a patched jack unplugs its cable back onto the comb.
+#[allow(clippy::too_many_arguments)] // A click reads the rack, its cables and the inventory.
 fn click_jack(
     click: On<PointerClick>,
+    jacks: Query<&JackHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    mut selection: ResMut<PatchSelection>,
+    mut held: ResMut<HeldCable>,
+    mut dragged: ResMut<DraggedJack>,
+    mut racks: Query<(&PlacedAsset, &mut RackState)>,
+    mut player: ResMut<PlayerInventory>,
+) {
+    // A drag that started here already pressed this jack; its click is the same gesture.
+    if dragged.0.take() == Some(click.entity) {
+        return;
+    }
+    let Ok(JackHit(jack)) = jacks.get(click.entity) else {
+        return;
+    };
+    on_rack(&screens, &profiles, &mut racks, |config, state| {
+        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+    });
+}
+
+/// VCV Rack's gesture: drag from a jack (or a hanging cable) and drop on another jack.
+/// Starting a drag presses the jack it starts on; dropping presses the jack under it.
+#[allow(clippy::too_many_arguments)] // As `click_jack`.
+fn drag_from_jack(
+    drag: On<bevy::picking::events::PointerDragStart>,
+    jacks: Query<&JackHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    mut selection: ResMut<PatchSelection>,
+    mut held: ResMut<HeldCable>,
+    mut dragged: ResMut<DraggedJack>,
+    mut racks: Query<(&PlacedAsset, &mut RackState)>,
+    mut player: ResMut<PlayerInventory>,
+) {
+    let Ok(JackHit(jack)) = jacks.get(drag.entity) else {
+        return;
+    };
+    dragged.0 = Some(drag.entity);
+    on_rack(&screens, &profiles, &mut racks, |config, state| {
+        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+    });
+}
+
+#[allow(clippy::too_many_arguments)] // As `click_jack`.
+fn drop_on_jack(
+    drop: On<bevy::picking::events::PointerDragDrop>,
     jacks: Query<&JackHit>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
@@ -546,18 +758,48 @@ fn click_jack(
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
     mut player: ResMut<PlayerInventory>,
 ) {
-    let Ok(JackHit(jack)) = jacks.get(click.entity) else {
+    let (Ok(JackHit(jack)), true) = (jacks.get(drop.entity), jacks.contains(drop.dropped)) else {
         return;
     };
-    let Some(machine) = open_rack(&screens) else {
+    if drop.entity == drop.dropped {
+        return;
+    }
+    on_rack(&screens, &profiles, &mut racks, |config, state| {
+        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+    });
+}
+
+/// The drag gesture's jack, so the click that ends it is not counted twice.
+#[derive(Resource, Default)]
+struct DraggedJack(Option<Entity>);
+
+/// Run `f` on the open rack's configuration and state.
+fn on_rack(
+    screens: &ScreenMode,
+    profiles: &Profiles,
+    racks: &mut Query<(&PlacedAsset, &mut RackState)>,
+    f: impl FnOnce(&RackConfiguration, &mut RackState),
+) {
+    let Some(machine) = open_rack(screens) else {
         return;
     };
     let Ok((asset, mut state)) = racks.get_mut(machine) else {
         return;
     };
-    let Some(config) = profiles.0.get(&asset.asset) else {
-        return;
-    };
+    if let Some(config) = profiles.0.get(&asset.asset) {
+        f(config, &mut state);
+    }
+}
+
+/// One press of a jack, by click or by the drag gesture.
+fn press_jack(
+    jack: &JackRef,
+    config: &RackConfiguration,
+    state: &mut RackState,
+    selection: &mut PatchSelection,
+    held: &mut HeldCable,
+    player: &mut PlayerInventory,
+) {
     let cable_at = |j: &JackRef| {
         config
             .cables
@@ -618,7 +860,11 @@ fn click_jack(
         selection.0 = Some(jack.clone());
         return;
     };
-    let mounted = modules(config, &state);
+    if &first == jack {
+        selection.0 = Some(first);
+        return;
+    }
+    let mounted = modules(config, state);
     // An input takes one cable; an output may feed several.
     let input_taken = |j: &JackRef| {
         state.own.iter().any(|(_, to)| to == j)
@@ -686,35 +932,49 @@ fn take_cable(
     }
 }
 
-/// Dragging a hanging cable onto either of its jacks patches it.
+/// Dragging a hanging cable off the comb takes it, as clicking it does.
+fn drag_cable(
+    drag: On<bevy::picking::events::PointerDragStart>,
+    parts: Query<&CombCable>,
+    screens: Res<ScreenMode>,
+    racks: Query<&RackState>,
+    mut held: ResMut<HeldCable>,
+    mut selection: ResMut<PatchSelection>,
+) {
+    let Ok(CombCable(i)) = parts.get(drag.entity) else {
+        return;
+    };
+    let Some(state) = open_rack(&screens).and_then(|e| racks.get(e).ok()) else {
+        return;
+    };
+    if !state.patched.get(*i).copied().unwrap_or(true) {
+        held.cable = Some(*i);
+        held.first = None;
+        selection.0 = None;
+    }
+}
+
+/// Dropping a hanging cable on one of its jacks plugs that end in; the other end stays
+/// in hand, following the pointer, until it goes into its other jack (VCV Rack).
+#[allow(clippy::too_many_arguments)] // As `click_jack`.
 fn drop_cable(
     drop: On<bevy::picking::events::PointerDragDrop>,
     parts: Query<&CombCable>,
     jacks: Query<&JackHit>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
+    mut selection: ResMut<PatchSelection>,
     mut held: ResMut<HeldCable>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
+    mut player: ResMut<PlayerInventory>,
 ) {
-    let (Ok(CombCable(i)), Ok(JackHit(jack))) = (parts.get(drop.dropped), jacks.get(drop.entity))
+    let (Ok(CombCable(_)), Ok(JackHit(jack))) = (parts.get(drop.dropped), jacks.get(drop.entity))
     else {
         return;
     };
-    let Some(machine) = open_rack(&screens) else {
-        return;
-    };
-    let Ok((asset, mut state)) = racks.get_mut(machine) else {
-        return;
-    };
-    let Some(cable) = profiles.0.get(&asset.asset).and_then(|c| c.cables.get(*i)) else {
-        return;
-    };
-    if (&cable.from == jack || &cable.to == jack) && !state.patched[*i] {
-        state.patched[*i] = true;
-        state.version += 1;
-        held.cable = None;
-        held.first = None;
-    }
+    on_rack(&screens, &profiles, &mut racks, |config, state| {
+        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+    });
 }
 
 /// The comb's hanging cables load as models; make their meshes pickable.
@@ -732,6 +992,20 @@ fn comb_parts_pickable(
             commands
                 .entity(entity)
                 .insert((*cable, Pickable::default()));
+        }
+    }
+}
+
+/// The live cable's plug model must never take a click meant for the jack under it.
+fn live_parts_unpickable(
+    mut commands: Commands,
+    meshes: Query<Entity, (With<Mesh3d>, Without<Pickable>)>,
+    parents: Query<&ChildOf>,
+    live: Query<(), With<LiveCable>>,
+) {
+    for entity in &meshes {
+        if parents.iter_ancestors(entity).any(|a| live.contains(a)) {
+            commands.entity(entity).insert(Pickable::IGNORE);
         }
     }
 }
@@ -787,7 +1061,7 @@ fn guidance(
     let text = if let Some(cable) = held.cable.and_then(|i| config.cables.get(i)) {
         let other = match &held.first {
             None => format!(
-                "click {}, then {}",
+                "click or drag {} to {}",
                 cable.from.port.to_uppercase(),
                 cable.to.port.to_uppercase()
             ),
@@ -797,7 +1071,7 @@ fn guidance(
                 } else {
                     &cable.from
                 };
-                format!("now click {}", rest.port.to_uppercase())
+                format!("now click or drop on {}", rest.port.to_uppercase())
             }
         };
         format!("{} cable in hand  |  {other}", colour_name(&cable.color))
@@ -899,6 +1173,118 @@ struct CableVisual;
 
 const CABLE_RADIUS: f32 = 0.016;
 
+/// The cable in hand, drawn as VCV Rack draws a cable being patched: from the jack its
+/// first end is in to the pointer, sagging with the same elastic curve as a patched one,
+/// with a plug on the free end. Rebuilt each frame while a cable is in hand.
+#[derive(Component)]
+struct LiveCable;
+
+#[allow(clippy::too_many_arguments)] // Reads the hand, the rack's sockets, the camera and pointer.
+fn live_cable(
+    mut commands: Commands,
+    server: Res<AssetServer>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    held: Res<HeldCable>,
+    selection: Res<PatchSelection>,
+    racks: Query<&PlacedAsset>,
+    ports: Query<(&PortNode, &GlobalTransform)>,
+    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    pointers: Query<(
+        &bevy::picking::pointer::PointerId,
+        &bevy::picking::pointer::PointerLocation,
+    )>,
+    old: Query<Entity, With<LiveCable>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut colours: Local<HashMap<String, Handle<StandardMaterial>>>,
+    mut plug: Local<Option<Entity>>,
+) {
+    old.iter()
+        .filter(|e| Some(*e) != *plug)
+        .for_each(|e| commands.entity(e).despawn());
+    let hide_plug = |commands: &mut Commands, plug: &mut Option<Entity>| {
+        if let Some(e) = plug.take() {
+            commands.entity(e).despawn();
+        }
+    };
+    let config = open_rack(&screens)
+        .and_then(|m| racks.get(m).ok())
+        .and_then(|a| profiles.0.get(&a.asset));
+    // The anchored end: a comb cable's first jack, or the first jack of one of your own.
+    let anchor = held.first.as_ref().or(selection.0.as_ref());
+    let (Some(config), Some(anchor), Ok((camera, eye))) = (config, anchor, hud.single()) else {
+        hide_plug(&mut commands, &mut plug);
+        return;
+    };
+    let colour = held
+        .cable
+        .and_then(|i| config.cables.get(i))
+        .map_or("bone".to_string(), |c| c.color.clone());
+    let Some(a) = ports
+        .iter()
+        .find(|(p, _)| &p.0 == anchor)
+        .map(|(_, t)| t.translation())
+    else {
+        hide_plug(&mut commands, &mut plug);
+        return;
+    };
+    let Some(b) = pointers
+        .iter()
+        .find(|(id, _)| **id == bevy::picking::pointer::PointerId::Mouse)
+        .and_then(|(_, l)| l.location.as_ref())
+        .and_then(|l| camera.viewport_to_world(eye, l.position).ok())
+        .and_then(|ray| {
+            // On the plane of the jacks, facing the camera.
+            let normal = eye.forward().as_vec3();
+            let d = ray.direction.dot(normal);
+            (d.abs() > 1e-4)
+                .then(|| ray.origin + ray.direction * ((a - ray.origin).dot(normal) / d))
+        })
+    else {
+        hide_plug(&mut commands, &mut plug);
+        return;
+    };
+    let layer = bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER);
+    let material = colours
+        .entry(colour.clone())
+        .or_insert_with(|| {
+            materials.add(StandardMaterial {
+                base_color: cable_color(&colour),
+                perceptual_roughness: 0.6,
+                ..default()
+            })
+        })
+        .clone();
+    commands.spawn((
+        LiveCable,
+        Mesh3d(meshes.add(tube(&cable_curve(a, b), CABLE_RADIUS))),
+        MeshMaterial3d(material),
+        layer.clone(),
+        Pickable::IGNORE,
+    ));
+    // The free plug hangs from the pointer, tip down, as in VCV Rack.
+    let at = Transform::from_translation(b);
+    match *plug {
+        Some(e) => {
+            commands.entity(e).insert(at);
+        }
+        None => {
+            *plug = Some(
+                commands
+                    .spawn((
+                        LiveCable,
+                        WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
+                        at,
+                        bevy::app::Propagate(layer),
+                        Pickable::IGNORE,
+                    ))
+                    .id(),
+            );
+        }
+    }
+}
+
 /// VCV Rack's elastic cable (`create_patch_cable.cable_curve`): a quadratic Bezier whose
 /// middle sags by (1 - tension) * (slump_base + span).
 fn cable_curve(a: Vec3, b: Vec3) -> Vec<Vec3> {
@@ -954,9 +1340,10 @@ fn draw_cables(
     ports: Query<(&PortNode, &GlobalTransform)>,
     comb: Query<(Entity, &CombNode, &GlobalTransform, &Transform)>,
     old: Query<Entity, With<CableVisual>>,
+    held: Res<HeldCable>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut drawn: Local<Option<(Entity, u32, usize)>>,
+    mut drawn: Local<Option<(Entity, u32, usize, Option<usize>)>>,
 ) {
     let Some(machine) = open_rack(&screens) else {
         if drawn.take().is_some() {
@@ -981,6 +1368,8 @@ fn draw_cables(
         machine,
         state.version,
         (layout.element_sum() * 1000.) as usize,
+        // A cable with one end plugged in is in hand (`live_cable`), not on the comb.
+        held.cable.filter(|_| held.first.is_some()),
     );
     if *drawn == Some(key) {
         return;
@@ -1053,6 +1442,15 @@ fn draw_cables(
                 layer.clone(),
             ));
         }
+        let index = config
+            .cables
+            .iter()
+            .position(|c| std::ptr::eq(c, cable))
+            .unwrap_or(0);
+        if key.3 == Some(index) {
+            slot += 1;
+            continue;
+        }
         // Spare: folded over a comb slot, both plugs hanging tip down.
         if let (Some(top), Some(pa), Some(pb)) = (
             node(format!("Comb_{slot}")),
@@ -1063,11 +1461,6 @@ fn draw_cables(
             // follow the frame however it is fitted (its posts move after it spawns).
             let (slot_entity, (a, b)) = (top.0, (pa.1.translation, pb.1.translation));
             let c = -(a + b) / 2. + Vec3::Y * 0.03;
-            let index = config
-                .cables
-                .iter()
-                .position(|c| std::ptr::eq(c, cable))
-                .unwrap_or(0);
             commands.spawn((
                 CableVisual,
                 CombCable(index),

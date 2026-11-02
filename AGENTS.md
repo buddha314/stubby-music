@@ -396,7 +396,13 @@ equivalent of an iron ore node, so the player does not pick it up.
   halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's
   cables are free; the player starts with 10 patch cables (`start.json`) for their own
   patches, and later makes them from discarded bird nests. The rack screen shows a
-  Satisfactory-style **Relevant** inventory strip (keys 1-0 insert). **Sound
+  Satisfactory-style **Relevant** inventory strip: each item shows its icon
+  (`assets/ui/icons/<item_id>.png`, from `tools/icons/make_item_icons.py`; hovering an
+  icon names the item, here and on the Tab inventory, which shows icons too) and is
+  **dragged into its slot** (or clicked, or keys 1-0). Cables follow **VCV Rack**: drag
+  from a jack (or a comb cable) and drop on the other, or click each; the cable in hand is
+  drawn live from its first jack to the pointer with the same elastic sag and its free
+  plug at the pointer. **Sound
   begins only when every cable is patched**, and the screen guides it: ghost cables show
   the patches still to make, and the hint line names each step. The stream's notes start
   with the sound.
