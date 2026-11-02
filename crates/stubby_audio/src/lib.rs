@@ -20,5 +20,5 @@ mod thread;
 pub use clock::{PeriodicClock, PulseClock, RandomClock};
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
 pub use modules::ParamSpec;
-pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
+pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 pub use thread::{AudioThread, Notice};

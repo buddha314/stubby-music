@@ -13,9 +13,14 @@ struct Review {
     start: Instant,
     stage: usize,
     next: f32,
+    /// Frames since the last sample, and the wall time it was written (frame rate).
+    frames: u32,
+    /// Seconds the first drag has been held over the slot (for its screenshot).
+    held_drag: f32,
+    sampled_at: Option<std::time::Instant>,
     hovers: usize,
     uses: usize,
-    captured: [bool; 8],
+    captured: [bool; 9],
     saw_animation: bool,
     saw_flash: bool,
     near_pass: bool,
@@ -63,7 +68,7 @@ impl Plugin for PrefabReviewPlugin {
             next: 0.,
             hovers: 0,
             uses: 0,
-            captured: [false; 8],
+            captured: [false; 9],
             saw_animation: false,
             saw_flash: false,
             near_pass: false,
@@ -74,6 +79,9 @@ impl Plugin for PrefabReviewPlugin {
             rack_step: 0,
             // Let the rack's models load before the first click and screenshot.
             rack_wait: 0.3,
+            frames: 0,
+            held_drag: 0.,
+            sampled_at: None,
             release: false,
             press_at: Vec2::ZERO,
             drag_to: None,
@@ -278,14 +286,27 @@ fn observe(
     if review.stage == 9 && far {
         review.far_seen = true;
     }
+    review.frames += 1;
     if elapsed >= review.next {
+        let now = std::time::Instant::now();
+        let fps = review
+            .sampled_at
+            .map(|at| review.frames as f32 / now.duration_since(at).as_secs_f32());
+        review.frames = 0;
+        review.sampled_at = Some(now);
+        write(
+            &review,
+            serde_json::json!({"event":"fps","fps":fps,"rack":review.rack_busy()}),
+        );
         write(
             &review,
             serde_json::json!({"event":"sample","seconds":elapsed,"assets":roots.iter().count(),"sources":sources.0.len(),"errors":errors.iter().map(|error|error.0.clone()).collect::<Vec<_>>(),"square":player.items.quantity("square_wave"),"reeds":player.items.quantity("reed"),"standing":standing,"leaves":leaves,"far_leaf":far,"phases":phases,"hovers":review.hovers,"uses":review.uses}),
         );
         review.next = elapsed + 0.25;
     }
-    let capture = if elapsed > 1.3 && !review.captured[0] {
+    let capture = if review.held_drag > 0.4 && !review.captured[8] {
+        Some((8, "rack-drag-item.png"))
+    } else if elapsed > 1.3 && !review.captured[0] {
         Some((0, "initial.png"))
     } else if review.stage >= 5 && !review.captured[1] {
         Some((1, "burbler-hover.png"))
@@ -422,6 +443,11 @@ fn drive_rack(
         review.press_at = to;
         return;
     }
+    // The item drag holds over the slot until its screenshot is taken.
+    if review.release && review.rack_step == 1 && !review.captured[8] {
+        review.held_drag += time.delta_secs();
+        return;
+    }
     if review.release {
         // Second frame of a click: lift the button where it went down.
         let position = review.press_at;
@@ -431,6 +457,8 @@ fn drive_rack(
             PointerAction::Release(PointerButton::Primary),
         ));
         review.release = false;
+        // Let the click's effects (a mount, a redraw) settle before the next step.
+        review.rack_wait = review.rack_wait.max(0.3);
         return;
     }
     review.rack_wait -= time.delta_secs();

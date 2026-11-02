@@ -9,7 +9,7 @@ use crate::modules::{
     ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, VcaNode, VcoConfig, VcoNode,
     Waveform,
 };
-use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef};
+use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 use crate::random_clock::RandomClockNode;
 use audioadapter_buffers::direct::InterleavedSlice;
 use firewheel::{
@@ -78,6 +78,8 @@ pub struct Engine {
     /// Removed modules still fading out: node, and the audio-clock frame after
     /// which it can be deleted.
     retiring: Vec<(NodeID, u64)>,
+    /// Loaded one-shot samples, one buffer per channel, at the engine's sample rate.
+    samples: HashMap<SampleId, Vec<Vec<f32>>>,
     stream: Option<firewheel::cpal::CpalStream>,
 }
 
@@ -102,6 +104,7 @@ impl Engine {
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
             retiring: Vec::new(),
+            samples: HashMap::new(),
             stream: None,
         }
     }
@@ -147,6 +150,7 @@ impl Engine {
     pub fn send(&mut self, command: Command) -> Result<(), EngineError> {
         match command {
             Command::AddModule { id, kind } => self.add_module(id, kind),
+            Command::PlaySample { sample, gain } => self.play_sample(sample, gain),
             Command::RemoveModule { id } => self.remove_module(id),
             Command::Connect { from, to } => self.connect(from, to),
             Command::Disconnect { from, to } => self.disconnect(from, to),
@@ -368,6 +372,66 @@ impl Engine {
         };
         let node = node.map_err(|e| EngineError::Graph(e.to_string()))?;
         self.modules.insert(id, Module { kind, node, state });
+        Ok(())
+    }
+
+    /// Load (or replace) a one-shot sample: one buffer per channel (mono or stereo),
+    /// recorded at `sample_rate`; it is resampled to the engine's rate here, off the
+    /// audio thread.
+    pub fn load_sample(&mut self, id: SampleId, sample_rate: u32, channels: Vec<Vec<f32>>) {
+        let target = self.sample_rate().unwrap_or(48_000);
+        let channels = if sample_rate == target || sample_rate == 0 {
+            channels
+        } else {
+            let ratio = sample_rate as f64 / target as f64;
+            channels
+                .iter()
+                .map(|c| {
+                    let n = ((c.len() as f64) / ratio) as usize;
+                    (0..n)
+                        .map(|i| {
+                            let x = i as f64 * ratio;
+                            let k = x as usize;
+                            let t = (x - k as f64) as f32;
+                            let a = c.get(k).copied().unwrap_or(0.);
+                            let b = c.get(k + 1).copied().unwrap_or(a);
+                            a + (b - a) * t
+                        })
+                        .collect()
+                })
+                .collect()
+        };
+        self.samples.insert(id, channels);
+    }
+
+    /// One voice per play: a sampler node to the speakers, retired once it has played.
+    fn play_sample(&mut self, id: SampleId, gain: f32) -> Result<(), EngineError> {
+        use firewheel::nodes::sampler::{SamplerConfig, SamplerNode};
+        let channels = self
+            .samples
+            .get(&id)
+            .cloned()
+            .ok_or(EngineError::Config("unknown sample"))?;
+        let frames = channels.first().map_or(0, Vec::len);
+        let mut node = SamplerNode {
+            volume: firewheel::Volume::Linear(gain.clamp(0., 4.)),
+            ..SamplerNode::default()
+        };
+        node.start_or_restart();
+        let id = self
+            .cx
+            .add_node(node, Some(SamplerConfig::default()))
+            .map_err(|e| EngineError::Graph(e.to_string()))?;
+        self.cx
+            .queue_event_for(id, SamplerNode::set_sample_event(channels));
+        self.cx.queue_event_for(id, node.sync_play_event());
+        let out = self.cx.graph_out_node_id();
+        self.cx
+            .connect(id, out, &[(0, 0), (1, 1)], false)
+            .map_err(|e| EngineError::Graph(e.to_string()))?;
+        let now = self.cx.audio_clock().samples.0.max(0) as u64;
+        let rate = self.sample_rate().unwrap_or(48_000) as u64;
+        self.retiring.push((id, now + frames as u64 + rate / 4));
         Ok(())
     }
 

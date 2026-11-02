@@ -99,6 +99,9 @@ impl Plugin for RackPlugin {
                     comb_parts_pickable,
                     live_parts_unpickable,
                     tint_plugs,
+                    load_snaps,
+                    snap_on_plug,
+                    rack_ghost,
                     clear_feedback_on_open,
                     patch_engine,
                     pods,
@@ -554,7 +557,11 @@ use super::inventory_screen::{icon_slot, item_icon};
 
 /// The icon following the pointer while an item is dragged from the Relevant strip.
 #[derive(Component)]
-struct DragGhost;
+struct DragGhost(String);
+/// The same icon inside the rack view: the rack camera draws over the screen's UI
+/// there, so over the rack the dragged item is a card in the rack's own scene.
+#[derive(Component)]
+struct RackGhost;
 
 /// The mount button a pointer event landed on (the tile or one of its children).
 fn mount_of<'a>(
@@ -575,16 +582,16 @@ fn start_item_drag(
     mut commands: Commands,
     server: Res<AssetServer>,
     buttons: Query<&MountButton>,
-    parents: Query<&ChildOf>,
     ghosts: Query<Entity, With<DragGhost>>,
 ) {
-    let Some(mount) = mount_of(drag.entity, &buttons, &parents) else {
+    // The event bubbles from the icon up through the tile; handle it once, at the tile.
+    let Ok(mount) = buttons.get(drag.entity) else {
         return;
     };
     ghosts.iter().for_each(|g| commands.entity(g).despawn());
     let at = drag.pointer.position - Vec2::splat(GHOST_PX / 2.);
     commands.spawn((
-        DragGhost,
+        DragGhost(mount.item.clone()),
         item_icon(&server, &mount.item),
         Node {
             position_type: PositionType::Absolute,
@@ -613,9 +620,77 @@ fn move_item_drag(
 fn end_item_drag(
     _drag: On<bevy::picking::events::PointerDragEnd>,
     mut commands: Commands,
-    ghosts: Query<Entity, With<DragGhost>>,
+    ghosts: Query<Entity, Or<(With<DragGhost>, With<RackGhost>)>>,
 ) {
     ghosts.iter().for_each(|g| commands.entity(g).despawn());
+}
+
+/// While an item is dragged, its card follows the pointer inside the rack view, just in
+/// front of the panels, the size of the screen ghost.
+#[allow(clippy::too_many_arguments, clippy::type_complexity)] // The drag, the rack camera and the card.
+fn rack_ghost(
+    mut commands: Commands,
+    server: Res<AssetServer>,
+    ghosts: Query<&DragGhost>,
+    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    ports: Query<&GlobalTransform, With<PortNode>>,
+    pointers: Query<(
+        &bevy::picking::pointer::PointerId,
+        &bevy::picking::pointer::PointerLocation,
+    )>,
+    mut cards: Query<(Entity, &mut Transform), With<RackGhost>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let (Some(DragGhost(item)), Ok((camera, eye))) = (ghosts.iter().next(), hud.single()) else {
+        return;
+    };
+    let Some(position) = pointers
+        .iter()
+        .find(|(id, _)| **id == bevy::picking::pointer::PointerId::Mouse)
+        .and_then(|(_, l)| l.location.as_ref())
+        .map(|l| l.position)
+    else {
+        return;
+    };
+    let Some(panel) = ports.iter().next().map(GlobalTransform::translation) else {
+        return;
+    };
+    // On a plane a little in front of the panels, facing the camera.
+    let normal = eye.forward().as_vec3();
+    let plane = panel - normal * 0.15;
+    let on_plane = |p: Vec2| {
+        let ray = camera.viewport_to_world(eye, p).ok()?;
+        let d = ray.direction.dot(normal);
+        (d.abs() > 1e-4)
+            .then(|| ray.origin + ray.direction * ((plane - ray.origin).dot(normal) / d))
+    };
+    let (Some(at), Some(edge)) = (on_plane(position), on_plane(position + Vec2::X * GHOST_PX))
+    else {
+        return;
+    };
+    let size = at.distance(edge);
+    let transform = Transform::from_translation(at)
+        .looking_to(normal, eye.up().as_vec3())
+        .with_scale(Vec3::splat(size));
+    if let Ok((_, mut card)) = cards.single_mut() {
+        *card = transform;
+        return;
+    }
+    commands.spawn((
+        RackGhost,
+        Mesh3d(meshes.add(Rectangle::new(1., 1.))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(server.load(format!("ui/icons/{item}.png"))),
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            cull_mode: None,
+            ..default()
+        })),
+        transform,
+        bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER),
+        Pickable::IGNORE,
+    ));
 }
 
 /// Dropping a Relevant item on its empty slot mounts the module, Satisfactory-style.
@@ -965,7 +1040,10 @@ fn tint_plugs(
         let Ok(name) = names.get(parent.parent()) else {
             continue;
         };
-        if !matches!(name.as_str(), "PatchCable_Sleeve" | "PatchCable_Stub" | "PatchCable_Relief") {
+        if !matches!(
+            name.as_str(),
+            "PatchCable_Sleeve" | "PatchCable_Stub" | "PatchCable_Relief"
+        ) {
             continue;
         }
         if let Some(PlugColour(material)) = parents
@@ -980,6 +1058,92 @@ fn tint_plugs(
 }
 #[derive(Component)]
 struct PlugTinted;
+
+// ------------------------------------------------------------------ sound
+
+/// The plug-in snaps: CC0 clicks from Kenney's Interface Sounds
+/// (`assets/audio/sfx/patch_snap/`, licence beside them), played in turn so repeated
+/// patching does not sound mechanical.
+const SNAPS: [&[u8]; 3] = [
+    include_bytes!("../../../assets/audio/sfx/patch_snap/click_002.wav"),
+    include_bytes!("../../../assets/audio/sfx/patch_snap/click_004.wav"),
+    include_bytes!("../../../assets/audio/sfx/patch_snap/switch_001.wav"),
+];
+const SNAP_GAIN: f32 = 0.6;
+
+/// A 16-bit PCM WAV as (sample rate, one buffer per channel).
+fn decode_wav(bytes: &[u8]) -> Option<(u32, Vec<Vec<f32>>)> {
+    let u16_at = |i: usize| Some(u16::from_le_bytes(bytes.get(i..i + 2)?.try_into().ok()?));
+    let u32_at = |i: usize| Some(u32::from_le_bytes(bytes.get(i..i + 4)?.try_into().ok()?));
+    if bytes.get(0..4)? != b"RIFF" || bytes.get(8..12)? != b"WAVE" {
+        return None;
+    }
+    let (mut at, mut format, mut data) = (12, None, None);
+    while at + 8 <= bytes.len() {
+        let (id, len) = (bytes.get(at..at + 4)?, u32_at(at + 4)? as usize);
+        let body = at + 8;
+        match id {
+            b"fmt " => {
+                format = Some((
+                    u16_at(body)?,
+                    u16_at(body + 2)?,
+                    u32_at(body + 4)?,
+                    u16_at(body + 14)?,
+                ))
+            }
+            b"data" => data = Some(bytes.get(body..(body + len).min(bytes.len()))?),
+            _ => {}
+        }
+        at = body + len + (len & 1);
+    }
+    let ((1, channels, rate, 16), data) = (format?, data?) else {
+        return None;
+    };
+    let channels = channels.max(1) as usize;
+    let mut out = vec![Vec::new(); channels];
+    for (i, frame) in data.chunks_exact(2).enumerate() {
+        out[i % channels].push(i16::from_le_bytes([frame[0], frame[1]]) as f32 / 32768.);
+    }
+    Some((rate, out))
+}
+
+/// Load the snaps into the engine once its thread is up.
+fn load_snaps(synth: Option<Res<super::audio::Synth>>, mut done: Local<bool>) {
+    let Some(thread) = synth.as_ref().and_then(|s| s.thread()) else {
+        return;
+    };
+    if *done {
+        return;
+    }
+    *done = true;
+    for (k, bytes) in SNAPS.iter().enumerate() {
+        if let Some((rate, channels)) = decode_wav(bytes) {
+            thread.load_sample(stubby_audio::SampleId(k as u32 + 1), rate, channels);
+        }
+    }
+}
+
+/// A cable going into a jack (a comb cable patched, or one of your own) snaps.
+fn snap_on_plug(
+    synth: Option<Res<super::audio::Synth>>,
+    racks: Query<(Entity, &RackState), Changed<RackState>>,
+    mut plugged: Local<HashMap<Entity, usize>>,
+    mut next: Local<u32>,
+) {
+    for (machine, state) in &racks {
+        let now = state.patched.iter().filter(|p| **p).count() + state.own.len();
+        let before = plugged.insert(machine, now).unwrap_or(now);
+        if now > before
+            && let Some(synth) = &synth
+        {
+            synth.send(stubby_audio::Command::PlaySample {
+                sample: stubby_audio::SampleId(*next % SNAPS.len() as u32 + 1),
+                gain: SNAP_GAIN,
+            });
+            *next += 1;
+        }
+    }
+}
 
 /// The live cable's plug model must never take a click meant for the jack under it.
 fn live_parts_unpickable(
@@ -1127,6 +1291,9 @@ impl CableSim {
 
 /// How far the far plug hangs below the pointer while a cable is carried.
 const HANG_M: f32 = 0.32;
+/// The patch plug model's cable attaches this far above its origin (`patch_plug.glb`'s
+/// `Cable_attach`).
+const PLUG_ATTACH_M: f32 = 0.33;
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)] // Reads the hand, the rack's sockets, the camera and pointer.
 fn live_cable(
@@ -1195,10 +1362,16 @@ fn live_cable(
         return;
     };
     let dt = time.delta_secs().min(1. / 30.);
-    // Ends: anchored (jack -> pointer) or carried (pointer -> swinging far plug).
+    // The plug at the pointer points into the panel, as VCV Rack draws a plug: seen
+    // head-on, its round end sits exactly where it will go in, and the cable leaves its
+    // back toward the viewer and bends away at an elbow.
+    let facing = Quat::from_rotation_arc(Vec3::NEG_Y, eye.forward().as_vec3());
+    let held_plug = Transform::from_translation(pointer).with_rotation(facing);
+    let held_attach = held_plug.translation + facing * Vec3::Y * PLUG_ATTACH_M;
+    // Ends: anchored (jack -> held plug) or carried (held plug -> swinging far plug).
     let (a, end_target) = match anchor {
-        Some(a) => (a, pointer),
-        None => (pointer, pointer + Vec3::NEG_Y * HANG_M),
+        Some(a) => (a, held_attach),
+        None => (held_attach, held_attach + Vec3::NEG_Y * HANG_M),
     };
     if !sim.started {
         sim.started = true;
@@ -1206,8 +1379,8 @@ fn live_cable(
         sim.end = (end_target, Vec3::ZERO);
     }
     let b = if anchor.is_some() {
-        sim.end = (pointer, Vec3::ZERO);
-        pointer
+        sim.end = (held_attach, Vec3::ZERO);
+        held_attach
     } else {
         CableSim::spring(&mut sim.end, end_target, dt);
         sim.end.0
@@ -1239,16 +1412,19 @@ fn live_cable(
         layer.clone(),
         Pickable::IGNORE,
     ));
-    // Plugs: at the pointer (and, while carried, the swinging far end), tip down.
-    let ends: Vec<Vec3> = if anchor.is_some() {
-        vec![b]
+    // Plugs: the held one; while carried, the far one hangs tip down from the cable's end.
+    let ends: Vec<Transform> = if anchor.is_some() {
+        vec![held_plug]
     } else {
-        vec![a, b]
+        vec![
+            held_plug,
+            Transform::from_translation(b - Vec3::Y * PLUG_ATTACH_M),
+        ]
     };
     for (k, plug) in sim.plugs.iter_mut().enumerate() {
         match (ends.get(k), *plug) {
             (Some(at), Some(e)) => {
-                commands.entity(e).insert(Transform::from_translation(*at));
+                commands.entity(e).insert(*at);
             }
             (Some(at), None) => {
                 *plug = Some(
@@ -1257,7 +1433,7 @@ fn live_cable(
                             LiveCable,
                             WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
                             PlugColour(material.clone()),
-                            Transform::from_translation(*at),
+                            *at,
                             bevy::app::Propagate(layer.clone()),
                             Pickable::IGNORE,
                         ))
@@ -1477,6 +1653,15 @@ fn draw_cables(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_snaps_decode() {
+        for bytes in SNAPS {
+            let (rate, channels) = decode_wav(bytes).expect("16-bit PCM WAV");
+            assert_eq!(rate, 44_100);
+            assert!(channels[0].iter().any(|s| s.abs() > 0.05));
+        }
+    }
 
     #[test]
     fn the_burbler_sounds_only_with_both_cables_patched() {

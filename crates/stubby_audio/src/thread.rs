@@ -33,6 +33,7 @@ pub enum Notice {
 
 enum Request {
     Command(Command),
+    LoadSample(crate::protocol::SampleId, u32, Vec<Vec<f32>>),
     Commit,
     Shutdown,
 }
@@ -127,6 +128,19 @@ impl AudioThread {
 
     /// Stage a command. It is applied, with the rest of the frame's commands, at the
     /// next [`commit`](Self::commit). Never blocks.
+    /// Load a one-shot sample (one buffer per channel, recorded at `sample_rate`) for
+    /// `Command::PlaySample`. Applied before any later command.
+    pub fn load_sample(
+        &self,
+        id: crate::protocol::SampleId,
+        sample_rate: u32,
+        channels: Vec<Vec<f32>>,
+    ) {
+        let _ = self
+            .requests
+            .send(Request::LoadSample(id, sample_rate, channels));
+    }
+
     pub fn send(&self, command: Command) {
         let _ = self.requests.send(Request::Command(command));
     }
@@ -203,6 +217,7 @@ fn run(
         while let Some(request) = next.take() {
             match request {
                 Request::Command(command) => staged.push(command),
+                Request::LoadSample(id, rate, channels) => engine.load_sample(id, rate, channels),
                 Request::Commit => {
                     for command in staged.drain(..) {
                         if let Err(error) = engine.send(command) {

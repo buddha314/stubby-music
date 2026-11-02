@@ -11,6 +11,10 @@
   "attack_seconds": 0.015,
   "light_lumens": 250.0,
   "light_range_metres": 3.0,
+  "hover_metres": [
+    1.3,
+    1.7
+  ],
   "clock": {
     "min_interval_seconds": 0.65,
     "max_interval_seconds": 2.4
