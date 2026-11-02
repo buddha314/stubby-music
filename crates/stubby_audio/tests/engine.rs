@@ -655,3 +655,21 @@ fn clock_blip_patch_sounds_on_every_tick() {
         assert!(click_ratio(onset, &[880.0]) <= 1.2, "click at tick {t}");
     }
 }
+
+#[test]
+fn a_loaded_sample_plays_once_to_the_speakers() {
+    let mut rig = Rig::new();
+    // A 10 ms click: a decaying burst.
+    let click: Vec<f32> = (0..480).map(|i| 0.8 * (1. - i as f32 / 480.) * if i % 2 == 0 { 1. } else { -1. }).collect();
+    rig.engine.load_sample(stubby_audio::SampleId(1), SR, vec![click]);
+    rig.send(Command::PlaySample {
+        sample: stubby_audio::SampleId(1),
+        gain: 1.,
+    });
+    rig.flush();
+    rig.render(SR as usize / 10);
+    assert!(peak(&rig.left) > 0.1, "the click sounds");
+    let after = rig.left.len();
+    rig.render(SR as usize / 10);
+    assert!(peak(&rig.left[after..]) < 1e-4, "and is over");
+}

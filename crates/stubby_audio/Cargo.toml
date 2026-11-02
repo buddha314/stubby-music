@@ -11,7 +11,7 @@ publish = false
 
 [dependencies]
 audioadapter-buffers = "5"
-firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing"] }
+firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing", "sampler_node"] }
 fundsp = "0.23.0"
 rtrb = "0.4.1"
 thiserror = "2"

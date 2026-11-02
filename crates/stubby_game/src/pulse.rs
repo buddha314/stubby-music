@@ -6,11 +6,15 @@ use std::{collections::HashMap, time::Instant};
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 pub const LIGHTNING_BUG_CLOCK: u64 = 1;
+/// The opening's bugs. They hover no higher than `BUG_MAX_HOVER_M` above the ground so
+/// they stay in view as the player walks up to them.
 const BUG_POSITIONS: [Vec3; 3] = [
     Vec3::new(-1., 1.5, 2.),
-    Vec3::new(0.5, 2.2, 0.),
-    Vec3::new(1.4, 2.8, -2.),
+    Vec3::new(0.5, 1.9, 0.),
+    Vec3::new(1.4, 2.2, -2.),
 ];
+/// The highest a lightning bug hovers above the ground.
+pub const BUG_MAX_HOVER_M: f32 = 2.2;
 fn bug_position(index: usize) -> Vec3 {
     let mut position = BUG_POSITIONS[index];
     position.y += super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
@@ -137,6 +141,9 @@ struct BugAsset {
     light_range_metres: f32,
     clock: ClockSettings,
     click: super::waveform_audio::WaveformSound,
+    /// Each flash a placed bug appears at a fresh height in this range (metres above
+    /// the ground), seeded so the same world repeats: low enough to stay in view up close.
+    hover_metres: [f32; 2],
 }
 #[derive(Clone, Deserialize)]
 struct ClockSettings {
@@ -167,6 +174,19 @@ struct BugVisualAssets {
 struct PlacedBug {
     voices: [ModuleId; 3],
     rest_scale: Vec3,
+    /// The bug's own seed (world seed and instance) and the pulse it last moved for.
+    seed: u64,
+    moved_for: Option<u64>,
+}
+
+/// Where in `[low, high]` a bug hovers for the pulse at `sample_time`: a seeded hash, so
+/// each flash moves it and the same world and clock always place it the same.
+fn flash_height(seed: u64, sample_time: u64, [low, high]: [f32; 2]) -> f32 {
+    let mut x = seed ^ sample_time.wrapping_mul(0x9e3779b97f4a7c15);
+    x = (x ^ (x >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)).wrapping_mul(0x94d049bb133111eb);
+    x ^= x >> 31;
+    low + (high - low) * (x >> 40) as f32 / (1u64 << 24) as f32
 }
 #[derive(Component)]
 struct BugEffectOwner(Entity);
@@ -187,6 +207,7 @@ impl Plugin for LightningBugPlugin {
                 Update,
                 (
                     update_placed_effects,
+                    bugs_broadside,
                     update_click_gains,
                     animate,
                     capture_pulse_preview,
@@ -453,7 +474,7 @@ fn animate(
             &PulseFollower,
             &mut Transform,
             &mut Visibility,
-            Option<&PlacedBug>,
+            Option<&mut PlacedBug>,
         ),
         With<FlashVisual>,
     >,
@@ -477,7 +498,19 @@ fn animate(
         } else {
             Visibility::Hidden
         };
-        transform.scale = placed.map_or(Vec3::ONE, |placed| placed.rest_scale) * level.sqrt();
+        // A placed bug hovers at a fresh height for each flash.
+        if let Some(mut placed) = placed {
+            transform.scale = placed.rest_scale * level.sqrt();
+            if let Some(pulse) = bus.last(follower.clock)
+                && placed.moved_for != Some(pulse.sample_time)
+            {
+                placed.moved_for = Some(pulse.sample_time);
+                transform.translation.y =
+                    flash_height(placed.seed, pulse.sample_time, asset.hover_metres);
+            }
+        } else {
+            transform.scale = level.sqrt() * Vec3::ONE;
+        }
     }
     for (follower, handle) in &shadows {
         if let Some(mut material) = materials.get_mut(&handle.0) {
@@ -604,7 +637,12 @@ pub(crate) fn bind_placed_bug(
         BugInstance(tag),
         FlashVisual,
         PulseFollower { clock: logical },
-        PlacedBug { voices, rest_scale },
+        PlacedBug {
+            voices,
+            rest_scale,
+            seed,
+            moved_for: None,
+        },
         Visibility::Hidden,
     ));
     let material = world
@@ -662,6 +700,38 @@ pub(crate) fn retire_placed_bug(world: &mut World, root: Entity) {
             .remove::<(PlacedBug, BugInstance, FlashVisual)>();
     }
 }
+/// A bug is long and thin along its body, so seen end-on it all but vanishes. Each frame
+/// it turns broadside to the player's camera (its body square to the line of sight, in
+/// the horizontal), so its profile and wings always show.
+fn bugs_broadside(
+    cameras: Query<
+        &GlobalTransform,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+            Without<FlashVisual>,
+        ),
+    >,
+    parents: Query<&GlobalTransform, Without<FlashVisual>>,
+    mut bugs: Query<(&mut Transform, &GlobalTransform, Option<&ChildOf>), With<FlashVisual>>,
+) {
+    let Ok(eye) = cameras.single() else { return };
+    for (mut transform, at, parent) in &mut bugs {
+        let sight = at.translation() - eye.translation();
+        let flat = Vec3::new(sight.x, 0., sight.z);
+        if flat.length_squared() < 1e-6 {
+            continue;
+        }
+        // The body (model -Z) along the camera's horizontal right: broadside.
+        let side = Vec3::Y.cross(flat).normalize();
+        let world = Quat::from_rotation_arc(Vec3::NEG_Z, side);
+        let parent = parent
+            .and_then(|p| parents.get(p.parent()).ok())
+            .map_or(Quat::IDENTITY, |g| g.rotation());
+        transform.rotation = parent.inverse() * world;
+    }
+}
+
 fn update_placed_effects(
     mut effects: Query<(&BugEffectOwner, &mut Transform, Has<FlashShadow>)>,
     sources: Query<&GlobalTransform, Without<BugEffectOwner>>,
@@ -794,11 +864,27 @@ mod tests {
     }
 
     #[test]
-    fn bugs_hover_one_to_three_metres_above_plate_rims() {
+    fn each_flash_picks_a_seeded_height_in_range() {
+        let range = [1.3, 1.7];
+        let heights: Vec<f32> = (0..200)
+            .map(|t| flash_height(7, t * 48_000, range))
+            .collect();
+        assert!(heights.iter().all(|h| (1.3..=1.7).contains(h)));
+        assert!(
+            heights.windows(2).any(|w| w[0] != w[1]),
+            "it moves between flashes"
+        );
+        assert_eq!(
+            flash_height(7, 96_000, range),
+            flash_height(7, 96_000, range)
+        );
+    }
+    #[test]
+    fn bugs_hover_no_higher_than_they_can_be_seen_up_close() {
         for index in 0..BUG_POSITIONS.len() {
             let position = bug_position(index);
             let ground = super::super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
-            assert!((1.0..=3.0).contains(&(position.y - ground)));
+            assert!((1.0..=BUG_MAX_HOVER_M).contains(&(position.y - ground)));
         }
     }
 

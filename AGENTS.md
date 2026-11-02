@@ -60,6 +60,9 @@ audio, as the burbler is.
 - Every lightning bug owns an independent seeded random clock. Use the shared
   `PulseClock` interface (`PeriodicClock`, `RandomClock`); other assets synchronize
   only by explicitly following the same clock ID. Preserve the flash appearance.
+  Each flash a placed bug appears at a fresh seeded height in `hover_metres`
+  (`assets/creatures/lightning_bug/asset.json`, 1.3-1.7 m, still being tuned), and it
+  always turns broadside to the player's camera: end-on, its thin body vanishes.
 - Reuse **Firewheel** for graph/device/scheduling and existing **fundsp** DSP units
   and module wrappers. Compose the bug click from the existing square VCO,
   envelope and VCA. Do not hand-write replacement DSP when the installed crates
@@ -406,7 +409,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   pointer with the same elastic sag, springing after each move; plugs take the cable's
   colour. **Sound begins only when every cable is patched**, and the screen guides it
   visually: ghost cables show the patches still to make and pods pulse in their colour.
-  **This is not a text adventure: no hint lines or step text on the rack screen.** The
+  **This is not a text adventure: no hint lines or step text on the rack screen.**
+  Plugging a cable in **snaps**: three CC0 clicks (Kenney Interface Sounds, licence in
+  `assets/audio/sfx/patch_snap/`) played in turn, through the engine's one-shot
+  `Command::PlaySample` (load once with `AudioThread::load_sample`; sound effects only,
+  never patch modules). The
   stream's notes start with the sound.
 - **Inventory: 16 boxes, 100 of one kind per box** (`stubby_recipes::INVENTORY_BOXES`,
   `BOX_STACK`); adds that do not fit fail all or nothing. The Tab screen is the 16 boxes,

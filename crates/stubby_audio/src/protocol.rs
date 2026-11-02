@@ -11,6 +11,11 @@ impl ModuleId {
     pub const OUTPUT: ModuleId = ModuleId(0);
 }
 
+/// A recorded sound loaded with `Engine::load_sample` (or `AudioThread::load_sample`),
+/// played as a one-shot by [`Command::PlaySample`]. Sound effects, not patch modules.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct SampleId(pub u32);
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ModuleKind {
     /// Sine oscillator. Input `"voct"`, output `"out"`, parameter `"freq"` (Hz).
@@ -82,6 +87,12 @@ pub enum Command {
         module: ModuleId,
         param: &'static str,
         value: f32,
+    },
+    /// Play a loaded sample once, straight to the speakers at `gain`: a sound effect
+    /// (a plug snapping in), not part of any patch. Overlapping plays each get a voice.
+    PlaySample {
+        sample: SampleId,
+        gain: f32,
     },
 }
 
