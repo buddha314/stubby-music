@@ -63,3 +63,24 @@ was idle; no separate per-game editor was installed. Bevy and Rust pins are unch
 At the user's explicit direction, filed the general bug report with AI disclosure:
 https://github.com/jbuehler23/jackdaw/issues/735 . No upstream PR or code push;
 code publication remains limited to buddha314.
+
+
+## Asset browser system promotion (2026-11-01)
+
+User requested installation after stopping the editor. Select fork dev/0.20 at
+ee0ea338e535dac9cd51b785868c95d534424eeb, incorporating the native-LOD thumbnail
+layer/cache fix and the Gallery/List / whole-tile filename-hover enhancement.
+Rebuild both jackdaw and jd in the shared /home/buddha/src/jackdaw checkout; the
+existing ~/.cargo/bin symlinks continue to point at that checkout's target/debug.
+Bevy 0.20.0 and Rust 1.99.0 stay unchanged. Update the local binary hash receipt
+after the build and run the compatibility guard; do not repeat broad tests.
+The feature already passed its focused regression and bounded UI reviews.
+
+Promotion verification: the shared-source `cargo +1.99.0 build -p jackdaw -p jd
+--locked --offline -j 4` passed. Both system symlinks resolve to the shared target;
+`jackdaw --version` and `jd --version` report 0.20.1-rc.1 / Bevy 0.20. Actual source
+HEAD is ee0ea338, the checkout is clean, binary hash receipts were refreshed, and
+the promoted source/compiler/manifests/lock/binary guard passed. No graphical
+relaunch or broad suite was needed after the already-validated feature review.
+The live game checkout's tracked pin remains untouched; update it from main before
+using its guarded launcher with the new system editor.

@@ -13,7 +13,7 @@
 
 ## 4. Focused validation and publication
 - [x] (claimed: codex) 4.1 Run one focused regression for mode/state retention and metadata fallback; briefly review hover coverage, long names and both views with the independent graphical watchdog.
-- [ ] (claimed: codex) 4.2 Commit/push the general enhancement to our shared Jackdaw fork; promote while idle and update the game's editor pin after validation. No upstream code push or PR.
+- [x] (claimed: codex) 4.2 Commit/push the general enhancement to our shared Jackdaw fork; promote while idle and update the game's editor pin after validation. No upstream code push or PR.
 
 ## Workstream checkpoint
 
@@ -22,6 +22,7 @@ feat/asset-browser-views, commit 031027b2. One focused regression, editor build
 and bounded 20-second UI reviews passed for thumbnail hover, both views, UTC
 timestamps, long-name wrapping and selection retention. Full implementation
 evidence is in the Jackdaw PR and docs/research/asset-browser-views.md there.
-Shared installation/pin promotion (4.2) remains pending; the live editor was not
-replaced. Existing unrelated long-name inspector/status-label limitations are
+The user authorized shared installation after closing the editor. Promote to
+ee0ea338, rebuild jackdaw and jd in /home/buddha/src/jackdaw, verify the system
+links and compatibility receipt. No live scene edits or per-game editor copy. Existing unrelated long-name inspector/status-label limitations are
 recorded in the implementation notes.
