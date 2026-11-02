@@ -396,16 +396,21 @@ equivalent of an iron ore node, so the player does not pick it up.
   halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's
   cables are free; the player starts with 10 patch cables (`start.json`) for their own
   patches, and later makes them from discarded bird nests. The rack screen shows a
-  Satisfactory-style **Relevant** inventory strip: each item shows its icon
-  (`assets/ui/icons/<item_id>.png`, from `tools/icons/make_item_icons.py`; hovering an
-  icon names the item, here and on the Tab inventory, which shows icons too) and is
-  **dragged into its slot** (or clicked, or keys 1-0). Cables follow **VCV Rack**: drag
-  from a jack (or a comb cable) and drop on the other, or click each; the cable in hand is
-  drawn live from its first jack to the pointer with the same elastic sag and its free
-  plug at the pointer. **Sound
-  begins only when every cable is patched**, and the screen guides it: ghost cables show
-  the patches still to make, and the hint line names each step. The stream's notes start
-  with the sound.
+  Satisfactory-style **Relevant** inventory strip: boxes of the items an open slot
+  accepts that the player **holds** (nothing held, nothing shown), each its icon and count
+  (`assets/ui/icons/<item_id>.png`, from `tools/icons/make_item_icons.py`; hover names the
+  item), **dragged into its slot** (or clicked, or keys 1-0). Cables follow **VCV Rack**:
+  drag from a jack (or a comb cable) and drop on the other, or click each. The cable in
+  hand is **shown, animated, never described**: taken from the comb it leaves the comb and
+  hangs from the pointer, swinging (a damped spring); with one end in a jack it runs to the
+  pointer with the same elastic sag, springing after each move; plugs take the cable's
+  colour. **Sound begins only when every cable is patched**, and the screen guides it
+  visually: ghost cables show the patches still to make and pods pulse in their colour.
+  **This is not a text adventure: no hint lines or step text on the rack screen.** The
+  stream's notes start with the sound.
+- **Inventory: 16 boxes, 100 of one kind per box** (`stubby_recipes::INVENTORY_BOXES`,
+  `BOX_STACK`); adds that do not fit fail all or nothing. The Tab screen is the 16 boxes,
+  filled in order; empty boxes stay blank, and nothing held at zero is shown.
 - **Every machine gets a rack, and all racks share one implementation** (`rack.rs`,
   `machine_config.rs`): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the
