@@ -33,7 +33,13 @@ component SHALL mount only in a slot of its kind, and a fixed slot SHALL never b
 Every rack SHALL show a small cable comb on its frame (`CableComb`, `Comb_<n>` slots).
 A machine's configuration SHALL list its spare cables (`configure.cables`), and they
 SHALL hang on the comb, folded over a slot with both plugs down, until the player takes
-one to patch. Unplugging both ends of a cable SHALL hang it back on the comb.
+one to patch. A comb cable SHALL join any output to any free input, as in VCV Rack; the
+jacks the configuration names for it are only the patch the screen suggests. Unplugging
+a cable SHALL hang it back on the comb.
+
+The cable in hand SHALL snap to a jack it can go into when the pointer comes within
+40 screen pixels of it: its plug shows in that jack, and releasing there SHALL plug it
+in, even off the jack itself.
 
 #### Scenario: Opening the burbler's rack
 - **WHEN** the player opens an unpatched burbler's configuration screen
@@ -42,6 +48,14 @@ one to patch. Unplugging both ends of a cable SHALL hang it back on the comb.
 #### Scenario: Taking a cable
 - **WHEN** the player drags a plug off the comb onto a jack
 - **THEN** that cable leaves the comb and its other end follows the pointer
+
+#### Scenario: Any cable, any patch
+- **WHEN** the player patches the green cable from the VCO's OUT to the volume's IN and the red one from GATE to TRIG
+- **THEN** the voice is complete and sounds, though the screen suggested the other colours
+
+#### Scenario: Snapping
+- **WHEN** the player releases the cable in hand just beside a jack it can go into
+- **THEN** it plugs into that jack
 
 ### Requirement: Patch pods pulse while waiting for a cable
 Each jack's halo (`Jack_<port>_Halo`) SHALL pulse, in the cable's colour, while a spare

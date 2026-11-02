@@ -83,7 +83,8 @@ as in VCV Rack: no fixed length, drooping by one tension setting.
 - **THEN** the burbler makes no tone and its stream shows no notes
 
 ### Requirement: The screen guides the patch
-Sound SHALL begin only when every cable in the machine's configuration is patched,
+Sound SHALL begin only when every patch in the machine's configuration is made (by any
+cables),
 and the screen SHALL make that easy to understand: each patch still to make SHALL show
 as a ghost cable between its two jacks in the build-ghost colour; the two jacks a
 hanging cable is for SHALL pulse in that cable's colour, while other jacks rest; the

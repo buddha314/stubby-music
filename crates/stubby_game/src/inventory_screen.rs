@@ -19,7 +19,8 @@ const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
 pub struct InventoryScreenPlugin;
 impl Plugin for InventoryScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(show_tooltip)
+        app.add_systems(Update, inventory_full_notice)
+            .add_observer(show_tooltip)
             .add_observer(move_tooltip)
             .add_observer(hide_tooltip)
             .add_systems(Startup, spawn)
@@ -157,6 +158,91 @@ fn hide_tooltip(
     }
 }
 
+/// Satisfactory's "Inventory Full" warning: a red banner under the reticle, with the
+/// icon of what did not fit, shown for a moment and faded out. Fires whenever something
+/// could not go into the inventory (a collection with no free box).
+#[derive(Component)]
+struct FullNotice {
+    shown: f32,
+}
+const NOTICE_SECONDS: f32 = 2.2;
+const NOTICE_FADE: f32 = 0.5;
+const NOTICE_RED: Color = Color::srgb(0.62, 0.13, 0.08);
+
+fn inventory_full_notice(
+    mut commands: Commands,
+    time: Option<Res<Time<Real>>>,
+    server: Option<Res<AssetServer>>,
+    mut full: MessageReader<super::recipes_plugin::InventoryFull>,
+    screens: Option<Res<ScreenMode>>,
+    mut notices: Query<(Entity, &mut FullNotice, &mut BackgroundColor)>,
+    mut texts: Query<&mut TextColor, With<FullNoticeText>>,
+) {
+    if let Some(event) = full.read().last() {
+        for (entity, ..) in &notices {
+            commands.entity(entity).despawn();
+        }
+        let mut banner = commands.spawn((
+            FullNotice { shown: 0. },
+            Node {
+                position_type: PositionType::Absolute,
+                left: percent(50),
+                // Under the reticle in the world; under a machine's window when one is
+                // open (the rack view draws over the screen's UI inside the window).
+                top: percent(if screens.as_ref().is_some_and(|s| s.open.is_some()) {
+                    90
+                } else {
+                    58
+                }),
+                margin: UiRect::left(px(-150)),
+                width: px(300),
+                padding: UiRect::axes(px(14), px(8)),
+                column_gap: px(12),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                border: UiRect::all(px(1)),
+                ..default()
+            },
+            BackgroundColor(NOTICE_RED.with_alpha(0.92)),
+            BorderColor::all(Color::srgb(1., 0.7, 0.31)),
+            GlobalZIndex(40),
+            Pickable::IGNORE,
+        ));
+        banner.with_children(|banner| {
+            if let Some(server) = &server {
+                banner.spawn((
+                    item_icon(server, &event.item),
+                    Node {
+                        width: px(36),
+                        height: px(36),
+                        ..default()
+                    },
+                    Pickable::IGNORE,
+                ));
+            }
+            banner.spawn((
+                FullNoticeText,
+                text("INVENTORY FULL", 22., Color::WHITE),
+                Pickable::IGNORE,
+            ));
+        });
+        return;
+    }
+    for (entity, mut notice, mut background) in &mut notices {
+        notice.shown += time.as_ref().map_or(0., |t| t.delta_secs());
+        let fade = ((NOTICE_SECONDS - notice.shown) / NOTICE_FADE).clamp(0., 1.);
+        background.0 = NOTICE_RED.with_alpha(0.92 * fade);
+        for mut colour in &mut texts {
+            colour.0 = Color::WHITE.with_alpha(fade);
+        }
+        if notice.shown >= NOTICE_SECONDS {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+#[derive(Component)]
+struct FullNoticeText;
+
 fn spawn(mut commands: Commands) {
     commands
         .spawn((
@@ -269,6 +355,38 @@ const SLOT_PX: f32 = 88.;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_full_inventory_shows_the_notice_then_it_goes() {
+        let mut app = App::new();
+        app.add_plugins(bevy::time::TimePlugin)
+            .add_message::<super::recipes_plugin::InventoryFull>()
+            .add_systems(Update, inventory_full_notice);
+        app.world_mut()
+            .write_message(super::recipes_plugin::InventoryFull {
+                item: "reed".into(),
+            });
+        app.update();
+        app.update();
+        let shown = app
+            .world_mut()
+            .query::<&FullNotice>()
+            .iter(app.world())
+            .count();
+        assert_eq!(shown, 1);
+        app.world_mut()
+            .query::<&mut FullNotice>()
+            .iter_mut(app.world_mut())
+            .for_each(|mut n| n.shown = NOTICE_SECONDS);
+        app.update();
+        app.update();
+        let shown = app
+            .world_mut()
+            .query::<&FullNotice>()
+            .iter(app.world())
+            .count();
+        assert_eq!(shown, 0);
+    }
 
     #[test]
     fn tab_opens_the_inventory_and_shows_only_held_items_by_catalog_name() {

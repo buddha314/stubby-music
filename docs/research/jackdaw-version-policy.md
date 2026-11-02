@@ -84,3 +84,20 @@ the promoted source/compiler/manifests/lock/binary guard passed. No graphical
 relaunch or broad suite was needed after the already-validated feature review.
 The live game checkout's tracked pin remains untouched; update it from main before
 using its guarded launcher with the new system editor.
+
+## Embedded Play speed fix promotion (2026-11-01)
+
+User asked to fix embedded Play's frame rate in the fork. Select fork dev/0.20 at
+f2a1cf207b14ec28116720f5dcb84faa44b86f13 (buddha314/jackdaw#4). The game-side PIE
+link (`jackdaw_runtime` `stream_state`) reflect-serialized every streamed entity's
+every component each frame, and `build_snapshot` walked the whole type registry per
+entity; in the desert opening (~1,600 entities) that held Play to ~10 fps while the
+standalone game ran at 60. Removing the frame readback changed nothing. The fix walks
+each entity's own components and, after the initial snapshot, re-serializes only
+entities changed since the last scan (Bevy change ticks), scanning at most every
+50 ms. Measured in embedded Play: ~9-13 fps to ~35-46 fps; a 250 ms interval did not
+raise it further (the rest is likely rendering at the stream size). Upstream has the
+same per-frame scan; no upstream PR or push.
+
+Promotion: the shared checkout was idle and clean; fast-forwarded to f2a1cf20,
+rebuilt with `tools/jackdaw.sh prepare` (receipts refreshed) and the guard passed.

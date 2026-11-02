@@ -110,9 +110,25 @@ struct HudPart;
 /// The panel's guidance line (filled by `rack`).
 #[derive(Component)]
 pub(crate) struct RackHint;
-/// Where `rack` puts the panel's buttons.
+/// Where `rack` lists the relevant items (the window's left column).
 #[derive(Component)]
 pub(crate) struct RackActions;
+/// Where `rack` lays out the player's inventory boxes (the window's right column).
+#[derive(Component)]
+pub(crate) struct RackInventory;
+
+/// The configuration window, Satisfactory's craft-bench layout, in fractions of the
+/// screen: a framed window with a title bar; the relevant items on the left, the rack in
+/// the middle panel, the inventory boxes on the right. `rack_viewport` fits the rack
+/// camera to `CENTRE`.
+mod layout {
+    /// (left, top, width, height)
+    pub const WINDOW: (f32, f32, f32, f32) = (0.06, 0.08, 0.88, 0.80);
+    pub const TITLE_H: f32 = 0.055;
+    pub const LEFT: (f32, f32, f32, f32) = (0.07, 0.15, 0.19, 0.71);
+    pub const CENTRE: (f32, f32, f32, f32) = (0.27, 0.15, 0.40, 0.71);
+    pub const RIGHT: (f32, f32, f32, f32) = (0.68, 0.15, 0.25, 0.71);
+}
 #[derive(Component)]
 struct HudScene {
     kind: SceneKind,
@@ -286,54 +302,135 @@ fn setup(mut commands: Commands) {
             // The backdrop must not catch the pointer: the jacks drawn by the rack camera
             // sit under it. Only the buttons in `RackActions` take clicks.
             Pickable::IGNORE,
-            BackgroundColor(Color::srgba(0., 0., 0., 0.55)),
+            BackgroundColor(Color::srgba(0., 0., 0., 0.45)),
             Node {
                 position_type: PositionType::Absolute,
                 width: percent(100),
                 height: percent(100),
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::SpaceBetween,
-                align_items: AlignItems::Center,
-                padding: UiRect::vertical(percent(4)),
                 ..default()
             },
         ))
         .with_children(|panel| {
+            let at = |(l, t, w, h): (f32, f32, f32, f32)| Node {
+                position_type: PositionType::Absolute,
+                left: percent(l * 100.),
+                top: percent(t * 100.),
+                width: percent(w * 100.),
+                height: percent(h * 100.),
+                ..default()
+            };
+            let frame = Color::srgb(0.42, 0.29, 0.13);
+            // The window and its title bar.
             panel.spawn((
-                Header,
-                Text::new(""),
-                text(26., Color::srgb(1., 0.7, 0.31)),
+                Node {
+                    border: UiRect::all(px(1)),
+                    ..at(layout::WINDOW)
+                },
+                BackgroundColor(Color::srgba(0.07, 0.065, 0.06, 0.97)),
+                BorderColor::all(frame),
                 Pickable::IGNORE,
             ));
+            let (l, t, w, _) = layout::WINDOW;
             panel
                 .spawn((
                     Node {
-                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        row_gap: px(10),
-                        ..default()
+                        ..at((l, t, w, layout::TITLE_H))
                     },
+                    BackgroundColor(Color::srgba(0.11, 0.1, 0.09, 1.)),
                     Pickable::IGNORE,
                 ))
-                .with_children(|foot| {
-                    foot.spawn((
-                        RackHint,
+                .with_children(|bar| {
+                    bar.spawn((
+                        Header,
                         Text::new(""),
-                        text(19., Color::srgb(0.68, 0.72, 0.83)),
+                        text(20., Color::srgb(0.92, 0.9, 0.85)),
+                        Pickable::IGNORE,
                     ));
-                    foot.spawn((
-                        RackActions,
+                    bar.spawn((
+                        Text::new("X"),
+                        text(22., Color::srgb(0.8, 0.78, 0.74)),
                         Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: px(6),
+                            position_type: PositionType::Absolute,
+                            right: px(16),
                             ..default()
                         },
                         Pickable::IGNORE,
                     ));
-                    foot.spawn((
-                        Text::new("Esc  close"),
-                        text(15., Color::srgb(0.55, 0.53, 0.49)),
+                });
+            // The middle panel, behind the rack camera's view.
+            panel.spawn((
+                Node {
+                    border: UiRect::all(px(2)),
+                    ..at(layout::CENTRE)
+                },
+                BackgroundColor(Color::srgb(0.13, 0.12, 0.11)),
+                BorderColor::all(Color::srgb(0.3, 0.29, 0.27)),
+                Pickable::IGNORE,
+            ));
+            panel.spawn((
+                RackActions,
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: px(4),
+                    overflow: Overflow::scroll_y(),
+                    ..at(layout::LEFT)
+                },
+                Pickable::IGNORE,
+            ));
+            panel.spawn((
+                RackInventory,
+                Node {
+                    // Four boxes a row: the 16-box inventory as 4 x 4.
+                    max_width: px(4. * 64. + 3. * 6. + 2.),
+                    flex_wrap: FlexWrap::Wrap,
+                    align_content: AlignContent::FlexStart,
+                    column_gap: px(6),
+                    row_gap: px(6),
+                    ..at(layout::RIGHT)
+                },
+                Pickable::IGNORE,
+            ));
+            // The guidance line stays (empty: the screen shows, it does not tell).
+            panel.spawn((
+                RackHint,
+                Text::new(""),
+                Node {
+                    display: Display::None,
+                    ..default()
+                },
+            ));
+            // Key prompts under the window, as Satisfactory shows them.
+            panel
+                .spawn((
+                    Node {
+                        column_gap: px(6),
+                        align_items: AlignItems::Center,
+                        ..at((l, t + layout::WINDOW.3 + 0.012, w, 0.04))
+                    },
+                    Pickable::IGNORE,
+                ))
+                .with_children(|keys| {
+                    keys.spawn((
+                        Node {
+                            padding: UiRect::axes(px(8), px(3)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.85, 0.84, 0.8)),
+                        Pickable::IGNORE,
+                    ))
+                    .with_children(|key| {
+                        key.spawn((
+                            Text::new("Esc"),
+                            text(15., Color::srgb(0.1, 0.1, 0.1)),
+                            Pickable::IGNORE,
+                        ));
+                    });
+                    keys.spawn((
+                        Text::new("Close"),
+                        text(15., Color::srgb(0.85, 0.84, 0.8)),
+                        Pickable::IGNORE,
                     ));
                 });
         });
@@ -345,18 +442,36 @@ fn setup(mut commands: Commands) {
     });
 }
 
-/// The rack's area on screen: the middle of what the game draws into (the window when
-/// run alone, an image when Jackdaw's Play hosts it), between header and hints.
+/// The rack's area on screen: the window's whole middle panel, in what the game draws
+/// into (the window when run alone, an image when Jackdaw's Play hosts it). The camera
+/// fits the rack to it (`frame_rack`).
 fn rack_viewport(target: UVec2) -> Viewport {
-    let (w, h) = (target.x, target.y);
-    // Leaves the bottom quarter for the step hint and the inventory tiles.
-    let height = (h as f32 * 0.56) as u32;
-    let width = (height as f32 * 1.25).min(w as f32 * 0.9) as u32;
+    let (w, h) = (target.x as f32, target.y as f32);
+    let (l, t, cw, ch) = layout::CENTRE;
     Viewport {
-        physical_position: UVec2::new((w - width) / 2, (h as f32 * 0.1) as u32),
-        physical_size: UVec2::new(width.max(1), height.max(1)),
+        physical_position: UVec2::new((l * w + 2.) as u32, (t * h + 2.) as u32),
+        physical_size: UVec2::new((cw * w - 4.).max(1.) as u32, (ch * h - 4.).max(1.) as u32),
         ..default()
     }
+}
+
+/// Fit the rack camera to the rack: the modules (`width`), the frame's posts either side
+/// and the cable comb to the right of the right post, with a small margin, so the rack
+/// fills the middle panel whatever its size.
+fn frame_rack(width: f32, projection: &mut Projection, transform: &mut Transform) {
+    const MARGIN: f32 = 0.06;
+    let (left, right) = (-(width / 2. + 0.16), width / 2. + 0.1 + 0.045 + 0.3);
+    let (bottom, top) = (-0.04, 1.34);
+    let centre = Vec2::new((left + right) / 2., (bottom + top) / 2.);
+    *transform = Transform::from_xyz(centre.x, HUD_Y + centre.y, 4.)
+        .looking_at(Vec3::new(centre.x, HUD_Y + centre.y, 0.), Vec3::Y);
+    *projection = Projection::Orthographic(OrthographicProjection {
+        scaling_mode: ScalingMode::AutoMin {
+            min_width: right - left + 2. * MARGIN,
+            min_height: top - bottom + 2. * MARGIN,
+        },
+        ..OrthographicProjection::default_3d()
+    });
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
@@ -372,7 +487,7 @@ fn sync_view(
         Option<&super::rack::RackState>,
     )>,
     windows: Query<&Window, With<PrimaryWindow>>,
-    mut cameras: Query<&mut Camera, With<RackHudCamera>>,
+    mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<RackHudCamera>>,
     mut panels: Query<&mut Visibility, With<Panel>>,
     mut headers: Query<&mut Text, With<Header>>,
 ) {
@@ -387,7 +502,7 @@ fn sync_view(
             Visibility::Hidden
         };
     }
-    if let Ok(mut camera) = cameras.get_mut(view.camera) {
+    if let Ok((mut camera, _, _)) = cameras.get_mut(view.camera) {
         camera.is_active = machine.is_some();
         if let Some(size) = camera.physical_target_size().or_else(|| {
             windows
@@ -431,6 +546,9 @@ fn sync_view(
         return;
     };
     let width: f32 = config.places.iter().map(|place| place.hp as f32 * HP).sum();
+    if let Ok((_, mut projection, mut transform)) = cameras.get_mut(view.camera) {
+        frame_rack(width, &mut projection, &mut transform);
+    }
     let root = commands
         .spawn((
             Transform::from_xyz(0., HUD_Y, 0.),
