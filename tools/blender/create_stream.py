@@ -246,13 +246,14 @@ class Stream(Burbler):
         return self.bar("Bar_0", LENGTH * 0.4 + 0.5 * FLOW_SPEED * 60 / PREVIEW_BPM)
 
     def ports(self):
-        radius = CHANNEL_HALF_WIDTH + 0.12
         for end, x in (("in", 0.0), ("out", LENGTH)):
-            # +X along the flow; the arch lies in the port's YZ plane, spanning the stream.
+            # +X along the flow; the halo is the stream's cross-section in the port's YZ
+            # plane, hidden (scale 0) until the player tries to connect here.
             port = self.node(f"Port_{end}", (x, 0, WATER_Z), stream="mud", direction=end)
             halo = self.node(f"Port_{end}_Halo", (0, 0, 0), parent=port, role="port_highlight")
             for k, (tube, mat) in enumerate([(0.008, self.glow), (0.03, self.port_halo), (0.07, self.port_halo)]):
-                self.arch(f"Port_{end}_Arch{k}", radius, tube, mat, halo)
+                self.section_ring(f"Port_{end}_Ring{k}", tube, mat, halo, WATER_Z)
+            halo.scale = (0, 0, 0)
 
     def reeds(self):
         """Reeds outline both banks, rising from the waterline up the inner slope. They

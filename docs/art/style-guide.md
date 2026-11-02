@@ -26,8 +26,8 @@ out in space. Raw streams are **muddy on purpose**, like ore. As other processes
 identified, constructors clean them, and the water goes **from muddy to clear** in
 stages. The water is always sheet music: a wavy five-line staff floats on it and
 each beat's note rides the staff downstream at the water's speed, so note spacing shows
-velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds build streams: 6 reeds make a segment, and reeds outline its banks, dry while muddy and green as it clears. They are as easy to gather as leaves in Satisfactory. Ports light a soft
-halo arch while a stream is being extended from them (Satisfactory's port
+velocity; it glows brighter and crisper as the water clears. Stream assets need a look for each stage. Reeds build streams: 6 reeds make a segment, and reeds outline its banks, dry while muddy and green as it clears. They are as easy to gather as leaves in Satisfactory. Ports show a soft
+halo in the stream's cross-section only while a connection is being attempted (Satisfactory's port
 highlighting), and the planned stream shows as a hologram before it is laid.
 
 So growth reads as a response to sound: flora and fauna that are being played to
@@ -100,7 +100,7 @@ been made once (2026-10-31, `accents[0]`).
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
-the only signal colour. Build holograms are pale amber, kin to the port arches they snap
+the only signal colour. Build holograms are pale amber, kin to the port halos they snap
 to, and turn red where a plan cannot be laid.
 
 ## Scale
@@ -298,7 +298,8 @@ Before an asset ships:
   one-beat clips. Stream water goes from muddy to clear as processes are identified.
 - **2026-10-31** — The burbler is the head of a mud stream: a channel about 1 m wide
   between banked sides, framed as a tall (portrait) preview looking up the stream. Its
-  port is an upright halo arch over the mouth, lit while a stream is extended from it.
+  port is a halo in the stream's cross-section at the mouth, shown only while a
+  connection is attempted (revised 2026-11-01; it was an upright arch).
 - **2026-10-31** — The burbler is a natural hot-spring mud pot (no in-world rack);
   configuring it opens a Eurorack HUD. Mud streams leave it through an outlet that
   halos when connected; raw mud stays muddy. The rack version is kept as a concept,

@@ -458,15 +458,28 @@ class Burbler(ModuleKit):
             self.ribbon(f"Vein{i}", pts, 0.008, self.glow, taper=True)
             self.ribbon(f"VeinHalo{i}", [(x, y, z + 0.003) for x, y, z in pts], 0.06, self.halo, taper=True)
 
-    def arch(self, name, radius, tube, mat, parent, segments=40):
-        """An upright half-ring across the stream, in the node's YZ plane."""
+    @classmethod
+    def stream_section(cls, base_z, lift=0.04, segments=48):
+        """The stream's cross-section in a port's YZ plane, z relative to `base_z` (the
+        port's height): across the bed and up both banked sides to their crests, `lift`
+        above the surface. Every stream port's halo has this shape."""
+        crest = CHANNEL_HALF_WIDTH + BANK_WIDTH
+        pts = []
+        for i in range(segments + 1):
+            y = -crest + 2 * crest * i / segments
+            bank = BANK_HEIGHT * cls.smooth((abs(y) - CHANNEL_HALF_WIDTH) / BANK_WIDTH)
+            pts.append(Vector((0, y, max(STREAM_MUD_Z, bank) - base_z + lift)))
+        return pts
+
+    def section_ring(self, name, tube, mat, parent, base_z):
+        """A tube along the stream's cross-section (see `stream_section`)."""
+        pts = self.stream_section(base_z)
         def fill(bm):
             rings = []
-            for i in range(segments + 1):
-                phi = math.pi * i / segments
-                centre = Vector((0, radius * math.cos(phi), radius * math.sin(phi)))
-                normal = Vector((0, math.cos(phi), math.sin(phi)))
-                rings.append([bm.verts.new(centre + tube * (normal * math.cos(a) + Vector((1, 0, 0)) * math.sin(a)))
+            for i, p in enumerate(pts):
+                tangent = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+                normal = Vector((1, 0, 0)).cross(tangent).normalized()
+                rings.append([bm.verts.new(p + tube * (normal * math.cos(a) + Vector((1, 0, 0)) * math.sin(a)))
                               for a in (k / 8 * 2 * math.pi for k in range(8))])
             for ra, rb in zip(rings, rings[1:]):
                 for k in range(8):
@@ -474,16 +487,17 @@ class Burbler(ModuleKit):
         return self.mesh_obj(name, fill, mat, parent=parent)
 
     def mouth(self):
-        """Where the stream leaves the burbler: `Outlet_0` (+X along the flow), with an
-        upright halo arch over the mouth. The arch is the snap point: it lights while the
-        player is extending a stream from here, as a generator's port does when you drag a
-        conveyor from it in Satisfactory, and stays softly lit once connected."""
+        """Where the stream leaves the burbler: `Outlet_0` (+X along the flow), with a halo
+        in the stream's own cross-section: across the bed and up both banks. It is the
+        snap point and appears only while the player is trying to connect a stream here,
+        as a generator's port does when you drag a conveyor from it in Satisfactory. It
+        ships at scale 0 (hidden) and the game shows it during the attempt."""
         node = self.node("Outlet_0", (0.0, STREAM_MOUTH_Y - 0.3, STREAM_MUD_Z), stream="mud", pulse="bpm")
         node.rotation_euler.z = -math.pi / 2
         halo = self.node("Outlet_0_Halo", (0, 0, 0), parent=node, role="port_highlight")
-        radius = self.channel_half_width(STREAM_MOUTH_Y) + 0.12
         for k, (tube, mat) in enumerate([(0.008, self.glow), (0.03, self.outlet_halo), (0.07, self.outlet_halo)]):
-            self.arch(f"Outlet_0_Arch{k}", radius, tube, mat, halo)
+            self.section_ring(f"Outlet_0_Ring{k}", tube, mat, halo, STREAM_MUD_Z)
+        halo.scale = (0, 0, 0)
 
     def steam_plumes(self, layout):
         """Slow, pale steam: not luminous, it catches the light around it."""
@@ -652,11 +666,9 @@ class Burbler(ModuleKit):
                 "Burbler_WispBell": {"rest": 0.0, "peak": 1.0, "attack_s": 0.1, "decay_s": 1.8},
                 "Burbler_WispCore": {"rest": 0.0, "peak": 1.0, "attack_s": 0.05, "decay_s": 1.6},
                 "Burbler_Mote": {"rest": 0.35, "peak": 1.0, "attack_s": 0.2, "decay_s": 0.8},
-                "Burbler_OutletHalo": {"rest": 0.0, "peak": 1.0, "connected": 0.4, "attack_s": 0.05,
-                                       "decay_s": 0.5,
-                                       "note": "0 normally; peak while a stream is being extended from "
-                                               "here (the snap point); 'connected' once attached, "
-                                               "breathing at the BPM"},
+                "Burbler_OutletHalo": {"rest": 0.0, "peak": 1.0, "attack_s": 0.05, "decay_s": 0.5,
+                                       "note": "hidden (scale 0) except while a connection is "
+                                               "attempted here, when it lights at peak"},
             },
             "nodes": nodes,
             "animations": {a.name: {"seconds": BEAT_FRAMES / 24, "loop": True, "burst_at_seconds": 0.0,

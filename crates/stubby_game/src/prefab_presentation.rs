@@ -313,6 +313,13 @@ fn pose_parts(
         let Ok((asset, state, resource, clock)) = roots.get(part.root) else {
             continue;
         };
+        // A stream port's halo (burbler outlet, stream ends) ships hidden and appears
+        // only while the player is trying to connect a stream there.
+        if part.extras["role"] == "port_highlight" {
+            transform.scale =
+                full_scale(part.rest.scale) * f32::from(u8::from(state.port_highlight));
+            continue;
+        }
         if asset.asset == "mudpit_burbler" {
             if part.name.starts_with("Wisp_")
                 || part.name.starts_with("Steam_")
@@ -761,14 +768,9 @@ fn shade_materials(
                 let attack = profile["attack_s"].as_f64().unwrap_or(0.04) as f32;
                 let decay = profile["decay_s"].as_f64().unwrap_or(0.45) as f32;
                 let level = bus.level(clock.clock, Instant::now(), attack, attack + decay);
+                // The port halo is only visible while a connection is attempted.
                 let strength = if part.name == "Burbler_OutletHalo" {
-                    if state.port_highlight {
-                        peak
-                    } else if state.stream_connected {
-                        profile["connected"].as_f64().unwrap_or(0.4) as f32 * (0.65 + 0.35 * level)
-                    } else {
-                        0.
-                    }
+                    if state.port_highlight { peak } else { 0. }
                 } else {
                     rest + (peak - rest) * level
                 };

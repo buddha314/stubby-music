@@ -128,12 +128,11 @@ class StreamHologram(Stream):
         return flow
 
     def rings(self):
-        radius = CHANNEL_HALF_WIDTH + 0.12
         for end, x in (("in", 0.0), ("out", LENGTH)):
             port = self.node(f"Port_{end}", (x, 0, WATER_Z), stream="mud", direction=end)
             ring = self.node(f"Port_{end}_Ring", (0, 0, 0), parent=port, role="snap_ghost")
-            self.arch(f"Port_{end}_Ring0", radius, 0.008, self.layers["Rib"], ring)
-            self.arch(f"Port_{end}_Ring1", radius, 0.035, self.layers["Shell"], ring)
+            self.section_ring(f"Port_{end}_Ring0", 0.008, self.layers["Rib"], ring, WATER_Z)
+            self.section_ring(f"Port_{end}_Ring1", 0.035, self.layers["Shell"], ring, WATER_Z)
 
     def profile(self):
         return {
