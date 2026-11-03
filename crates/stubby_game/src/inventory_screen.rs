@@ -360,10 +360,10 @@ mod tests {
     fn a_full_inventory_shows_the_notice_then_it_goes() {
         let mut app = App::new();
         app.add_plugins(bevy::time::TimePlugin)
-            .add_message::<super::recipes_plugin::InventoryFull>()
+            .add_message::<crate::recipes_plugin::InventoryFull>()
             .add_systems(Update, inventory_full_notice);
         app.world_mut()
-            .write_message(super::recipes_plugin::InventoryFull {
+            .write_message(crate::recipes_plugin::InventoryFull {
                 item: "reed".into(),
             });
         app.update();
@@ -391,7 +391,7 @@ mod tests {
     #[test]
     fn tab_opens_the_inventory_and_shows_only_held_items_by_catalog_name() {
         let mut app = App::new();
-        app.add_plugins(super::super::recipes_plugin::RecipesPlugin::default())
+        app.add_plugins(crate::recipes_plugin::RecipesPlugin::default())
             .init_resource::<ButtonInput<KeyCode>>()
             .init_resource::<ScreenMode>()
             .add_plugins(InventoryScreenPlugin)
