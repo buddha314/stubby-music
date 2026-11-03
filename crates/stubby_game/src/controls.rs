@@ -36,6 +36,11 @@ pub fn spawn_transform() -> Transform {
 }
 #[derive(Resource)]
 pub(crate) struct LookCapture(bool);
+impl LookCapture {
+    pub(crate) fn captured(&self) -> bool {
+        self.0
+    }
+}
 
 /// Full-screen HUD panels. One is open at a time; while one is, the cursor is free and
 /// the player neither moves nor looks (add-inventory-and-goals-hud D7). The burbler's

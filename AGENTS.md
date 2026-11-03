@@ -78,7 +78,7 @@ Use **O** for the recipe book/codex. **What E acts on comes from avian3d, not ha
 (`interaction.rs`): every pickup and machine `Interact` point has a small kinematic sensor
 marker that follows it, one `SpatialQuery` cylinder (3 m, horizontal reach) at the player
 finds them, and the nearest becomes `InteractTarget`, which collecting, prompts and racks read.
-Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. Reserve **Q** for build, **F** for dismantle,
+Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. **Q** is build: it enters stream build mode, laid like a Satisfactory conveyor (`streams.rs`, `openspec/changes/add-stream-building/`): aim by a free port (burbler mouth, stream end) and click to anchor, the hologram curves to the aim, click lays it (6 reeds a segment, from `buildables.json`) and chains from its end; right click drops the anchor; Escape or Q leaves. Reserve **F** for dismantle,
 **Tab** for inventory and **B** for flashlight; do not assign these to unrelated
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
