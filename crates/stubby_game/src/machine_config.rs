@@ -138,6 +138,17 @@ struct HudScene {
 /// A jack's mesh on the rack screen, pickable for patching.
 #[derive(Component, Clone)]
 pub(crate) struct JackHit(pub JackRef);
+/// A knob's mesh on the rack screen: the place's module and the param it turns.
+#[derive(Component, Clone)]
+pub(crate) struct KnobHit {
+    pub place: String,
+    pub param: String,
+}
+/// A module shown on the rack screen, in its place; its knobs follow the rack's values.
+#[derive(Component, Clone)]
+pub(crate) struct RackModuleView {
+    pub place: String,
+}
 /// A jack's halo mesh (its patch pod).
 #[derive(Component, Clone)]
 pub(crate) struct PodMesh(pub JackRef);
@@ -594,17 +605,23 @@ fn sync_view(
                 },
                 ChildOf(root),
             ));
-            if let Some(clock) = clock.filter(|_| module.as_str() == "burbler_clock") {
-                part.insert((
-                    ModuleView,
-                    SynthModule {
-                        id: clock.engine,
-                        asset: module.clone(),
-                    },
-                    ModuleParams([("bpm".into(), clock.bpm)].into()),
-                    ModuleLights::default(),
-                ));
-            }
+            // A view of the module, not a second engine node: the clock's lamp and
+            // lights follow the machine's clock; knobs follow the rack (`show_knobs`).
+            let id = clock
+                .filter(|_| module.as_str() == "burbler_clock")
+                .map_or(stubby_audio::ModuleId(0), |clock| clock.engine);
+            part.insert((
+                ModuleView,
+                RackModuleView {
+                    place: place.place.clone(),
+                },
+                SynthModule {
+                    id,
+                    asset: module.clone(),
+                },
+                ModuleParams::default(),
+                ModuleLights::default(),
+            ));
         } else {
             commands.spawn((
                 WorldAssetRoot(
@@ -680,6 +697,23 @@ fn prepare_parts(
                 commands
                     .entity(entity)
                     .insert((JackHit(jack(port)), Pickable::default()));
+            } else if is_mesh
+                && node.contains("_Knob")
+                && let Some(param) = parents.iter_ancestors(entity).find_map(|a| {
+                    names
+                        .get(a)
+                        .ok()
+                        .and_then(|n| n.as_str().strip_prefix("Knob_"))
+                        .map(str::to_owned)
+                })
+            {
+                commands.entity(entity).insert((
+                    KnobHit {
+                        place: place.clone(),
+                        param,
+                    },
+                    Pickable::default(),
+                ));
             } else if is_mesh && node.contains("_JackHalo") {
                 commands.entity(entity).insert(PodMesh(jack(port)));
             } else if !is_mesh && let Some(port) = node.strip_prefix("Port_") {
