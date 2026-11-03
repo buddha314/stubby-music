@@ -149,7 +149,8 @@ fn move_sun(
         (
             &Transform,
             &mut bevy::light::Skybox,
-            &mut GeneratedEnvironmentMapLight,
+            Option<&mut GeneratedEnvironmentMapLight>,
+            Option<&mut EnvironmentMapLight>,
             Option<&mut DistanceFog>,
         ),
         (With<Camera3d>, Without<SunDisc>, Without<Sunlight>),
@@ -165,7 +166,7 @@ fn move_sun(
         light.color = Color::srgb(1., 0.71 + 0.22 * daylight, 0.43 + 0.4 * daylight);
     }
     ambient.brightness = 5. + 95. * daylight;
-    for (camera, mut sky, mut environment, fog) in &mut cameras {
+    for (camera, mut sky, generated, environment, fog) in &mut cameras {
         if let Some(mut fog) = fog {
             fog.color = Color::srgb(
                 0.015 + 0.545 * daylight,
@@ -174,7 +175,15 @@ fn move_sun(
             );
         }
         sky.brightness = 20. + 1480. * daylight;
-        environment.intensity = 20. + 1480. * daylight;
+        // Shading reads `EnvironmentMapLight`; Bevy copies the generated intensity into it
+        // only once, and the sky stops being generated after its first bake.
+        let intensity = 20. + 1480. * daylight;
+        if let Some(mut generated) = generated {
+            generated.intensity = intensity;
+        }
+        if let Some(mut environment) = environment {
+            environment.intensity = intensity;
+        }
         for mut disc in &mut discs {
             disc.translation = camera.translation + direction * 900.;
         }

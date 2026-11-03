@@ -61,6 +61,7 @@ impl Plugin for DesertPlugin {
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
+        .add_plugins(sky::StaticSkyPlugin)
         .insert_resource(WorldSeed(self.seed))
         .add_systems(Startup, setup)
         .add_systems(Update, capture_preview);

@@ -53,3 +53,84 @@ pub fn desert_sky() -> Image {
     });
     image
 }
+
+/// The desert sky cubemap never changes (day and night only scale its intensity), but
+/// Bevy re-filters a `GeneratedEnvironmentMapLight` every frame (~1.3 ms GPU). Bake it
+/// once: when the render world has run the generator's filter passes, drop
+/// `GeneratedEnvironmentMapLight` and keep the `EnvironmentMapLight` it produced.
+pub struct StaticSkyPlugin;
+
+/// Main-world cameras whose environment map the render world has filtered.
+#[derive(Resource, Clone, Default)]
+struct BakedEnvironmentMaps(std::sync::Arc<std::sync::Mutex<Vec<Entity>>>);
+
+impl Plugin for StaticSkyPlugin {
+    fn build(&self, app: &mut App) {
+        use bevy::pbr::generate::filtering_system;
+        use bevy::render::{Render, RenderApp, RenderSystems};
+        let baked = BakedEnvironmentMaps::default();
+        app.insert_resource(baked.clone())
+            .add_systems(Update, stop_regenerating);
+        if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
+            render_app.insert_resource(baked).add_systems(
+                Render,
+                mark_filtered
+                    .after(filtering_system)
+                    .before(RenderSystems::Render),
+            );
+        }
+    }
+}
+
+/// Runs after the generator's filter passes: if all of its pipelines are compiled, every
+/// generated map with bind groups was filtered this frame.
+fn mark_filtered(
+    maps: Query<
+        &bevy::render::sync_world::MainEntity,
+        (
+            With<bevy::pbr::generate::GeneratorBindGroups>,
+            With<bevy::pbr::generate::RenderEnvironmentMap>,
+        ),
+    >,
+    cache: Res<bevy::render::render_resource::PipelineCache>,
+    pipelines: Option<Res<bevy::pbr::generate::GeneratorPipelines>>,
+    baked: Res<BakedEnvironmentMaps>,
+) {
+    let Some(p) = pipelines else { return };
+    let ready = [
+        p.downsample_first,
+        p.downsample_second,
+        p.copy,
+        p.radiance,
+        p.irradiance,
+    ]
+    .into_iter()
+    .all(|id| cache.get_compute_pipeline(id).is_some());
+    if !ready || maps.is_empty() {
+        return;
+    }
+    if let Ok(mut list) = baked.0.lock() {
+        list.extend(maps.iter().map(|main| main.id()));
+    }
+}
+
+fn stop_regenerating(
+    mut commands: Commands,
+    baked: Res<BakedEnvironmentMaps>,
+    generated: Query<
+        (),
+        (
+            With<GeneratedEnvironmentMapLight>,
+            With<EnvironmentMapLight>,
+        ),
+    >,
+) {
+    let Ok(mut list) = baked.0.lock() else { return };
+    for entity in list.drain(..) {
+        if generated.contains(entity) {
+            commands
+                .entity(entity)
+                .remove::<GeneratedEnvironmentMapLight>();
+        }
+    }
+}
