@@ -131,7 +131,10 @@ def main():
     run(sys.executable, str(ROOT / 'tools/bevy_main_forks.py'), 'ensure')
     repin(record, revision)
     run(sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--source', str(SOURCE))
-    if run('cargo', 'build', '--locked', '-p', 'stubby_game', '-p', 'stubby_jackdaw', check=False):
+    # Separately: built together, Cargo unifies features and the adapter build that
+    # embedded Play runs would start cold.
+    if any(run('cargo', 'build', '--locked', '-p', package, check=False)
+           for package in ('stubby_game', 'stubby_jackdaw')):
         sys.exit('The game does not build on the new Jackdaw/Bevy; fix the game (or a fork) and rerun. '
                  f'Shared Jackdaw moved {before[:8]} -> {revision[:8]}; '
                  f'roll back with: git -C {SOURCE} reset --keep {before} && '
