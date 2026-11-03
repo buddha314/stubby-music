@@ -53,4 +53,9 @@ segment on the same 24 subdivisions, so the game bends and chains it the same wa
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream_hologram.py
 ```
 
-Still to come: reeds, the conveyor-belt segments streams run along.
+The game lays both (`crates/stubby_game/src/streams.rs`, `add-stream-building`):
+segment and hologram meshes are baked from these glTFs once and bent along the plan;
+`Pulse_0`, `Bar_0` and the staff's morph targets are not used yet, so laid streams lie
+quiet until notes and the staff's flow land.
+
+Still to come: the conveyor-belt segments streams run along.
