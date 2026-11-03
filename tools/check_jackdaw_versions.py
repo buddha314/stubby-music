@@ -47,17 +47,18 @@ def validate(root, source):
             errors.append(f'{member} must inherit Bevy from the unified workspace')
         if 'workspace' in manifest:
             errors.append(f'{member} must not define a separate workspace')
-    adapter = read_toml(root / 'jackdaw/Cargo.toml')
-    for section in ('dependencies', 'dev-dependencies'):
-        for name, dep in adapter.get(section, {}).items():
-            if not name.startswith('jackdaw_'):
-                continue
-            if not isinstance(dep, dict) or 'path' not in dep:
-                errors.append(f'{name} must use the selected shared source path')
-                continue
-            actual = (root / 'jackdaw' / dep['path']).resolve()
-            if actual != (source / 'crates' / name).resolve():
-                errors.append(f'{name} path resolves to {actual}, not the selected shared checkout')
+    for member in ('jackdaw', 'crates/stubby_game'):
+        manifest = read_toml(root / member / 'Cargo.toml')
+        for section in ('dependencies', 'dev-dependencies'):
+            for name, dep in manifest.get(section, {}).items():
+                if not name.startswith('jackdaw_'):
+                    continue
+                if not isinstance(dep, dict) or 'path' not in dep:
+                    errors.append(f'{member}: {name} must use the selected shared source path')
+                    continue
+                actual = (root / member / dep['path']).resolve()
+                if actual.name != name or not actual.is_relative_to(source.resolve()):
+                    errors.append(f'{member}: {name} path resolves to {actual}, not the selected shared checkout')
     if (root / 'jackdaw/Cargo.lock').exists():
         errors.append('remove the separate adapter lockfile; the workspace has one Cargo.lock')
     if bevy_sources(read_toml(root / 'Cargo.lock')) != {expected}:
@@ -91,6 +92,7 @@ def validate_tree(tree, record):
     errors = []
     found = False
     for line in tree.splitlines():
+        line = re.sub(r'\x1b\[[0-9;]*m', '', line).strip()
         match = re.match(r'^(bevy|bevy_app|bevy_ecs|bevy_math|bevy_reflect|bevy_transform) v([^ ]+)(.*)$', line)
         if not match:
             continue

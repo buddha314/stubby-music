@@ -516,6 +516,11 @@ or restore a separate adapter lockfile. `jackdaw/compatibility.json` records the
 shared editor source revision, upstream base, Bevy revision and compiler.
 
 Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
+**When our fork's `dev/0.20` moves, run `tools/jackdaw.sh sync`**: it fast-forwards the
+shared checkout, re-pins `jackdaw/compatibility.json` (revision and upstream base),
+refreshes `Cargo.lock`, runs the guard and rebuilds the editor; commit the pin and lock on
+a branch. It stops for a Bevy/Rust change or a non-fast-forward. CI warns when the pin
+lags the fork.
 `tools/jackdaw.sh prepare` builds the selected shared editor/CLI and records local
 binary hashes; managed launches verify that receipt. This does not install a
 per-game editor. A source mismatch requires deliberate integration and validation,

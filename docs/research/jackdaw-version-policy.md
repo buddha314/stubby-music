@@ -32,7 +32,8 @@ do not install extra testing infrastructure merely to run them. One bounded
 checks pass. Earlier broad test runs were stopped by the user; do not resume them.
 
 Publish the supported fork commit first. Update the game's source/engine/compiler
-record and lockfile together. Promote the shared checkout only when clean and
+record and lockfile together: `tools/jackdaw.sh sync` does this for a fast-forward of
+origin/dev/0.20 and refuses anything that changes Bevy or Rust. Promote the shared checkout only when clean and
 idle, then build the editor and CLI from that same source. Keep the prior tested
 revision for rollback. Do not touch another agent's unsaved game scene. A source
 pin must not be silently rewritten to whatever checkout happens to be present.

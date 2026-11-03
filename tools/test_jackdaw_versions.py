@@ -100,6 +100,11 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(versions.validate_tree(good + '\nbevy_ecs v0.19.1', self.record))
         self.assertTrue(versions.validate_tree('', self.record))
 
+    def test_colored_tree_output_is_accepted(self):
+        # CI forces cargo colour; the dedup marker arrives wrapped in ANSI codes.
+        line = 'bevy_ecs v' + self.record['bevy']['version'] + ' \x1b[33m\x1b[2m(*)\x1b[39m\x1b[22m'
+        self.assertEqual(versions.validate_tree(line, self.record), [])
+
 
 if __name__ == '__main__':
     unittest.main()
