@@ -16,25 +16,24 @@ fn main() {
             .expect("export desert preview");
         return;
     }
+    let default_plugins = DefaultPlugins
+        .set(AssetPlugin {
+            file_path: format!("{}/../../assets", env!("CARGO_MANIFEST_DIR")),
+            ..default()
+        })
+        .set(WindowPlugin {
+            primary_window: Some(Window {
+                title: format!("Stubby • mudflat / seed {seed} • WASD • mouse look • E collect"),
+                resolution: (1440, 900).into(),
+                ..default()
+            }),
+            ..default()
+        });
+    // Under Jackdaw's embedded Play the editor owns the window.
+    let default_plugins = jackdaw_runtime::maybe_windowless(default_plugins);
     App::new()
         .insert_resource(config)
-        .add_plugins(
-            DefaultPlugins
-                .set(AssetPlugin {
-                    file_path: format!("{}/../../assets", env!("CARGO_MANIFEST_DIR")),
-                    ..default()
-                })
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: format!(
-                            "Stubby • mudflat / seed {seed} • WASD • mouse look • E collect"
-                        ),
-                        resolution: (1440, 900).into(),
-                        ..default()
-                    }),
-                    ..default()
-                }),
-        )
+        .add_plugins(default_plugins)
         .add_plugins(stubby_game::DesertPlugin { seed })
         .add_plugins(stubby_game::audio::SynthAudioPlugin {
             demo: std::env::args().any(|a| a == "--audio-demo"),
