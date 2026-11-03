@@ -4117,18 +4117,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
-name = "jackdaw_avian_integration"
-version = "0.21.0-dev"
-dependencies = [
- "avian3d",
- "bevy",
- "jackdaw_geometry",
- "jackdaw_runtime",
- "jackdaw_scene_types",
- "jackdaw_terrain",
-]
-
-[[package]]
 name = "jackdaw_bind"
 version = "0.21.0-dev"
 dependencies = [
@@ -4210,7 +4198,6 @@ dependencies = [
  "jackdaw_scene_types",
  "jackdaw_schema",
  "jackdaw_surface",
- "jackdaw_terrain",
  "jackdaw_widgets_runtime",
  "serde",
  "serde_json",
@@ -4255,12 +4242,8 @@ dependencies = [
 name = "jackdaw_terrain"
 version = "0.21.0-dev"
 dependencies = [
- "bevy",
  "bevy_math",
- "bytemuck",
  "jackdaw_data_path",
- "jackdaw_scene_types",
- "path-slash",
 ]
 
 [[package]]
@@ -6524,8 +6507,6 @@ dependencies = [
  "bevy_stubby_recipes",
  "gltf",
  "half",
- "jackdaw_avian_integration",
- "jackdaw_runtime",
  "jackdaw_terrain",
  "png",
  "serde",

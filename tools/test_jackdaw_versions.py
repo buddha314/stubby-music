@@ -20,7 +20,7 @@ class CompatibilityTests(unittest.TestCase):
         self.source = Path(self.temp.name) / 'jackdaw'
         for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
                      'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'jackdaw/Cargo.toml',
-                     'jackdaw/jackdaw.toml', 'jackdaw.toml', 'jackdaw/compatibility.json'):
+                     'jackdaw/jackdaw.toml', 'jackdaw/compatibility.json'):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / name, dest)

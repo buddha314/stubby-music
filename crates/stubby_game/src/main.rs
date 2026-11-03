@@ -29,13 +29,9 @@ fn main() {
             }),
             ..default()
         });
-    // Under Jackdaw's embedded Play the editor owns the window.
-    let default_plugins = jackdaw_runtime::maybe_windowless(default_plugins);
     App::new()
         .insert_resource(config)
         .add_plugins(default_plugins)
-        // Opens the link to the editor under embedded Play (and answers its schema request).
-        .add_plugins(jackdaw_runtime::JackdawPlugin)
         .add_plugins(stubby_game::DesertPlugin { seed })
         .add_plugins(stubby_game::audio::SynthAudioPlugin {
             demo: std::env::args().any(|a| a == "--audio-demo"),
