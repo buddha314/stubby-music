@@ -103,7 +103,7 @@ and ~1 ms for the opaque pass.
 | ------------- | -----: | ------: | --------: |
 | Ground as one mesh (before) | 7.0-8.6 | 6.1-6.2 | ~18 |
 | **Ground in 12x12-plate chunks** (shipped) | 5.8-6.7 | 3.2 | ~13 |
-| Chunks + 2 cascades to 120 m | 6.3 | 1.6 | ~11.5 |
+| **Chunks + 2 cascades to 120 m** (shipped) | 6.3 | 1.6 | ~11.5 |
 | Chunks, ground casts no shadow | 8.0 | 1.1 | - |
 
 Other passes are fixed costs: bloom 0.7, upscaling 0.4, tonemapping 0.3 ms.
@@ -115,8 +115,8 @@ Other passes are fixed costs: bloom 0.7, upscaling 0.4, tonemapping 0.3 ms.
    per cell, so the chunked ground is identical (screenshot diff: 0.025% of pixels,
    the flashing bug and the sand).
 8. **Two shadow cascades** (to 120 m instead of four to 150 m) halve shadows again and
-   looked the same in a daytime shot. Not shipped: it trades resolution in long
-   dawn/dusk shadows, an art call to make by eye.
+   looked the same in a daytime shot. Shipped; it trades resolution in long
+   dawn/dusk shadows, so raise the count if those look too soft.
 9. **The rest of the opaque pass** is the ground's vertex load plus fill at 2133x1200.
    Next levers if needed: a coarser far LOD for distant chunks (plates beyond ~40 m
    as flat polygons, cracks dropped), or a lower render scale on integrated GPUs.
