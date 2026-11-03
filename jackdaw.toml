@@ -11,9 +11,10 @@ package = "stubby_game"
 # open so an editor upgrade is reported instead of surfacing as a
 # build failure.
 [jackdaw]
-version = "0.20.1-rc.1"
-bevy = "0.20"
-channel = "stable"
+version = "0.21.0-dev"
+bevy = "main"
+channel = "bleeding-edge"
+bevy_rev = "c9c397ba1a73e6cfffe957318e0359330b701865"
 
 # Optional jackdaw modules this project uses. Change them from the
 # editor (File > Modules) so the game's Cargo.toml follows.

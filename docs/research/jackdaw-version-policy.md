@@ -1,9 +1,11 @@
 # Jackdaw version policy
 
-The game follows the shared Jackdaw **dev/0.20** branch, based on upstream
-**release-0.20**. This existing supported line provides Avian Physics and the LOD
-APIs the game uses. Fork main remains the upstream-development tracking line; do
-not move this game to Bevy-main just to make version numbers look current.
+**Since 2026-11-03 the game follows Jackdaw main** (user direction: use the latest
+features jbuehler23 publishes). The chain is Bevy main → jbuehler23/jackdaw main →
+buddha314/jackdaw main → this game. `tools/jackdaw.sh sync` reconciles it end to end;
+see AGENTS.md. Third-party crates without a Bevy-main release (Avian and its helpers)
+are generated forks listed in `jackdaw/bevy_main_forks.json`. The earlier policy below
+(follow dev/0.20, do not move to Bevy main) is superseded; dev/0.20 stays for rollback.
 
 `jackdaw/compatibility.json` records the exact shared source commit, upstream base,
 Jackdaw release, Bevy version/source and Rust toolchain. Both game entry points
@@ -32,8 +34,7 @@ do not install extra testing infrastructure merely to run them. One bounded
 checks pass. Earlier broad test runs were stopped by the user; do not resume them.
 
 Publish the supported fork commit first. Update the game's source/engine/compiler
-record and lockfile together: `tools/jackdaw.sh sync` does this for a fast-forward of
-origin/dev/0.20 and refuses anything that changes Bevy or Rust. Promote the shared checkout only when clean and
+record and lockfile together: `tools/jackdaw.sh sync` does this. Promote the shared checkout only when clean and
 idle, then build the editor and CLI from that same source. Keep the prior tested
 revision for rollback. Do not touch another agent's unsaved game scene. A source
 pin must not be silently rewritten to whatever checkout happens to be present.
@@ -102,3 +103,13 @@ same per-frame scan; no upstream PR or push.
 
 Promotion: the shared checkout was idle and clean; fast-forwarded to f2a1cf20,
 rebuilt with `tools/jackdaw.sh prepare` (receipts refreshed) and the guard passed.
+
+## Move to Jackdaw main (2026-11-03)
+
+Fork main merged upstream main #736–#757 (buddha314/jackdaw#5); our dev/0.20 fixes were
+ported to main (#6: embedded Play speed, asset list view, LOD thumbnails, retired dock
+rows, read-only policy; the light-probe fix was already there). The shared checkout moved
+from dev/0.20 (f2a1cf20) to main (4ff3eddc). Bevy main c9c397ba as Jackdaw locks it.
+Avian 0.8 and its helpers built against Bevy main with only their manifests rewritten;
+the game and adapter built without code changes. Rollback: shared checkout back to
+dev/0.20 f2a1cf20 and revert the game PR.

@@ -37,7 +37,15 @@ def validate(root, source):
     expected = (bevy['version'], bevy['source'])
     workspace = read_toml(root / 'Cargo.toml')['workspace']
     dep = workspace['dependencies']['bevy']
-    if not isinstance(dep, dict) or dep.get('version') != '=' + bevy['version'] or 'git' in dep or 'path' in dep:
+    if bevy['source'].startswith('git+'):
+        # Bevy main: the workspace names the git branch; Cargo.lock pins the revision.
+        url, branch = bevy['source'].removeprefix('git+').split('#')[0].split('?branch=')
+        good = isinstance(dep, dict) and dep.get('git') == url and dep.get('branch') == branch \
+            and 'version' not in dep and 'path' not in dep
+    else:
+        good = isinstance(dep, dict) and dep.get('version') == '=' + bevy['version'] \
+            and 'git' not in dep and 'path' not in dep
+    if not good:
         errors.append('workspace Bevy source/version differs from the selected Jackdaw release')
     members = workspace['members']
     for member in ('crates/stubby_game', 'crates/bevy_stubby_recipes', 'jackdaw'):
@@ -63,9 +71,11 @@ def validate(root, source):
         errors.append('remove the separate adapter lockfile; the workspace has one Cargo.lock')
     if bevy_sources(read_toml(root / 'Cargo.lock')) != {expected}:
         errors.append(f'Cargo.lock must resolve one Bevy engine source: {expected}')
-    project = read_toml(root / 'jackdaw/jackdaw.toml')['jackdaw']
-    if (project['version'], project.get('bevy_rev'), project['bevy']) != (selected['version'], None, bevy['line']):
-        errors.append('jackdaw.toml differs from the selected Jackdaw/Bevy versions')
+    rev = bevy['source'].rsplit('#', 1)[1] if bevy['source'].startswith('git+') else None
+    for manifest in ('jackdaw/jackdaw.toml', 'jackdaw.toml'):
+        project = read_toml(root / manifest)['jackdaw']
+        if (project['version'], project.get('bevy_rev'), project['bevy']) != (selected['version'], rev, bevy['line']):
+            errors.append(f'{manifest} differs from the selected Jackdaw/Bevy versions')
     if read_toml(root / 'rust-toolchain.toml')['toolchain']['channel'] != record['rust']:
         errors.append(f"project compiler must match Jackdaw: Rust {record['rust']}")
     try:
@@ -97,8 +107,13 @@ def validate_tree(tree, record):
         if not match:
             continue
         found = True
-        suffix = match[3].strip()
-        if match[2] != bevy['version'] or suffix not in ('', '(*)'):
+        suffix = match[3].strip().removesuffix('(*)').strip()
+        if bevy['source'].startswith('git+'):
+            url, rev = bevy['source'].removeprefix('git+').split('#')
+            source_ok = suffix == f'({url}#{rev[:8]})'
+        else:
+            source_ok = suffix == ''
+        if match[2] != bevy['version'] or not source_ok:
             errors.append(f'active Bevy dependency differs from Jackdaw: {line}')
     if not found:
         errors.append('Cargo tree contains no Bevy engine dependencies')

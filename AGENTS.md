@@ -285,7 +285,7 @@ testable by asserting identical output for identical seeds.
 
 | Concern | Choice | Version (crates.io, 2026-10-31) |
 | ------- | ------ | ------------------------------- |
-| Engine | `bevy` | selected by Jackdaw; `jackdaw/compatibility.json` |
+| Engine | `bevy` | Bevy main as Jackdaw main locks it; `jackdaw/compatibility.json` |
 | Audio I/O | `cpal` | 0.18.2 |
 | Audio engine (graph, device, scheduling) | `firewheel` | 0.14.0 |
 | DSP inside modules | `fundsp` | 0.23.0 |
@@ -516,23 +516,30 @@ or restore a separate adapter lockfile. `jackdaw/compatibility.json` records the
 shared editor source revision, upstream base, Bevy revision and compiler.
 
 Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
-**When our fork's `dev/0.20` moves, run `tools/jackdaw.sh sync`**: it fast-forwards the
-shared checkout, re-pins `jackdaw/compatibility.json` (revision and upstream base),
-refreshes `Cargo.lock`, runs the guard and rebuilds the editor; commit the pin and lock on
-a branch. It stops for a Bevy/Rust change or a non-fast-forward. CI warns when the pin
-lags the fork.
+
+**We follow the chain Bevy main → jbuehler23/jackdaw main → our fork's main → this game**
+(user direction, 2026-11-03: use the latest Jackdaw features as they are published).
+**`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/jackdaw_sync.py`): it merges
+upstream main into the fork (temporary worktree, `sync/<date>` PR on buddha314; stops on a
+conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
+crates, re-pins `jackdaw/compatibility.json`, both `jackdaw.toml` pins,
+`rust-toolchain.toml` and Cargo.lock's Bevy revision to the one our Jackdaw locks, then
+builds the game and adapter and the shared editor (`prepare`). Commit the pins and lock on
+a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
+CI warns when the pin lags the fork.
+
+**Crates without a Bevy-main release are generated forks** (`jackdaw/bevy_main_forks.json`,
+`tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and
+glam_matrix_extras, each a `bevy-main` branch on buddha314 = the published release plus one
+commit pointing its Bevy dependencies at Bevy's git main. The root `[patch.crates-io]` uses
+them. Add a crate there (not by hand) when a new dependency needs Bevy main.
+
 `tools/jackdaw.sh prepare` builds the selected shared editor/CLI and records local
 binary hashes; managed launches verify that receipt. This does not install a
-per-game editor. A source mismatch requires deliberate integration and validation,
-not silently rewriting the pin to whatever happens to be installed.
-
-For this game, use origin/dev/0.20 as the tested shared editor line and
-upstream/release-0.20 as its incoming reference. Fork main tracks upstream/main
-separately. Use fix/<issue> for focused fixes and sync/<date> for integration. Merge upstream
-in an isolated worktree; preserve shared history and local regression coverage.
-Never force-sync/reset the fork to discard fixes. Promote only validated revisions
-while the shared editor is idle and its checkout clean. Follow
-`docs/research/jackdaw-version-policy.md` for checks, promotion and rollback.
+per-game editor. Our editor fixes go on fork main (`fix/<issue>` branches); `dev/0.20`
+is retired and kept only for rollback. Never force-sync/reset the fork to discard fixes.
+Promote only while the shared editor is idle and its checkout clean. Follow
+`docs/research/jackdaw-version-policy.md` for promotion and rollback.
 
 ### Prototype testing: keep it minimal
 
