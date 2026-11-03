@@ -524,7 +524,7 @@ Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
 **`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/jackdaw_sync.py`): it merges
 upstream main into the fork (temporary worktree, `sync/<date>` PR on buddha314; stops on a
 conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
-crates, re-pins `jackdaw/compatibility.json`, both `jackdaw.toml` pins,
+crates, re-pins `jackdaw/compatibility.json`, `jackdaw/jackdaw.toml` pins,
 `rust-toolchain.toml` and Cargo.lock's Bevy revision to the one our Jackdaw locks, then
 builds the game and adapter and the shared editor (`prepare`). Commit the pins and lock on
 a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.

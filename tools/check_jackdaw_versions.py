@@ -72,7 +72,7 @@ def validate(root, source):
     if bevy_sources(read_toml(root / 'Cargo.lock')) != {expected}:
         errors.append(f'Cargo.lock must resolve one Bevy engine source: {expected}')
     rev = bevy['source'].rsplit('#', 1)[1] if bevy['source'].startswith('git+') else None
-    for manifest in ('jackdaw/jackdaw.toml', 'jackdaw.toml'):
+    for manifest in ('jackdaw/jackdaw.toml',):
         project = read_toml(root / manifest)['jackdaw']
         if (project['version'], project.get('bevy_rev'), project['bevy']) != (selected['version'], rev, bevy['line']):
             errors.append(f'{manifest} differs from the selected Jackdaw/Bevy versions')
