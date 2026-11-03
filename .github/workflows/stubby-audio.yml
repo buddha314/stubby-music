@@ -60,9 +60,9 @@ jobs:
       - name: Fork drift (warning only)
         run: |
           pinned=$(git -C ../jackdaw rev-parse HEAD)
-          head=$(git ls-remote https://github.com/buddha314/jackdaw.git refs/heads/dev/0.20 | cut -f1)
+          head=$(git ls-remote https://github.com/buddha314/jackdaw.git refs/heads/main | cut -f1)
           if [ -n "$head" ] && [ "$head" != "$pinned" ]; then
-            echo "::warning::Jackdaw pin $pinned is behind buddha314/jackdaw dev/0.20 ($head). Run tools/jackdaw.sh sync."
+            echo "::warning::Jackdaw pin $pinned is behind buddha314/jackdaw main ($head). Run tools/jackdaw.sh sync."
           fi
       - name: Version consistency
         run: python3 tools/check_jackdaw_versions.py

@@ -20,7 +20,7 @@ class CompatibilityTests(unittest.TestCase):
         self.source = Path(self.temp.name) / 'jackdaw'
         for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
                      'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'jackdaw/Cargo.toml',
-                     'jackdaw/jackdaw.toml', 'jackdaw/compatibility.json'):
+                     'jackdaw/jackdaw.toml', 'jackdaw.toml', 'jackdaw/compatibility.json'):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / name, dest)
@@ -94,15 +94,23 @@ class CompatibilityTests(unittest.TestCase):
         dest.write_text(json.dumps(receipt))
         self.assertTrue(any('another source revision' in e for e in versions.validate_binaries(self.root, self.source)))
 
+    def tree_line(self, name):
+        bevy = self.record['bevy']
+        line = f"{name} v{bevy['version']}"
+        if bevy['source'].startswith('git+'):
+            url, rev = bevy['source'].removeprefix('git+').split('#')
+            line += f' ({url}#{rev[:8]})'
+        return line
+
     def test_active_second_bevy_is_rejected(self):
-        good = 'bevy v' + self.record['bevy']['version']
+        good = self.tree_line('bevy')
         self.assertEqual(versions.validate_tree(good, self.record), [])
         self.assertTrue(versions.validate_tree(good + '\nbevy_ecs v0.19.1', self.record))
         self.assertTrue(versions.validate_tree('', self.record))
 
     def test_colored_tree_output_is_accepted(self):
         # CI forces cargo colour; the dedup marker arrives wrapped in ANSI codes.
-        line = 'bevy_ecs v' + self.record['bevy']['version'] + ' \x1b[33m\x1b[2m(*)\x1b[39m\x1b[22m'
+        line = self.tree_line('bevy_ecs') + ' \x1b[33m\x1b[2m(*)\x1b[39m\x1b[22m'
         self.assertEqual(versions.validate_tree(line, self.record), [])
 
 

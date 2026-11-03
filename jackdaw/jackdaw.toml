@@ -2,8 +2,10 @@ plugin = "DesertPlugin"
 package = "stubby_jackdaw"
 
 [jackdaw]
-version = "0.20.1-rc.1"
-bevy = "0.20"
+version = "0.21.0-dev"
+bevy = "main"
+channel = "bleeding-edge"
+bevy_rev = "c9c397ba1a73e6cfffe957318e0359330b701865"
 
 [[run]]
 name = "Desert opening"

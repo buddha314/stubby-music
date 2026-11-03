@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "jackdaw": {
-    "revision": "f2a1cf207b14ec28116720f5dcb84faa44b86f13",
-    "upstream_revision": "42d12878a8943446747d21fcaccc56d1d7acdbec",
-    "version": "0.20.1-rc.1",
+    "revision": "4ff3eddc0c1418d5925162e76aa8306301c19eee",
+    "upstream_revision": "2959b79e1b22b409339f0019e45354efea7eb5d9",
+    "version": "0.21.0-dev",
     "origin": "https://github.com/buddha314/jackdaw.git",
     "upstream": "https://github.com/jbuehler23/jackdaw.git",
-    "branch": "dev/0.20",
-    "upstream_branch": "release-0.20"
+    "branch": "main",
+    "upstream_branch": "main"
   },
   "bevy": {
-    "version": "0.20.0",
-    "source": "registry+https://github.com/rust-lang/crates.io-index",
-    "line": "0.20"
+    "version": "0.20.0-dev",
+    "source": "git+https://github.com/bevyengine/bevy?branch=main#c9c397ba1a73e6cfffe957318e0359330b701865",
+    "line": "main"
   },
   "rust": "1.99.0"
 }

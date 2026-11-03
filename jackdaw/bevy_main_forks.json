@@ -1,0 +1,11 @@
+{
+  "comment": "Third-party crates the game needs that have no Bevy-main release. tools/bevy_main_forks.py rebuilds each fork's branch from the published release plus one generated commit pointing its Bevy dependencies at Bevy's git main. The root Cargo.toml [patch.crates-io] uses these branches; Cargo.lock pins Bevy to the revision our Jackdaw fork locks.",
+  "bevy_minor": "0.20",
+  "branch": "bevy-main",
+  "forks": [
+    {"crate": "avian3d", "version": "0.8.0", "upstream": "https://github.com/avianphysics/avian", "fork": "https://github.com/buddha314/avian", "base": "v0.8.0"},
+    {"crate": "bevy_heavy", "version": "0.6.0", "upstream": "https://github.com/Jondolf/bevy_heavy", "fork": "https://github.com/buddha314/bevy_heavy", "base": "351b924dc5ab488a438481b7f1b800dcdb87b1bf"},
+    {"crate": "bevy_transform_interpolation", "version": "0.6.0", "upstream": "https://github.com/Jondolf/bevy_transform_interpolation", "fork": "https://github.com/buddha314/bevy_transform_interpolation", "base": "5cf426b4e156e58376b8e27a729fcecc9238c866"},
+    {"crate": "glam_matrix_extras", "version": "0.4.0", "upstream": "https://github.com/Jondolf/glam_matrix_extras", "fork": "https://github.com/buddha314/glam_matrix_extras", "base": "3bd48361a8b3c16915bb7775a91ff18117706035"}
+  ]
+}

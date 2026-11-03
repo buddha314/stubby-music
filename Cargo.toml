@@ -7,9 +7,10 @@ exclude = ["spikes"]
 [workspace.package]
 edition = "2024"
 
-# Selected by the recorded Jackdaw revision; Cargo.lock pins its matching engine dependencies.
+# Bevy main, as Jackdaw main uses; Cargo.lock pins the revision our Jackdaw fork locks
+# (tools/jackdaw.sh sync).
 [workspace.dependencies]
-bevy = { version = "=0.20.0", default-features = false }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 # Physics (AGENTS.md stack). Mesh colliders for shapes primitives cannot fit (pool, banks, dug
 # channels); prefer primitives. debug-plugin draws colliders when enabled.
 avian3d = { version = "~0.8.0", default-features = false, features = ["3d", "parry-f32", "parallel", "collider-from-mesh", "debug-plugin"] }
@@ -22,3 +23,10 @@ opt-level = 1
 opt-level = 3
 debug-assertions = false
 overflow-checks = false
+
+# Crates with no Bevy-main release, from our generated forks (jackdaw/bevy_main_forks.json).
+[patch.crates-io]
+avian3d = { git = "https://github.com/buddha314/avian", branch = "bevy-main" }
+bevy_heavy = { git = "https://github.com/buddha314/bevy_heavy", branch = "bevy-main" }
+bevy_transform_interpolation = { git = "https://github.com/buddha314/bevy_transform_interpolation", branch = "bevy-main" }
+glam_matrix_extras = { git = "https://github.com/buddha314/glam_matrix_extras", branch = "bevy-main" }
