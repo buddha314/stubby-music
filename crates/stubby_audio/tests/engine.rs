@@ -660,8 +660,11 @@ fn clock_blip_patch_sounds_on_every_tick() {
 fn a_loaded_sample_plays_once_to_the_speakers() {
     let mut rig = Rig::new();
     // A 10 ms click: a decaying burst.
-    let click: Vec<f32> = (0..480).map(|i| 0.8 * (1. - i as f32 / 480.) * if i % 2 == 0 { 1. } else { -1. }).collect();
-    rig.engine.load_sample(stubby_audio::SampleId(1), SR, vec![click]);
+    let click: Vec<f32> = (0..480)
+        .map(|i| 0.8 * (1. - i as f32 / 480.) * if i % 2 == 0 { 1. } else { -1. })
+        .collect();
+    rig.engine
+        .load_sample(stubby_audio::SampleId(1), SR, vec![click]);
     rig.send(Command::PlaySample {
         sample: stubby_audio::SampleId(1),
         gain: 1.,
