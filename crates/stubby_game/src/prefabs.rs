@@ -495,13 +495,19 @@ mod tests {
             app.world().get::<Transform>(bug).unwrap().scale.x > 0.
                 && app.world().get::<Transform>(bug).unwrap().scale.x <= 1.7
         );
-        assert_eq!(
-            app.world()
-                .get::<GlobalTransform>(bug)
-                .unwrap()
-                .translation(),
-            Vec3::new(32., 2., 13.)
-        );
+        // Each flash hovers at a seeded height within the asset's `hover_metres`.
+        let at = app
+            .world()
+            .get::<GlobalTransform>(bug)
+            .unwrap()
+            .translation();
+        let asset: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../assets/creatures/lightning_bug/asset.json"
+        ))
+        .unwrap();
+        let [low, high] = [0, 1].map(|i| asset["hover_metres"][i].as_f64().unwrap() as f32);
+        assert_eq!((at.x, at.z), (32., 13.));
+        assert!((low..=high).contains(&at.y), "flash height {}", at.y);
         app.world_mut()
             .get_mut::<ResourceNode>(bug)
             .unwrap()

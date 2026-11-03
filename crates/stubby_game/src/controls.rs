@@ -220,6 +220,10 @@ mod tests {
             app.world().get::<CursorOptions>(window).unwrap().grab_mode,
             CursorGrabMode::Locked
         );
+        // No InputPlugin here: clear last frame's click as Bevy does each frame.
+        app.world_mut()
+            .resource_mut::<ButtonInput<MouseButton>>()
+            .clear();
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::Escape);
