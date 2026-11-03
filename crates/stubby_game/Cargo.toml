@@ -9,6 +9,7 @@ dev = ["bevy/dynamic_linking"]
 embedded_recipes_plugin = []
 
 [dependencies]
+jackdaw_terrain = { path = "../../../jackdaw/crates/jackdaw_terrain", default-features = false }
 stubby_recipes = { path = "../stubby_recipes" }
 bevy_stubby_recipes = { path = "../bevy_stubby_recipes" }
 stubby_audio = { path = "../stubby_audio" }

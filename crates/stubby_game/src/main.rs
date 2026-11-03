@@ -1,18 +1,23 @@
 use bevy::prelude::*;
 
 fn main() {
-    let seed = std::env::args()
-        .skip(1)
-        .find_map(|s| s.strip_prefix("--seed=").and_then(|s| s.parse().ok()))
-        .unwrap_or(42);
+    let config = match stubby_game::world_generation::WorldConfig::from_args(std::env::args()) {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("Invalid world configuration: {error}");
+            std::process::exit(2);
+        }
+    };
+    let seed = config.seed_value().expect("validated world seed");
     if let Some(path) =
         std::env::args().find_map(|s| s.strip_prefix("--export=").map(str::to_owned))
     {
-        stubby_game::export::write_preview(std::path::Path::new(&path), seed)
+        stubby_game::export::write_world_preview(std::path::Path::new(&path), &config)
             .expect("export desert preview");
         return;
     }
     App::new()
+        .insert_resource(config)
         .add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
