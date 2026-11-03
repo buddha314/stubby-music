@@ -344,7 +344,14 @@ Several agents work in this repo at once. To avoid stepping on each other:
   module-asset-binding 2.5 in `add-jackdaw-live-listen`: user confirmed no flicker
   during 20-second 165Hz Play. Separate 10ms on-screen timing remains open.
   Use the independent 20-second diagnostic watchdog for graphical tests.
+  **Claude, by the user's direct request (2026-11-01..03):** crate work on the rack and
+  burbler UX, performance (sky environment map baked once, ground chunked for culling,
+  two shadow cascades; `docs/research/performance-profiling.md`) and stream laying
+  (`streams.rs`, the `buildables` rule type, `add-stream-building`).
   Update this line when you claim work.
+- **The game opens at sunrise**, and since the sky's light dims with the day (#89) the
+  first ~2 minutes are dark. Reviews set the calendar to midday for screenshots; if the
+  opening reads too dark, start the clock later rather than brightening the night.
 - **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,
   the stream and the base audio component are in the game, start iterating on the
   opening scene itself rather than on parts.
@@ -465,6 +472,12 @@ equivalent of an iron ore node, so the player does not pick it up.
 - **Stream hologram.** While extending, the planned stream shows as a holographic
   preview, like a Satisfactory conveyor before it is built. That is its own asset,
   separate from the burbler.
+- **Laying streams works (2026-11-03, `streams.rs`, `add-stream-building`).** Q build
+  mode, a cubic Bézier from the port's flow direction to the aim, whole 4 m segments
+  bent from the glTF meshes, scrolling hologram chevrons, port halos, reed `need / have`
+  under the reticle; cost from `buildables.json`. Still to do: the staff's flow, notes
+  and bar lines on laid streams (2.7), bubbles (2.6), dismantle (F), saving laid
+  streams, collision checks. `--stream-review=<dir>` scripts it for the watchdog.
 - Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the
   burbler, the HUD rack's modules and, later, streams and reeds; game logic (Codex)
   builds the interaction, the HUD, the patch, streams and production.
