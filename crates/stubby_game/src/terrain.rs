@@ -85,9 +85,30 @@ impl Surface {
     }
 }
 pub fn ground(seed: u64, radius: i32) -> Mesh {
+    ground_cells(seed, -radius..radius, -radius..radius)
+}
+
+/// The ground as square chunks of `chunk` plates a side, so each can be culled on its own
+/// (one mesh for the whole mudflat is drawn in full, behind the camera and into every
+/// shadow cascade). Plates are generated per cell, so chunks join seamlessly.
+pub fn ground_chunks(seed: u64, radius: i32, chunk: i32) -> Vec<Mesh> {
+    let mut chunks = Vec::new();
+    for z in (-radius..radius).step_by(chunk as usize) {
+        for x in (-radius..radius).step_by(chunk as usize) {
+            chunks.push(ground_cells(
+                seed,
+                x..(x + chunk).min(radius),
+                z..(z + chunk).min(radius),
+            ));
+        }
+    }
+    chunks
+}
+
+fn ground_cells(seed: u64, xs: std::ops::Range<i32>, zs: std::ops::Range<i32>) -> Mesh {
     let mut s = Surface::default();
-    for z in -radius..radius {
-        for x in -radius..radius {
+    for z in zs {
+        for x in xs.clone() {
             let center = site(x, z, seed);
             let poly = plate(x, z, seed);
             let shade = 0.76 + hash(x, z, seed ^ 17) * 0.24;

@@ -168,10 +168,9 @@ fn setup(
         perceptual_roughness: 0.96,
         ..default()
     });
-    commands.spawn((
-        Mesh3d(meshes.add(terrain::ground(seed.0, 60))),
-        MeshMaterial3d(floor),
-    ));
+    for mesh in terrain::ground_chunks(seed.0, 60, 12) {
+        commands.spawn((Mesh3d(meshes.add(mesh)), MeshMaterial3d(floor.clone())));
+    }
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(1600., 1600.))),
         MeshMaterial3d(materials.add(StandardMaterial {
