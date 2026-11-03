@@ -10,7 +10,9 @@ Guidance for AI agents (Claude Code, Codex, etc.) and humans working in this rep
 with 60/95/144/240 Hz modes (no 165 Hz). The old AMD flicker workaround
 (`amdgpu.dcdebugmask=0x410`) is no longer on the kernel command line and no longer
 applies; do not reapply it. On this setup, bounded 20-second Jackdaw Play tests at 60 Hz
-and at 144 Hz (with return to 60 Hz) looked clean to the user. This is bounded
+and at 144 Hz (with return to 60 Hz) looked clean to the user. They were repeated
+on Jackdaw main / Bevy main (fork 4ff3eddc, Bevy c9c397ba): 60 Hz and 144 Hz Play, the
+placed-prefab review and the standalone game all looked clean too. This is bounded
 validation, not a claim of indefinite stability.
 
 Use only `tools/jackdaw_timed_test.py` for graphical diagnostics: it has an independent
