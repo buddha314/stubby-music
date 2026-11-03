@@ -78,6 +78,15 @@ pub struct RecipeDefinition {
     pub inputs: Vec<Stack>,
     pub outputs: Vec<Stack>,
 }
+/// Something the player builds in the world (not an inventory item), and what one costs.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BuildableDefinition {
+    pub id: String,
+    pub name: String,
+    /// Items taken from the inventory for each one built.
+    pub cost: Vec<Stack>,
+}
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CatalogDefinition {
@@ -86,6 +95,8 @@ pub struct CatalogDefinition {
     #[serde(default)]
     pub mines: Vec<MineDefinition>,
     pub recipes: Vec<RecipeDefinition>,
+    #[serde(default)]
+    pub buildables: Vec<BuildableDefinition>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -94,6 +105,8 @@ pub enum RecipeError {
     InvalidCatalog(String),
     #[error("unknown recipe: {0}")]
     UnknownRecipe(String),
+    #[error("unknown buildable: {0}")]
+    UnknownBuildable(String),
     #[error("unknown resource: {0}")]
     UnknownResource(String),
     #[error("unknown resource source: {0}")]
@@ -220,6 +233,7 @@ pub struct Catalog {
     resources: BTreeMap<String, ResourceDefinition>,
     mines: BTreeMap<String, MineDefinition>,
     recipes: BTreeMap<String, RecipeDefinition>,
+    buildables: BTreeMap<String, BuildableDefinition>,
 }
 fn insert_unique<T>(map: &mut BTreeMap<String, T>, id: &str, value: T) -> Result<(), RecipeError> {
     if id.is_empty()
@@ -268,6 +282,7 @@ impl Catalog {
             resources: BTreeMap::new(),
             mines: BTreeMap::new(),
             recipes: BTreeMap::new(),
+            buildables: BTreeMap::new(),
         };
         for item in definition.items {
             insert_unique(&mut catalog.items, &item.id.clone(), item)?;
@@ -312,6 +327,10 @@ impl Catalog {
             catalog.validate_stacks(&recipe.outputs)?;
             insert_unique(&mut catalog.recipes, &recipe.id.clone(), recipe)?;
         }
+        for buildable in definition.buildables {
+            catalog.validate_stacks(&buildable.cost)?;
+            insert_unique(&mut catalog.buildables, &buildable.id.clone(), buildable)?;
+        }
         Ok(catalog)
     }
     fn validate_stacks(&self, stacks: &[Stack]) -> Result<(), RecipeError> {
@@ -332,6 +351,70 @@ impl Catalog {
     }
     pub fn recipe(&self, id: &str) -> Option<&RecipeDefinition> {
         self.recipes.get(id)
+    }
+    pub fn buildable(&self, id: &str) -> Option<&BuildableDefinition> {
+        self.buildables.get(id)
+    }
+    /// The cost of building `count` of a buildable, one stack per item.
+    pub fn build_cost(&self, id: &str, count: u32) -> Result<Vec<Stack>, RecipeError> {
+        let buildable = self
+            .buildables
+            .get(id)
+            .ok_or_else(|| RecipeError::UnknownBuildable(id.into()))?;
+        aggregate(&buildable.cost)?
+            .into_iter()
+            .map(|(item, quantity)| {
+                quantity
+                    .checked_mul(count)
+                    .map(|quantity| Stack {
+                        item: item.clone(),
+                        quantity,
+                    })
+                    .ok_or(RecipeError::InventoryOverflow(item))
+            })
+            .collect()
+    }
+    /// What the inventory lacks to build `count`; empty when it can.
+    pub fn build_shortfall(
+        &self,
+        id: &str,
+        count: u32,
+        inventory: &Inventory,
+    ) -> Result<Vec<Stack>, RecipeError> {
+        Ok(self
+            .build_cost(id, count)?
+            .into_iter()
+            .filter_map(|stack| {
+                let available = inventory.quantity(&stack.item);
+                (available < stack.quantity).then(|| Stack {
+                    quantity: stack.quantity - available,
+                    item: stack.item,
+                })
+            })
+            .collect())
+    }
+    /// Take the cost of building `count` from the inventory, all or nothing.
+    pub fn build(
+        &self,
+        id: &str,
+        count: u32,
+        inventory: &mut Inventory,
+    ) -> Result<Vec<Stack>, RecipeError> {
+        let cost = self.build_cost(id, count)?;
+        if let Some(short) = cost
+            .iter()
+            .find(|stack| inventory.quantity(&stack.item) < stack.quantity)
+        {
+            return Err(RecipeError::MissingIngredient {
+                item: short.item.clone(),
+                needed: short.quantity,
+                available: inventory.quantity(&short.item),
+            });
+        }
+        for stack in &cost {
+            inventory.take(&stack.item, stack.quantity)?;
+        }
+        Ok(cost)
     }
     pub fn resource(&self, id: &str) -> Option<&ResourceDefinition> {
         self.resources.get(id)

@@ -5,7 +5,8 @@
 //! the schema is code"). A new row of an existing type needs no code; a new rule type
 //! is an OpenSpec change, then code here, then rows.
 use crate::{
-    CatalogDefinition, ItemDefinition, MineDefinition, RecipeDefinition, ResourceDefinition, Stack,
+    BuildableDefinition, CatalogDefinition, ItemDefinition, MineDefinition, RecipeDefinition,
+    ResourceDefinition, Stack,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -20,6 +21,7 @@ pub const ITEMS: &str = "items.json";
 pub const RESOURCES: &str = "resources.json";
 pub const MINES: &str = "mines.json";
 pub const RECIPES: &str = "recipes.json";
+pub const BUILDABLES: &str = "buildables.json";
 pub const MIGRATIONS: &str = "migrations.json";
 pub use crate::goals::GOALS;
 pub const START: &str = "start.json";
@@ -89,6 +91,7 @@ rules_file!(ItemsFile, items, ItemDefinition);
 rules_file!(ResourcesFile, resources, ResourceDefinition);
 rules_file!(MinesFile, mines, MineDefinition);
 rules_file!(RecipesFile, recipes, RecipeDefinition);
+rules_file!(BuildablesFile, buildables, BuildableDefinition);
 rules_file!(MigrationsFile, migrations, Migration);
 rules_file!(GoalsFile, goals, crate::goals::GoalDefinition);
 // What a new player starts with.
@@ -116,6 +119,7 @@ pub enum Registry {
     Resources,
     Mines,
     Recipes,
+    Buildables,
     Goals,
 }
 impl Registry {
@@ -125,6 +129,7 @@ impl Registry {
             Self::Resources => RESOURCES,
             Self::Mines => MINES,
             Self::Recipes => RECIPES,
+            Self::Buildables => BUILDABLES,
             Self::Goals => GOALS,
         }
     }
@@ -138,6 +143,7 @@ pub struct RulesFiles<'a> {
     pub resources: &'a str,
     pub mines: &'a str,
     pub recipes: &'a str,
+    pub buildables: &'a str,
     pub migrations: &'a str,
     pub goals: &'a str,
     pub start: &'a str,
@@ -150,6 +156,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
         resources: include_str!("../../../assets/recipes/resources.json"),
         mines: include_str!("../../../assets/recipes/mines.json"),
         recipes: include_str!("../../../assets/recipes/recipes.json"),
+        buildables: include_str!("../../../assets/recipes/buildables.json"),
         migrations: include_str!("../../../assets/recipes/migrations.json"),
         goals: include_str!("../../../assets/recipes/goals.json"),
         start: include_str!("../../../assets/recipes/start.json"),
@@ -174,6 +181,8 @@ impl Rules {
             parse::<ResourcesFile>(RESOURCES, files.resources, "resources", &mut errors);
         let mines = parse::<MinesFile>(MINES, files.mines, "mines", &mut errors);
         let recipes = parse::<RecipesFile>(RECIPES, files.recipes, "recipes", &mut errors);
+        let buildables =
+            parse::<BuildablesFile>(BUILDABLES, files.buildables, "buildables", &mut errors);
         let migrations =
             parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
         let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
@@ -183,10 +192,13 @@ impl Rules {
             Some(resources),
             Some(mines),
             Some(recipes),
+            Some(buildables),
             Some(migrations),
             Some(goals),
             Some(start),
-        ) = (items, resources, mines, recipes, migrations, goals, start)
+        ) = (
+            items, resources, mines, recipes, buildables, migrations, goals, start,
+        )
         else {
             return Err(RulesErrors(errors));
         };
@@ -195,6 +207,7 @@ impl Rules {
             (RESOURCES, resources.format),
             (MINES, mines.format),
             (RECIPES, recipes.format),
+            (BUILDABLES, buildables.format),
             (MIGRATIONS, migrations.format),
             (GOALS, goals.format),
             (START, start.format),
@@ -213,6 +226,7 @@ impl Rules {
             resources: resources.resources,
             mines: mines.mines,
             recipes: recipes.recipes,
+            buildables: buildables.buildables,
         };
         errors.extend(validate(&definition));
         let rule_ids: BTreeSet<String> = ids(&definition).into_iter().map(|(id, _)| id).collect();
@@ -335,6 +349,12 @@ fn ids(definition: &CatalogDefinition) -> Vec<(String, &'static str)> {
     );
     ids.extend(definition.mines.iter().map(|r| (r.id.clone(), MINES)));
     ids.extend(definition.recipes.iter().map(|r| (r.id.clone(), RECIPES)));
+    ids.extend(
+        definition
+            .buildables
+            .iter()
+            .map(|r| (r.id.clone(), BUILDABLES)),
+    );
     ids
 }
 
@@ -445,6 +465,15 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
     for recipe in &definition.recipes {
         stacks(&mut errors, RECIPES, &recipe.id, "inputs", &recipe.inputs);
         stacks(&mut errors, RECIPES, &recipe.id, "outputs", &recipe.outputs);
+    }
+    for buildable in &definition.buildables {
+        stacks(
+            &mut errors,
+            BUILDABLES,
+            &buildable.id,
+            "cost",
+            &buildable.cost,
+        );
     }
     // Reachability: an item is obtainable if a resource yields it or a recipe whose
     // inputs are all obtainable makes it. A recipe nothing can feed is an error.
@@ -601,6 +630,8 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     let resources = parse::<ResourcesFile>(RESOURCES, files.resources, "resources", &mut errors);
     let mines = parse::<MinesFile>(MINES, files.mines, "mines", &mut errors);
     let recipes = parse::<RecipesFile>(RECIPES, files.recipes, "recipes", &mut errors);
+    let buildables =
+        parse::<BuildablesFile>(BUILDABLES, files.buildables, "buildables", &mut errors);
     let migrations =
         parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
     let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
@@ -610,10 +641,13 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         Some(mut resources),
         Some(mut mines),
         Some(mut recipes),
+        Some(mut buildables),
         Some(mut migrations),
         Some(mut goals),
         Some(mut start),
-    ) = (items, resources, mines, recipes, migrations, goals, start)
+    ) = (
+        items, resources, mines, recipes, buildables, migrations, goals, start,
+    )
     else {
         return Err(RulesErrors(errors));
     };
@@ -625,6 +659,8 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     mines.mines.sort_by(|a, b| a.id.cmp(&b.id));
     recipes.schema = schema_ref(RECIPES);
     recipes.recipes.sort_by(|a, b| a.id.cmp(&b.id));
+    buildables.schema = schema_ref(BUILDABLES);
+    buildables.buildables.sort_by(|a, b| a.id.cmp(&b.id));
     migrations.schema = schema_ref(MIGRATIONS);
     migrations.migrations.sort_by(|a, b| a.id.cmp(&b.id));
     // Goals keep their authored order: it is the order the hub offers them in.
@@ -635,6 +671,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         (RESOURCES, pretty(&resources)),
         (MINES, pretty(&mines)),
         (RECIPES, pretty(&recipes)),
+        (BUILDABLES, pretty(&buildables)),
         (MIGRATIONS, pretty(&migrations)),
         (GOALS, pretty(&goals)),
         (START, pretty(&start)),
@@ -649,6 +686,7 @@ pub fn schemas() -> Vec<(String, String)> {
         (RESOURCES, schemars::schema_for!(ResourcesFile)),
         (MINES, schemars::schema_for!(MinesFile)),
         (RECIPES, schemars::schema_for!(RecipesFile)),
+        (BUILDABLES, schemars::schema_for!(BuildablesFile)),
         (MIGRATIONS, schemars::schema_for!(MigrationsFile)),
         (GOALS, schemars::schema_for!(GoalsFile)),
         (START, schemars::schema_for!(StartFile)),
@@ -673,11 +711,44 @@ mod tests {
             "resources" => files.resources = text,
             "mines" => files.mines = text,
             "recipes" => files.recipes = text,
+            "buildables" => files.buildables = text,
             "goals" => files.goals = text,
             "start" => files.start = text,
             _ => files.migrations = text,
         }
         files
+    }
+
+    #[test]
+    fn buildables_cost_known_items_and_build_all_or_nothing() {
+        let catalog = shipped_catalog().unwrap();
+        let mut inventory = crate::Inventory::default();
+        inventory
+            .grant(&[Stack {
+                item: "reed".into(),
+                quantity: 13,
+            }])
+            .unwrap();
+        assert!(catalog.build("stream_segment", 3, &mut inventory).is_err());
+        assert_eq!(inventory.quantity("reed"), 13);
+        assert_eq!(
+            catalog
+                .build_shortfall("stream_segment", 3, &inventory)
+                .unwrap(),
+            vec![Stack {
+                item: "reed".into(),
+                quantity: 5
+            }]
+        );
+        catalog.build("stream_segment", 2, &mut inventory).unwrap();
+        assert_eq!(inventory.quantity("reed"), 1);
+
+        let bad = r#"{"format":1,"buildables":[{"id":"stream_segment","name":"S","cost":[{"item":"mystery","quantity":6}]}]}"#;
+        let errors = Rules::load(&with("buildables", bad)).unwrap_err();
+        assert!(errors.0.iter().any(|e| e.file == BUILDABLES
+            && e.id == "stream_segment"
+            && e.field == "cost"
+            && e.message.contains("mystery")));
     }
 
     #[test]

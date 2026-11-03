@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BuildablesFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "buildables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BuildableDefinition"
+      }
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "buildables"
+  ],
+  "$defs": {
+    "BuildableDefinition": {
+      "description": "Something the player builds in the world (not an inventory item), and what one costs.",
+      "type": "object",
+      "properties": {
+        "cost": {
+          "description": "Items taken from the inventory for each one built.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Stack"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "cost"
+      ]
+    },
+    "Stack": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "quantity"
+      ]
+    }
+  }
+}

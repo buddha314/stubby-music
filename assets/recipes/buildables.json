@@ -1,0 +1,16 @@
+{
+  "$schema": "schema/buildables.schema.json",
+  "format": 1,
+  "buildables": [
+    {
+      "id": "stream_segment",
+      "name": "Stream segment",
+      "cost": [
+        {
+          "item": "reed",
+          "quantity": 6
+        }
+      ]
+    }
+  ]
+}

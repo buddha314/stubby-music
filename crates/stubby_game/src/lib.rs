@@ -26,6 +26,7 @@ pub mod rack;
 pub mod resources;
 mod review;
 mod sky;
+mod streams;
 pub mod synth_modules;
 mod terrain;
 mod waveform_audio;
@@ -61,7 +62,7 @@ impl Plugin for DesertPlugin {
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
-        .add_plugins(sky::StaticSkyPlugin)
+        .add_plugins((sky::StaticSkyPlugin, streams::StreamBuildPlugin))
         .insert_resource(WorldSeed(self.seed))
         .add_systems(Startup, setup)
         .add_systems(Update, capture_preview);
