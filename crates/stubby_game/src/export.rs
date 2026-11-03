@@ -7,6 +7,18 @@ pub fn write_preview(directory: &Path, seed: u64) -> Result<(), Box<dyn std::err
     write_preview_with_radius(directory, seed, 60)
 }
 
+/// Export the exact resolved input alongside the existing mesh/textures.
+/// This records configuration, not a save or an archive of referenced content.
+pub fn write_world_preview(
+    directory: &Path,
+    config: &super::world_generation::WorldConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
+    config.validate()?;
+    write_preview(directory, config.seed_value()?)?;
+    config.write(&directory.join("world-config.json"))?;
+    Ok(())
+}
+
 fn write_preview_with_radius(
     directory: &Path,
     seed: u64,

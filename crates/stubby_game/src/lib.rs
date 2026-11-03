@@ -30,6 +30,7 @@ mod streams;
 pub mod synth_modules;
 mod terrain;
 mod waveform_audio;
+pub mod world_generation;
 
 use bevy::{
     asset::RenderAssetUsages,

@@ -4347,6 +4347,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "jackdaw_terrain"
+version = "0.20.1-rc.1"
+dependencies = [
+ "bevy_math",
+]
+
+[[package]]
 name = "jackdaw_widgets_runtime"
 version = "0.20.1-rc.1"
 dependencies = [
@@ -6660,6 +6667,7 @@ dependencies = [
  "bevy_stubby_recipes",
  "gltf",
  "half",
+ "jackdaw_terrain",
  "png",
  "serde",
  "serde_json",
@@ -6680,6 +6688,7 @@ dependencies = [
  "jackdaw_prefab",
  "jackdaw_runtime",
  "jackdaw_scene_types",
+ "jackdaw_terrain",
  "png",
  "serde",
  "serde_json",

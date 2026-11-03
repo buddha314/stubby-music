@@ -4,17 +4,31 @@
 - [ ] 0.3 Confirm one existing decorative prop and its allowed area with the scene/art owner; leave opening resource placements authored.
 
 ## 1. Shared configuration and native scatter adapter
-- [ ] 1.1 Share validated world configuration across game, adapter and export; record revisions and explicit seed 17 fixture; report malformed input.
-- [ ] 1.2 Adapt existing ground height sampling to native heightmap/channel inputs in one finite region; call native scatter, preserving the mudflat renderer. Stop and document an API incompatibility before substituting a package.
-- [ ] 1.3 Resolve versioned masks, authored clearance and candidate keys before filtering; preserve authored IDs and transforms.
+- [x] 1.1 (claimed: codex) Share validated world configuration across game, adapter and export; record revisions and explicit seed 17 fixture; report malformed input.
+- [x] 1.2 (claimed: codex) Adapt existing ground height sampling to native heightmap/channel inputs in one finite region; call native scatter, preserving the mudflat renderer. Stop and document an API incompatibility before substituting a package.
+- [ ] 1.3 (claimed: codex) Resolve versioned masks, authored clearance and candidate keys before filtering; preserve authored IDs and transforms.
 
 ## 2. Designer control and runtime binding
-- [ ] 2.1 Reuse native masks and supported promotion/edit persistence; add only missing suppression/transform overlay data through existing Serde and game extension points.
+- [ ] 2.1 (claimed: codex) Reuse native masks and supported promotion/edit persistence; add only missing suppression/transform overlay data through existing Serde and game extension points.
 - [ ] 2.2 Wire one decorative rule to matching preview and runtime; verify rerun does not recreate suppressed originals or duplicate promoted objects.
-- [ ] 2.3 Report conflicting/stale overrides and unsupported versions; retain edits without guessing a migration.
+- [ ] 2.3 (claimed: codex) Report conflicting/stale overrides and unsupported versions; retain edits without guessing a migration.
 - [ ] 2.4 Before enabling any interactive scatter, instantiate existing prefabs with stable keys and existing bridge/ledger cleanup; verify batched decoration is never mistaken for a live resource.
 
 ## 3. Focused verification and handoff
 - [ ] 3.1 Use one seed-17 fixture for repeatability, protected/authored priority, move/remove persistence and unaffected-key stability. No additional seed sweep.
 - [ ] 3.2 Extend existing bounded diagnostic selector to carry the same config; one 20-second 60 Hz preview/Play review if runtime integration changed.
 - [ ] 3.3 Update the existing research runbook with actual supported commands and editor authoring steps; record the placement identity/save boundary for future persistence work.
+
+## Foundation evidence (2026-11-01)
+- Shared configuration is consumed by both game entry points; export writes the
+  resolved `world-config.json`. Seed-17 example and supported commands are in the
+  research runbook. Scatter settings/masks/overlays still belong to tasks 1.3–2.1.
+- Native `jackdaw_terrain` with default features disabled samples a heightmap made
+  from the existing analytical ground. No editor changes, new RNG or runtime
+  scatter spawning. At most one candidate per native cell in this first adapter.
+- Two focused seed-17 unit tests passed; both changed game binaries passed
+  `cargo check --bins`. Both affected OpenSpec changes passed strict validation.
+- Corrected two pre-existing inventory-test module paths required to compile the
+  focused library tests. No inventory behavior changed.
+- Native mask filtering, stable placement keys, persistent move/remove overlays,
+  runtime placement and bounded visual review remain pending. No graphical launch.

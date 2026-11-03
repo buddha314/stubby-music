@@ -507,3 +507,41 @@ version-sensitive source claims as permanent engine contracts.
 [satisfactory-tool]: https://github.com/SatisfactoryTools/world-data-generator-wrapper
 [rand-repro]: https://rust-random.github.io/book/crate-reprod.html
 [chacha]: https://docs.rs/rand_chacha/0.10.0/rand_chacha/
+
+## Implemented foundation: hybrid-world-foundation
+
+The first implementation adds a shared `WorldConfig` to both entry points and a
+pure adapter to the pinned `jackdaw_terrain` sampler. It does not yet scatter objects
+into the scene. Authored resources and the cracked-mud renderer remain unchanged.
+The standalone entry point remains its existing terrain/demo, not an authored-scene
+loader; the Jackdaw entry point loads the scene named by the configuration.
+
+Example input: [world-seed-17.json](examples/world-seed-17.json). From the project
+root, after building the relevant executable once in your own worktree:
+
+```bash
+target/debug/stubby_game --world-config=docs/research/examples/world-seed-17.json --export=/tmp/stubby-seed-17
+```
+
+The export now includes `world-config.json` alongside `seed.txt`, `mudflat.glb` and
+the textures. The existing numeric `--seed=17` form still works; an absent seed keeps
+the existing default 42. Invalid values and conflicting config/seed/scene flags fail
+rather than falling back. A matching seed flag is allowed for existing launcher
+compatibility. Pass `--world-config=<path>` to the Jackdaw game executable through
+its run arguments too; existing bounded diagnostic presets still need their planned
+config selector before they can be used to claim a seed-17 graphical review.
+
+`content_revision: development` is an explicit development label, **not a computed
+checksum or a promise that changing files reproduces a world**. Retain the source
+commit and referenced content as described in the runbook. The initial schema
+supports only `mudflat-v1`; changes to its output require revisiting that revision.
+Scatter rules, eligibility masks and designer overlays will extend this schema in
+the next slice, before runtime placement is enabled.
+
+The adapter samples our analytical ground height into native `Heightmap`, then
+calls Jackdaw's existing `scatter` with no new RNG and no rendering features. This
+is an approximation of the walkable ground surface, not a collision query against
+each cracked plate. Initial sampling permits at most one candidate per cell and no
+spacing rejection, keeping the native cell identity unambiguous. Mask/clearance and
+stable-key filtering follow in proposal tasks 1.3 and 2.1. No gameplay save state is
+loaded or cleared by this foundation.
