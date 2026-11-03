@@ -3,23 +3,20 @@
 Guidance for AI agents (Claude Code, Codex, etc.) and humans working in this repo.
 `CLAUDE.md` imports this file; keep the real content here.
 
-## Resume after reboot: display-flicker workaround
+## Graphical testing and the display flicker
 
-The user reports applying the grubby workaround before reboot: remove
-`amdgpu.dcfeaturemask=0x8` and add `amdgpu.dcdebugmask=0x410`. Do not apply it again
-automatically. After reboot, first read
-`/sys/module/amdgpu/parameters/dcdebugmask`: expected **1040** (decimal 0x410), and
-check `/proc/cmdline` for the intended AMD options. This confirms configuration,
-not that the flicker is fixed. If the option is absent, investigate before graphics.
+**Current setup (2026-11-03):** the monitors are driven by the **NVIDIA RTX 5070 Ti**
+(`nvidia` driver, Vulkan) under **KDE Plasma (Wayland)**. The main monitor, DP-6, is 4K
+with 60/95/144/240 Hz modes (no 165 Hz). The old AMD flicker workaround
+(`amdgpu.dcdebugmask=0x410`) is no longer on the kernel command line and no longer
+applies; do not reapply it. On this setup, bounded 20-second Jackdaw Play tests at 60 Hz
+and at 144 Hz (with return to 60 Hz) looked clean to the user. This is bounded
+validation, not a claim of indefinite stability.
 
-Resume in `/home/buddha/src/stubby-music-live-listen` on `add-jackdaw-live-listen`.
-Rebuild the game/adapter from the moved worktree before testing. Use only
-`tools/jackdaw_timed_test.py` for graphical diagnostics: it has an independent
-20-second kill timer. Begin at fixed 60Hz; then compare 165Hz with automatic
-60Hz recovery. No unbounded graphical launches while the regression is open.
-Do not reboot or log out the user automatically. Post-reboot verification is complete: dcdebugmask=1040 and a 20-second 165Hz
-Play test passed with user-confirmed no flicker. This is bounded validation, not
-a claim of indefinite stability. Keep the watchdog for further graphical tests.
+Use only `tools/jackdaw_timed_test.py` for graphical diagnostics: it has an independent
+20-second kill timer. Build `stubby_jackdaw` first so Play has time to run. On KDE it
+switches refresh with `kscreen-doctor` and restores each output's original mode; on
+GNOME it uses Mutter's DisplayConfig. Do not reboot or log out the user automatically.
 
 Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 `/home/buddha/.cache/stubby-music-live-listen/evidence/`.

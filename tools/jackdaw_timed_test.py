@@ -18,6 +18,53 @@ ROOT = Path(__file__).resolve().parents[1]
 PORT = 15713
 
 
+def kde():
+    return 'KDE' in os.environ.get('XDG_CURRENT_DESKTOP', '')
+
+
+def kde_outputs():
+    import re
+    out = subprocess.run(['kscreen-doctor', '-o'], capture_output=True, text=True, check=True).stdout
+    out = re.sub(r'\x1b\[[0-9;]*m', '', out)
+    outputs = []
+    for block in re.split(r'(?m)^Output: ', out)[1:]:
+        name = block.split()[1]
+        if not re.search(r'(?m)^\s*enabled$', block):
+            continue
+        modes = re.findall(r'(\d+):(\d+)x(\d+)@([\d.]+)(\*?)', block.split('Modes:')[1].splitlines()[0])
+        vrr = re.search(r'Vrr: (\S+)', block)
+        outputs.append((name, [(i, int(w), int(h), float(r), cur == '*') for i, w, h, r, cur in modes],
+                        vrr.group(1) if vrr else None))
+    return outputs
+
+
+def kde_display_mode(hz, restore=None):
+    """Set every enabled output that has an hz mode at its current resolution.
+
+    With restore ({output: mode id}), put those modes back instead.
+    Returns (report, {output: original mode id}).
+    """
+    report, original, args = [], {}, []
+    for name, modes, vrr in kde_outputs():
+        current = next(m for m in modes if m[4])
+        if restore is not None:
+            target = next((m for m in modes if m[0] == restore.get(name)), current)
+        else:
+            candidates = [m for m in modes if m[1:3] == current[1:3]]
+            target = min(candidates, key=lambda m: abs(m[3] - hz))
+            if abs(target[3] - hz) > 1:
+                report.append(f'{name}: unchanged {current[1]}x{current[2]}@{current[3]} (no {hz}Hz) vrr={vrr}')
+                continue
+        original[name] = current[0]
+        args.append(f'output.{name}.mode.{target[0]}')
+        report.append(f'{name}: {target[1]}x{target[2]}@{target[3]} vrr={vrr}')
+    if restore is None and not original:
+        raise RuntimeError(f'no output has a {hz}Hz mode at its current resolution')
+    if args:
+        subprocess.run(['kscreen-doctor', *args], capture_output=True, check=True, timeout=10)
+    return report, original
+
+
 def display_mode(hz):
     from gi.repository import Gio, GLib
     proxy = Gio.DBusProxy.new_for_bus_sync(
@@ -80,7 +127,7 @@ def rpc(method, params=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=float, default=20)
-    parser.add_argument('--refresh', type=int, choices=(60, 165), default=60)
+    parser.add_argument('--refresh', type=int, choices=(60, 144, 165, 240), default=60)
     parser.add_argument('--adapter', help='Bevy WGPU_ADAPTER_NAME substring')
     parser.add_argument('--play', action='store_true')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
@@ -108,6 +155,7 @@ def main():
               'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play or args.review or args.prefabs, 'review': args.review, 'prefabs': args.prefabs}
     process = None
     display_changed = False
+    kde_original = {}
     test_manifest = None
     try:
         if not args.command:
@@ -117,7 +165,10 @@ def main():
                 existing = None
             if existing is not None:
                 raise RuntimeError('Test port already has an editor; refusing to touch it')
-            report['mode'] = display_mode(args.refresh)
+            if kde():
+                report['mode'], kde_original = kde_display_mode(args.refresh)
+            else:
+                report['mode'] = display_mode(args.refresh)
             display_changed = True
             if args.play or args.review or args.prefabs:
                 block = '[[run]]\nname = "Live listen: clock + square"\nargs = ["--seed=42", "--module-demo"]\n'
@@ -169,8 +220,11 @@ def main():
             else:
                 report['manifest_restore_conflict'] = True
         if display_changed:
-            report['recovery_mode'] = display_mode(60)
-            if args.refresh != 60 or args.reset_output:
+            if kde():
+                report['recovery_mode'], _ = kde_display_mode(60, restore=kde_original)
+            else:
+                report['recovery_mode'] = display_mode(60)
+            if not kde() and (args.refresh != 60 or args.reset_output):
                 reset_output()
         report['log'] = str(output)
         Path('/tmp', f'jackdaw-flicker-{args.name}.json').write_text(json.dumps(report, indent=2))
