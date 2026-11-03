@@ -11,11 +11,13 @@ use super::{
     audio::Synth,
     controls::{Screen, ScreenMode},
     machine_config::{
-        CombNode, JackHit, JackRef, PodMesh, PortNode, Profiles, RackActions, RackConfiguration,
+        CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles, RackActions,
+        RackConfiguration, RackModuleView,
     },
     module_ids::ModuleIds,
     prefabs::{AssetClock, PlacedAsset},
     resources::{PlayerInventory, RecipeCatalog},
+    synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
 use bevy::{
     asset::RenderAssetUsages, mesh::Indices, picking::events::PointerClick, prelude::*,
@@ -62,8 +64,15 @@ impl RackState {
 #[derive(Component, Default)]
 struct RackEngine {
     owned: Vec<ModuleId>,
+    /// (place, part) -> engine module, so a knob reaches the module it turns.
+    parts: HashMap<(String, &'static str), ModuleId>,
     configured: bool,
 }
+
+/// Knob values the player has set on a rack, by (place, param). A knob not yet turned
+/// is at its module's default (`knob_default`); the clock's BPM lives in `AssetClock`.
+#[derive(Component, Default)]
+pub struct RackKnobs(pub HashMap<(String, String), f32>);
 
 /// A machine's rack was completed: every spare cable patched, its voice sounds.
 #[derive(Message, Clone, Copy)]
@@ -104,10 +113,14 @@ impl Plugin for RackPlugin {
             .add_observer(move_item_drag)
             .add_observer(end_item_drag)
             .add_observer(drop_item)
+            .add_observer(turn_knob)
+            .add_observer(scroll_knob)
             .add_systems(
                 Update,
                 (
                     attach,
+                    apply_knobs,
+                    show_knobs,
                     mount_buttons,
                     number_keys,
                     comb_parts_pickable,
@@ -131,22 +144,48 @@ impl Plugin for RackPlugin {
 
 // ------------------------------------------------------------------ modules → engine
 
-/// The engine modules a rack module is built from (the burbler's own clock is the
-/// machine's, `AssetClock`).
-fn parts(module: &str) -> Vec<(&'static str, ModuleKind)> {
+/// The engine modules a rack module is built from, at its knobs' values (`knob`: the
+/// value of one of its params). The burbler's own clock is the machine's, `AssetClock`.
+fn parts(module: &str, knob: impl Fn(&str) -> Option<f32>) -> Vec<(&'static str, ModuleKind)> {
+    let value = |param: &str| knob(param).or_else(|| knob_default(module, param, None));
     match module {
-        // A Square VCO is made from a bug's square wave, so it sounds at the bug's pitch.
+        // A Square VCO is made from a bug's square wave, so it starts at the bug's pitch.
         "square_vco" => vec![(
             "vco",
             ModuleKind::SquareVco {
-                freq_hz: super::waveform_audio::bug_click().freq_hz,
+                freq_hz: value("freq").unwrap_or_default(),
             },
         )],
         // The volume is a plain VCA: TRIG opens it while the gate is high, so the
         // voice stays square (no envelope shaping it).
-        "volume" => vec![("vca", ModuleKind::Vca { gain: 0.25 })],
+        "volume" => vec![(
+            "vca",
+            ModuleKind::Vca {
+                gain: value("gain").unwrap_or_default(),
+            },
+        )],
         _ => vec![],
     }
+}
+
+/// A knob's value before the player turns it.
+fn knob_default(module: &str, param: &str, clock: Option<&AssetClock>) -> Option<f32> {
+    match (module, param) {
+        ("burbler_clock", "bpm") => clock.map(|c| c.bpm),
+        ("square_vco", "freq") => Some(super::waveform_audio::bug_click().freq_hz),
+        ("volume", "gain") => Some(0.25),
+        _ => None,
+    }
+}
+
+/// The engine part and parameter a panel knob sets.
+fn knob_target(module: &str, param: &str) -> Option<(&'static str, &'static str)> {
+    Some(match (module, param) {
+        ("burbler_clock", "bpm") => ("clock", "bpm"),
+        ("square_vco", "freq") => ("vco", "freq"),
+        ("volume", "gain") => ("vca", "gain"),
+        _ => return None,
+    })
 }
 /// Connections inside one module (none yet: the volume is a single VCA).
 fn internal(_module: &str) -> Vec<((&'static str, &'static str), (&'static str, &'static str))> {
@@ -191,14 +230,24 @@ fn modules(config: &RackConfiguration, state: &RackState) -> HashMap<String, Str
         .collect()
 }
 
-/// The full engine patch for a rack: modules to add and connections, given the
-/// machine's clock and a source of fresh IDs. Pure, so it is easy to check.
+/// A rack's engine patch: the modules it owns, the commands that build it, and the
+/// engine module behind each (place, part).
+struct Plan {
+    owned: Vec<ModuleId>,
+    commands: Vec<Command>,
+    parts: HashMap<(String, &'static str), ModuleId>,
+}
+
+/// The full engine patch for a rack: modules to add (at their knobs' values) and
+/// connections, given the machine's clock and a source of fresh IDs. Pure, so it is
+/// easy to check.
 fn plan(
     config: &RackConfiguration,
     state: &RackState,
+    knobs: &RackKnobs,
     clock: Option<ModuleId>,
     mut fresh: impl FnMut() -> Option<ModuleId>,
-) -> (Vec<ModuleId>, Vec<Command>) {
+) -> Plan {
     let mut owned = Vec::new();
     let mut commands = Vec::new();
     let mut ids: HashMap<(String, &'static str), ModuleId> = HashMap::new();
@@ -207,7 +256,8 @@ fn plan(
         if let Some(clock) = clock.filter(|_| module == "burbler_clock") {
             ids.insert((place.clone(), "clock"), clock);
         }
-        for (part, kind) in parts(module) {
+        let knob = |param: &str| knobs.0.get(&(place.clone(), param.to_owned())).copied();
+        for (part, kind) in parts(module, knob) {
             let Some(id) = fresh() else { continue };
             owned.push(id);
             ids.insert((place.clone(), part), id);
@@ -240,7 +290,11 @@ fn plan(
             to: PortRef::output(),
         });
     }
-    (owned, commands)
+    Plan {
+        owned,
+        commands,
+        parts: ids,
+    }
 }
 
 // ------------------------------------------------------------------ state
@@ -258,6 +312,7 @@ fn attach(
                     ..default()
                 },
                 RackEngine::default(),
+                RackKnobs::default(),
             ));
         }
     }
@@ -273,6 +328,7 @@ fn patch_engine(
             Entity,
             &PlacedAsset,
             &RackState,
+            &RackKnobs,
             &mut RackEngine,
             Option<&AssetClock>,
         ),
@@ -280,20 +336,23 @@ fn patch_engine(
     >,
     mut configured: MessageWriter<MachineConfigured>,
 ) {
-    for (machine, asset, state, mut engine, clock) in &mut racks {
+    for (machine, asset, state, knobs, mut engine, clock) in &mut racks {
         let Some(config) = profiles.0.get(&asset.asset) else {
             continue;
         };
-        let (owned, plan) = plan(config, state, clock.map(|c| c.engine), || ids.allocate());
+        let plan = plan(config, state, knobs, clock.map(|c| c.engine), || {
+            ids.allocate()
+        });
         if let Some(synth) = &synth {
             for id in engine.owned.drain(..) {
                 synth.send(Command::RemoveModule { id });
             }
-            for command in plan {
+            for command in plan.commands {
                 synth.send(command);
             }
         }
-        engine.owned = owned;
+        engine.owned = plan.owned;
+        engine.parts = plan.parts;
         if state.complete(config) && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });
@@ -305,6 +364,208 @@ fn open_rack(screens: &ScreenMode) -> Option<Entity> {
     match screens.open {
         Some(Screen::MachineConfiguration(e)) => Some(e),
         _ => None,
+    }
+}
+
+// ------------------------------------------------------------------ knobs
+
+/// Pixels of vertical drag that turn a knob through its whole range (VCV Rack's feel).
+const KNOB_DRAG_PX: f32 = 240.;
+/// One scroll-wheel notch turns a knob this fraction of its range.
+const KNOB_SCROLL_STEP: f32 = 1. / 48.;
+
+/// A value's position along its knob, 0..1, following the knob's taper.
+fn knob_norm(value: f32, p: &ParamProfile) -> f32 {
+    let v = value.clamp(p.min, p.max);
+    if p.taper == "log" && p.min > 0.0 {
+        (v / p.min).ln() / (p.max / p.min).ln()
+    } else {
+        (v - p.min) / (p.max - p.min)
+    }
+}
+/// The value at a position along a knob, 0..1.
+fn knob_value(norm: f32, p: &ParamProfile) -> f32 {
+    let n = norm.clamp(0., 1.);
+    if p.taper == "log" && p.min > 0.0 {
+        p.min * (p.max / p.min).powf(n)
+    } else {
+        p.min + (p.max - p.min) * n
+    }
+}
+
+/// Turn the open rack's knob `hit` by `turn` (a fraction of its range, up is positive).
+fn turn_open_knob(
+    hit: &KnobHit,
+    turn: f32,
+    profiles: &Profiles,
+    catalog: &ModuleCatalog,
+    racks: &mut Query<(
+        &PlacedAsset,
+        &RackState,
+        &mut RackKnobs,
+        Option<&AssetClock>,
+    )>,
+    machine: Entity,
+) {
+    let Ok((asset, state, mut knobs, clock)) = racks.get_mut(machine) else {
+        return;
+    };
+    let Some(config) = profiles.0.get(&asset.asset) else {
+        return;
+    };
+    let Some(module) = modules(config, state).remove(&hit.place) else {
+        return;
+    };
+    let Some(param) = catalog
+        .0
+        .get(&module)
+        .and_then(|m| m.params.iter().find(|p| p.param == hit.param))
+    else {
+        return;
+    };
+    let key = (hit.place.clone(), hit.param.clone());
+    let Some(current) = knobs
+        .0
+        .get(&key)
+        .copied()
+        .or_else(|| knob_default(&module, &hit.param, clock))
+    else {
+        return;
+    };
+    let mut value = knob_value(knob_norm(current, param) + turn, param);
+    if hit.param == "bpm" {
+        // The display shows whole BPM; the clock keeps to what it shows.
+        value = value.round();
+    }
+    if value != current {
+        knobs.0.insert(key, value);
+    }
+}
+
+/// Drag a knob up to turn it up, down to turn it down (VCV Rack).
+fn turn_knob(
+    drag: On<bevy::picking::events::PointerDrag>,
+    hits: Query<&KnobHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    catalog: Res<ModuleCatalog>,
+    mut racks: Query<(
+        &PlacedAsset,
+        &RackState,
+        &mut RackKnobs,
+        Option<&AssetClock>,
+    )>,
+) {
+    let (Ok(hit), Some(machine)) = (hits.get(drag.entity), open_rack(&screens)) else {
+        return;
+    };
+    let turn = -drag.delta.y / KNOB_DRAG_PX;
+    turn_open_knob(hit, turn, &profiles, &catalog, &mut racks, machine);
+}
+
+/// The scroll wheel over a knob turns it in small steps.
+fn scroll_knob(
+    scroll: On<bevy::picking::events::PointerScroll>,
+    hits: Query<&KnobHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    catalog: Res<ModuleCatalog>,
+    mut racks: Query<(
+        &PlacedAsset,
+        &RackState,
+        &mut RackKnobs,
+        Option<&AssetClock>,
+    )>,
+) {
+    let (Ok(hit), Some(machine)) = (hits.get(scroll.entity), open_rack(&screens)) else {
+        return;
+    };
+    let notches = match scroll.unit {
+        bevy::input::mouse::MouseScrollUnit::Line => scroll.y,
+        bevy::input::mouse::MouseScrollUnit::Pixel => scroll.y / 40.,
+    };
+    let turn = notches.signum() * notches.abs().max(1.) * KNOB_SCROLL_STEP;
+    if notches != 0. {
+        turn_open_knob(hit, turn, &profiles, &catalog, &mut racks, machine);
+    }
+}
+
+/// Send turned knobs to the engine. The clock's BPM is the machine's tempo
+/// (`AssetClock`), so the bubbles, the stream and the lamp follow it too.
+fn apply_knobs(
+    profiles: Res<Profiles>,
+    synth: Option<Res<Synth>>,
+    mut racks: Query<
+        (
+            &PlacedAsset,
+            &RackState,
+            &RackKnobs,
+            &RackEngine,
+            Option<&mut AssetClock>,
+        ),
+        Changed<RackKnobs>,
+    >,
+) {
+    for (asset, state, knobs, engine, mut clock) in &mut racks {
+        let Some(config) = profiles.0.get(&asset.asset) else {
+            continue;
+        };
+        let modules = modules(config, state);
+        for ((place, param), &value) in &knobs.0 {
+            let Some(module) = modules.get(place) else {
+                continue;
+            };
+            let Some((part, name)) = knob_target(module, param) else {
+                continue;
+            };
+            let id = if part == "clock" {
+                let Some(clock) = clock.as_mut() else {
+                    continue;
+                };
+                if clock.bpm != value {
+                    clock.bpm = value;
+                }
+                Some(clock.engine)
+            } else {
+                engine.parts.get(&(place.clone(), part)).copied()
+            };
+            if let (Some(synth), Some(module)) = (&synth, id) {
+                synth.send(Command::SetParam {
+                    module,
+                    param: name,
+                    value,
+                });
+            }
+        }
+    }
+}
+
+/// The open rack's modules show their knobs' values (knob angle, the BPM display).
+fn show_knobs(
+    screens: Res<ScreenMode>,
+    catalog: Res<ModuleCatalog>,
+    racks: Query<(&RackKnobs, Option<&AssetClock>)>,
+    mut views: Query<(&RackModuleView, &SynthModule, &mut ModuleParams)>,
+) {
+    let Some((knobs, clock)) = open_rack(&screens).and_then(|m| racks.get(m).ok()) else {
+        return;
+    };
+    for (view, module, mut params) in &mut views {
+        let Some(profile) = catalog.0.get(&module.asset) else {
+            continue;
+        };
+        for p in &profile.params {
+            let value = knobs
+                .0
+                .get(&(view.place.clone(), p.param.clone()))
+                .copied()
+                .or_else(|| knob_default(&module.asset, &p.param, clock));
+            if let Some(value) = value
+                && params.0.get(&p.param) != Some(&value)
+            {
+                params.0.insert(p.param.clone(), value);
+            }
+        }
     }
 }
 
@@ -1755,11 +2016,17 @@ mod tests {
         state.mounted.insert("vco".into(), "square_vco".into());
         let connections = |state: &RackState| {
             let mut next = 100;
-            plan(config, state, Some(ModuleId(1)), || {
-                next += 1;
-                Some(ModuleId(next))
-            })
-            .1
+            plan(
+                config,
+                state,
+                &RackKnobs::default(),
+                Some(ModuleId(1)),
+                || {
+                    next += 1;
+                    Some(ModuleId(next))
+                },
+            )
+            .commands
             .into_iter()
             .filter(|c| matches!(c, Command::Connect { .. }))
             .count()
@@ -1777,6 +2044,57 @@ mod tests {
         state.patched = vec![link(&config.cables[1]), link(&config.cables[0])];
         assert!(state.complete(config));
         assert_eq!(connections(&state), 3, "GATE->TRIG and OUT->IN added");
+    }
+
+    #[test]
+    fn knobs_set_the_modules_they_turn() {
+        let profiles = Profiles::default();
+        let config = &profiles.0["mudpit_burbler"];
+        let mut state = RackState {
+            patched: vec![None; config.cables.len()],
+            ..default()
+        };
+        state.mounted.insert("vco".into(), "square_vco".into());
+        let mut knobs = RackKnobs::default();
+        knobs.0.insert(("vco".into(), "freq".into()), 440.);
+        let volume = config
+            .places
+            .iter()
+            .find(|p| p.module.as_deref() == Some("volume"))
+            .expect("the burbler has a volume")
+            .place
+            .clone();
+        knobs.0.insert((volume.clone(), "gain".into()), 0.8);
+        let mut next = 100;
+        let plan = plan(config, &state, &knobs, Some(ModuleId(1)), || {
+            next += 1;
+            Some(ModuleId(next))
+        });
+        let kind = |id: ModuleId| {
+            plan.commands.iter().find_map(|c| match c {
+                Command::AddModule { id: i, kind } if *i == id => Some(kind.clone()),
+                _ => None,
+            })
+        };
+        assert!(matches!(
+            kind(plan.parts[&("vco".to_owned(), "vco")]),
+            Some(ModuleKind::SquareVco { freq_hz }) if freq_hz == 440.
+        ));
+        assert!(matches!(
+            kind(plan.parts[&(volume, "vca")]),
+            Some(ModuleKind::Vca { gain }) if gain == 0.8
+        ));
+        assert_eq!(plan.parts[&("clock".to_owned(), "clock")], ModuleId(1));
+        // A knob's position and its value agree, linear and log.
+        let catalog = ModuleCatalog::default();
+        for (module, value) in [
+            ("square_vco", 440.),
+            ("volume", 0.8),
+            ("burbler_clock", 120.),
+        ] {
+            let p = &catalog.0[module].params[0];
+            assert!((knob_value(knob_norm(value, p), p) - value).abs() < 1e-2 * value);
+        }
     }
 
     /// Development only: renders the burbler's patch to WAVs for listening (not run in
@@ -1813,11 +2131,11 @@ mod tests {
                 })
                 .unwrap();
             let mut next = 100;
-            for command in plan(config, &state, Some(clock), || {
+            for command in plan(config, &state, &RackKnobs::default(), Some(clock), || {
                 next += 1;
                 Some(ModuleId(next))
             })
-            .1
+            .commands
             {
                 engine.send(command).unwrap();
             }

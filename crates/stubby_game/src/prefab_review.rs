@@ -37,6 +37,9 @@ struct Review {
     press_at: Vec2,
     /// A drag in progress: where the pointer moves (still pressed) before it is released.
     drag_to: Option<Vec2>,
+    /// Where the pointer was last moved: a press waits a frame after the move, since
+    /// picking presses what was hovered before the move.
+    moved_to: Option<Vec2>,
     rack_configured: bool,
 }
 impl Review {
@@ -54,7 +57,7 @@ impl Review {
 /// IN (comb cables go anywhere and snap to a jack within reach); take the red one, click
 /// beside GATE, move partway (the live cable: screenshot), click beside TRIG; then the
 /// patched screenshot. Only what the rack shows is patched (AGENTS.md).
-const RACK_STEPS: usize = 10;
+const RACK_STEPS: usize = 12;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
     fn build(&self, app: &mut App) {
@@ -88,6 +91,7 @@ impl Plugin for PrefabReviewPlugin {
             release: false,
             press_at: Vec2::ZERO,
             drag_to: None,
+            moved_to: None,
             rack_configured: false,
         })
         .add_systems(Startup, start.after(super::setup))
@@ -403,7 +407,12 @@ fn drive_rack(
     slots: Query<(&super::machine_config::SlotHit, &GlobalTransform)>,
     plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
     buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
-    racks: Query<&super::rack::RackState>,
+    racks: Query<(
+        &super::rack::RackState,
+        Option<&super::rack::RackKnobs>,
+        Option<&super::prefabs::AssetClock>,
+    )>,
+    knobs: Query<(&super::machine_config::KnobHit, &GlobalTransform)>,
     held: Res<super::rack::HeldCable>,
     hovers: Res<bevy::picking::hover::HoverMap>,
     names: Query<(
@@ -453,6 +462,7 @@ fn drive_rack(
             },
         ));
         review.press_at = to;
+        review.moved_to = Some(to);
         return;
     }
     // The item drag holds over the slot until its screenshot is taken.
@@ -508,6 +518,13 @@ fn drive_rack(
             .world_to_viewport(transform, world.translation())
             .ok()
     };
+    let knob = |place: &str| {
+        let (camera, transform) = hud.single().ok()?;
+        let (_, world) = knobs.iter().find(|(k, _)| k.place == place)?;
+        camera
+            .world_to_viewport(transform, world.translation())
+            .ok()
+    };
     let step = review.rack_step;
     // Beside a jack, inside the snap reach but off the jack itself.
     let near = |p: Vec2| p + Vec2::new(22., 14.);
@@ -544,6 +561,17 @@ fn drive_rack(
             true,
         ),
         8 => (jack("volume", "trig").map(near), None, false),
+        // Turn the knobs (VCV Rack: drag up to turn up): the clock's BPM up, the volume down.
+        9 => (
+            knob("clock"),
+            knob("clock").map(|p| p - Vec2::Y * 60.),
+            false,
+        ),
+        10 => (
+            knob("volume"),
+            knob("volume").map(|p| p + Vec2::Y * 50.),
+            false,
+        ),
         _ => (None, None, false),
     };
     if step + 1 < RACK_STEPS {
@@ -552,11 +580,18 @@ fn drive_rack(
         if step == 0 && drag.is_none() {
             return;
         }
-        input.write(PointerInput::new(
-            PointerId::Mouse,
-            at(position),
-            PointerAction::Move { delta: Vec2::ZERO },
-        ));
+        if review.moved_to != Some(position) {
+            input.write(PointerInput::new(
+                PointerId::Mouse,
+                at(position),
+                PointerAction::Move { delta: Vec2::ZERO },
+            ));
+            review.moved_to = Some(position);
+            if !hover {
+                // Press next frame, once picking hovers what is here.
+                return;
+            }
+        }
         if !hover {
             input.write(PointerInput::new(
                 PointerId::Mouse,
@@ -568,14 +603,24 @@ fn drive_rack(
             review.drag_to = drag;
         }
     }
-    let state = racks.iter().next();
+    let rack = racks.iter().next();
+    let state = rack.map(|(s, _, _)| s);
+    let knob_values = rack.map(|(_, k, c)| {
+        let mut values: Vec<_> = k
+            .into_iter()
+            .flat_map(|k| k.0.iter())
+            .map(|((place, param), v)| format!("{place}.{param}={v:.3}"))
+            .collect();
+        values.sort();
+        (values, c.map(|c| c.bpm))
+    });
     write(
         &review,
         serde_json::json!({"event":"rack_step","step":step,"at":point.map(|p| [p.x, p.y]),
             "window":[window.width(), window.height(), window.scale_factor()],
             "hovered":hovers.get(&PointerId::Mouse).map(|h| h.keys().map(|e| names.get(*e).map(|(n, jack, ui)| format!("{:?} jack={jack} ui={ui}", n.map(Name::as_str))).unwrap_or_default()).collect::<Vec<_>>()),
             "held":held.cable,
-            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.iter().map(Option::is_some).collect::<Vec<_>>()),"own":state.map(|s| s.own.len())}),
+            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.iter().map(Option::is_some).collect::<Vec<_>>()),"own":state.map(|s| s.own.len()),"knobs":knob_values}),
     );
     review.rack_step += 1;
     review.rack_wait = 0.12;
