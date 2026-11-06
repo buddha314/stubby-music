@@ -55,7 +55,8 @@ segment on the same 24 subdivisions, so the game bends and chains it the same wa
 
 The game lays both (`crates/stubby_game/src/streams.rs`, `add-stream-building`):
 segment and hologram meshes are baked from these glTFs once and bent along the plan;
-`Pulse_0`, `Bar_0` and the staff's morph targets are not used yet, so laid streams lie
-quiet until notes and the staff's flow land.
+`Bar_0` rides a sounding burbler's streams, one per downbeat, on the staff's fixed wave.
+`Pulse_0`, the staff's morph targets and the clarity stages are not used yet: laid streams
+stay muddy, with a still staff and no notes, until those land.
 
 Still to come: the conveyor-belt segments streams run along.

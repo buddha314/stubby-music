@@ -157,6 +157,25 @@ Use the watchdog when testing the review run configuration.
 Normal play uses `[`/`]` for slower/faster simulation and `\` for 1×.
 Music pitch, clock tempo and flash envelopes retain their audio timing.
 
+## Bounded stream review
+
+Build the adapter, then script laying a stream at the burbler:
+
+```sh
+cargo +1.99.0 build --bin stubby_jackdaw --manifest-path crates/stubby_jackdaw/Cargo.toml
+python3 tools/jackdaw_timed_test.py --streams --seconds 20 --name stream-review
+```
+
+It logs to `/tmp/stubby-stream-review/events.jsonl`, including how many bar lines are alive. It
+turns bar lines on without patching anything, so it stays silent and does not exercise a patched
+voice. Under embedded Play it wrote no screenshots (2026-11-06). For those, run the binary in its
+own window, still under the watchdog:
+
+```sh
+python3 tools/jackdaw_timed_test.py --seconds 20 --name stream-shots \
+  --command target/debug/stubby_jackdaw --seed=42 --stream-review=/tmp/stubby-stream-review
+```
+
 ## Bounded prefab review
 
 Build the adapter, then run the seven-instance saved-prefab fixture:

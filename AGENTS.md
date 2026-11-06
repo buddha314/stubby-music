@@ -280,6 +280,10 @@ testable by asserting identical output for identical seeds.
   validates them.
 - Ship each glb in its starting pose using **node scale** (Blender's hidden-in-render
   flag does not export).
+- **Placed prefabs need unique instance IDs.** A prefab with a fixed `MineNode` or
+  `ResourceNode` `instance` (each `scrub_oak_<k>` is `scrub_oak-<k>`) fails with "duplicate
+  or empty instance ID" when placed twice, unless its placement gets its own `instance`.
+  Reeds carry none: each placement takes an ID from its name and position.
 - **Levels of detail belong to the model, never to a placement** (Unity's, Unreal's
   and Godot's practice, and Jackdaw's). Hand-made levels go inside the one glb as nodes
   named `<id>_LOD0`, `<id>_LOD1`, ...; Jackdaw's **Import LOD levels**
@@ -348,10 +352,11 @@ Several agents work in this repo at once. To avoid stepping on each other:
   module-asset-binding 2.5 in `add-jackdaw-live-listen`: user confirmed no flicker
   during 20-second 165Hz Play. Separate 10ms on-screen timing remains open.
   Use the independent 20-second diagnostic watchdog for graphical tests.
-  **Claude, by the user's direct request (2026-11-01..03):** crate work on the rack and
+  **Claude, by the user's direct request (2026-11-01..06):** crate work on the rack and
   burbler UX, performance (sky environment map baked once, ground chunked for culling,
-  two shadow cascades; `docs/research/performance-profiling.md`) and stream laying
-  (`streams.rs`, the `buildables` rule type, `add-stream-building`).
+  two shadow cascades; `docs/research/performance-profiling.md`), stream laying
+  (`streams.rs`, the `buildables` rule type, `add-stream-building`), bar lines on streams
+  and placed machine voices (`add-localized-machine-voices`).
   Update this line when you claim work.
 - **The game opens at sunrise**, and since the sky's light dims with the day (#89) the
   first ~2 minutes are dark. Reviews set the calendar to midday for screenshots; if the
@@ -432,7 +437,7 @@ equivalent of an iron ore node, so the player does not pick it up.
   `assets/audio/sfx/patch_snap/`) played in turn, through the engine's one-shot
   `Command::PlaySample` (load once with `AudioThread::load_sample`; sound effects only,
   never patch modules). The
-  stream's notes start with the sound.
+  stream's bar lines and notes start with the sound.
 - **Inventory: 16 boxes, 100 of one kind per box** (`stubby_recipes::INVENTORY_BOXES`,
   `BOX_STACK`); adds that do not fit fail all or nothing. The Tab screen is the 16 boxes,
   filled in order; empty boxes stay blank, and nothing held at zero is shown. Anything
@@ -543,6 +548,10 @@ crates, re-pins `compatibility.json`, `jackdaw.toml` pins,
 builds the game and adapter and the shared editor (`prepare`). Commit the pins and lock on
 a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
 CI warns when the pin lags the fork.
+
+**Physics colliders on prefabs are planned in `add-prefab-colliders`:** Avian already runs on
+our fork, and `jackdaw_avian_integration` compiles once a one-line Jackdaw workspace bug is
+fixed. The player's movement still ignores physics, so colliders alone block nothing yet.
 
 **Crates without a Bevy-main release are generated forks** (`bevy_main_forks.json`,
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and

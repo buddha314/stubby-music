@@ -62,6 +62,10 @@ that module to the rack in 2.6, along with the others.
 
 ## 4. Spatial emission
 
+Machine voices already pan through `Command::SetEmitter` on Firewheel's basic spatial node, with
+a hearing radius (`add-localized-machine-voices`). This section replaces that with HRTF, voice
+budgets and occlusion; bug clicks still have a distance-only fade.
+
 - [ ] 4.1 Vendor the HRTF node (Irc1040 plus profile selection) with its license notice; FFT 2×128; reject `slice_count = 1`
 - [ ] 4.2 Emitter registry: module output, world position, hearing radius
 - [ ] 4.3 Preallocated HRTF and pan voice pools; routing stems to voices
