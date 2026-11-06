@@ -76,6 +76,32 @@ Reading the keys:
 - **`emissive_gain` rises at night and when bloomed.** Lights read stronger as the
   world darkens, and the bloomed world glows on purpose.
 
+### Reference: dusk as the air clears (2026-11-06)
+
+The user's reference for tone and colour later in the game, once the haze has thinned: a photo
+of a civic plaza at dusk, a pale stone tower against a burning orange sky, with a round water basin
+in the foreground. It is a target for mood and colour, **not a scene to build**: take no building
+or place from it. The photo is not in this public repository, since its rights are unknown; a local
+copy may be at `docs/art/references/clearing_dusk.png` (ignored by Git).
+
+What to take from it:
+
+- **The sky carries the picture.** Saturated orange fills most of the frame, in soft horizontal
+  bands with darker cloud. Only the far top corner keeps a little smoky blue-grey.
+- **Clear air shows as contrast.** There is no fog between viewer and tower. Near-black silhouettes
+  sit hard against the sky: clearing the haze reveals the sky's colour, it does not lighten the world.
+- **Shadows lean violet, never brown or neutral.** Silhouettes are near-black with a blue-violet cast.
+- **One pale monument takes the light.** Lit stone goes rosy, not white, and is the only large mid-tone
+  against the sky. Machines and big structures can play this part.
+- **Water holds the sky.** The basin's still surface repeats the warm light low in the frame, and its
+  stone rim picks up cool violet. Water is how the sky's colour reaches the ground.
+- **Small warm lights are a garnish.** A strung line of pale bulbs reads in the dusk, close to our
+  fairy-light language.
+
+Compared with the keys today: `bloomed` dusk is pinker and more violet (zenith `#4d388f`, horizon
+`#ff8f73`, pink fog) than this orange. Retuning it, or adding a stage between bleak and bloomed,
+is an open decision (`add-art-direction` 1.5). Nothing in the game follows this yet.
+
 ## Palette
 
 ![Palette](palette.png)
@@ -89,6 +115,7 @@ been made once (2026-10-31, `accents[0]`).
 | ----- | ------- |
 | Bleak desert | Mud `#302116`, Ridges `#2e2b33`, Haze `#8f6e54`, Sun `#ffb56e`, Ambient `#adb8d4` |
 | Bloomed | Ground `#29361c`, accents Cyan `#33ffd9`, Magenta `#ff4dd9`, Green `#8cd933`, lunar sky `#421a5c` |
+| Clearing dusk (reference, not yet in the keys) | Sky peak `#f9990d`, Sky `#f06304`, Upper sky `#c65005`, Cloud `#c0591f`, Smoky top `#5f505b`, Silhouette `#100b19`, Lit stone `#946168`, Water glow `#d2a6a7`, Cool rim `#6f648e`, Bulbs `#ecd8e3` |
 | Module materials | Case `#3c3d3f`, Faceplate `#adadaa`, Patch `#454548`, Print `#212121`, Print inverted `#e7e5dd`, Brass `#c4aa76`, Knob `#272729` |
 | Signal (emissive) | Amber `#ffb350`, Clock flash `#ffce89`, Segment `#ff9945`, Bug `#ffffff` |
 | Crude | Sand `#8c7656`, Rust iron `#5e3a22`, Weathered wood `#5a4a3a` |
@@ -236,6 +263,8 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-06** — Reference for dusk as the air clears: saturated orange sky, violet-black
+  silhouettes, rosy lit stone, water holding the sky. Recorded as a target; the keys are unchanged.
 - **2026-11-01** — Patch guidance on the rack screen: each patch still to make is a ghost
   cable in the build-ghost colour, and the two jacks each spare cable is for pulse in
   that cable's colour. Mocks: `hud_mock_ready` (step 1), `hud_mock_step2`, `hud_mock`.
