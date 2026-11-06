@@ -1,11 +1,11 @@
 ## 0. Decisions
 - [x] 0.1 Where the first clean water comes from: a filter mini-rack, HPF → pure liquid, LPF → solids/nutrients, controlled via audio (detailed design later, `add-fluid-quality-and-viscosity`)
-- [x] 0.2 Layout: prefabs placed in Jackdaw (`jackdaw/assets/prefabs/`, made with Jackdaw's Save as Prefab)
+- [x] 0.2 Layout: prefabs placed in Jackdaw (`assets/prefabs/`, made with Jackdaw's Save as Prefab)
 - [ ] 0.3 Reconcile `add-desert-opening` discovery-progression (square from a bug; clock is the burbler)
 
 ## 1. Layout (Claude, art and scene)
 - [ ] 1.1 Region layout sketch: spawn, grove, burbler, reed beds, prop scatter, with distances; top-down plan in `docs/art/`
-- [x] 1.0 Prefabs for every placeable world asset, model-owned `_LOD0`/`_LOD1` nodes, models posed by node scale; `jackdaw/tests/prefabs.rs` (claimed: claude)
+- [x] 1.0 Prefabs for every placeable world asset, model-owned `_LOD0`/`_LOD1` nodes, models posed by node scale; `crates/stubby_jackdaw/tests/prefabs.rs` (claimed: claude)
 - [ ] 1.2 Lay out the region in the Jackdaw opening scene from the prefabs
 - [ ] 1.3 Lighting pass on the region at dusk and night with the bleak keys
 
@@ -35,7 +35,7 @@
 Completed against main through PR #50: category paths and import settings retained,
 bug child bound at its world position, six reeds per clump. Native Jackdaw LOD
 render parts carry game animation metadata; no replacement LOD tools or scene
-reconstruction. The 20-second review passed near/far/return; see `jackdaw/README.md`.
+reconstruction. The 20-second review passed near/far/return; see `crates/stubby_jackdaw/README.md`.
 
 - [x] 2.5a Translate authored glTF sources to registered game asset identities; preserve scene transforms and report duplicate instance/clock IDs
 - [x] 2.5b Bind bug presentation/voices, module profiles and mine registry with reload/despawn cleanup

@@ -127,7 +127,9 @@ crates/
   stubby_game/            the Bevy app
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
-assets/                   runtime assets loaded by Bevy (glTF, textures, shaders)
+  stubby_jackdaw/         the game as Jackdaw builds it (adapter; keeps saved prefab type paths)
+assets/                   the one asset folder: scene.bsn, prefabs/, glTF, textures, shaders
+jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
 ```
@@ -269,9 +271,9 @@ testable by asserting identical output for identical seeds.
   props, machines/modules, cables, and the player.
 - **Levels are designed with Jackdaw prefabs**, the standard editor workflow: art
   delivers the glb, a prefab wraps it with its gameplay components, and levels place
-  prefabs. Every placeable world asset has one under `jackdaw/assets/prefabs/`. Make
+  prefabs. Every placeable world asset has one under `assets/prefabs/`. Make
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
-  `jackdaw/README.md`) and edit them there. `cargo test --test prefabs` in `jackdaw/`
+  `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
 - Ship each glb in its starting pose using **node scale** (Blender's hidden-in-render
   flag does not export).
@@ -287,7 +289,7 @@ testable by asserting identical output for identical seeds.
 
 | Concern | Choice | Version (crates.io, 2026-10-31) |
 | ------- | ------ | ------------------------------- |
-| Engine | `bevy` | Bevy main as Jackdaw main locks it; `jackdaw/compatibility.json` |
+| Engine | `bevy` | Bevy main as Jackdaw main locks it; `compatibility.json` |
 | Audio I/O | `cpal` | 0.18.2 |
 | Audio engine (graph, device, scheduling) | `firewheel` | 0.14.0 |
 | DSP inside modules | `fundsp` | 0.23.0 |
@@ -319,7 +321,7 @@ Several agents work in this repo at once. To avoid stepping on each other:
   live workspace, and often has the Jackdaw editor open on it.
 - **Claim tasks in OpenSpec:** add `(claimed: <agent>)` to the task's line in
   `tasks.md`, in the PR with your first commit for it. Check claims before starting.
-- **Shared files** (`Cargo.lock`, `crates/*/src/lib.rs`, `jackdaw/Cargo.toml`) conflict
+- **Shared files** (`Cargo.lock`, `crates/*/src/lib.rs`, `crates/stubby_jackdaw/Cargo.toml`) conflict
   most often. Keep edits to them small, and update from `main` before opening a PR.
 - **Never share a `target/` directory between checkouts that are in use.** Cargo names a
   workspace crate's artifacts the same in every checkout, so a shared
@@ -514,7 +516,7 @@ owner and the existing muddy-to-clear stages.
 The standalone game and editor adapter share the root Cargo workspace, its one
 Cargo.lock, the workspace Bevy dependency and rust-toolchain.toml. Keep the adapter
 package/type paths for existing saved prefabs. Do not independently upgrade Bevy
-or restore a separate adapter lockfile. `jackdaw/compatibility.json` records the
+or restore a separate adapter lockfile. `compatibility.json` records the
 shared editor source revision, upstream base, Bevy revision and compiler.
 
 Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
@@ -524,13 +526,13 @@ Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
 **`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/jackdaw_sync.py`): it merges
 upstream main into the fork (temporary worktree, `sync/<date>` PR on buddha314; stops on a
 conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
-crates, re-pins `jackdaw/compatibility.json`, `jackdaw/jackdaw.toml` pins,
+crates, re-pins `compatibility.json`, `jackdaw.toml` pins,
 `rust-toolchain.toml` and Cargo.lock's Bevy revision to the one our Jackdaw locks, then
 builds the game and adapter and the shared editor (`prepare`). Commit the pins and lock on
 a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
 CI warns when the pin lags the fork.
 
-**Crates without a Bevy-main release are generated forks** (`jackdaw/bevy_main_forks.json`,
+**Crates without a Bevy-main release are generated forks** (`bevy_main_forks.json`,
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and
 glam_matrix_extras, each a `bevy-main` branch on buddha314 = the published release plus one
 commit pointing its Bevy dependencies at Bevy's git main. The root `[patch.crates-io]` uses

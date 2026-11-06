@@ -28,7 +28,7 @@ Normal launch remains unpatched and silent at spawn.
 - Jackdaw Play connected in the isolated editor (remote port 15713). Output capture
   `/tmp/stubby-live-listen-jackdaw.wav`: 8 seconds, peak 0.1178, 16 bursts with
   every complete interval 0.500 seconds.
-- Editor screenshot: `jackdaw/.jackdaw/live-listen.png` (ignored generated evidence).
+- Editor screenshot: `.jackdaw/live-listen.png` (ignored generated evidence).
 - Stop returned the editor to authoring; `/tmp/stubby-live-listen-stopped.wav`
   contains 2 seconds of digital silence (peak 0.0).
 - Replay connected again and `/tmp/stubby-live-listen-replay.wav` contains

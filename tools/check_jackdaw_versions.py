@@ -29,7 +29,7 @@ def bevy_sources(lock):
 
 def validate(root, source):
     errors = []
-    record = json.loads((root / 'jackdaw/compatibility.json').read_text())
+    record = json.loads((root / 'compatibility.json').read_text())
     if record.get('schema_version') != 1:
         return ['unsupported compatibility record schema']
     selected = record['jackdaw']
@@ -48,14 +48,14 @@ def validate(root, source):
     if not good:
         errors.append('workspace Bevy source/version differs from the selected Jackdaw release')
     members = workspace['members']
-    for member in ('crates/stubby_game', 'crates/bevy_stubby_recipes', 'jackdaw'):
+    for member in ('crates/stubby_game', 'crates/bevy_stubby_recipes', 'crates/stubby_jackdaw'):
         manifest = read_toml(root / member / 'Cargo.toml')
         member_bevy = manifest['dependencies']['bevy']
         if member not in members or not isinstance(member_bevy, dict) or member_bevy.get('workspace') is not True:
             errors.append(f'{member} must inherit Bevy from the unified workspace')
         if 'workspace' in manifest:
             errors.append(f'{member} must not define a separate workspace')
-    for member in ('jackdaw', 'crates/stubby_game'):
+    for member in ('crates/stubby_jackdaw', 'crates/stubby_game'):
         manifest = read_toml(root / member / 'Cargo.toml')
         for section in ('dependencies', 'dev-dependencies'):
             for name, dep in manifest.get(section, {}).items():
@@ -67,12 +67,12 @@ def validate(root, source):
                 actual = (root / member / dep['path']).resolve()
                 if actual.name != name or not actual.is_relative_to(source.resolve()):
                     errors.append(f'{member}: {name} path resolves to {actual}, not the selected shared checkout')
-    if (root / 'jackdaw/Cargo.lock').exists():
+    if (root / 'crates/stubby_jackdaw/Cargo.lock').exists():
         errors.append('remove the separate adapter lockfile; the workspace has one Cargo.lock')
     if bevy_sources(read_toml(root / 'Cargo.lock')) != {expected}:
         errors.append(f'Cargo.lock must resolve one Bevy engine source: {expected}')
     rev = bevy['source'].rsplit('#', 1)[1] if bevy['source'].startswith('git+') else None
-    for manifest in ('jackdaw/jackdaw.toml',):
+    for manifest in ('jackdaw.toml',):
         project = read_toml(root / manifest)['jackdaw']
         if (project['version'], project.get('bevy_rev'), project['bevy']) != (selected['version'], rev, bevy['line']):
             errors.append(f'{manifest} differs from the selected Jackdaw/Bevy versions')
@@ -121,8 +121,8 @@ def validate_tree(tree, record):
 
 
 def validate_binaries(root, source):
-    record = json.loads((root / 'jackdaw/compatibility.json').read_text())
-    receipt = json.loads((root / 'jackdaw/.jackdaw/editor-build.json').read_text())
+    record = json.loads((root / 'compatibility.json').read_text())
+    receipt = json.loads((root / '.jackdaw/editor-build.json').read_text())
     errors = []
     if receipt['revision'] != record['jackdaw']['revision']:
         errors.append('shared editor build receipt is for another source revision')
@@ -148,7 +148,7 @@ def main():
         if args.binaries:
             errors += validate_binaries(root, source)
         if args.tree:
-            errors += validate_tree(args.tree.read_text(), json.loads((root / "jackdaw/compatibility.json").read_text()))
+            errors += validate_tree(args.tree.read_text(), json.loads((root / "compatibility.json").read_text()))
     except (OSError, KeyError, ValueError, TypeError) as error:
         errors = [f'invalid or missing compatibility configuration: {error}']
     if errors:

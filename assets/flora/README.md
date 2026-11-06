@@ -1,6 +1,6 @@
 # Flora
 
-Every asset here has a Jackdaw prefab (`jackdaw/assets/prefabs/flora/`). Levels of
+Every asset here has a Jackdaw prefab (`assets/prefabs/flora/`). Levels of
 detail are inside each model as `<id>_LOD0` and `<id>_LOD1` nodes, imported into its
 settings (`.glb.meta`) by Jackdaw.
 

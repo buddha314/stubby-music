@@ -14,7 +14,7 @@ use stubby_jackdaw::pulse::PulseFollower;
 use stubby_jackdaw::resources::{MineNode, ResourceNode};
 
 fn assets() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets")
 }
 
 fn prefab_files(dir: &Path, out: &mut Vec<PathBuf>) {

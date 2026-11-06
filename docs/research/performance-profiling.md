@@ -10,7 +10,7 @@ later analysis; reproduce with the commands at the end.
   NAVI33, Mesa 26.2.5) and integrated Radeon 780M (RADV PHOENIX); Fedora 44,
   kernel 7.2.11; internal panel 2560x1600.
 - Game: Bevy 0.20.0, Rust 1.99.0, dev profile (our crates `opt-level = 1`,
-  dependencies `opt-level = 3`), the authored level `jackdaw/assets/scene.bsn`,
+  dependencies `opt-level = 3`), the authored level `assets/scene.bsn`,
   **~1,471 entities**, driven by the dev-only prefab review (walk, collect, open
   and patch the burbler rack). The game picks the discrete GPU by default.
 - Tools (all built into Bevy, no custom instrumentation):
@@ -130,17 +130,17 @@ Other passes are fixed costs: bloom 0.7, upscaling 0.4, tonemapping 0.3 ms.
 
 ## Reproduce
 
-Temporary edits, not committed: in `jackdaw/src/main.rs` add
+Temporary edits, not committed: in `crates/stubby_jackdaw/src/main.rs` add
 `FrameTimeDiagnosticsPlugin`, `RenderDiagnosticsPlugin`,
 `EntityCountDiagnosticsPlugin` and `LogDiagnosticsPlugin`, and set the primary
 window's `present_mode` to `AutoNoVsync`. Then:
 
 ```bash
-cargo +1.99.0 build --bin stubby_jackdaw --manifest-path jackdaw/Cargo.toml --features bevy/trace_chrome
+cargo +1.99.0 build --bin stubby_jackdaw --manifest-path crates/stubby_jackdaw/Cargo.toml --features bevy/trace_chrome
 python3 tools/jackdaw_timed_test.py --seconds 20 --name profile --command \
   bash -c "cd jackdaw && ../target/debug/stubby_jackdaw --prefab-review=/tmp/stubby-standalone"
-# diagnostics: /tmp/jackdaw-flicker-profile.log ; trace: jackdaw/trace-*.json
-python3 tools/profiling/trace_summary.py jackdaw/trace-*.json 8 18   # 8-18 s window
+# diagnostics: /tmp/jackdaw-flicker-profile.log ; trace: trace-*.json
+python3 tools/profiling/trace_summary.py trace-*.json 8 18   # 8-18 s window
 ```
 
 Add `WGPU_ADAPTER_NAME=780M` before the binary for the integrated GPU, and

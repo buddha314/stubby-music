@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes", "jackdaw"]
+members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes", "crates/stubby_jackdaw"]
 # Both game entry points and the crafting adapter follow shared Jackdaw.
 exclude = ["spikes"]
 
@@ -24,7 +24,7 @@ opt-level = 3
 debug-assertions = false
 overflow-checks = false
 
-# Crates with no Bevy-main release, from our generated forks (jackdaw/bevy_main_forks.json).
+# Crates with no Bevy-main release, from our generated forks (bevy_main_forks.json).
 [patch.crates-io]
 avian3d = { git = "https://github.com/buddha314/avian", branch = "bevy-main" }
 bevy_heavy = { git = "https://github.com/buddha314/bevy_heavy", branch = "bevy-main" }

@@ -5,7 +5,7 @@
    pushed to buddha314 as sync/<date>, merged by PR. Stops on a conflict.
 2. Fast-forward the shared Jackdaw checkout to the fork's main.
 3. Rebuild our Bevy-main forks of third-party crates (tools/bevy_main_forks.py).
-4. Re-pin the game: compatibility.json, jackdaw/jackdaw.toml pins, rust-toolchain.toml,
+4. Re-pin the game: compatibility.json, jackdaw.toml pins, rust-toolchain.toml,
    and Cargo.lock's Bevy revision to the one our Jackdaw locks.
 5. Verify (tools/check_jackdaw_versions.py) and build the game and adapter.
 
@@ -24,7 +24,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = Path(os.environ.get('JACKDAW_SOURCE', ROOT.parent / 'jackdaw'))
-RECORD = ROOT / 'jackdaw/compatibility.json'
+RECORD = ROOT / 'compatibility.json'
 
 
 def run(*args, cwd=ROOT, capture=False, check=True):
@@ -104,7 +104,7 @@ def repin(record, revision):
 
     pins = f'version = "{jackdaw["version"]}"\nbevy = "{record["bevy"]["line"]}"\n'
     pins += f'channel = "bleeding-edge"\nbevy_rev = "{rev}"\n' if git_bevy else 'channel = "stable"\n'
-    for manifest in (ROOT / 'jackdaw/jackdaw.toml',):
+    for manifest in (ROOT / 'jackdaw.toml',):
         text = manifest.read_text()
         text = re.sub(r'(?m)^\[jackdaw\]\n(?:(?:version|bevy|bevy_rev|channel|build) = .*\n)*',
                       lambda _: '[jackdaw]\n' + pins, text, count=1)
@@ -115,7 +115,7 @@ def repin(record, revision):
     # Refresh the lock for moved path crates, then pin Bevy and the forks.
     run('cargo', 'metadata', '--format-version', '1', capture=True)
     # Forks first: updating them re-resolves Bevy's git branch, so Bevy is pinned last.
-    forks = json.loads((ROOT / 'jackdaw/bevy_main_forks.json').read_text())['forks']
+    forks = json.loads((ROOT / 'bevy_main_forks.json').read_text())['forks']
     run('cargo', 'update', '-q', *[a for f in forks for a in ('-p', f['crate'])])
     if git_bevy:
         url = source.removeprefix('git+').split('#')[0]
@@ -138,7 +138,7 @@ def main():
         sys.exit('The game does not build on the new Jackdaw/Bevy; fix the game (or a fork) and rerun. '
                  f'Shared Jackdaw moved {before[:8]} -> {revision[:8]}; '
                  f'roll back with: git -C {SOURCE} reset --keep {before} && '
-                 f'git -C {ROOT} checkout -- jackdaw/jackdaw.toml jackdaw/compatibility.json '
+                 f'git -C {ROOT} checkout -- jackdaw.toml compatibility.json '
                  'rust-toolchain.toml Cargo.lock')
     print(f'Synced: Jackdaw {revision[:8]}, Bevy {record["bevy"]["source"].rsplit("#", 1)[-1][:8]}. '
           'Commit the pins and Cargo.lock on a branch.')

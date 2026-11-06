@@ -26,7 +26,7 @@ fn files(dir: &Path, out: &mut Vec<PathBuf>) {
 }
 #[test]
 fn saved_prefabs_become_live_runtime_assets() {
-    let assets = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
+    let assets = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets");
     let mut prefabs = Vec::new();
     files(&assets.join("prefabs"), &mut prefabs);
     prefabs.sort();
