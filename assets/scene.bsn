@@ -1,4 +1,4 @@
-// jackdaw 0.20.1-rc.1 | bevy 0.20
+// jackdaw 0.21.0-dev | bevy main
 bevy_ecs::hierarchy::Children [
     #"Desert opening · seed 42"
     bevy_transform::components::transform::Transform {
@@ -9,6 +9,7 @@ bevy_ecs::hierarchy::Children [
         },
     }
     bevy_camera::visibility::Visibility::Visible
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437902)
     bevy_ecs::hierarchy::Children [
         #"Procedural mudflat preview"
         jackdaw_scene_types::types::HiddenInGame
@@ -18,6 +19,7 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_transform::components::transform::Transform
         bevy_camera::visibility::Visibility::Visible
+        jackdaw_scene_types::node_id::SceneNodeId(8620410544732437904)
         --
         #"Desert sun"
         jackdaw_scene_types::types::HiddenInGame
@@ -34,6 +36,7 @@ bevy_ecs::hierarchy::Children [
             },
         }
         bevy_camera::visibility::Visibility::Visible
+        jackdaw_scene_types::node_id::SceneNodeId(8620410544732437903)
         --
         jackdaw::prefab::components::IsA {
             source: "prefabs/creatures/lightning_bug.bsn",
@@ -174,4 +177,102 @@ bevy_ecs::hierarchy::Children [
     bevy_ecs::hierarchy::Children [
         jackdaw::prefab::components::PrefabEntityId(1)
     ]
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437906)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 8.836631774902344,
+            y: 0.06288988143205643,
+            z: -54.51497268676758,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437907)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 4.303626537322998,
+            y: 0.027349062263965607,
+            z: -54.40945816040039,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437908)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.25757360458374,
+            y: 0.03355724364519119,
+            z: -76.20170593261719,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437909)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -21.9613037109375,
+            y: 0.005241461098194122,
+            z: -70.80561065673828,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437910)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 11.012310981750488,
+            y: 0.016292162239551544,
+            z: -41.25470733642578,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/reed_clump_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437911)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 21.521154403686523,
+            y: 0.02861601859331131,
+            z: -89.05773162841797,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/flora/scrub_oak_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437912)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -24.144296646118164,
+            y: 0.0,
+            z: -88.36827087402344,
+        },
+    }
 ]
