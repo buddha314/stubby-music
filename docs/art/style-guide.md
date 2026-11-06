@@ -98,9 +98,10 @@ What to take from it:
 - **Small warm lights are a garnish.** A strung line of pale bulbs reads in the dusk, close to our
   fairy-light language.
 
-Compared with the keys today: `bloomed` dusk is pinker and more violet (zenith `#4d388f`, horizon
-`#ff8f73`, pink fog) than this orange. Retuning it, or adding a stage between bleak and bloomed,
-is an open decision (`add-art-direction` 1.5). Nothing in the game follows this yet.
+**Decided (2026-11-06): this is a new stage, `clearing`, between bleak and bloomed**
+(`add-clearing-air-stage`). The haze lifts first and reveals this sky; the colour of life comes
+after. `bloomed` dusk stays pinker and more violet (zenith `#4d388f`, horizon `#ff8f73`, pink fog) as
+the destination. The keys are not written yet, and the game does not read the keys file yet.
 
 ## Palette
 
@@ -263,6 +264,9 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-06** — Decided a third lighting stage, `clearing`, between bleak and bloomed
+  (`add-clearing-air-stage`). Keys not yet authored. Nature assets from outside: see
+  `docs/research/nature-asset-sourcing.md`.
 - **2026-11-06** — Reference for dusk as the air clears: saturated orange sky, violet-black
   silhouettes, rosy lit stone, water holding the sky. Recorded as a target; the keys are unchanged.
 - **2026-11-01** — Patch guidance on the rack screen: each patch still to make is a ghost

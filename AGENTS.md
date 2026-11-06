@@ -112,6 +112,10 @@ Escape or focus loss releases the cursor, and left click recaptures it.
   animals). Time of day is global. Lighting for every
   combination is art-authored in `assets/lighting/lighting_keys.json`; see
   `docs/art/style-guide.md`. Never hard-cut between looks.
+- **Three lighting stages (decided 2026-11-06):** bleak haze, then `clearing`, where the air clears
+  to a burning sky with hard silhouettes, then bloomed (`add-clearing-air-stage`; not authored yet).
+- **Outside nature assets:** check `docs/research/nature-asset-sourcing.md` first. This repository
+  is public, so only CC0 assets may be committed; record each asset's licence beside it.
 - The environment is **procedurally generated** from a seed. The same seed always
   produces the same world.
 

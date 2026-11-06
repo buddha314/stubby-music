@@ -23,7 +23,7 @@
 - [ ] 3.3 Camera-following sand particles (`bevy_hanabi`, CPU fallback if incompatible)
 - [ ] 3.4 `TimeOfDay` resource and cycle; load and hot-reload `assets/lighting/lighting_keys.json`; interpolate the time keys (wrapping night → dawn) into sun, ambient, fog, sky, exposure and emissive gain
 - [ ] 3.5 Light quality field: sparse 10 m cubic cells, value and target in [0, 1], eased; trilinear sample at a point; tests for locality and easing
-- [ ] 3.6 Blend bleak and bloomed keys by the light quality sampled at the camera; storm intensity falls as light quality rises
+- [ ] 3.6 (now three stages, `add-clearing-air-stage`) Blend bleak and bloomed keys by the light quality sampled at the camera; storm intensity falls as light quality rises
 - [ ] 3.7 Per-cell light quality in materials: ground tint and flora emission (the `accents` in the keys file)
 
 ## 4. Player and discovery
