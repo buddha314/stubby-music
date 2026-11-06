@@ -89,6 +89,8 @@ using its guarded launcher with the new system editor.
 
 ## Embedded Play speed fix promotion (2026-11-01)
 
+*Replaced on 2026-11-06 by upstream's #788; see the sync below.*
+
 User asked to fix embedded Play's frame rate in the fork. Select fork dev/0.20 at
 f2a1cf207b14ec28116720f5dcb84faa44b86f13 (buddha314/jackdaw#4). The game-side PIE
 link (`jackdaw_runtime` `stream_state`) reflect-serialized every streamed entity's
@@ -113,3 +115,22 @@ from dev/0.20 (f2a1cf20) to main (4ff3eddc). Bevy main c9c397ba as Jackdaw locks
 Avian 0.8 and its helpers built against Bevy main with only their manifests rewritten;
 the game and adapter built without code changes. Rollback: shared checkout back to
 dev/0.20 f2a1cf20 and revert the game PR.
+
+## Sync with upstream main (2026-11-06)
+
+Fork main moved to 3c891ed1, containing upstream ed63ef10; Bevy stays on c9c397ba. No upstream
+issue or PR was filed: as of this date AGENTS.md forbids both. `tools/jackdaw.sh sync` stopped on
+three conflicts in Play code, resolved by hand in buddha314/jackdaw#12:
+
+- `crates/jackdaw_runtime/src/pie.rs`: took upstream's. Our only change there was #4 (embedded
+  Play at 10 fps); upstream's #788 rewrites the same streaming with a per-frame budget.
+- `crates/jackdaw_pie_protocol/src/snapshot.rs`: took upstream's side. Our light-probe skip
+  stays, since `snapshot_columns` still calls `should_skip`.
+- `editor/jackdaw_editor_core/src/pie_projection.rs`: kept both our brush face material fix
+  (#8) and upstream's handle keeping.
+
+Checked: the brush regression test, game, adapter and editor builds, prefab tests, CI, and one
+20-second Play test. Not measured: Play's frame rate on the large scene without #4. To check a
+merged runtime, build the game: `cargo check -p jackdaw_runtime --features pie` alone fails on
+Bevy features the game turns on (`winit`, gizmos). Rollback: shared checkout to 706f2437 and
+revert stubby-music#110.

@@ -33,7 +33,8 @@ First-time setup and Play instructions are in [crates/stubby_jackdaw/README.md](
 
 The audio engine is `crates/stubby_audio`; it has no Bevy dependency. One shared
 audio thread drives the lightning bugs’ clocks and short click patches. The opening
-is silent until a bug is nearby. For a test patch, add `--audio-demo` or press F8.
+is silent until a bug is nearby. A patched burbler's voice pans from the nearest point
+of the burbler or its streams and fades out at its hearing radius. For a test patch, add `--audio-demo` or press F8.
 To hear the engine alone on the default output device:
 
 ```sh

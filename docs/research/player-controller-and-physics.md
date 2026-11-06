@@ -90,6 +90,15 @@ The released-Bevy versions in the research table are historical compatibility
 information, not permission to upgrade Bevy independently. Physics remains gated
 by the selected shared editor's module support. See `jackdaw-version-policy.md`.
 
+### Checkpoint (2026-11-06): no longer blocked by Avian
+
+This supersedes the gating above and the dev/0.20 checkpoint below. On Jackdaw main and
+Bevy main, Avian 0.8 runs from our generated fork, and `jackdaw_avian_integration` compiles
+against it with one Bevy in the graph, once `exclude = ["integrations"]` is added to Jackdaw's
+root `Cargo.toml`. Without that line, Cargo reads the wrong workspace and fails with
+`workspace.package.edition was not defined`. Nothing has used the crate at runtime yet, and
+the player's movement still ignores physics. The work is planned in `add-prefab-colliders`.
+
 ### Supported-line alignment checkpoint
 
 The game now follows the shared dev/0.20 branch (upstream release-0.20), rather
