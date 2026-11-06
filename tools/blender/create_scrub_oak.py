@@ -44,8 +44,8 @@ is placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_scrub_oak.py
            (or `-- 3` for one variant; `-- montage` rebuilds the lineup only)
-Writes assets/models/flora/scrub_oak/scrub_oak_<k>.glb and assets/flora/scrub_oak/ (profiles,
-previews per variant and stage, and the lineup).
+Writes assets/models/flora/scrub_oak/scrub_oak_<k>.glb assets/flora/scrub_oak/ (profiles)
+and previews/flora/scrub_oak/ (previews per variant and stage, and the lineup).
 """
 from pathlib import Path
 import json
@@ -65,6 +65,7 @@ from module_kit import PROJECT  # noqa: E402
 
 VARIANTS = [11, 23, 37, 41, 58, 64]   # one seed per exported variant
 OUT = PROJECT / "assets/flora/scrub_oak"
+PREVIEW_OUT = PROJECT / "previews/flora/scrub_oak"
 RING = 6                               # sides on a branch tube
 FAR_LOD_M = 45.0
 MAX_BLOOMS = 18
@@ -352,7 +353,7 @@ class ScrubOak(Burbler):
         report = self.finish(self.profile(near, far), aim=(0, 0, 1.35), camera_location=(2.7, -8.8, 2.5),
                              before_render=stage)
         if bpy.app.background:
-            out = OUT / self.asset_id
+            out = PREVIEW_OUT / self.asset_id
             for name, g in STAGES.items():
                 self.set_growth(g)
                 self.scene.render.filepath = str(out / f"preview_{name}.png")
@@ -432,16 +433,16 @@ def montage():
                 "-pointsize", "18", str(dest)]
         subprocess.run(cmd, check=True)
     for stage in ("dormant", "full_bloom"):
-        tile([OUT / f"scrub_oak_{k}/preview_{stage}.png" for k in range(len(VARIANTS))],
-             [f"variant {k}" for k in range(len(VARIANTS))], len(VARIANTS), OUT / f"lineup_{stage}.png")
-    tile([OUT / f"scrub_oak_0/preview_{s}.png" for s in STAGES],
-         [f"{s.replace('_', ' ')} ({g:g})" for s, g in STAGES.items()], len(STAGES), OUT / "growth.png")
+        tile([PREVIEW_OUT / f"scrub_oak_{k}/preview_{stage}.png" for k in range(len(VARIANTS))],
+             [f"variant {k}" for k in range(len(VARIANTS))], len(VARIANTS), PREVIEW_OUT / f"lineup_{stage}.png")
+    tile([PREVIEW_OUT / f"scrub_oak_0/preview_{s}.png" for s in STAGES],
+         [f"{s.replace('_', ' ')} ({g:g})" for s, g in STAGES.items()], len(STAGES), PREVIEW_OUT / "growth.png")
     # Keep the repo light: variant 0 keeps every preview; the others keep the two the
     # lineups use (the rest are rendered again whenever the generator runs).
     for k in range(1, len(VARIANTS)):
         for name in ("preview.png", "preview_far.png", "preview_budding.png", "preview_leafing.png",
                      "preview_leafed.png"):
-            (OUT / f"scrub_oak_{k}" / name).unlink(missing_ok=True)
+            (PREVIEW_OUT / f"scrub_oak_{k}" / name).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

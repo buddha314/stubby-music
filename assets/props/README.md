@@ -4,8 +4,8 @@
 
 The bleak opening's scatter, each with its bloomed counterpart (`add-art-direction` 2.6).
 
-![bleak](desert/sheet_bleak.png)
-![bloomed](desert/sheet_bloomed.png)
+![bleak](../../previews/props/desert/sheet_bleak.png)
+![bloomed](../../previews/props/desert/sheet_bloomed.png)
 
 | Family | Bleak | Bloomed | Triangles |
 | ------ | ----- | ------- | --------- |

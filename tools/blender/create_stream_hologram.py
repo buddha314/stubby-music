@@ -21,7 +21,7 @@ stream will flow.
                        the profile (valid, invalid)
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_stream_hologram.py
-Writes assets/streams/stream_hologram/ (profile and previews: valid, invalid, and the
+Writes assets/streams/stream_hologram/ (profile) and previews/streams/stream_hologram/ (valid, invalid, and the
 hologram extending a laid stream).
 """
 from pathlib import Path
@@ -180,7 +180,7 @@ class StreamHologram(Stream):
         aim, cam = (LENGTH * 0.55, 0, 0.0), (-2.9, -2.3, 3.0)
         report = self.finish(self.profile(), aim=aim, camera_location=cam, before_render=stage)
         if bpy.app.background:
-            out = PROJECT / "assets/streams/stream_hologram"
+            out = PROJECT / "previews/streams/stream_hologram"
             tiles = []
             for name, state in STATES.items():
                 self.tint(state["color"])

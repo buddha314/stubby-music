@@ -35,7 +35,7 @@ and crisper as the water clears.
                        spawns one every `beats_per_bar` ticks (see the profile's `bars`)
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_stream.py
-Writes assets/streams/stream_segment/ (profile and previews: muddy, silty, clear).
+Writes assets/streams/stream_segment/ (profile) and previews/streams/stream_segment/ (muddy, silty, clear).
 """
 from pathlib import Path
 import math
@@ -390,7 +390,7 @@ class Stream(Burbler):
         report = self.finish(self.profile(), aim=(LENGTH * 0.55, 0, 0.0), camera_location=(-2.9, -2.3, 3.0),
                              before_render=stage_preview)
         if bpy.app.background:  # also render each clarity stage, then tile them
-            out = PROJECT / "assets/streams/stream_segment"
+            out = PROJECT / "previews/streams/stream_segment"
             tiles = []
             for stage in CLARITY:
                 self.set_clarity(stage)

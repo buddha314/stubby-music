@@ -7,7 +7,7 @@ emitted. The flash attacks in 15 ms and decays to zero over a total of 180 ms.
 - Source: `assets-src/blender/creatures/lightning_bug.blend` (metres, isolated asset scene).
 - Runtime: `assets/models/creatures/lightning_bug.glb`, with a `white_flash` scale animation.
 - Profile: `asset.json`. The game embeds this profile at build time.
-- Preview: `preview.png` shows the flash at its peak; scrub frames 1–19 in Blender
+- Preview: `previews/creatures/lightning_bug/preview.png` shows the flash at its peak; scrub frames 1–19 in Blender
   to see it collapse to invisibility at 60 FPS.
 
 Rebuild from the repository root:

@@ -6,7 +6,7 @@ settings (`.glb.meta`) by Jackdaw.
 
 ## Reeds (`tools/blender/create_reeds.py`)
 
-![dry, harvested, regrowing, green](reeds/states.png)
+![dry, harvested, regrowing, green](../../previews/flora/reeds/states.png)
 
 The stream's ingredient: **6 reeds build one stream segment**, and reeds then outline
 the segment's banks (`openspec/changes/add-reeds/`). A frequent renewable, as easy to
@@ -16,7 +16,7 @@ stubble; it returns after the catalog's short replenishment interval, and the ga
 scale `Standing` up from stubble height to show it coming back. Greenness (0 dry,
 1 green) recolours stalks and blades.
 
-![variants](reeds/lineup.png)
+![variants](../../previews/flora/reeds/lineup.png)
 
 Four seeded variants (`models/flora/reeds/reed_clump_<k>.glb`) plus per-instance scale, height,
 yaw, sway phase and greenness from the world seed and instance ID. Nodes: `Interact`,
@@ -29,7 +29,7 @@ the far level `reed_clump_<k>_LOD1` inside the model (crossed strips, beyond 30 
 
 ## Scrub oak (`tools/blender/create_scrub_oak.py`)
 
-![dormant to full bloom](scrub_oak/growth.png)
+![dormant to full bloom](../../previews/flora/scrub_oak/growth.png)
 
 The infinite mine that produces lightning bugs: a low, many-stemmed desert oak about
 2.5–4 m tall. It **starts dormant, in winter**: grey bare wood, tight buds, a few dry
@@ -38,8 +38,8 @@ clean water is delivered and escalates it through budding, leaf-out and leafed t
 **full bloom**, when luminous catkins hang from the crown. Each bloom carries a
 `BugSpawn_<k>`, so only open blooms produce bugs and a dormant tree makes none.
 
-![full bloom, all variants](scrub_oak/lineup_full_bloom.png)
-![dormant, all variants](scrub_oak/lineup_dormant.png)
+![full bloom, all variants](../../previews/flora/scrub_oak/lineup_full_bloom.png)
+![dormant, all variants](../../previews/flora/scrub_oak/lineup_dormant.png)
 
 ### Tree-to-tree variation
 
