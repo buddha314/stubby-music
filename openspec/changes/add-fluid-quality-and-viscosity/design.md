@@ -76,3 +76,5 @@ alongside light quality; keep those inputs separate from palette progression.
 - Junctions, empty streams, full outputs and mixing conserve transferred volume.
 - Fixed simulated duration gives equivalent transfers at different render FPS.
 - Better delivered water improves scrub-oak production with light held constant.
+
+**Reference (2026-11-06):** `docs/research/persian-water-systems.md` describes how qanats and gardens manage water with the land, with undecided ideas for this game (`explore-water-landscape-ideas`).
