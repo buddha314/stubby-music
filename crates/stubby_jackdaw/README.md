@@ -29,7 +29,7 @@ Run `tools/jackdaw.sh check` for read-only source/version validation and
 `tools/jackdaw.sh prepare` to rebuild matching shared binaries and the floor preview.
 Prepare refuses while that shared editor is running. Managed launch/build verifies
 a local source-linked binary receipt; stale or missing receipts require Prepare.
-See [the upgrade and fork policy](../docs/research/jackdaw-version-policy.md).
+See [the upgrade and fork policy](../../docs/research/jackdaw-version-policy.md).
 
 The edit viewport loads `generated/mudflat.glb` through `GltfSource` (a raw
 `SceneRoot` is not registered in this editor). Re-run `prepare` after changing the
