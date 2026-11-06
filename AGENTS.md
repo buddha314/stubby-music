@@ -513,6 +513,11 @@ owner and the existing muddy-to-clear stages.
 
 ### Jackdaw is the version authority
 
+**The repo root is the Jackdaw project**, the layout Jackdaw scaffolds: `jackdaw.toml` and
+`.jackdaw/` at the root, one `assets/` as Bevy expects, and `package` naming the workspace
+member Jackdaw builds. The project takes its name from the folder. In the launcher, add
+the checkout (`~/src/stubby-music`), not a subfolder.
+
 The standalone game and editor adapter share the root Cargo workspace, its one
 Cargo.lock, the workspace Bevy dependency and rust-toolchain.toml. Keep the adapter
 package/type paths for existing saved prefabs. Do not independently upgrade Bevy
