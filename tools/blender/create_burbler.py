@@ -654,6 +654,7 @@ class Burbler(ModuleKit):
                           # The voice's output, normalled to the burbler's outlet (the speakers
                           # until streams carry it).
                           "normalled_output": {"place": "volume", "port": "out"},
+                          "hearing_radius_metres": 30.0,
                           # One spare cable per patch the voice needs, hanging on the comb. Each
                           # names the jacks it joins, so the screen can guide the player: ghost
                           # patches, pods pulsing in the cable's colour, one hint per step.

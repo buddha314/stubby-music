@@ -479,9 +479,13 @@ equivalent of an iron ore node, so the player does not pick it up.
 - **Laying streams works (2026-11-03, `streams.rs`, `add-stream-building`).** Q build
   mode, a cubic Bézier from the port's flow direction to the aim, whole 4 m segments
   bent from the glTF meshes, scrolling hologram chevrons, port halos, reed `need / have`
-  under the reticle; cost from `buildables.json`. Still to do: the staff's flow, notes
-  and bar lines on laid streams (2.7), bubbles (2.6), dismantle (F), saving laid
-  streams, collision checks. `--stream-review=<dir>` scripts it for the watchdog.
+  under the reticle; cost from `buildables.json`. Bar lines ride a sounding burbler's
+  streams, from the audio clock. Its voice is heard from the nearest point of the
+  burbler or its streams, within `hearing_radius_metres`
+  (`add-localized-machine-voices`). Still to do: the staff's flow and notes on laid
+  streams (2.7), bubbles (2.6), dismantle (F), saving laid streams, collision checks.
+  `tools/jackdaw_timed_test.py --streams` runs the script (`--stream-review=<dir>`)
+  under the watchdog.
 - Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the
   burbler, the HUD rack's modules and, later, streams and reeds; game logic (Codex)
   builds the interaction, the HUD, the patch, streams and production.

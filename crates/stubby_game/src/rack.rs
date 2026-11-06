@@ -62,8 +62,12 @@ impl RackState {
 
 /// Engine modules this rack owns (not the machine's clock), and whether it has sounded.
 #[derive(Component, Default)]
-struct RackEngine {
+pub(crate) struct RackEngine {
     owned: Vec<ModuleId>,
+    /// The voice's normalled output, which the streams place in the world.
+    pub(crate) voice: Option<PortRef>,
+    /// Every spare cable is patched, so the voice sounds and its stream carries it.
+    pub(crate) sounding: bool,
     /// (place, part) -> engine module, so a knob reaches the module it turns.
     parts: HashMap<(String, &'static str), ModuleId>,
     configured: bool,
@@ -236,6 +240,7 @@ struct Plan {
     owned: Vec<ModuleId>,
     commands: Vec<Command>,
     parts: HashMap<(String, &'static str), ModuleId>,
+    voice: Option<PortRef>,
 }
 
 /// The full engine patch for a rack: modules to add (at their knobs' values) and
@@ -284,7 +289,8 @@ fn plan(
             commands.push(Command::Connect { from, to });
         }
     }
-    if let Some(out) = config.normalled_output.as_ref().and_then(port) {
+    let voice = config.normalled_output.as_ref().and_then(port);
+    if let Some(out) = voice {
         commands.push(Command::Connect {
             from: out,
             to: PortRef::output(),
@@ -294,6 +300,7 @@ fn plan(
         owned,
         commands,
         parts: ids,
+        voice,
     }
 }
 
@@ -353,6 +360,8 @@ fn patch_engine(
         }
         engine.owned = plan.owned;
         engine.parts = plan.parts;
+        engine.voice = plan.voice;
+        engine.sounding = state.complete(config);
         if state.complete(config) && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });

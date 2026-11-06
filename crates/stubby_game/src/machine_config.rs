@@ -31,6 +31,9 @@ pub struct RackConfiguration {
     /// The voice's output, normalled to the machine's outlet.
     #[serde(default)]
     pub normalled_output: Option<JackRef>,
+    /// How far the voice carries from the machine and its streams. Beyond this it is
+    /// silent, so the world stays quiet until the player walks into earshot.
+    pub hearing_radius_metres: f32,
     /// The spare cables on the comb, each for one patch the voice needs.
     #[serde(default)]
     pub cables: Vec<RackCable>,

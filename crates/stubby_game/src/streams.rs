@@ -8,16 +8,27 @@
 //!
 //! Segment and hologram meshes are taken once from their glTFs, baked into the asset's
 //! root space, and bent along the plan per segment (design D4).
+//!
+//! A laid stream carries its burbler's voice in two ways. Bar lines ride the staff, one
+//! on each downbeat of the audio clock (`add-mudpit-burbler` 2.7), and the voice is heard
+//! from the nearest point of the burbler or its streams (`add-localized-machine-voices`).
+use super::audio::{ClockTick, Synth};
 use super::controls::{LookCapture, Player, ScreenMode};
+use super::machine_config::Profiles;
 use super::prefab_presentation::AssetPart;
-use super::prefabs::{AssetState, PlacedAsset};
+use super::prefabs::{AssetClock, AssetState, PlacedAsset};
+use super::rack::RackEngine;
 use super::recipes_plugin::{PlayerInventory, RecipeCatalog};
 use bevy::{
     camera::visibility::NoFrustumCulling,
+    ecs::message::Messages,
     mesh::VertexAttributeValues,
+    platform::collections::HashMap,
     prelude::*,
     world_serialization::{WorldAssetRoot, WorldInstanceReady},
 };
+use std::time::Instant;
+use stubby_audio::Command;
 
 /// The buildable whose cost each segment spends (`assets/recipes/buildables.json`).
 const SEGMENT: &str = "stream_segment";
@@ -41,6 +52,7 @@ impl Plugin for StreamBuildPlugin {
         review::install(app);
         app.init_resource::<StreamBuild>()
             .init_resource::<Templates>()
+            .insert_resource(StaffProfile::shipped())
             .add_observer(harvest_template)
             .add_systems(Startup, (load_templates, spawn_cost))
             .add_systems(
@@ -55,6 +67,16 @@ impl Plugin for StreamBuildPlugin {
                 (build_input, plan, lay, show_hologram, show_ports, show_cost)
                     .chain()
                     .before(super::controls::capture_cursor),
+            )
+            .add_systems(
+                Update,
+                (
+                    emit_bars.run_if(resource_exists::<Messages<ClockTick>>),
+                    ride_bars,
+                    place_voices,
+                )
+                    .chain()
+                    .after(lay),
             );
     }
 }
@@ -95,6 +117,13 @@ struct LaidStream {
     end: Port,
     end_used: bool,
     end_halo: Vec<Entity>,
+    path: Path,
+    /// The length of one bent segment: `path.length() / segments`.
+    span: f32,
+    /// The burbler whose water this is, through any chain of streams.
+    source: Option<Entity>,
+    /// How far along the whole chain from the burbler this stream starts.
+    start: f32,
 }
 
 // ---------- Templates: the glTFs' meshes, baked into root space ----------
@@ -126,6 +155,8 @@ struct Templates {
     hologram: Vec<Piece>,
     /// The hologram's materials tinted per state: (valid, invalid) for each piece.
     tints: Vec<(Handle<StandardMaterial>, Handle<StandardMaterial>)>,
+    /// The bar line's parts, centred on the staff (`Bar_0` without its place on it).
+    bar: Vec<(Handle<Mesh>, Handle<StandardMaterial>)>,
     pool: Vec<Vec<(Entity, Handle<Mesh>)>>,
 }
 
@@ -152,7 +183,7 @@ fn harvest_template(
     children: Query<&Children>,
     nodes: Query<(&Transform, Option<&Name>, Option<&ChildOf>)>,
     pieces: Query<(&Mesh3d, &MeshMaterial3d<StandardMaterial>)>,
-    meshes: Res<Assets<Mesh>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut templates: ResMut<Templates>,
 ) {
@@ -161,6 +192,7 @@ fn harvest_template(
         return;
     };
     let mut out = Vec::new();
+    let mut bar = Vec::new();
     for entity in children.iter_descendants(root) {
         let Ok((mesh, material)) = pieces.get(entity) else {
             continue;
@@ -181,6 +213,10 @@ fn harvest_template(
             if transform.scale.length_squared() < 1e-6 {
                 transform.scale = Vec3::ONE;
             }
+            // A bar line keeps its height on the staff; `bar_pose` gives the rest.
+            if name.is_some_and(|name| name.as_str() == "Bar_0") {
+                transform = Transform::from_xyz(0., transform.translation.y, 0.);
+            }
             affine = transform.to_matrix() * affine;
             if let Some(name) = name {
                 names.push(name.as_str().to_owned());
@@ -189,12 +225,16 @@ fn harvest_template(
             at = parent.parent();
         }
         let under = |node: &str| names.iter().any(|n| n == node);
-        // Notes and bar lines come with the music, a later pass: a laid stream is quiet.
-        if under("Pulse_0") || under("Bar_0") || under("Port_in_Halo") {
+        // Notes come with a later pass.
+        if under("Pulse_0") || under("Port_in_Halo") {
             continue;
         }
         let mut baked = plain_copy(source);
         transform_mesh(&mut baked, affine);
+        if under("Bar_0") {
+            bar.push((meshes.add(baked), material.0.clone()));
+            continue;
+        }
         let role = if under("Port_out_Halo") {
             Role::HaloOut
         } else if under("Port_in_Ring") {
@@ -213,7 +253,10 @@ fn harvest_template(
         });
     }
     match kind {
-        Kind::Segment => templates.segment = out,
+        Kind::Segment => {
+            templates.segment = out;
+            templates.bar = bar;
+        }
         Kind::Hologram => {
             let valid = hex("#ffd39a");
             let invalid = hex("#ff5a46");
@@ -567,6 +610,12 @@ fn lay(
         return;
     }
     let span = plan.path.length() / plan.segments as f32;
+    let (source, start) = match anchor.owner {
+        PortOwner::Burbler(entity) => (Some(entity), 0.),
+        PortOwner::Stream(entity) => streams.get(entity).map_or((None, 0.), |upstream| {
+            (upstream.source, upstream.start + upstream.path.length())
+        }),
+    };
     let (end_at, end_dir) = plan.path.at(plan.path.length());
     let mut end_halo = Vec::new();
     let stream = commands
@@ -619,6 +668,10 @@ fn lay(
         end,
         end_used: false,
         end_halo,
+        path: plan.path.clone(),
+        span,
+        source,
+        start,
     });
     match anchor.owner {
         PortOwner::Burbler(entity) => {
@@ -634,6 +687,195 @@ fn lay(
     }
     // Keep extending from the new end, like dragging on from a conveyor's end.
     build.anchor = Some(end);
+}
+
+// ---------- What a laid stream carries: bar lines and the voice ----------
+
+/// The staff and bar settings a stream reads from its profile.
+#[derive(Resource, Clone, Copy, Debug, PartialEq)]
+struct StaffProfile {
+    beats_per_bar: u32,
+    flow_speed: f32,
+    wave_amplitude: f32,
+    wavelength: f32,
+}
+impl StaffProfile {
+    fn shipped() -> Self {
+        let profile: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../assets/streams/stream_segment/asset.json"
+        ))
+        .expect("stream segment profile");
+        let number = |value: &serde_json::Value| value.as_f64().expect("number in profile") as f32;
+        Self {
+            beats_per_bar: profile["bars"]["beats_per_bar"]["default"]
+                .as_u64()
+                .expect("beats per bar") as u32,
+            flow_speed: number(&profile["notes"]["flow_speed_mps"]),
+            wave_amplitude: number(&profile["staff"]["wave"]["amplitude_m"]),
+            wavelength: number(&profile["staff"]["wave"]["wavelength_m"]),
+        }
+    }
+}
+
+/// A bar line riding the staff of one burbler's stream.
+#[derive(Component)]
+struct BarLine {
+    machine: Entity,
+    /// When its downbeat is heard, from the audio clock.
+    at: Instant,
+    /// Half a beat in flow time: a bar line sits between the measures.
+    lead_seconds: f32,
+}
+
+/// How far down the chain a bar line is, `elapsed` seconds after its downbeat.
+fn bar_distance(elapsed: f32, lead_seconds: f32, flow_speed: f32) -> f32 {
+    (elapsed + lead_seconds) * flow_speed
+}
+
+/// A bar line `along` metres down this stream: on the staff's centre line, square to it.
+fn bar_pose(path: &Path, span: f32, along: f32, staff: &StaffProfile) -> Transform {
+    let k = std::f32::consts::TAU / staff.wavelength;
+    // Each bent segment holds the same 4 m of staff, however long the bend made it.
+    let x = along.rem_euclid(span) * SEGMENT_LENGTH / span;
+    let (origin, dir) = path.at(along);
+    let side = dir.cross(Vec3::Y);
+    Transform {
+        // Blender's sideways wave (+y) is -z in the segment's root space.
+        translation: origin - side * staff.wave_amplitude * (k * x).sin(),
+        rotation: Quat::from_mat3(&Mat3::from_cols(dir, Vec3::Y, side))
+            * Quat::from_rotation_y((staff.wave_amplitude * k * (k * x).cos()).atan()),
+        scale: Vec3::ONE,
+    }
+}
+
+/// One bar line on each downbeat of a sounding burbler that has a stream.
+fn emit_bars(
+    mut commands: Commands,
+    mut ticks: MessageReader<ClockTick>,
+    mut beats: Local<HashMap<Entity, u32>>,
+    staff: Res<StaffProfile>,
+    templates: Res<Templates>,
+    machines: Query<(Entity, &AssetClock, &RackEngine)>,
+    streams: Query<&LaidStream>,
+) {
+    for tick in ticks.read() {
+        for (machine, clock, engine) in &machines {
+            if clock.engine != tick.module {
+                continue;
+            }
+            // Bars start with the sound, and on its first beat.
+            if !engine.sounding {
+                beats.remove(&machine);
+                continue;
+            }
+            let beat = beats.entry(machine).or_default();
+            let downbeat = *beat == 0;
+            *beat = (*beat + 1) % staff.beats_per_bar.max(1);
+            if !downbeat || !streams.iter().any(|s| s.source == Some(machine)) {
+                continue;
+            }
+            commands
+                .spawn((
+                    Name::new("Bar line"),
+                    BarLine {
+                        machine,
+                        at: tick.at.unwrap_or_else(Instant::now),
+                        lead_seconds: 30. / clock.bpm.max(1.),
+                    },
+                    Transform::default(),
+                    Visibility::Hidden,
+                ))
+                .with_children(|bar| {
+                    for (mesh, material) in &templates.bar {
+                        bar.spawn((Mesh3d(mesh.clone()), MeshMaterial3d(material.clone())));
+                    }
+                });
+        }
+    }
+}
+
+/// Move bar lines at the water's speed, from the audio clock, not the frame count. One
+/// past the end of its chain is gone.
+fn ride_bars(
+    mut commands: Commands,
+    staff: Res<StaffProfile>,
+    mut bars: Query<(Entity, &BarLine, &mut Transform, &mut Visibility)>,
+    streams: Query<&LaidStream>,
+) {
+    let now = Instant::now();
+    for (entity, bar, mut transform, mut visibility) in &mut bars {
+        if now < bar.at {
+            continue;
+        }
+        let elapsed = now.duration_since(bar.at).as_secs_f32();
+        let distance = bar_distance(elapsed, bar.lead_seconds, staff.flow_speed);
+        let on = streams.iter().find(|s| {
+            s.source == Some(bar.machine)
+                && (s.start..s.start + s.path.length()).contains(&distance)
+        });
+        if let Some(stream) = on {
+            *transform = bar_pose(&stream.path, stream.span, distance - stream.start, &staff);
+            *visibility = Visibility::Visible;
+        } else {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+/// Where a voice is heard from: the machine, or the nearest point of its streams.
+fn nearest_source(listener: Vec3, machine: Vec3, streams: &[&Path]) -> Vec3 {
+    let mut best = machine;
+    for path in streams {
+        let steps = (path.length() / 0.5).ceil().max(1.) as u32;
+        for k in 0..=steps {
+            let (point, _) = path.at(path.length() * k as f32 / steps as f32);
+            if point.distance_squared(listener) < best.distance_squared(listener) {
+                best = point;
+            }
+        }
+    }
+    best
+}
+
+/// Silent beyond the radius, full at the source: the same curve as a lightning bug's click.
+fn hearing_gain(distance: f32, radius: f32) -> f32 {
+    (1. - distance / radius.max(0.001)).clamp(0., 1.).powi(2)
+}
+
+/// Tell the engine where each rack's voice is, relative to the player's ears.
+fn place_voices(
+    synth: Option<Res<Synth>>,
+    profiles: Option<Res<Profiles>>,
+    camera: Query<
+        &GlobalTransform,
+        (
+            With<Camera3d>,
+            Without<super::machine_config::RackHudCamera>,
+        ),
+    >,
+    machines: Query<(Entity, &PlacedAsset, &RackEngine, &GlobalTransform)>,
+    streams: Query<&LaidStream>,
+) {
+    let (Some(synth), Some(profiles), Ok(camera)) = (synth, profiles, camera.single()) else {
+        return;
+    };
+    let (_, ears, listener) = camera.to_scale_rotation_translation();
+    for (machine, asset, engine, transform) in &machines {
+        let (Some(output), Some(config)) = (engine.voice, profiles.0.get(&asset.asset)) else {
+            continue;
+        };
+        let paths: Vec<&Path> = streams
+            .iter()
+            .filter(|s| s.source == Some(machine))
+            .map(|s| &s.path)
+            .collect();
+        let source = nearest_source(listener, transform.translation(), &paths);
+        synth.send(Command::SetEmitter {
+            output,
+            offset: (ears.inverse() * (source - listener)).to_array(),
+            volume: hearing_gain(source.distance(listener), config.hearing_radius_metres),
+        });
+    }
 }
 
 fn show_hologram(
@@ -886,6 +1128,8 @@ mod review {
         outlets: Query<(&AssetPart, &GlobalTransform)>,
         mut inventory: Option<ResMut<PlayerInventory>>,
         streams: Query<&LaidStream>,
+        bars: Query<&BarLine>,
+        mut racks: Query<&mut RackEngine>,
         mut calendar: ResMut<super::super::calendar::Calendar>,
     ) {
         let Some((_, outlet)) = outlets.iter().find(|(part, _)| part.name == "Outlet_0") else {
@@ -940,7 +1184,13 @@ mod review {
                 at + dir * 7. + side * 4.,
             ),
             3 => shoot(&mut commands, &review, "2-plan-valid.png"),
-            4 => build.click = true,
+            4 => {
+                build.click = true;
+                // Show bar lines without patching anything: their gate stays silent.
+                for mut rack in &mut racks {
+                    rack.sounding = true;
+                }
+            }
             // Plan on from the new end: 6 reeds left, too few.
             5 => {
                 if let Some(end) = streams.iter().next().map(|s| s.end) {
@@ -983,6 +1233,7 @@ mod review {
                     "valid": p.valid, "affordable": p.affordable,
                 })),
                 "streams": streams.iter().count(),
+                "bars": bars.iter().count(),
                 "reeds": inventory.as_ref().map(|i| i.items.quantity("reed")),
             }),
         );
@@ -1000,6 +1251,76 @@ mod tests {
             dir: Vec3::X,
             owner: PortOwner::Stream(Entity::PLACEHOLDER),
         }
+    }
+
+    fn staff() -> StaffProfile {
+        StaffProfile {
+            beats_per_bar: 4,
+            flow_speed: 1.5,
+            wave_amplitude: 0.07,
+            wavelength: 2.0,
+        }
+    }
+
+    #[test]
+    fn the_shipped_profile_gives_the_bars_settings() {
+        assert_eq!(StaffProfile::shipped(), staff());
+    }
+
+    #[test]
+    fn bar_lines_are_a_measure_apart_at_any_tempo() {
+        let staff = staff();
+        for bpm in [60., 90., 140.] {
+            let beat = 60. / bpm;
+            let first = bar_distance(
+                staff.beats_per_bar as f32 * beat,
+                beat / 2.,
+                staff.flow_speed,
+            );
+            let second = bar_distance(0., beat / 2., staff.flow_speed);
+            let spacing = staff.beats_per_bar as f32 * staff.flow_speed * beat;
+            assert!((first - second - spacing).abs() < 1e-4);
+        }
+    }
+
+    #[test]
+    fn a_bar_line_sits_on_the_staff_square_to_it() {
+        // Straight along +X: the pose reduces to the staff's own wave.
+        let path = Path::new(&port(), port().at + Vec3::X * 8.);
+        let staff = staff();
+        let span = 4.;
+        let k = std::f32::consts::TAU / staff.wavelength;
+        for x in [0.25_f32, 0.5, 1.5, 3.2] {
+            let pose = bar_pose(&path, span, x, &staff);
+            let on_staff = port().at.z - staff.wave_amplitude * (k * x).sin();
+            assert!((pose.translation.x - port().at.x - x).abs() < 0.02);
+            assert!((pose.translation.z - on_staff).abs() < 1e-3);
+            // A line across the channel turned by the wave's slope, as Blender's bar is.
+            let across = pose.rotation * Vec3::Z;
+            let yaw = (staff.wave_amplitude * k * (k * x).cos()).atan();
+            assert!((across.x - yaw.sin()).abs() < 1e-3);
+        }
+    }
+
+    #[test]
+    fn the_voice_comes_from_the_nearest_point_of_machine_or_stream() {
+        let path = Path::new(&port(), port().at + Vec3::X * 20.);
+        let machine = port().at - Vec3::X * 2.;
+        // Standing by the far end of the stream: heard from there, not the machine.
+        let far = port().at + Vec3::new(20., 0., 3.);
+        assert!(nearest_source(far, machine, &[&path]).distance(port().at + Vec3::X * 20.) < 0.6);
+        // Standing behind the machine: heard from the machine.
+        let behind = machine - Vec3::X * 5.;
+        assert_eq!(nearest_source(behind, machine, &[&path]), machine);
+        assert_eq!(nearest_source(far, machine, &[]), machine);
+    }
+
+    #[test]
+    fn hearing_fades_to_silence_at_the_radius() {
+        assert_eq!(hearing_gain(0., 30.), 1.);
+        assert!(hearing_gain(15., 30.) > hearing_gain(25., 30.));
+        assert_eq!(hearing_gain(30., 30.), 0.);
+        assert_eq!(hearing_gain(50., 30.), 0.);
     }
 
     #[test]
