@@ -312,7 +312,7 @@ releases. Pin exact minor versions in `Cargo.toml`.
 - Rust 2024 edition. Format changed Rust files and use the smallest relevant build or check; do not run all-target lint sweeps by default.
 - Tests: focused checks only during this prototype. DSP modules get offline render tests (render N
   samples, assert frequency/amplitude/phase) — they need no audio device.
-- Commits to our own repositories are authorized as part of completing requested work; do not ask for separate commit permission. Branch off `main` for feature work. Publication remains restricted to buddha314; jbuehler23 is read-only.
+- Commits to our own repositories, and merging their pull requests, are authorized as part of completing requested work (user direction, 2026-11-06); do not ask for separate permission. This covers buddha314 only. Branch off `main` for feature work. Publication remains restricted to buddha314; jbuehler23 is read-only.
 
 ### Working alongside other agents
 
@@ -567,9 +567,9 @@ Promote only while the shared editor is idle and its checkout clean. Follow
 ## Hard rule: jbuehler23 is read-only
 
 Never push to jbuehler23, whether through a named remote, a direct URL, GitHub CLI,
-an API or any other route. Never open pull requests or publish code changes to that
-account. Fetching and reading are allowed. Explicitly requested reports of general
-Jackdaw bugs may be filed as GitHub issues with an AI disclosure; this is not
-authorization for an upstream PR or push. All pushes and PRs go only to buddha314.
-This rule overrides any older instruction to offer fixes upstream. The upstream
-remote's push URL is deliberately disabled; do not restore or bypass it.
+an API or any other route. Never create issues or pull requests there, and never
+publish code changes to that account (user direction, 2026-11-06; this replaces the
+earlier allowance for filing bug reports as issues). Fetching and reading are allowed.
+All pushes and PRs go only to buddha314. This rule overrides any older instruction to
+offer fixes or reports upstream. The upstream remote's push URL is deliberately
+disabled; do not restore or bypass it.
