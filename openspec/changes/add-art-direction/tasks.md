@@ -7,7 +7,7 @@ tracked in the owning change.
 - [x] 1.2 `assets/lighting/lighting_keys.json`: bleak and bloomed × dawn, day, dusk, night (claimed: claude)
 - [x] 1.3 `tools/blender/render_style_sheet.py` and `docs/art/style_sheet.png`; `docs/art/palette.png` (claimed: claude)
 - [ ] 1.4 Check the keys in the game once its reader lands (`add-desert-opening` 3.4), and retune where Bevy and Cycles disagree
-- [ ] 1.5 Dusk as the air clears (reference in the style guide, 2026-11-06): decide whether `bloomed` dusk moves to its orange, or a stage is added between bleak and bloomed, then retune and re-render the style sheet
+- [x] 1.5 Dusk as the air clears (reference in the style guide, 2026-11-06): decided, a new stage between bleak and bloomed; the work is in `add-clearing-air-stage`
 
 ## 2. Asset backlog
 
