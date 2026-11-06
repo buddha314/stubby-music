@@ -2,7 +2,7 @@
 
 ## Player start marker (`tools/blender/create_player_start.py`)
 
-![marker](player_start_marker/preview.png)
+![marker](../../previews/actors/player_start_marker/preview.png)
 
 What the level designer sees where the player will begin; never drawn in play (its
 prefab carries `HiddenInGame`). Origin on the ground at the footprint's centre, so it

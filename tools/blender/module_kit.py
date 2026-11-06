@@ -53,8 +53,8 @@ def model_file(asset_id):
 
 class ModuleKit:
     # Category folder shared by the model (assets/models/<folder>/), its Blender
-    # source (assets-src/blender/<folder>/) and its profile and previews
-    # (assets/<folder>/<asset_id>/). LODs sit beside their model.
+    # source (assets-src/blender/<folder>/), its profile (assets/<folder>/<asset_id>/)
+    # and its previews (previews/<folder>/<asset_id>/). LODs sit beside their model.
     folder = "modules"
 
     def __init__(self, kind, asset_id, hp=8, **root_props):
@@ -452,7 +452,8 @@ class ModuleKit:
 
         source = PROJECT / f"assets-src/blender/{self.folder}/{self.asset_id}.blend"
         model = PROJECT / f"assets/models/{self.folder}/{self.asset_id}.glb"
-        preview = PROJECT / f"assets/{self.folder}/{self.asset_id}/preview.png"
+        profile_dir = PROJECT / f"assets/{self.folder}/{self.asset_id}"
+        preview = PROJECT / f"previews/{self.folder}/{self.asset_id}/preview.png"
         model.parent.mkdir(parents=True, exist_ok=True)
         source.parent.mkdir(parents=True, exist_ok=True)
         if bpy.app.background:
@@ -464,7 +465,8 @@ class ModuleKit:
             bpy.ops.wm.save_as_mainfile(filepath=str(source), check_existing=False)
             export_scene(scene, model)
             preview.parent.mkdir(parents=True, exist_ok=True)
-            preview.with_name("asset.json").write_text(json.dumps(profile, indent=2) + "\n")
+            profile_dir.mkdir(parents=True, exist_ok=True)
+            (profile_dir / "asset.json").write_text(json.dumps(profile, indent=2) + "\n")
             if before_render:
                 before_render()
             scene.render.filepath = str(preview)

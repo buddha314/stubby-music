@@ -27,7 +27,8 @@ placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_reeds.py
            (`-- 2` for one variant, `-- montage` for the lineup)
-Writes assets/models/flora/reeds/reed_clump_<k>.glb and assets/flora/reeds/.
+Writes assets/models/flora/reeds/reed_clump_<k>.glb, assets/flora/reeds/ (profiles)
+and previews/flora/reeds/.
 """
 from pathlib import Path
 import json
@@ -47,6 +48,7 @@ from module_kit import PROJECT  # noqa: E402
 
 VARIANTS = [5, 17, 29, 44]
 OUT = PROJECT / "assets/flora/reeds"
+PREVIEW_OUT = PROJECT / "previews/flora/reeds"
 FAR_LOD_M = 30.0
 SWAY_GROUPS = 3
 STUBBLE_HEIGHT = 0.12
@@ -228,7 +230,7 @@ class ReedClump(Burbler):
             self.stage_preview(resolution=(420, 560))
         report = self.finish(profile, aim=(0, 0, 0.7), camera_location=(1.4, -3.6, 1.3), before_render=stage)
         if bpy.app.background:
-            out = OUT / self.asset_id
+            out = PREVIEW_OUT / self.asset_id
             for name, args in PREVIEWS.items():
                 self.set_state(standing, stubble, *args)
                 self.scene.render.filepath = str(out / f"preview_{name}.png")
@@ -287,13 +289,13 @@ def montage():
         cmd += ["-tile", f"{len(files)}x1", "-geometry", "+4+4", "-background", "#15161a", "-fill", "#d8d4cc",
                 "-pointsize", "16", str(dest)]
         subprocess.run(cmd, check=True)
-    tile([OUT / f"reed_clump_0/preview_{p}.png" for p in PREVIEWS], list(PREVIEWS), OUT / "states.png")
-    tile([OUT / f"reed_clump_{k}/preview_dry.png" for k in range(len(VARIANTS))],
-         [f"variant {k}" for k in range(len(VARIANTS))], OUT / "lineup.png")
+    tile([PREVIEW_OUT / f"reed_clump_0/preview_{p}.png" for p in PREVIEWS], list(PREVIEWS), PREVIEW_OUT / "states.png")
+    tile([PREVIEW_OUT / f"reed_clump_{k}/preview_dry.png" for k in range(len(VARIANTS))],
+         [f"variant {k}" for k in range(len(VARIANTS))], PREVIEW_OUT / "lineup.png")
     for k in range(1, len(VARIANTS)):   # keep the repo light; re-rendered on every run
         for name in ("preview.png", "preview_far.png", "preview_harvested.png", "preview_regrowing.png",
                      "preview_green.png"):
-            (OUT / f"reed_clump_{k}" / name).unlink(missing_ok=True)
+            (PREVIEW_OUT / f"reed_clump_{k}" / name).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

@@ -256,6 +256,9 @@ testable by asserting identical output for identical seeds.
 ## Blender asset pipeline
 
 - Blender is installed at `~/.local/bin/blender`.
+- **Previews live in `previews/`, mirroring `assets/`** (`previews/flora/reeds/states.png`), so
+  they stay out of the Jackdaw asset browser and the shipped assets. Only PNGs the game loads
+  belong in `assets/`: today `assets/ui/` and the generated floor textures.
 - Sources live in `assets-src/blender/<category>/`. Export to **glTF binary (`.glb`)**
   into the same folder under `assets/models/` (`creatures`, `flora/<family>`,
   `machines`, `modules`, `props/<family>`, `streams`). Bevy loads `.glb`, never

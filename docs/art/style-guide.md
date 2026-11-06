@@ -191,7 +191,7 @@ and their glTF extras:
 Files, grouped by category folder (`creatures`, `flora/<family>`, `machines`, `modules`,
 `props/<family>`, `streams`), the same folder in each tree:
 `assets-src/blender/<folder>/<id>.blend`, `assets/models/<folder>/<id>.glb` (levels of
-detail inside it as `<id>_LOD<n>` nodes; Jackdaw's import settings in `<id>.glb.meta`), and `assets/<folder>/<id>/{asset.json,preview.png,preview_far.png}`.
+detail inside it as `<id>_LOD<n>` nodes; Jackdaw's import settings in `<id>.glb.meta`), `assets/<folder>/<id>/asset.json`, and `previews/<folder>/<id>/{preview.png,preview_far.png}`.
 Ids are `snake_case`.
 
 ## Pipeline

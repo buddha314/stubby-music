@@ -8,7 +8,7 @@ the staff glows brighter. Requirements: `openspec/changes/add-mudpit-burbler/`.
 
 ## Stream segment (`tools/blender/create_stream.py`)
 
-![muddy, silty, clear](stream_segment/preview_stages.png)
+![muddy, silty, clear](../../previews/streams/stream_segment/preview_stages.png)
 
 A straight 4 m length of the burbler's own channel: 1 m of water between banked
 sides, built up from the ground. Its bank profile and water height are imported from
@@ -41,13 +41,13 @@ sides, built up from the ground. Its bank profile and water height are imported 
 
 ## Stream hologram (`tools/blender/create_stream_hologram.py`)
 
-![valid, invalid](stream_hologram/preview_states.png)
+![valid, invalid](../../previews/streams/stream_hologram/preview_states.png)
 
 The planned stream, shown while the player extends one: a luminous ghost of the
 segment on the same 24 subdivisions, so the game bends and chains it the same way.
 `Flow` chevrons scroll downstream (+X, wrapping every `spacing_m`); the game tints every
 `StreamHologram_*` material by the profile's `states` (valid `#ffd39a`, invalid
-`#ff5a46`). `preview_extending.png` shows it running on from a laid stream.
+`#ff5a46`). `previews/streams/stream_hologram/preview_extending.png` shows it running on from a laid stream.
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream_hologram.py

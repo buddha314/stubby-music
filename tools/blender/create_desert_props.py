@@ -41,6 +41,7 @@ from create_reeds import ReedClump  # noqa: E402
 from module_kit import PROJECT  # noqa: E402
 
 OUT = PROJECT / "assets/props/desert"
+PREVIEW_OUT = PROJECT / "previews/props/desert"
 FAMILIES = {"brush": [3, 14, 27], "stump": [8, 19, 33], "debris": [6, 21, 40]}
 # bleak -> bloomed colours (sRGB) for the materials the game blends
 BLEND = {
@@ -301,7 +302,7 @@ class Prop(Burbler):
         if bpy.app.background:
             for name, b in (("bleak", 0.0), ("bloomed", 1.0)):
                 self.set_bloom(b)
-                self.scene.render.filepath = str(OUT / self.asset_id / f"preview_{name}.png")
+                self.scene.render.filepath = str(PREVIEW_OUT / self.asset_id / f"preview_{name}.png")
                 bpy.ops.render.render(write_still=True, scene=self.scene.name)
         report.update(triangles=tris)
         return report
@@ -337,15 +338,15 @@ def montage():
     for name in ("bleak", "bloomed"):
         cmd = [magick, "montage"]
         for f, k in assets():
-            cmd += ["-label", f"{f} {k}", str(OUT / f"desert_{f}_{k}/preview_{name}.png")]
+            cmd += ["-label", f"{f} {k}", str(PREVIEW_OUT / f"desert_{f}_{k}/preview_{name}.png")]
         cmd += ["-tile", "3x3", "-geometry", "+4+4", "-background", "#15161a", "-fill", "#d8d4cc",
-                "-pointsize", "16", str(OUT / f"sheet_{name}.png")]
+                "-pointsize", "16", str(PREVIEW_OUT / f"sheet_{name}.png")]
         subprocess.run(cmd, check=True)
     for f, k in assets():   # keep the repo light: sheets carry the variants
         if k:
             for n in ("preview.png", "preview_far.png"):
-                (OUT / f"desert_{f}_{k}" / n).unlink(missing_ok=True)
-    for path in OUT.glob("*/*.png"):
+                (PREVIEW_OUT / f"desert_{f}_{k}" / n).unlink(missing_ok=True)
+    for path in PREVIEW_OUT.glob("*/*.png"):
         subprocess.run([magick, str(path), "-strip", "-define", "png:compression-level=9", str(path)], check=True)
 
 

@@ -5,14 +5,14 @@ before anything on top). Every module comes from a generator script in
 `tools/blender/`, which is the source of truth. The scripts share
 `tools/blender/module_kit.py` (materials, case, knobs, jacks, labels, glyph strokes,
 preview and export). It writes the `.blend` to
-`assets-src/blender/modules/`, the `.glb` to `assets/models/modules/`, and `asset.json`,
-`preview.png` and `preview_far.png` (the same view from about 12 m) here.
+`assets-src/blender/modules/`, the `.glb` to `assets/models/modules/`, `asset.json` here, and
+`preview.png` and `preview_far.png` (the same view from about 12 m) to `previews/modules/`.
 
 ## Clock (`tools/blender/create_clock_lamp.py`)
 
 | Close | About 12 m |
 | --- | --- |
-| ![clock](clock_lamp/preview.png) | ![clock from 12 m](clock_lamp/preview_far.png) |
+| ![clock](../../previews/modules/clock_lamp/preview.png) | ![clock from 12 m](../../previews/modules/clock_lamp/preview_far.png) |
 
 The opening's second discovery, and the clock that manifests as a pulsating light. It
 is a tempo module in the spirit of performance clock modules: a **BPM readout** and a
@@ -40,7 +40,7 @@ is a tempo module in the spirit of performance clock modules: a **BPM readout** 
 
 | Square | Saw | Triangle | Sine |
 | --- | --- | --- | --- |
-| ![square](square_vco/preview.png) | ![saw](saw_vco/preview.png) | ![triangle](triangle_vco/preview.png) | ![sine](sine_vco/preview.png) |
+| ![square](../../previews/modules/square_vco/preview.png) | ![saw](../../previews/modules/saw_vco/preview.png) | ![triangle](../../previews/modules/triangle_vco/preview.png) | ![sine](../../previews/modules/sine_vco/preview.png) |
 
 8HP oscillators: one FREQ knob, a V/OCT input, and an OUT output on the dark patch
 outputs conventionally sit on. Each waveform must read from a distance, so it appears
@@ -87,7 +87,7 @@ exported module. The Clock's equivalents are `Port_gate`, `Port_phase`, `Knob_bp
 
 | Burbler clock | Volume |
 | --- | --- |
-| ![burbler clock](burbler_clock/preview.png) | ![volume](volume/preview.png) |
+| ![burbler clock](../../previews/modules/burbler_clock/preview.png) | ![volume](../../previews/modules/volume/preview.png) |
 
 The modules in a mudpit burbler's configuration HUD (`add-mudpit-burbler`), with a VCO
 in the middle place: see `docs/art/hud_mock.png`. They are the first modules in the

@@ -2,7 +2,7 @@
 
 ## Patch cable (`tools/blender/create_patch_cable.py`)
 
-![plug](patch_plug/preview.png)
+![plug](../../previews/cables/patch_plug/preview.png)
 
 The general cable that patches any module jack to any other, in the HUD rack and in
 the world. Two parts:
