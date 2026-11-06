@@ -29,8 +29,8 @@ import subprocess
 import sys
 
 REPO = Path(__file__).resolve().parents[1]
-PROJECT = REPO / "jackdaw"
-MODELS = REPO / "assets/models"   # jackdaw/assets/models links here
+PROJECT = REPO
+MODELS = REPO / "assets/models"
 # Models without hand-made levels that are heavy enough to want generated ones.
 GENERATE = {
     "machines/mudpit_burbler.glb": 3,

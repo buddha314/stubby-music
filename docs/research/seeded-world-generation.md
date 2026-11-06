@@ -220,10 +220,10 @@ Observed on the documentation branch based on main during this research:
 | Existing piece | Present behavior | Design implication |
 | --- | --- | --- |
 | `crates/stubby_game/src/main.rs` | Reads `--seed=`, defaulting to 42 | There is already a seed entry point; no world-selection UI is established |
-| `jackdaw/src/main.rs` | Same seed input, loads an authored scene and normally inserts `AuthoredLevel` | Seed selection alone does not rearrange saved prefab placements |
+| `crates/stubby_jackdaw/src/main.rs` | Same seed input, loads an authored scene and normally inserts `AuthoredLevel` | Seed selection alone does not rearrange saved prefab placements |
 | `crates/stubby_game/src/terrain.rs` | Coordinate/seed hash builds a finite cracked-mud mesh | Deterministic surface detail exists; it is not yet a general streamed world generator |
 | `crates/stubby_game/src/lib.rs` | Uses `WorldSeed` for ground texture/mesh and environmental variation | Keep one explicit world configuration flowing through those consumers |
-| `jackdaw/assets/scene.bsn` | Saved authored opening, including placed bugs and burbler | Reproduction needs this layout's revision as well as the seed |
+| `assets/scene.bsn` | Saved authored opening, including placed bugs and burbler | Reproduction needs this layout's revision as well as the seed |
 | `openspec/changes/add-opening-region/design.md` | Prefab-authored layout; later seeded scatter allowed around it | Hybrid generation is compatible with current direction; replacing the opening is a separate design decision |
 | Editor floor preview | Exported generated model, separate from runtime generation | Future preview and Play must consume the same selected configuration; a stale preview export is not proof of a seed bug |
 
@@ -286,9 +286,9 @@ git status --short
 world_review_dir="$(mktemp -d /tmp/stubby-worldgen-review.XXXXXX)"
 git rev-parse HEAD > "$world_review_dir/game-revision.txt"
 git -C /home/buddha/src/jackdaw rev-parse HEAD > "$world_review_dir/editor-revision.txt"
-cp jackdaw/compatibility.json "$world_review_dir/compatibility.json"
-cp jackdaw/assets/scene.bsn "$world_review_dir/scene.bsn"
-sha256sum Cargo.lock jackdaw/assets/scene.bsn > "$world_review_dir/input-checksums.txt"
+cp compatibility.json "$world_review_dir/compatibility.json"
+cp assets/scene.bsn "$world_review_dir/scene.bsn"
+sha256sum Cargo.lock assets/scene.bsn > "$world_review_dir/input-checksums.txt"
 ```
 
 The copied scene protects the layout used for the experiment; it is not a full
@@ -410,7 +410,7 @@ engine, new framework or custom RNG.
 | Phase | Deliverable and likely touchpoints | Completion evidence |
 | --- | --- | --- |
 | 0. Agree the contract | OpenSpec proposal linked to `add-opening-region`; choose which resources/scatter vary and which placements stay authored | Example configuration and explicit initial-world versus save-state promise |
-| 1. Configuration | Small shared game-side configuration module using existing serde/JSON; common parsing for `crates/stubby_game/src/main.rs`, `jackdaw/src/main.rs` and export | Invalid seeds fail clearly; both entry points resolve the same configuration; copy/import round-trip retains concrete settings |
+| 1. Configuration | Small shared game-side configuration module using existing serde/JSON; common parsing for `crates/stubby_game/src/main.rs`, `crates/stubby_jackdaw/src/main.rs` and export | Invalid seeds fail clearly; both entry points resolve the same configuration; copy/import round-trip retains concrete settings |
 | 2. Placement data | A pure generation module under `crates/stubby_game/src/`, reusing current terrain functions and a documented RNG/noise library where needed | One focused fixture covers repeated generation, changed seed and reordered region requests |
 | 3. Runtime/preview integration | Use existing prefab binding, authored `SceneNodeId`/`PrefabEntityId` support and native model/LOD pipeline; extend `export.rs` and the bounded diagnostic selector | Preview and Play identify the same configuration and placement set |
 | 4. Persistence | Initial configuration plus stable-keyed resource/construction deltas, through the game's chosen save boundary | Resume preserves one representative collection and construction case once that save support exists |

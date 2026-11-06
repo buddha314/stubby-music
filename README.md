@@ -29,7 +29,7 @@ To save a preview after shader warmup, append
 `--screenshot=/tmp/stubby-desert-preview.png` to the game arguments.
 
 Open the level in the shared Jackdaw editor with `tools/jackdaw.sh open`.
-First-time setup and Play instructions are in [jackdaw/README.md](jackdaw/README.md).
+First-time setup and Play instructions are in [crates/stubby_jackdaw/README.md](crates/stubby_jackdaw/README.md).
 
 The audio engine is `crates/stubby_audio`; it has no Bevy dependency. One shared
 audio thread drives the lightning bugs’ clocks and short click patches. The opening
@@ -54,7 +54,7 @@ for VCO, LFO and gate uses. Other waveform resources and production combinations
 will be authored later.
 
 Version selection follows the shared Jackdaw checkout, recorded in
-[`jackdaw/compatibility.json`](jackdaw/compatibility.json). Both game entry points
+[`compatibility.json`](compatibility.json). Both game entry points
 share one Cargo workspace and lockfile. Run `tools/jackdaw.sh check` before editor
 work; see [the version and upstream-sync policy](docs/research/jackdaw-version-policy.md).
 

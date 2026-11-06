@@ -1,7 +1,7 @@
 # Desert opening in Jackdaw
 
-Use the shared source checkout `/home/buddha/src/jackdaw`. This folder is a game
-project, not an editor fork. Both editor and CLI come from that shared checkout.
+Use the shared source checkout `/home/buddha/src/jackdaw`. The repo root is the game
+project (`jackdaw.toml`), and this crate is what Jackdaw builds; neither is an editor fork. Both editor and CLI come from that shared checkout.
 The system-wide `~/.cargo/bin/jd` and `~/.cargo/bin/jackdaw` are soft links to that shared build.
 
 The shared checkout uses `https://github.com/buddha314/jackdaw.git` as development
@@ -51,8 +51,8 @@ streams the desert view; Stop restores authoring. The shared Jackdaw regression
 and all 23 PIE projection tests pass. The game workspace tests and both game
 and adapter Clippy checks pass.
 
-The lightning bug models are shared through `assets/models`, a symlink into the
-main runtime asset folder. Play compiles the shared pulse code and uses the
+The game and Play share one asset folder, the repo root's `assets/`. Play compiles the
+shared pulse code and uses the
 standalone `stubby_audio` crate through its own public API. The edit viewport's
 floor proxy does not animate the creatures; Play does.
 Audio: Play runs the game's audio engine too. The run configuration
@@ -121,7 +121,7 @@ model in the Project window and open its import settings:
   Jackdaw own the meshes, LOD generation and runtime switching; the game does not
   rebuild scenes or supply another LOD implementation.
 
-`cargo test --test prefabs` (from this folder) loads every prefab the way the editor
+`cargo test -p stubby_jackdaw --test prefabs` loads every prefab the way the editor
 does and fails on an unknown type, a missing model or a missing LOD level. Run it
 after adding or editing prefabs.
 
@@ -162,7 +162,7 @@ Music pitch, clock tempo and flash envelopes retain their audio timing.
 Build the adapter, then run the seven-instance saved-prefab fixture:
 
 ```sh
-cargo +1.99.0 build --bin stubby_jackdaw --manifest-path jackdaw/Cargo.toml
+cargo +1.99.0 build --bin stubby_jackdaw --manifest-path crates/stubby_jackdaw/Cargo.toml
 python3 tools/jackdaw_timed_test.py --prefabs --seconds 20 --refresh 60 --name prefab-runtime
 ```
 

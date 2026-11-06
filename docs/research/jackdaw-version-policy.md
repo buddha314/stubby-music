@@ -4,10 +4,10 @@
 features jbuehler23 publishes). The chain is Bevy main → jbuehler23/jackdaw main →
 buddha314/jackdaw main → this game. `tools/jackdaw.sh sync` reconciles it end to end;
 see AGENTS.md. Third-party crates without a Bevy-main release (Avian and its helpers)
-are generated forks listed in `jackdaw/bevy_main_forks.json`. The earlier policy below
+are generated forks listed in `bevy_main_forks.json`. The earlier policy below
 (follow dev/0.20, do not move to Bevy main) is superseded; dev/0.20 stays for rollback.
 
-`jackdaw/compatibility.json` records the exact shared source commit, upstream base,
+`compatibility.json` records the exact shared source commit, upstream base,
 Jackdaw release, Bevy version/source and Rust toolchain. Both game entry points
 share one root Cargo workspace, one Bevy declaration and one Cargo.lock. The
 adapter package remains to preserve saved-prefab type paths. Domain/audio code

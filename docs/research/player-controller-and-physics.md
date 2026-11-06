@@ -40,7 +40,7 @@ the scrub oaks and every prop. A factory builder needs the player to stop at mac
   control map, with a separate input context for the rack screen (cursor free,
   movement off).
 - **Colliders on placed things:** authored in Jackdaw with its Physics module
-  (`[modules] physics = true` in `jackdaw/jackdaw.toml`; `AvianCollider` and
+  (`[modules] physics = true` in `jackdaw.toml`; `AvianCollider` and
   `RigidBody::Static` on prefabs: oak trunks, the burbler's banks, stumps, modules).
   This is Jackdaw's documented workflow, not an editor change. Small things the player
   walks through (reeds, brush, debris, bugs) get no collider.
@@ -94,6 +94,6 @@ by the selected shared editor's module support. See `jackdaw-version-policy.md`.
 
 The game now follows the shared dev/0.20 branch (upstream release-0.20), rather
 than bleeding-edge Bevy main. Its exact Jackdaw commit is recorded in
-`jackdaw/compatibility.json`; both game entry points use its Bevy 0.20.0 and Rust
+`compatibility.json`; both game entry points use its Bevy 0.20.0 and Rust
 1.99.0. That line has Physics support. Adding the actual runtime plugin and game
 colliders remains a separate task; no physics implementation is claimed here.

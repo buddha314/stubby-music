@@ -19,15 +19,15 @@ class CompatibilityTests(unittest.TestCase):
         self.root = Path(self.temp.name) / 'game'
         self.source = Path(self.temp.name) / 'jackdaw'
         for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
-                     'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'jackdaw/Cargo.toml',
-                     'jackdaw/jackdaw.toml', 'jackdaw/compatibility.json'):
+                     'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'crates/stubby_jackdaw/Cargo.toml',
+                     'jackdaw.toml', 'compatibility.json'):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / name, dest)
         self.source.mkdir()
         for name in ('Cargo.lock', 'rust-toolchain.toml'):
             shutil.copyfile(self.root / name, self.source / name)
-        self.record = json.loads((self.root / 'jackdaw/compatibility.json').read_text())
+        self.record = json.loads((self.root / 'compatibility.json').read_text())
         self.responses = {
             ('rev-parse', 'HEAD'): self.record['jackdaw']['revision'],
             ('status', '--porcelain', '--untracked-files=no'): '',
@@ -59,15 +59,15 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(any('Cargo.lock must resolve' in e for e in self.check()))
 
     def test_independent_adapter_version_and_lockfile_are_rejected(self):
-        path = self.root / 'jackdaw/Cargo.toml'
+        path = self.root / 'crates/stubby_jackdaw/Cargo.toml'
         path.write_text(path.read_text().replace('bevy.workspace = true', 'bevy.workspace = false'))
-        (self.root / 'jackdaw/Cargo.lock').write_text('version = 4\n')
+        (self.root / 'crates/stubby_jackdaw/Cargo.lock').write_text('version = 4\n')
         errors = self.check()
         self.assertTrue(any('inherit Bevy' in e for e in errors))
         self.assertTrue(any('separate adapter lockfile' in e for e in errors))
 
     def test_published_runtime_cannot_replace_shared_source(self):
-        path = self.root / 'jackdaw/Cargo.toml'
+        path = self.root / 'crates/stubby_jackdaw/Cargo.toml'
         original = path.read_text()
         line = next(line for line in original.splitlines() if line.startswith('jackdaw_runtime ='))
         path.write_text(original.replace(line, 'jackdaw_runtime = "0.21"'))
@@ -84,7 +84,7 @@ class CompatibilityTests(unittest.TestCase):
         for name in ('jackdaw', 'jd'):
             (target / name).write_bytes(name.encode())
             receipt['sha256'][name] = hashlib.sha256(name.encode()).hexdigest()
-        dest = self.root / 'jackdaw/.jackdaw/editor-build.json'
+        dest = self.root / '.jackdaw/editor-build.json'
         dest.parent.mkdir()
         dest.write_text(json.dumps(receipt))
         self.assertEqual(versions.validate_binaries(self.root, self.source), [])

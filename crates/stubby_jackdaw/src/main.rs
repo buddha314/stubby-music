@@ -3,7 +3,7 @@ mod prefab_bridge;
 
 fn main() -> AppExit {
     let plugins = DefaultPlugins.set(AssetPlugin {
-        file_path: format!("{}/assets", env!("CARGO_MANIFEST_DIR")),
+        file_path: format!("{}/../../assets", env!("CARGO_MANIFEST_DIR")),
         ..default()
     });
     let plugins = jackdaw_runtime::maybe_windowless(plugins);

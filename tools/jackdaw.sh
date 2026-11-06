@@ -5,7 +5,7 @@ repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="${JACKDAW_SOURCE:-${repo_dir}/../jackdaw}"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 cli_path="${source_dir}/target/debug/jd"
-project_dir="${repo_dir}/jackdaw"
+project_dir="${repo_dir}"
 cd "$repo_dir"
 command_name="${1:-open}"
 python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir"
@@ -46,7 +46,7 @@ path.write_text(json.dumps(receipt, indent=2) + '\n')
 PYRECEIPT
         mkdir -p "${project_dir}/.jackdaw/target"
         if [[ ! -e "${project_dir}/.jackdaw/target/game" ]]; then
-            ln -s ../../../target "${project_dir}/.jackdaw/target/game"
+            ln -s ../../target "${project_dir}/.jackdaw/target/game"
         fi
         ;;
     sync)

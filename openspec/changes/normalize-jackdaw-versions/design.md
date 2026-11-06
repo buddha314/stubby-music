@@ -4,7 +4,7 @@ Jackdaw is the authority. Use buddha314/jackdaw dev/0.20, based on upstream
 release-0.20, with our existing PIE light-probe fix retained. This supported line
 has Avian Physics and the native LOD APIs the game uses. Its lockfile selects
 Bevy 0.20.0 and its toolchain is Rust 1.99.0. The exact fork commit is recorded in
-jackdaw/compatibility.json; path dependencies alone never count as a source pin.
+compatibility.json; path dependencies alone never count as a source pin.
 
 ## Decisions
 

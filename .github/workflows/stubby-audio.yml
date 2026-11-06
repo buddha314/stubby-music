@@ -10,9 +10,9 @@ on:
       - "Cargo.lock"
       - "Cargo.toml"
       - "rust-toolchain.toml"
-      - "jackdaw/compatibility.json"
-      - "jackdaw/Cargo.toml"
-      - "jackdaw/jackdaw.toml"
+      - "compatibility.json"
+      - "crates/stubby_jackdaw/Cargo.toml"
+      - "jackdaw.toml"
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
@@ -23,9 +23,9 @@ on:
       - "Cargo.lock"
       - "Cargo.toml"
       - "rust-toolchain.toml"
-      - "jackdaw/compatibility.json"
-      - "jackdaw/Cargo.toml"
-      - "jackdaw/jackdaw.toml"
+      - "compatibility.json"
+      - "crates/stubby_jackdaw/Cargo.toml"
+      - "jackdaw.toml"
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
@@ -46,7 +46,7 @@ jobs:
         run: |
           python3 - <<'PYVERSIONS' >> "$GITHUB_OUTPUT"
           import json
-          record = json.load(open('jackdaw/compatibility.json'))
+          record = json.load(open('compatibility.json'))
           print('jackdaw=' + record['jackdaw']['revision'])
           print('rust=' + record['rust'])
           PYVERSIONS

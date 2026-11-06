@@ -11,7 +11,7 @@
 - [ ] 2.5 Greenness from local water or light quality; sway `Sway_<n>` with the wind
 
 ## 3. Prefabs carry their resource (found 2026-11-01)
-The reed prefabs (`jackdaw/assets/prefabs/flora/reed_clump_0..3.bsn`) hold only the
+The reed prefabs (`assets/prefabs/flora/reed_clump_0..3.bsn`) hold only the
 model; Play adds `ResourceNode` by file stem. Bugs and oaks carry theirs on the prefab,
 so a placed reed shows no resource and no editable `instance` in the editor.
 - [ ] 3.1 (Claude, in Jackdaw once the editor builds again) add `ResourceNode { resource: "reed_clump", instance: "reed_clump-<k>" }` to each reed prefab and **Save as Prefab**

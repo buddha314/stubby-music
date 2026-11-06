@@ -141,7 +141,7 @@ def main():
         parser.error('--seconds must be greater than zero and no more than 20')
     if not args.command:
         subprocess.run([sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--binaries'], check=True)
-    project = ROOT / 'jackdaw'
+    project = ROOT
     manifest = project / 'jackdaw.toml'
     original = manifest.read_text()
     env = dict(os.environ)
