@@ -27,6 +27,9 @@ rustc-ice-*.txt
 .jackdaw/
 assets/generated/
 
+# Reference images with unknown rights: described in docs/art/style-guide.md, not published
+docs/art/references/
+
 # Blender backup saves and Python bytecode
 *.blend[0-9]*
 __pycache__/
