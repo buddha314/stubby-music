@@ -312,7 +312,7 @@ releases. Pin exact minor versions in `Cargo.toml`.
 - Rust 2024 edition. Format changed Rust files and use the smallest relevant build or check; do not run all-target lint sweeps by default.
 - Tests: focused checks only during this prototype. DSP modules get offline render tests (render N
   samples, assert frequency/amplitude/phase) — they need no audio device.
-- Commits to our own repositories are authorized as part of completing requested work; do not ask for separate commit permission. Branch off `main` for feature work. Publication remains restricted to buddha314; jbuehler23 is read-only.
+- Commits to our own repositories, and merging their pull requests, are authorized as part of completing requested work (user direction, 2026-11-06); do not ask for separate permission. This covers buddha314 only. Branch off `main` for feature work. Publication remains restricted to buddha314; jbuehler23 is read-only.
 
 ### Working alongside other agents
 
