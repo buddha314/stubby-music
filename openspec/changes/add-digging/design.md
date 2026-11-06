@@ -14,3 +14,5 @@ them (`add-scrub-oak-production`). Nothing yet lets the player change the ground
   or water quality above a threshold for some time?
 - Whether muddy water waters a tree at all, or only cleaned water (the fluid change says
   quality matters; `add-fluid-quality-and-viscosity`).
+
+**Reference (2026-11-06):** `docs/research/persian-water-systems.md` describes how qanats and gardens manage water with the land, with undecided ideas for this game (`explore-water-landscape-ideas`).
