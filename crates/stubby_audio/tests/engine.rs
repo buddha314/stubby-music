@@ -676,3 +676,54 @@ fn a_loaded_sample_plays_once_to_the_speakers() {
     rig.render(SR as usize / 10);
     assert!(peak(&rig.left[after..]) < 1e-4, "and is over");
 }
+
+#[test]
+fn an_emitter_pans_toward_its_side_and_its_volume_silences_it() {
+    let mut rig = Rig::new();
+    let vco = rig.add(1, ModuleKind::SquareVco { freq_hz: 220.0 });
+    rig.connect(out(vco), PortRef::output());
+    let emit = |rig: &mut Rig, x: f32, volume: f32| {
+        rig.send(Command::SetEmitter {
+            output: out(vco),
+            offset: [x, 0.0, 0.0],
+            volume,
+        });
+        rig.flush();
+    };
+    // Settle, then compare the two ears over the last stretch.
+    let window = |rig: &mut Rig, frames: usize| {
+        rig.left.clear();
+        rig.right.clear();
+        rig.render(SR as usize / 2);
+        rig.left.drain(..rig.left.len() - frames);
+        rig.right.drain(..rig.right.len() - frames);
+    };
+    emit(&mut rig, -10.0, 1.0);
+    window(&mut rig, 4800);
+    assert!(
+        peak(&rig.left) > peak(&rig.right) * 1.5,
+        "left: {} right: {}",
+        peak(&rig.left),
+        peak(&rig.right)
+    );
+    emit(&mut rig, 10.0, 1.0);
+    window(&mut rig, 4800);
+    assert!(
+        peak(&rig.right) > peak(&rig.left) * 1.5,
+        "left: {} right: {}",
+        peak(&rig.left),
+        peak(&rig.right)
+    );
+    emit(&mut rig, 10.0, 0.0);
+    window(&mut rig, 4800);
+    assert!(peak(&rig.left).max(peak(&rig.right)) < 1e-3);
+    // The voice can still be removed, and a late update for it is ignored.
+    rig.send(Command::RemoveModule { id: vco });
+    rig.send(Command::SetEmitter {
+        output: out(vco),
+        offset: [0.0; 3],
+        volume: 1.0,
+    });
+    rig.flush();
+    rig.render(SR as usize / 4);
+}

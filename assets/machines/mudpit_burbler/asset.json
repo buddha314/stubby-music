@@ -57,6 +57,7 @@
         "module": "volume"
       }
     ],
+    "hearing_radius_metres": 30.0,
     "normalled_output": {
       "place": "volume",
       "port": "out"

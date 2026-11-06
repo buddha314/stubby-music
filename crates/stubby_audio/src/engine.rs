@@ -12,6 +12,7 @@ use crate::modules::{
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 use crate::random_clock::RandomClockNode;
 use audioadapter_buffers::direct::InterleavedSlice;
+use firewheel::nodes::spatial_basic::SpatialBasicNode;
 use firewheel::{
     ActivateInfo, FirewheelConfig, FirewheelContext,
     backend::BackendProcessInfo,
@@ -72,6 +73,8 @@ pub struct Engine {
     cables: HashMap<PortRef, PortRef>,
     /// Outputs cabled to the master output.
     to_master: HashSet<PortRef>,
+    /// Master outputs placed in the world, each through its own spatial node.
+    emitters: HashMap<PortRef, (NodeID, SpatialBasicNode)>,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
@@ -100,6 +103,7 @@ impl Engine {
             modules: HashMap::new(),
             cables: HashMap::new(),
             to_master: HashSet::new(),
+            emitters: HashMap::new(),
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
@@ -152,6 +156,11 @@ impl Engine {
             Command::AddModule { id, kind } => self.add_module(id, kind),
             Command::PlaySample { sample, gain } => self.play_sample(sample, gain),
             Command::RemoveModule { id } => self.remove_module(id),
+            Command::SetEmitter {
+                output,
+                offset,
+                volume,
+            } => self.set_emitter(output, offset, volume),
             Command::Connect { from, to } => self.connect(from, to),
             Command::Disconnect { from, to } => self.disconnect(from, to),
             Command::SetParam {
@@ -468,13 +477,26 @@ impl Engine {
             | NodeState::Constant(_)
             | NodeState::Envelope(_) => false,
         };
+        let spatial: Vec<NodeID> = self
+            .emitters
+            .iter()
+            .filter(|(from, _)| from.module == id)
+            .map(|(_, (node, _))| *node)
+            .collect();
+        self.emitters.retain(|from, _| from.module != id);
         if fading {
             let sample_rate = self.sample_rate().unwrap_or(48_000) as f64;
             let after = self.cx.audio_clock().samples.0.max(0) as u64
                 + (RETIRE_SECONDS * sample_rate) as u64;
             self.retiring.push((module.node, after));
+            // Its fade out still has to reach the speakers.
+            self.retiring
+                .extend(spatial.into_iter().map(|node| (node, after)));
         } else {
             let _ = self.cx.remove_node(module.node);
+            for node in spatial {
+                let _ = self.cx.remove_node(node);
+            }
         }
         // Firewheel removes a node's edges with it; our tables forget them now, since
         // the module no longer exists as far as the game is concerned.
@@ -483,6 +505,55 @@ impl Engine {
         self.to_master.retain(|from| from.module != id);
         self.pending_params.retain(|(m, _), _| *m != id);
         self.event_rings.retain(|(m, _)| *m != id);
+        Ok(())
+    }
+
+    /// Route a master output through its spatial node (added on first use) and update
+    /// where it is. The hearing range is the game's `volume`, so the node's own distance
+    /// loss is off; it still pans and muffles.
+    fn set_emitter(
+        &mut self,
+        output: PortRef,
+        offset: [f32; 3],
+        volume: f32,
+    ) -> Result<(), EngineError> {
+        if !self.to_master.contains(&output) {
+            return Ok(());
+        }
+        let volume = firewheel::Volume::Linear(volume.clamp(0., 1.));
+        if let Some((node, old)) = self.emitters.get_mut(&output) {
+            let new = SpatialBasicNode {
+                volume,
+                offset: offset.into(),
+                ..*old
+            };
+            let mut queue = self.cx.event_queue(*node);
+            new.diff(old, PathBuilder::default(), &mut queue);
+            *old = new;
+            return Ok(());
+        }
+        let mut params = SpatialBasicNode {
+            volume,
+            offset: offset.into(),
+            ..SpatialBasicNode::default()
+        };
+        params.distance_attenuation.distance_gain_factor = 0.;
+        let graph = |e: AddEdgeError| EngineError::Graph(e.to_string());
+        let (src, src_port) = self.output_port(output)?;
+        let node = self
+            .cx
+            .add_node(params, None)
+            .map_err(|e| EngineError::Graph(e.to_string()))?;
+        let out = self.cx.graph_out_node_id();
+        self.cx
+            .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
+        self.cx
+            .connect(src, node, &[(src_port, 0)], false)
+            .map_err(graph)?;
+        self.cx
+            .connect(node, out, &[(0, 0), (1, 1)], false)
+            .map_err(graph)?;
+        self.emitters.insert(output, (node, params));
         Ok(())
     }
 
@@ -549,6 +620,10 @@ impl Engine {
         if to == PortRef::output() {
             if !self.to_master.remove(&from) {
                 return Err(EngineError::NotConnected { from, to });
+            }
+            if let Some((node, _)) = self.emitters.remove(&from) {
+                let _ = self.cx.remove_node(node);
+                return Ok(());
             }
             let out = self.cx.graph_out_node_id();
             self.cx

@@ -88,6 +88,16 @@ pub enum Command {
         param: &'static str,
         value: f32,
     },
+    /// Place an output already cabled to the master output in the world: `offset` is
+    /// where the sound is relative to the listener, in metres (+x right; other axes
+    /// only add distance), and `volume` scales it (0..1). Sent every frame as things
+    /// move; the change is smoothed. An output no longer cabled is ignored, since a
+    /// rack can rebuild its voice in the same frame.
+    SetEmitter {
+        output: PortRef,
+        offset: [f32; 3],
+        volume: f32,
+    },
     /// Play a loaded sample once, straight to the speakers at `gain`: a sound effect
     /// (a plug snapping in), not part of any patch. Overlapping plays each get a voice.
     PlaySample {
