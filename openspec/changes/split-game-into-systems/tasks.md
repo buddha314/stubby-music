@@ -1,8 +1,8 @@
 ## 1. Unwind the source includes
 
-- [ ] 1.1 `stubby_jackdaw` depends on `stubby_game` as an ordinary dependency; remove the `#[path]` `desert` module and repoint `prefab_bridge.rs` and `model_part_bindings.rs`
-- [ ] 1.2 `stubby_game` depends on `bevy_stubby_recipes` normally; remove `embedded_recipes_plugin` from both crates
-- [ ] 1.3 With the shared editor idle, rewrite `stubby_jackdaw::desert::` to `stubby_game::` in `assets/prefabs/**/*.bsn` and the two scenes; `cargo test -p stubby_jackdaw --test prefabs` passes
+- [x] 1.1 `stubby_jackdaw` depends on `stubby_game` as an ordinary dependency; remove the `#[path]` `desert` module and repoint `prefab_bridge.rs` and `model_part_bindings.rs`
+- [x] 1.2 `stubby_game` depends on `bevy_stubby_recipes` normally; remove `embedded_recipes_plugin` from both crates
+- [x] 1.3 With the shared editor idle, rewrite `stubby_jackdaw::desert::` to `stubby_game::` in `assets/prefabs/**/*.bsn` and the two scenes; `cargo test -p stubby_jackdaw --test prefabs` passes
 
 ## 2. Shared core
 

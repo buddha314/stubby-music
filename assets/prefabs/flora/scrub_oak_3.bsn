@@ -4,4 +4,4 @@ jackdaw::prefab::components::PrefabEntityId(0)
 bevy_transform::components::transform::Transform
 bevy_camera::visibility::Visibility::Visible
 jackdaw_scene_types::types::GltfSource { path: "models/flora/scrub_oak/scrub_oak_3.glb", scene_index: 0 }
-stubby_jackdaw::desert::resources::MineNode { mine: "scrub_oak", instance: "scrub_oak-3" }
+stubby_game::resources::MineNode { mine: "scrub_oak", instance: "scrub_oak-3" }

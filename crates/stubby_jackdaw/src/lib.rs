@@ -1,7 +1,3 @@
-// Compile the same generator against the editor's exact Bevy revision.
-#[path = "../../stubby_game/src/lib.rs"]
-mod desert;
-pub use desert::{
-    DesertPlugin, WorldSeed, audio, calendar, controls, export, machine_config,
-    prefab_presentation, prefabs, pulse, resources, synth_modules, world_generation,
-};
+//! The game as Jackdaw builds it. Jackdaw's project names this package; the game is
+//! `stubby_game`, re-exported here so `DesertPlugin` and the editor bridge keep one path.
+pub use stubby_game::*;

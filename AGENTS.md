@@ -132,7 +132,7 @@ crates/
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
-  stubby_jackdaw/         the game as Jackdaw builds it (adapter; keeps saved prefab type paths)
+  stubby_jackdaw/         the package Jackdaw builds: stubby_game plus the editor bridge
 assets/                   the one asset folder: scene.bsn, prefabs/, glTF, textures, shaders
 jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
 assets-src/blender/       source .blend files — never loaded at runtime
@@ -540,8 +540,10 @@ member Jackdaw builds. The project takes its name from the folder. In the launch
 the checkout (`~/src/stubby-music`), not a subfolder.
 
 The standalone game and editor adapter share the root Cargo workspace, its one
-Cargo.lock, the workspace Bevy dependency and rust-toolchain.toml. Keep the adapter
-package/type paths for existing saved prefabs. Do not independently upgrade Bevy
+Cargo.lock, the workspace Bevy dependency and rust-toolchain.toml. The adapter depends on
+`stubby_game` like any crate; saved prefabs name a component by the crate that owns it
+(`stubby_game::resources::MineNode`), and a change that moves a reflected type rewrites
+the `.bsn` files that name it (`split-game-into-systems`). Do not independently upgrade Bevy
 or restore a separate adapter lockfile. `compatibility.json` records the
 shared editor source revision, upstream base, Bevy revision and compiler.
 
