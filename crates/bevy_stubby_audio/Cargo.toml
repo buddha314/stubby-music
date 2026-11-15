@@ -1,0 +1,13 @@
+[package]
+name = "bevy_stubby_audio"
+version = "0.1.0"
+edition.workspace = true
+description = "The audio engine as a Bevy service: commands, clock ticks, module IDs and the pulse bus"
+license = "MIT"
+publish = false
+
+# A service crate (split-game-into-systems): the engine and Bevy, never a game system.
+[dependencies]
+stubby_audio = { path = "../stubby_audio" }
+bevy.workspace = true
+bevy.features = ["3d", "ui", "mesh_picking"]

@@ -11,9 +11,9 @@
 //! `--module-demo` places a clock and a square VCO in front of spawn.
 
 use super::audio::Synth;
-use super::pulse::{PulseBus, PulseBusPlugin, PulseReceive};
 use bevy::gltf::GltfMaterialName;
 use bevy::prelude::*;
+use bevy_stubby_audio::pulse::{PulseBus, PulseBusPlugin, PulseReceive};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::Instant;

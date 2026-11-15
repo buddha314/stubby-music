@@ -12,6 +12,7 @@ dev = ["bevy/dynamic_linking", "stubby_game/dev"]
 # The game itself, as an ordinary dependency (split-game-into-systems step 1); this
 # package adds only the editor bridge and Jackdaw's runtime.
 stubby_game = { path = "../stubby_game" }
+bevy_stubby_audio = { path = "../bevy_stubby_audio" }
 jackdaw_prefab.workspace = true
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]

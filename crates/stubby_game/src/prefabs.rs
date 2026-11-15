@@ -2,11 +2,11 @@
 use super::{
     audio::Synth,
     module_ids::ModuleIds,
-    pulse::{PulseAliases, PulseBus, PulseFollower},
     resources::{MineNode, RecipeCatalog, ResourceNode},
     synth_modules::{ModuleCatalog, ModuleLights, ModuleParams, SynthModule},
 };
 use bevy::prelude::*;
+use bevy_stubby_audio::pulse::{PulseAliases, PulseBus, PulseFollower};
 use std::collections::{BTreeMap, HashMap};
 use stubby_audio::{Command, ModuleId, ModuleKind};
 use stubby_core::PrefabBinding;
@@ -65,7 +65,7 @@ impl Plugin for PlacedPrefabsPlugin {
                 Update,
                 bind_runtime
                     .in_set(PrefabBinding)
-                    .before(super::pulse::PulseReceive)
+                    .before(bevy_stubby_audio::pulse::PulseReceive)
                     .before(super::synth_modules::ModuleEngine),
             )
             .add_plugins(super::prefab_presentation::PrefabPresentationPlugin);
@@ -385,11 +385,12 @@ fn install(world: &mut World, entity: Entity, definition: &PlacedAsset) -> Resul
 mod tests {
     use super::super::{
         audio::{AudioOutput, SynthAudioPlugin},
-        pulse::{LightningBugPlugin, SamplePulse},
+        pulse::LightningBugPlugin,
         resources::{PlayerInventory, ResourceRecipesPlugin},
         synth_modules::SynthModulesPlugin,
     };
     use super::*;
+    use bevy_stubby_audio::pulse::SamplePulse;
     use std::time::{Duration, Instant};
     pub(super) fn app() -> App {
         let mut app = App::new();

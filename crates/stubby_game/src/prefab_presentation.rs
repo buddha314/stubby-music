@@ -2,7 +2,6 @@
 use super::{
     audio::Synth,
     prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError},
-    pulse::PulseBus,
     resources::ResourceNode,
 };
 use bevy::{
@@ -10,6 +9,7 @@ use bevy::{
     gltf::{Gltf, GltfExtras},
     prelude::*,
 };
+use bevy_stubby_audio::pulse::PulseBus;
 use std::time::Instant;
 use stubby_core::PrefabBinding;
 
@@ -895,13 +895,13 @@ mod tests {
     fn audio_elapsed_uses_sample_timestamps_across_skipped_frames() {
         let now = Instant::now();
         let mut bus = PulseBus::default();
-        bus.queue(super::super::pulse::SamplePulse {
+        bus.queue(bevy_stubby_audio::pulse::SamplePulse {
             clock: 5,
             sample_time: 100,
             at: now,
         });
         bus.advance(now);
-        bus.queue(super::super::pulse::SamplePulse {
+        bus.queue(bevy_stubby_audio::pulse::SamplePulse {
             clock: 5,
             sample_time: 96100,
             at: now + std::time::Duration::from_secs(2),

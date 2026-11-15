@@ -1,11 +1,12 @@
 //! Shared sample-clock pulse bus and the lightning bug's flash-only presentation.
-use super::audio::{ClockTick, Synth};
+use super::audio::Synth;
 use bevy::prelude::*;
+use bevy_stubby_audio::pulse::{PulseBus, PulseBusPlugin, PulseFollower, PulseReceive};
 use serde::Deserialize;
-use std::{collections::HashMap, time::Instant};
+use std::time::Instant;
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
-pub const LIGHTNING_BUG_CLOCK: u64 = 1;
+pub const LIGHTNING_BUG_CLOCK: u64 = bevy_stubby_audio::pulse::DEFAULT_CLOCK;
 /// The opening's bugs. They hover no higher than `BUG_MAX_HOVER_M` above the ground so
 /// they stay in view as the player walks up to them.
 const BUG_POSITIONS: [Vec3; 3] = [
@@ -28,109 +29,8 @@ fn bug_seed(world_seed: u64, index: usize) -> u64 {
     world_seed ^ bug_clock(index).wrapping_mul(0x9e3779b97f4a7c15)
 }
 
-/// Every follower gets the same sample timestamp and predicted display instant.
-#[derive(Message, Debug, Clone, Copy)]
-pub struct SamplePulse {
-    pub clock: u64,
-    pub sample_time: u64,
-    pub at: Instant,
-}
-
-/// Attach to future pulse-driven assets as well as the lightning bug.
-#[derive(Component, Reflect, Clone, Copy)]
-#[reflect(Component, Default)]
-pub struct PulseFollower {
-    pub clock: u64,
-}
-impl Default for PulseFollower {
-    fn default() -> Self {
-        Self {
-            clock: LIGHTNING_BUG_CLOCK,
-        }
-    }
-}
-
-/// Receives engine clock ticks into the shared [`PulseBus`]. Added by every plugin that
-/// follows pulses (lightning bugs, synth module lights), guarded by `is_plugin_added`.
-pub struct PulseBusPlugin;
-impl Plugin for PulseBusPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<PulseBus>()
-            .add_message::<SamplePulse>()
-            .init_resource::<PulseAliases>()
-            .add_systems(Update, poll_audio.in_set(PulseReceive));
-    }
-}
-
-/// Systems that read pulse levels run after this set.
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PulseReceive;
-
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub(super) struct BugEffects;
-
-#[derive(Resource, Default)]
-pub struct PulseBus {
-    first: HashMap<u64, SamplePulse>,
-    pending: Vec<SamplePulse>,
-    latest: HashMap<u64, SamplePulse>,
-}
-impl PulseBus {
-    pub fn forget(&mut self, clock: u64) {
-        self.pending.retain(|pulse| pulse.clock != clock);
-        self.latest.remove(&clock);
-        self.first.remove(&clock);
-    }
-    pub fn elapsed(&self, clock: u64, now: Instant, sample_rate: u32) -> Option<f64> {
-        let first = self.first.get(&clock)?;
-        let last = self.latest.get(&clock)?;
-        let age = now.checked_duration_since(last.at)?.as_secs_f64();
-        Some(
-            last.sample_time.saturating_sub(first.sample_time) as f64 / f64::from(sample_rate)
-                + age,
-        )
-    }
-    pub fn queue(&mut self, pulse: SamplePulse) {
-        self.pending.push(pulse);
-    }
-    pub fn advance(&mut self, now: Instant) {
-        let latest = &mut self.latest;
-        let first = &mut self.first;
-        self.pending.retain(|pulse| {
-            if pulse.at > now {
-                return true;
-            }
-            first.entry(pulse.clock).or_insert(*pulse);
-            let entry = latest.entry(pulse.clock).or_insert(*pulse);
-            if pulse.sample_time >= entry.sample_time {
-                *entry = *pulse;
-            }
-            false
-        });
-    }
-    /// The most recent pulse from `clock` that has reached its display instant.
-    pub fn last(&self, clock: u64) -> Option<SamplePulse> {
-        self.latest.get(&clock).copied()
-    }
-    pub fn level(&self, clock: u64, now: Instant, attack: f32, duration: f32) -> f32 {
-        self.latest
-            .get(&clock)
-            .and_then(|pulse| now.checked_duration_since(pulse.at))
-            .map_or(0., |age| {
-                flash_envelope(age.as_secs_f32(), attack, duration)
-            })
-    }
-}
-
-fn flash_envelope(age: f32, attack: f32, duration: f32) -> f32 {
-    if age < 0. || age >= duration {
-        0.
-    } else if age < attack {
-        age / attack
-    } else {
-        ((duration - age) / (duration - attack)).powi(2)
-    }
-}
 
 #[derive(Resource, Clone, Deserialize)]
 struct BugAsset {
@@ -163,8 +63,6 @@ struct FlashLight;
 struct FlashShadow;
 #[derive(Component)]
 struct BugInstance(usize);
-#[derive(Resource, Default)]
-pub struct PulseAliases(pub HashMap<u64, u64>);
 #[derive(Resource, Clone)]
 struct BugVisualAssets {
     mesh: Handle<Mesh>,
@@ -403,34 +301,6 @@ fn update_click_gains(
             value: gain,
         });
     }
-}
-
-fn poll_audio(
-    mut ticks: MessageReader<ClockTick>,
-    aliases: Res<PulseAliases>,
-    mut bus: ResMut<PulseBus>,
-    mut pulses: MessageWriter<SamplePulse>,
-) {
-    for tick in ticks.read() {
-        if let Some(at) = tick.at {
-            let pulse = SamplePulse {
-                clock: tick.module.0,
-                sample_time: tick.sample_time,
-                at,
-            };
-            bus.queue(pulse);
-            pulses.write(pulse);
-            if let Some(clock) = aliases.0.get(&pulse.clock) {
-                let alias = SamplePulse {
-                    clock: *clock,
-                    ..pulse
-                };
-                bus.queue(alias);
-                pulses.write(alias);
-            }
-        }
-    }
-    bus.advance(Instant::now());
 }
 
 fn shadow_texture() -> Image {
@@ -750,6 +620,8 @@ fn update_placed_effects(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy_stubby_audio::ClockTick;
+    use bevy_stubby_audio::pulse::{PulseAliases, SamplePulse, poll_audio};
     use std::time::Duration;
     #[test]
     fn dormant_bug_retains_source_and_restores_all_effects() {
@@ -898,9 +770,9 @@ mod tests {
         });
         app.update();
         let bus = app.world().resource::<PulseBus>();
-        assert_eq!(bus.latest[&2].sample_time, 48_000);
-        assert_eq!(bus.latest[&2].at, at);
-        assert!(!bus.latest.contains_key(&1));
+        assert_eq!(bus.last(2).unwrap().sample_time, 48_000);
+        assert_eq!(bus.last(2).unwrap().at, at);
+        assert!(bus.last(1).is_none());
     }
 
     #[test]
@@ -993,6 +865,6 @@ mod tests {
             at: now - Duration::from_secs(1),
         });
         bus.advance(now);
-        assert_eq!(bus.latest[&1].sample_time, 200);
+        assert_eq!(bus.last(1).unwrap().sample_time, 200);
     }
 }

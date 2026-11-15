@@ -7,7 +7,7 @@ bevy_ecs::hierarchy::Children [
     #"Lightning bug hover"
     jackdaw::prefab::components::PrefabEntityId(1)
     stubby_game::resources::ResourceNode { resource: "lightning_bug", instance: "review-bug", collected: false }
-    stubby_game::pulse::PulseFollower { clock: 51 }
+    bevy_stubby_audio::pulse::PulseFollower { clock: 51 }
 ]
 
 --

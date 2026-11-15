@@ -1,4 +1,4 @@
-//! Connects the game to the audio engine (`stubby_audio`), which runs on its own
+//! The audio engine as a Bevy service (split-game-into-systems). Connects the game to the audio engine (`stubby_audio`), which runs on its own
 //! control thread. The game sends commands during the frame, they are committed as
 //! one batch at the end of it, and clock ticks come back as `ClockTick` messages
 //! carrying the predicted instant each tick is heard.
@@ -8,6 +8,9 @@
 //! audible clock, for listening checks before discovery exists.
 
 use bevy::prelude::*;
+
+pub mod module_ids;
+pub mod pulse;
 use std::time::Instant;
 use stubby_audio::{
     AudioThread, Command, EngineConfig, Event, ModuleId, ModuleKind, Notice, PortRef,

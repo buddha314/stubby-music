@@ -1,9 +1,9 @@
 //! Editor-only translation; shared gameplay never depends on Jackdaw types.
 use bevy::prelude::*;
+use bevy_stubby_audio::pulse::PulseFollower;
 use jackdaw_prefab::components::{IsA, PrefabEntityId};
 use jackdaw_runtime::{GltfSource, HiddenInGame};
 use jackdaw_scene_types::SceneNodeId;
-use stubby_jackdaw::pulse::PulseFollower;
 #[path = "model_part_bindings.rs"]
 mod model_part_bindings;
 use stubby_jackdaw::{
