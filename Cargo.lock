@@ -6534,21 +6534,14 @@ dependencies = [
 name = "stubby_jackdaw"
 version = "0.1.0"
 dependencies = [
- "avian3d",
  "bevy",
  "gltf",
- "half",
  "jackdaw_bsn",
  "jackdaw_prefab",
  "jackdaw_runtime",
  "jackdaw_scene_types",
- "jackdaw_terrain",
- "png",
- "serde",
  "serde_json",
- "stubby_audio",
- "stubby_rack",
- "stubby_recipes",
+ "stubby_game",
  "tempfile",
 ]
 

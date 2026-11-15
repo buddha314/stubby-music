@@ -10,7 +10,8 @@ are generated forks listed in `bevy_main_forks.json`. The earlier policy below
 `compatibility.json` records the exact shared source commit, upstream base,
 Jackdaw release, Bevy version/source and Rust toolchain. Both game entry points
 share one root Cargo workspace, one Bevy declaration and one Cargo.lock. The
-adapter package remains to preserve saved-prefab type paths. Domain/audio code
+adapter package depends on `stubby_game` normally (it once compiled the game's source
+as a module, which is why old prefabs said `stubby_jackdaw::desert::`). Domain/audio code
 remains independent of the game engine.
 
 The game builds from this repository alone: Jackdaw's crates are git dependencies on
