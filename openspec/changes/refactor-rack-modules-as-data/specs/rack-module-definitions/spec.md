@@ -22,7 +22,7 @@ SHALL fail. Loading SHALL report every error at once, each with the file, module
 and field.
 
 #### Scenario: Two mistakes, one report
-- **WHEN** a definition binds a jack to `vco.outt` and gives a knob the unknown default source `bug_tempo`
+- **WHEN** a definition binds a jack to `vco.outt` and gives a knob a default outside its range
 - **THEN** loading fails and the report names both errors with the file, module and field
 
 ### Requirement: Definitions agree with the panel
@@ -39,23 +39,38 @@ panel profile and SHALL match the direction of the engine port it binds.
 - **WHEN** a definition binds the panel's OUT jack (an output) to the VCA's `in` port
 - **THEN** validation fails naming the jack and the mismatched direction
 
-### Requirement: Knob defaults are numbers or named sources
-A knob's default SHALL be either a number within the knob's range or a named default
-source from a closed list (initially `machine_clock_bpm`, the machine's seeded tempo,
-and `lightning_bug_pitch`, the bug click's frequency). A new source SHALL be a rule
-change, not a data change.
+### Requirement: The rack system is independent of the game
+The rack system (module definitions, validation and patch planning) SHALL be its own
+crate depending only on the audio engine. It SHALL NOT depend on Bevy, crafting,
+inventory, items, creatures, machines, the world or any other game system, and its
+data SHALL NOT name them. Rules that join the rack to another system, such as an item
+mounting as a module or a creature's pitch setting a knob, SHALL live in the game
+layer that composes the systems.
+
+#### Scenario: Built alone
+- **WHEN** `cargo tree -p stubby_rack` is listed
+- **THEN** it shows no Bevy, `stubby_recipes` or `stubby_game` crate
+
+#### Scenario: No game names in rack data
+- **WHEN** the shipped module definitions are read
+- **THEN** none names an item, creature or machine
+
+### Requirement: Knob defaults are numbers the caller can override
+A knob's default in a module definition SHALL be a number within the knob's range.
+Whoever instantiates a module MAY supply starting values for any of its knobs, which
+SHALL take precedence over the defaults and SHALL be range-checked the same way.
 
 #### Scenario: The burbler clock starts at its seeded tempo
 - **WHEN** a burbler with a seeded tempo of 96 BPM opens its rack for the first time
-- **THEN** the clock's BPM knob reads 96, from the `machine_clock_bpm` source
+- **THEN** the game supplies 96 as the clock's starting BPM and the knob reads 96
 
 #### Scenario: A mounted square VCO starts at the bug's pitch
 - **WHEN** a Square VCO is mounted and its FREQ knob has never been turned
-- **THEN** it plays at the lightning bug click's frequency
+- **THEN** the game supplies the lightning bug click's frequency as the starting FREQ and the VCO plays at it
 
 ### Requirement: One source of defaults for every use
 Every place a module is instantiated, the rack and the module showcase alike, SHALL
-take its engine parts and starting parameters from the same definition.
+take its engine parts and default parameters from the same definition.
 
 #### Scenario: Rack and showcase agree
 - **WHEN** the volume is built once on the burbler's rack and once in the module showcase

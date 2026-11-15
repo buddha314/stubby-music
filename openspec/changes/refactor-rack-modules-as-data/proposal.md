@@ -22,8 +22,10 @@ add data, not systems. Now is cheap: there are only three rack modules.
   and patched cables. The pure planning that is now inside `rack.rs` moves there.
 - `rack.rs` and `synth_modules.rs` read module behaviour only through `stubby_rack`.
   The six `match` functions and `engine_kind` are deleted.
-- Knob defaults that depend on the world (the burbler's seeded BPM, the lightning
-  bug's pitch) are named **default sources** from a closed list, not numbers.
+- `stubby_rack` is an **independent system**: it depends only on the audio engine and
+  never names items, creatures, machines, the world or Bevy. Starting values that come
+  from the game (the burbler's seeded BPM, the lightning bug's pitch) are passed in by
+  the game's rack glue, which is where systems are joined.
 - **BREAKING (sound):** the module showcase takes its defaults from the definitions, so
   its volume gain becomes 0.25 and the rack and showcase can no longer disagree.
 - Fix `volume/asset.json`'s stale built-in envelope note.

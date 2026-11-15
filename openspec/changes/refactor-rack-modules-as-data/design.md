@@ -76,17 +76,34 @@ Example, `assets/modules/volume/module.json`:
 }
 ```
 
-and `square_vco`'s FREQ knob: `{ "param": "vco.freq", "default": { "source": "lightning_bug_pitch" } }`.
+and `square_vco`'s FREQ knob: `{ "param": "vco.freq", "default": 261.63 }`. The game,
+not the definition, starts it at the bug's pitch (below).
 
 ### Jack direction comes from the panel only
 `is_output` is deleted. Direction is read from `asset.json`'s `ports[].direction` and
 validated against the bound engine port's direction, so it is stated once.
 
-### Default sources are a closed enum
-`machine_clock_bpm` and `lightning_bug_pitch` are the two world-dependent defaults in
-use. The game supplies their values to the planner through a small context
-(`DefaultContext { clock_bpm, bug_pitch_hz }`). Rows never hold expressions; a new
-source is a rule change (AGENTS.md, "Rows never hold logic").
+### The rack system knows nothing of the game
+`stubby_rack` is one independent system, the synthesis side of the game, and must
+stay that way: it never names items, creatures, machines, the world or Bevy. Two
+starting values today come from elsewhere, the burbler's seeded tempo and the
+lightning bug's pitch. Rather than give the rack crate names for them (an earlier
+draft had `machine_clock_bpm` and `lightning_bug_pitch` sources, which would have tied
+the synth to a creature), a definition's defaults are plain numbers and the planner
+takes optional **starting knob values** from its caller. The game's rack glue
+(`rack.rs`, the layer that already joins machines, inventory and the rack) looks up
+the seeded tempo and the bug's pitch and passes them in.
+
+*Alternative:* a closed enum of named default sources in `stubby_rack`. Rejected: each
+new source would put another game concept inside the synth crate.
+
+The direction is one-way:
+
+```
+stubby_audio  <-  stubby_rack  <-  stubby_game (glue: machines, items -> modules, starting values)
+                                       |
+stubby_recipes  <-  bevy_stubby_recipes  (never sees the rack)
+```
 
 ### Embedded at build time
 Definitions are `include_str!`'d, as `synth_modules::PROFILES` is today, so the game
@@ -116,8 +133,10 @@ Each step builds on its own; rollback is reverting the last step.
 
 ## Open Questions
 
-- Should the clock lamp's `Clock` part default to the seeded tempo too, or keep a
-  plain 120? (Proposed: a plain number until a machine uses it.)
+- This is the first step of splitting the game into independent systems. The
+  remaining coupling inside `stubby_game` (rack ↔ machine_config, pulse ↔ prefabs,
+  resources ↔ prefabs) wants its own change, carving each system into a crate behind
+  a small shared core of input, screen state and system-set labels.
 - Saw and triangle VCOs have no engine part yet. Proposed: no `module.json` until they
   do, and validation allows a panel without a definition only when it is in no rack
   configuration.
