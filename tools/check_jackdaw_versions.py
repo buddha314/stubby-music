@@ -27,7 +27,45 @@ def bevy_sources(lock):
     return {(p['version'], p.get('source', '')) for p in lock['package'] if p['name'] == 'bevy'}
 
 
-def validate(root, source):
+def jackdaw_lock_source(selected):
+    return f"git+{selected['origin']}?rev={selected['revision']}#{selected['revision']}"
+
+
+def validate_jackdaw_dependencies(root, workspace, selected):
+    """Jackdaw crates come from the fork at the recorded revision, declared once."""
+    errors = []
+    url, rev = selected['origin'], selected['revision']
+    for name, dep in workspace.get('dependencies', {}).items():
+        if not name.startswith('jackdaw_'):
+            continue
+        if not isinstance(dep, dict) or dep.get('git') != url or dep.get('rev') != rev \
+                or any(key in dep for key in ('path', 'branch', 'tag', 'version')):
+            errors.append(f'workspace {name} must be {{ git = "{url}", rev = "{rev}" }}, found {dep}')
+    for member in workspace['members']:
+        manifest = read_toml(root / member / 'Cargo.toml')
+        for section in ('dependencies', 'dev-dependencies', 'build-dependencies'):
+            for name, dep in manifest.get(section, {}).items():
+                if name.startswith('jackdaw_') and not (isinstance(dep, dict) and dep.get('workspace') is True):
+                    errors.append(f'{member}: {name} must inherit the pinned Jackdaw ({name}.workspace = true)')
+    expected = jackdaw_lock_source(selected)
+    linked = []
+    for package in read_toml(root / 'Cargo.lock')['package']:
+        if not package['name'].startswith('jackdaw_'):
+            continue
+        source = package.get('source')
+        if source is None:
+            linked.append(package['name'])
+        elif source != expected:
+            locked = source.rsplit('#', 1)[-1]
+            errors.append(f"Cargo.lock resolves {package['name']} at {locked}, but compatibility.json records {rev}")
+    if linked:
+        errors.append(f"Cargo.lock records linked Jackdaw paths ({', '.join(sorted(linked))}); "
+                      'run tools/jackdaw.sh unlink before committing')
+    return errors
+
+
+def validate(root):
+    """The repository alone: manifests, lockfile and pins agree with compatibility.json."""
     errors = []
     record = json.loads((root / 'compatibility.json').read_text())
     if record.get('schema_version') != 1:
@@ -55,18 +93,7 @@ def validate(root, source):
             errors.append(f'{member} must inherit Bevy from the unified workspace')
         if 'workspace' in manifest:
             errors.append(f'{member} must not define a separate workspace')
-    for member in ('crates/stubby_jackdaw', 'crates/stubby_game'):
-        manifest = read_toml(root / member / 'Cargo.toml')
-        for section in ('dependencies', 'dev-dependencies'):
-            for name, dep in manifest.get(section, {}).items():
-                if not name.startswith('jackdaw_'):
-                    continue
-                if not isinstance(dep, dict) or 'path' not in dep:
-                    errors.append(f'{member}: {name} must use the selected shared source path')
-                    continue
-                actual = (root / member / dep['path']).resolve()
-                if actual.name != name or not actual.is_relative_to(source.resolve()):
-                    errors.append(f'{member}: {name} path resolves to {actual}, not the selected shared checkout')
+    errors += validate_jackdaw_dependencies(root, workspace, selected)
     if (root / 'crates/stubby_jackdaw/Cargo.lock').exists():
         errors.append('remove the separate adapter lockfile; the workspace has one Cargo.lock')
     if bevy_sources(read_toml(root / 'Cargo.lock')) != {expected}:
@@ -78,10 +105,20 @@ def validate(root, source):
             errors.append(f'{manifest} differs from the selected Jackdaw/Bevy versions')
     if read_toml(root / 'rust-toolchain.toml')['toolchain']['channel'] != record['rust']:
         errors.append(f"project compiler must match Jackdaw: Rust {record['rust']}")
+    return errors
+
+
+def validate_editor(root, source):
+    """The shared editor checkout matches the pin; Play speaks Jackdaw's PIE protocol to the game."""
+    errors = []
+    record = json.loads((root / 'compatibility.json').read_text())
+    selected = record['jackdaw']
+    expected = (record['bevy']['version'], record['bevy']['source'])
     try:
         actual = git(source, 'rev-parse', 'HEAD')
         if actual != selected['revision']:
-            errors.append(f"Jackdaw checkout drift: expected {selected['revision']}, found {actual}")
+            errors.append(f"Jackdaw checkout drift: expected {selected['revision']}, found {actual}; "
+                          'run tools/jackdaw.sh sync, or check out the recorded revision')
         if git(source, 'status', '--porcelain', '--untracked-files=no'):
             errors.append('shared Jackdaw has tracked changes; validate a clean revision')
         for remote in ('origin', 'upstream'):
@@ -139,12 +176,15 @@ def main():
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--source', type=Path, help='shared checkout (defaults to JACKDAW_SOURCE or sibling jackdaw)')
     parser.add_argument('--tree', type=Path, help='also check cargo tree --workspace -e normal,build,dev --prefix none --format {p} --locked output')
-    parser.add_argument('--binaries', action='store_true', help='also check the source-linked local build receipt')
+    parser.add_argument('--editor', action='store_true', help='also check the shared editor checkout matches the pin')
+    parser.add_argument('--binaries', action='store_true', help='also check the source-linked local build receipt (implies --editor)')
     args = parser.parse_args()
     root = args.root.resolve()
     source = (args.source or Path(os.environ.get('JACKDAW_SOURCE', root.parent / 'jackdaw'))).resolve()
     try:
-        errors = validate(root, source)
+        errors = validate(root)
+        if args.editor or args.binaries:
+            errors += validate_editor(root, source)
         if args.binaries:
             errors += validate_binaries(root, source)
         if args.tree:
@@ -156,7 +196,7 @@ def main():
             print(f'ERROR: {error}')
         print('Use a tested Jackdaw revision. For an intentional upgrade, follow docs/research/jackdaw-version-policy.md; do not update Bevy independently. Run tools/jackdaw.sh prepare for a missing build receipt.')
         return 1
-    print('Jackdaw compatibility check passed: source, compiler, manifests and unified Bevy lock agree.')
+    print('Jackdaw compatibility check passed: pinned Jackdaw, compiler, manifests and unified Bevy lock agree.')
     return 0
 
 
