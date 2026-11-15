@@ -4,7 +4,9 @@ compile_error!("The dev feature enables dynamic linking; omit it for release bui
 // The crafting system, as a Bevy plugin.
 pub use bevy_stubby_recipes as recipes_plugin;
 
-pub mod audio;
+// The audio engine as a Bevy service (bevy_stubby_audio), under its old module names.
+pub use bevy_stubby_audio as audio;
+pub use bevy_stubby_audio::module_ids;
 pub mod calendar;
 pub mod controls;
 pub mod export;
@@ -12,7 +14,6 @@ mod hand;
 mod interaction;
 mod inventory_screen;
 pub mod machine_config;
-pub mod module_ids;
 pub mod prefab_presentation;
 mod prefab_review;
 pub mod prefabs;

@@ -11,7 +11,7 @@
 
 ## 3. Services
 
-- [ ] 3.1 Create `bevy_stubby_audio` from `audio.rs`, `module_ids.rs` and the pulse bus (with `PulseFollower`); rewrite its saved type path
+- [x] 3.1 Create `bevy_stubby_audio` from `audio.rs`, `module_ids.rs` and the pulse bus (with `PulseFollower`); rewrite its saved type path
 
 ## 4. Systems (one PR each)
 

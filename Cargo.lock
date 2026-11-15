@@ -1920,6 +1920,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_stubby_audio"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "stubby_audio",
+]
+
+[[package]]
 name = "bevy_stubby_recipes"
 version = "0.1.0"
 dependencies = [
@@ -6524,6 +6532,7 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
+ "bevy_stubby_audio",
  "bevy_stubby_recipes",
  "gltf",
  "half",
@@ -6543,6 +6552,7 @@ name = "stubby_jackdaw"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_stubby_audio",
  "gltf",
  "jackdaw_bsn",
  "jackdaw_prefab",

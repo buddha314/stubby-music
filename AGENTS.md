@@ -128,6 +128,8 @@ openspec/                 requirements and change proposals (see below)
 docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
+  bevy_stubby_audio/      service: the engine in Bevy (Synth, ClockTick, module IDs, pulse bus)
+  stubby_core/            service: the few contracts systems share (screens, keys, HUD camera, sets)
   stubby_game/            the Bevy app
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)

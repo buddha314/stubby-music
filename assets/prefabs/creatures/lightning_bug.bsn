@@ -12,5 +12,5 @@ bevy_ecs::hierarchy::Children [
     bevy_camera::visibility::Visibility::Visible
     jackdaw_scene_types::types::GltfSource { path: "models/creatures/lightning_bug.glb", scene_index: 0 }
     stubby_game::resources::ResourceNode { resource: "lightning_bug", instance: "lightning_bug-placed-0", collected: false }
-    stubby_game::pulse::PulseFollower { clock: 1 }
+    bevy_stubby_audio::pulse::PulseFollower { clock: 1 }
 ]

@@ -7,10 +7,10 @@
 use std::path::{Path, PathBuf};
 
 use bevy::prelude::*;
+use bevy_stubby_audio::pulse::PulseFollower;
 use jackdaw_bsn::{JackdawBsnPlugin, UnresolvedTypes, load_bsn_document, parse_bsn_text};
 use jackdaw_prefab::{PrefabTypesPlugin, resolve_scene};
 use jackdaw_scene_types::{GltfSource, LodGroup, LodLevel};
-use stubby_jackdaw::pulse::PulseFollower;
 use stubby_jackdaw::resources::{MineNode, ResourceNode};
 
 fn assets() -> PathBuf {
