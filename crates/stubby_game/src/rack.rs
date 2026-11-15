@@ -11,7 +11,6 @@
 //! reaches its input). Completing the last patch sends `MachineConfigured`, once.
 use super::{
     audio::Synth,
-    controls::{Screen, ScreenMode},
     machine_config::{
         CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles, RackActions,
         RackConfiguration, RackModuleView,
@@ -28,6 +27,7 @@ use bevy::{
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use stubby_audio::{Command, ModuleId, PortRef};
+use stubby_core::{Screen, ScreenMode};
 use stubby_rack::{Modules, Plan, RackPatch};
 use stubby_recipes::Stack;
 
@@ -151,7 +151,7 @@ impl Plugin for RackPlugin {
                     snap_release,
                 )
                     .chain()
-                    .after(super::machine_config::MachineInteractionSet),
+                    .after(stubby_core::MachineInteractionSet),
             );
     }
 }
@@ -836,7 +836,7 @@ fn rack_ghost(
     mut commands: Commands,
     server: Res<AssetServer>,
     ghosts: Query<&DragGhost>,
-    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     ports: Query<&GlobalTransform, With<PortNode>>,
     pointers: Query<(
         &bevy::picking::pointer::PointerId,
@@ -1492,7 +1492,7 @@ fn snap_release(
     jacks: Query<(), With<JackHit>>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
-    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     ports: Query<(&PortNode, &GlobalTransform)>,
     mut hand: (
         ResMut<HeldCable>,
@@ -1575,7 +1575,7 @@ fn live_cable(
     selection: Res<PatchSelection>,
     racks: Query<(&PlacedAsset, &RackState)>,
     ports: Query<(&PortNode, &GlobalTransform)>,
-    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     pointers: Query<(
         &bevy::picking::pointer::PointerId,
         &bevy::picking::pointer::PointerLocation,

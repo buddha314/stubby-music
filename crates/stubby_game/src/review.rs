@@ -58,13 +58,7 @@ fn start(
     mut review: ResMut<Review>,
     mut calendar: ResMut<Calendar>,
     mut time: ResMut<Time<Virtual>>,
-    mut cameras: Query<
-        &mut Transform,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    mut cameras: Query<&mut Transform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
 ) {
     if let Err(error) = std::fs::create_dir_all(&review.directory) {
         error!("review directory: {error}");
@@ -162,13 +156,7 @@ fn observe(
     time: Res<Time<Virtual>>,
     player: Res<PlayerInventory>,
     nodes: Query<(&ResourceNode, &Visibility)>,
-    cameras: Query<
-        &bevy::camera::RenderTarget,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    cameras: Query<&bevy::camera::RenderTarget, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
 ) {
     let elapsed = review.started.elapsed().as_secs_f32();
     if elapsed >= review.sample_at {

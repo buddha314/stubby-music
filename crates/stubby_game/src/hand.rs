@@ -3,8 +3,9 @@
 //! and pose in the lower right of the view. Only the field recorder exists so far
 //! (add-field-recorder): H.
 use bevy::{light::NotShadowCaster, prelude::*};
+use stubby_core::{RECORDER, ScreenMode};
 
-use super::controls::{Player, RECORDER, ScreenMode};
+use super::controls::Player;
 
 /// An item the hand can hold.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

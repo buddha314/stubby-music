@@ -6,8 +6,8 @@
 
 ## 2. Shared core
 
-- [ ] 2.1 Create `stubby_core`: `ScreenMode`/`Screen`, key bindings, `HudCamera` (was `RackHudCamera`), `InteractTarget`, shared system-set labels, `GroundHeight`
-- [ ] 2.2 Repoint every importer; confirm the four cycles in the design's table are gone
+- [x] 2.1 Create `stubby_core`: `ScreenMode`/`Screen`, key bindings, `HudCamera` (was `RackHudCamera`), `InteractTarget`, shared system-set labels (`PrefabBinding`, `MachineInteractionSet`). `GroundHeight` waits for 4.5, the first step where a crate boundary needs it
+- [x] 2.2 Repoint every importer. `pulse` ↔ `machine_config` is gone; the other three carry feature types, not contracts, and end with their moves: `rack` ↔ `machine_config` become one crate (4.1), `prefabs` ↔ `resources` (4.2: `PlayerInventory`, `PrefabError`), `prefabs` ↔ `pulse` (4.4: the prefab lifecycle calls `bind_placed_bug`)
 
 ## 3. Services
 

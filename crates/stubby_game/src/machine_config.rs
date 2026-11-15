@@ -1,8 +1,7 @@
 //! Proximity interaction and the shared, model-backed machine rack HUD.
 use super::{
-    controls::{Screen, ScreenMode},
     prefab_presentation::AssetUsed,
-    prefabs::{AssetClock, PlacedAsset, PrefabBinding, PrefabError},
+    prefabs::{AssetClock, PlacedAsset, PrefabError},
     synth_modules::{ModuleLights, ModuleParams, ModuleView, SynthModule},
 };
 use bevy::{
@@ -17,6 +16,7 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::collections::HashMap;
+use stubby_core::{HudCamera, MachineInteractionSet, PrefabBinding, Screen, ScreenMode};
 
 pub(crate) const HUD_LAYER: usize = 31;
 const HUD_Y: f32 = -1000.;
@@ -97,10 +97,6 @@ pub struct MachineInteraction {
 pub struct MachineConfigurationOpened {
     pub machine: Entity,
 }
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct MachineInteractionSet;
-#[derive(Component)]
-pub struct RackHudCamera;
 #[derive(Component)]
 struct Panel;
 #[derive(Component)]
@@ -190,7 +186,7 @@ impl Plugin for MachineConfigurationPlugin {
             .init_resource::<Profiles>()
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
-            .init_resource::<super::interaction::InteractTarget>()
+            .init_resource::<stubby_core::InteractTarget>()
             .add_message::<MachineConfigurationOpened>()
             .add_systems(Startup, setup)
             .add_systems(
@@ -215,7 +211,7 @@ impl Plugin for MachineConfigurationPlugin {
 fn interact(
     keys: Res<ButtonInput<KeyCode>>,
     profiles: Res<Profiles>,
-    target: Res<super::interaction::InteractTarget>,
+    target: Res<stubby_core::InteractTarget>,
     mut state: ResMut<MachineInteraction>,
     mut screens: ResMut<ScreenMode>,
     machines: Query<&PlacedAsset, Without<PrefabError>>,
@@ -244,7 +240,7 @@ fn interact(
     };
     state.target = Some(machine);
     state.prompt.clone_from(&config.interact.prompt);
-    if keys.just_pressed(super::controls::INTERACT) {
+    if keys.just_pressed(stubby_core::INTERACT) {
         screens.open = Some(Screen::MachineConfiguration(machine));
         opened.write(MachineConfigurationOpened { machine });
         used.write(AssetUsed {
@@ -261,7 +257,7 @@ fn setup(mut commands: Commands) {
     // rather than an image lets mesh picking reach the jacks.
     let camera = commands
         .spawn((
-            RackHudCamera,
+            HudCamera,
             Camera3d::default(),
             Camera {
                 order: 1,
@@ -498,7 +494,7 @@ fn sync_view(
         Option<&super::rack::RackState>,
     )>,
     windows: Query<&Window, With<PrimaryWindow>>,
-    mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<RackHudCamera>>,
+    mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<HudCamera>>,
     mut panels: Query<&mut Visibility, With<Panel>>,
     mut headers: Query<&mut Text, With<Header>>,
 ) {
@@ -765,7 +761,7 @@ mod tests {
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
             .init_resource::<ButtonInput<KeyCode>>()
-            .init_resource::<super::super::interaction::InteractTarget>()
+            .init_resource::<stubby_core::InteractTarget>()
             .add_message::<AssetUsed>()
             .add_message::<MachineConfigurationOpened>()
             .add_systems(
@@ -781,8 +777,8 @@ mod tests {
             })
             .id();
         *app.world_mut()
-            .resource_mut::<super::super::interaction::InteractTarget>() =
-            super::super::interaction::InteractTarget::Machine(machine);
+            .resource_mut::<stubby_core::InteractTarget>() =
+            stubby_core::InteractTarget::Machine(machine);
         app.update();
         assert_eq!(
             app.world().resource::<MachineInteraction>().prompt,
