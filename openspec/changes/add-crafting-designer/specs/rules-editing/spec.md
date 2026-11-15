@@ -6,7 +6,7 @@ applies typed edits (add, change and remove a row in any registry) without a Bev
 dependency. Every front end SHALL change rules only through this model.
 
 #### Scenario: Add a recipe
-- **WHEN** an edit adds recipe `square_vco_kit` with one `square_wave` in and one `square_vco` out
+- **WHEN** an edit adds a test recipe that takes one `square_wave` and makes one existing item
 - **THEN** the model holds the new row and reports it valid
 
 ### Requirement: Validation is live and complete
