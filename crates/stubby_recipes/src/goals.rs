@@ -24,9 +24,15 @@ pub enum Horizon {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Condition {
     /// Every `configure.cables` patch of a placed machine is made, so its voice sounds.
-    MachineConfigured { machine: String },
+    MachineConfigured {
+        #[schemars(extend("x-stubby-ref" = "mines"))]
+        machine: String,
+    },
     /// A stream delivers water to a placed tree of this mine (needs add-digging).
-    TreeWatered { mine: String },
+    TreeWatered {
+        #[schemars(extend("x-stubby-ref" = "mines"))]
+        mine: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -44,9 +50,11 @@ pub struct GoalDefinition {
     pub condition: Option<Condition>,
     /// Goals that must be complete before this one opens.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(extend("x-stubby-ref" = "goals"))]
     pub after: Vec<String>,
     /// Items discovered in the recipe book when it completes.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(extend("x-stubby-ref" = "items"))]
     pub unlocks: Vec<String>,
 }
 

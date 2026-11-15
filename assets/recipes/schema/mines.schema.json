@@ -39,7 +39,8 @@
         },
         "produces_resource": {
           "description": "A resource definition ID, not an item ID. Each produced bug is finite.",
-          "type": "string"
+          "type": "string",
+          "x-stubby-ref": "resources"
         },
         "productivity_factors": {
           "type": "array",
