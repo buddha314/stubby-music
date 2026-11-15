@@ -8,6 +8,23 @@ preview and export). It writes the `.blend` to
 `assets-src/blender/modules/`, the `.glb` to `assets/models/modules/`, `asset.json` here, and
 `preview.png` and `preview_far.png` (the same view from about 12 m) to `previews/modules/`.
 
+**How a module sounds is not art's file.** Beside `asset.json` (the panel), each module that
+can sit in a rack has a hand-written `module.json` (refactor-rack-modules-as-data): the
+engine parts it is built from, wiring inside it, the engine port behind each panel jack,
+and the engine parameter and default behind each knob:
+
+```json
+{ "id": "volume", "parts": [{ "part": "vca", "kind": "Vca" }], "internal": [],
+  "jacks": { "trig": "vca.cv", "in": "vca.in", "out": "vca.out" },
+  "knobs": { "gain": { "param": "vca.gain", "default": 0.25 } } }
+```
+
+`cargo test -p stubby_rack` checks every definition against its panel: every port and
+knob bound, nothing extra, jack directions matching the engine, defaults in range. A new
+module whose engine parts exist needs only these two files and a line in
+`stubby_rack::shipped_sources`. Saw and triangle VCOs have no `module.json` until the
+engine has those oscillators.
+
 ## Clock (`tools/blender/create_clock_lamp.py`)
 
 | Close | About 12 m |

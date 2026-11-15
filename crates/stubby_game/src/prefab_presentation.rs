@@ -1,7 +1,7 @@
 //! Named-node presentation and interaction hooks shared by authored assets.
 use super::{
     audio::Synth,
-    prefabs::{AssetClock, AssetState, PlacedAsset, PrefabBinding, PrefabError},
+    prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError},
     pulse::PulseBus,
     resources::ResourceNode,
 };
@@ -11,6 +11,7 @@ use bevy::{
     prelude::*,
 };
 use std::time::Instant;
+use stubby_core::PrefabBinding;
 
 #[derive(Resource, Default)]
 pub struct HoveredAsset {
@@ -92,7 +93,7 @@ impl Plugin for PrefabPresentationPlugin {
                 )
                     .chain()
                     .after(PrefabBinding)
-                    .after(super::machine_config::MachineInteractionSet),
+                    .after(stubby_core::MachineInteractionSet),
             )
             .add_systems(
                 PostUpdate,
@@ -493,13 +494,7 @@ fn seek_animations(
 fn update_hover(
     mut hover: ResMut<HoveredAsset>,
     keys: Res<ButtonInput<KeyCode>>,
-    cameras: Query<
-        Entity,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    cameras: Query<Entity, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     roots: Query<
         (
             Entity,
@@ -513,7 +508,7 @@ fn update_hover(
     mut events: MessageWriter<AssetHoverEvent>,
     mut uses: MessageWriter<AssetUsed>,
     mut labels: Query<&mut Text, With<HoverLabel>>,
-    screens: Option<Res<super::controls::ScreenMode>>,
+    screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
     let camera = cameras
         .single()
@@ -597,7 +592,7 @@ fn update_hover(
             label.0 = text.clone();
         }
     }
-    if keys.just_pressed(super::controls::INTERACT)
+    if keys.just_pressed(stubby_core::INTERACT)
         && let Some((entity, asset, _, _)) = selected
         && asset.asset != "mudpit_burbler"
     {

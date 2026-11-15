@@ -5,8 +5,8 @@
 //! catalog; nothing here names an item. Items the recipe book knows but the player holds
 //! none of stay listed, dimmed. Opening and closing go through `controls::ScreenMode`.
 use bevy::prelude::*;
+use stubby_core::{Screen, ScreenMode};
 
-use super::controls::{Screen, ScreenMode};
 use super::resources::{PlayerInventory, RecipeCatalog};
 
 const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.94);

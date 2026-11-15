@@ -7,9 +7,10 @@
 //! cylinder is tall, so a bug hovering at 1.8 m is as near as one on the ground.
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use stubby_core::{HudCamera, InteractTarget};
 
 use super::{
-    machine_config::{Profiles, RackHudCamera},
+    machine_config::Profiles,
     prefabs::{PlacedAsset, PrefabError},
     resources::ResourceNode,
 };
@@ -20,31 +21,6 @@ pub const REACH_M: f32 = 3.0;
 const REACH_HEIGHT_M: f32 = 8.0;
 /// The sensor every interactable carries: small, so it marks a point, not an area.
 const MARKER_RADIUS_M: f32 = 0.25;
-
-/// The one thing E would act on now.
-#[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
-pub enum InteractTarget {
-    #[default]
-    None,
-    /// A finite pickup (its `ResourceNode` entity).
-    Pickup(Entity),
-    /// A placed machine (its `PlacedAsset` entity), reached through its `Interact` point.
-    Machine(Entity),
-}
-impl InteractTarget {
-    pub fn pickup(self) -> Option<Entity> {
-        match self {
-            Self::Pickup(e) => Some(e),
-            _ => None,
-        }
-    }
-    pub fn machine(self) -> Option<Entity> {
-        match self {
-            Self::Machine(e) => Some(e),
-            _ => None,
-        }
-    }
-}
 
 /// A machine's interaction point, pointing at the machine.
 #[derive(Component)]
@@ -66,7 +42,7 @@ impl Plugin for InteractionPlugin {
             (mark_pickups, mark_interact_points, follow, choose_target)
                 .chain()
                 .in_set(InteractionTargeting)
-                .after(super::prefabs::PrefabBinding),
+                .after(stubby_core::PrefabBinding),
         );
     }
 }
@@ -146,7 +122,7 @@ fn follow(
 
 fn choose_target(
     spatial: SpatialQuery,
-    cameras: Query<&GlobalTransform, (With<Camera3d>, Without<RackHudCamera>)>,
+    cameras: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
     pickups: Query<(&ResourceNode, &GlobalTransform), Without<PrefabError>>,
     points: Query<(&InteractPoint, &GlobalTransform)>,
     markers: Query<&ReachMarker>,

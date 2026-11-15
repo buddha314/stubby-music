@@ -1,0 +1,13 @@
+[package]
+name = "stubby_core"
+version = "0.1.0"
+edition.workspace = true
+description = "The few contracts several stubby-music systems share; no behaviour"
+license = "MIT"
+publish = false
+
+# A service crate (split-game-into-systems): Bevy only, never another crate of ours.
+# Entry test: an item belongs here only if at least two systems need it and it carries
+# no behaviour.
+[dependencies]
+bevy.workspace = true

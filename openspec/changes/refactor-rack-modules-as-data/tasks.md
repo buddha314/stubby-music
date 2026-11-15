@@ -1,0 +1,34 @@
+## 1. Engine interface
+
+- [x] 1.1 `ModuleKind` already states `inputs()`, `outputs()` and `params()`; add `name()` and a constructor from a kind name plus parameter values (`from_params`, `default_of`)
+- [x] 1.2 Offline test: every variant's constructor accepts exactly the parameters `params()` lists
+
+## 2. The `stubby_rack` crate
+
+- [x] 2.1 Create `crates/stubby_rack` (no Bevy; `stubby_audio`, `serde`, `serde_json`) and add it to the workspace members
+- [x] 2.2 Definition types with `deny_unknown_fields`: parts, internal wiring, jacks, knobs, numeric defaults
+- [x] 2.3 Planner input for caller-supplied starting knob values, clamped to the knob's range
+- [x] 2.4 Loader and validator reporting every error with file, module ID and field: unknown kinds, ports and params; duplicate IDs; defaults out of range
+- [x] 2.5 Cross-check against `asset.json`: every panel port and knob bound, nothing extra, jack direction matches the engine port's
+- [x] 2.6 Move `modules`, `Plan` and `plan` from `rack.rs` into `stubby_rack` as a pure planner over definitions, mounted modules, knob values and patched cables
+- [x] 2.7 Tests: shipped definitions load and cross-check; one report holds two errors; the burbler's partly and fully patched plans
+- [x] 2.8 Independence check: `cargo tree -p stubby_rack` shows no Bevy engine crate, `stubby_recipes` or `stubby_game` (`bevy_platform` arrives through Firewheel, as for `stubby_audio`)
+
+## 3. Data
+
+- [x] 3.1 Write `module.json` for `burbler_clock`, `square_vco` and `volume`, reproducing today's values (volume gain 0.25); no item, creature or machine names
+- [x] 3.2 Write `module.json` for `sine_vco` and `clock_lamp` (engine parts exist); leave saw and triangle without one
+- [x] 3.3 Fix the stale built-in envelope note in `assets/modules/volume/asset.json` and in `tools/blender/` where it is generated
+- [x] 3.4 Document `module.json` in `assets/modules/README.md`
+
+## 4. Switch the game over
+
+- [x] 4.1 `rack.rs` reads definitions through `stubby_rack` and passes starting values (the burbler's seeded BPM, the bug's pitch for a mounted Square VCO); delete `parts`, `knob_default`, `knob_target`, `internal`, `jack`, `is_output`
+- [x] 4.2 `synth_modules.rs` builds engine modules from definitions; delete `engine_kind`
+- [x] 4.3 Add `stubby_rack` to `stubby_game` and `stubby_jackdaw` dependencies
+- [x] 4.4 Check: `cargo test -p stubby_rack`, `cargo build -p stubby_game -p stubby_jackdaw`, `cargo test -p stubby_jackdaw --test prefabs`
+- [ ] 4.5 Brief smoke test under `tools/jackdaw_timed_test.py`: the burbler patches and sounds as before (not run: no graphical session this round; the planner tests cover the patch)
+
+## 5. Docs
+
+- [x] 5.1 AGENTS.md: a rack module is a `module.json` row, not an entry in `rack.rs`; add `stubby_rack` to the repo map

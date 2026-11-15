@@ -1,0 +1,15 @@
+[package]
+name = "stubby_rack"
+version = "0.1.0"
+edition.workspace = true
+description = "Rack modules as data and the engine patch a rack plans, independent of Bevy and the game"
+license = "MIT"
+repository = "https://github.com/buddha314/stubby-music"
+publish = false
+
+# Independent system (refactor-rack-modules-as-data): the audio engine and serde only.
+# Never Bevy, never the game, never crafting.
+[dependencies]
+stubby_audio = { path = "../stubby_audio" }
+serde = { version = "~1.0", features = ["derive"] }
+serde_json = "~1.0"

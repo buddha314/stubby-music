@@ -10,10 +10,16 @@ are generated forks listed in `bevy_main_forks.json`. The earlier policy below
 `compatibility.json` records the exact shared source commit, upstream base,
 Jackdaw release, Bevy version/source and Rust toolchain. Both game entry points
 share one root Cargo workspace, one Bevy declaration and one Cargo.lock. The
-adapter package remains to preserve saved-prefab type paths. Domain/audio code
+adapter package depends on `stubby_game` normally (it once compiled the game's source
+as a module, which is why old prefabs said `stubby_jackdaw::desert::`). Domain/audio code
 remains independent of the game engine.
 
-Keep the shared source and game as sibling directories. Run
+The game builds from this repository alone: Jackdaw's crates are git dependencies on
+the fork at the pinned `rev` (`use-jackdaw-git-dependencies`, 2026-11-15; before then
+they were path dependencies into the sibling checkout, which let the build follow
+whatever the checkout held). The shared editor checkout still lives beside the game
+(or at `$JACKDAW_SOURCE`) and must equal the pin to launch. `tools/jackdaw.sh link` /
+`unlink` switch the build to that checkout for unpushed editor work. Run
 `tools/jackdaw.sh check` to detect source or version drift. Prepare builds matching
 shared editor/CLI binaries and records their local hashes; managed launches check
 that receipt. It refuses to rebuild an editor the user is running. No per-game

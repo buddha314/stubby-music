@@ -6,8 +6,8 @@ bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 
 bevy_ecs::hierarchy::Children [
     #"Lightning bug hover"
     jackdaw::prefab::components::PrefabEntityId(1)
-    stubby_jackdaw::desert::resources::ResourceNode { resource: "lightning_bug", instance: "review-bug", collected: false }
-    stubby_jackdaw::desert::pulse::PulseFollower { clock: 51 }
+    stubby_game::resources::ResourceNode { resource: "lightning_bug", instance: "review-bug", collected: false }
+    stubby_game::pulse::PulseFollower { clock: 51 }
 ]
 
 --
@@ -44,7 +44,7 @@ bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 
 jackdaw::prefab::components::IsA { source: "prefabs/flora/scrub_oak_0.bsn", deleted: [] }
 jackdaw::prefab::components::PrefabEntityId(0)
 bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 6.0, y: 0.0, z: -4.0 } }
-stubby_jackdaw::desert::resources::MineNode { mine: "scrub_oak", instance: "review-oak" }
+stubby_game::resources::MineNode { mine: "scrub_oak", instance: "review-oak" }
 
 --
 

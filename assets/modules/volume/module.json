@@ -1,0 +1,21 @@
+{
+  "id": "volume",
+  "parts": [
+    {
+      "part": "vca",
+      "kind": "Vca"
+    }
+  ],
+  "internal": [],
+  "jacks": {
+    "trig": "vca.cv",
+    "in": "vca.in",
+    "out": "vca.out"
+  },
+  "knobs": {
+    "gain": {
+      "param": "vca.gain",
+      "default": 0.25
+    }
+  }
+}

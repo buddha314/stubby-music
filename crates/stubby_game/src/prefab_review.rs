@@ -128,13 +128,7 @@ fn start(mut review: ResMut<Review>, mut calendar: ResMut<Calendar>) {
 fn drive(
     mut review: ResMut<Review>,
     mut keys: ResMut<ButtonInput<KeyCode>>,
-    mut camera: Query<
-        &mut Transform,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    mut camera: Query<&mut Transform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     mut roots: Query<(&PlacedAsset, &mut AssetState)>,
     mut calendar: ResMut<Calendar>,
 ) {
@@ -217,18 +211,12 @@ fn observe(
     errors: Query<&PrefabError>,
     players: Query<&AnimationPlayer>,
     nodes: Query<(&Name, &Transform)>,
-    cameras: Query<
-        &bevy::camera::RenderTarget,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    cameras: Query<&bevy::camera::RenderTarget, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     mut hover: MessageReader<AssetHoverEvent>,
     mut used: MessageReader<AssetUsed>,
     mut rack: MessageReader<super::machine_config::MachineConfigurationOpened>,
     mut configured: MessageReader<super::rack::MachineConfigured>,
-    screens: Res<super::controls::ScreenMode>,
+    screens: Res<stubby_core::ScreenMode>,
     flat: Query<(&super::prefab_presentation::AssetPart, &Transform)>,
 ) {
     let elapsed = review.now();
@@ -402,7 +390,7 @@ fn drive_rack(
     mut review: ResMut<Review>,
     time: Res<Time<Real>>,
     windows: Query<(Entity, &Window), With<bevy::window::PrimaryWindow>>,
-    hud: Query<(&Camera, &GlobalTransform), With<super::machine_config::RackHudCamera>>,
+    hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     jacks: Query<(&super::machine_config::JackHit, &GlobalTransform)>,
     slots: Query<(&super::machine_config::SlotHit, &GlobalTransform)>,
     plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
@@ -423,7 +411,7 @@ fn drive_rack(
     targets: Query<
         (
             Option<&bevy::camera::RenderTarget>,
-            Has<super::machine_config::RackHudCamera>,
+            Has<stubby_core::HudCamera>,
         ),
         With<Camera3d>,
     >,

@@ -1,0 +1,19 @@
+{
+  "id": "sine_vco",
+  "parts": [
+    {
+      "part": "vco",
+      "kind": "SineVco"
+    }
+  ],
+  "jacks": {
+    "voct": "vco.voct",
+    "out": "vco.out"
+  },
+  "knobs": {
+    "freq": {
+      "param": "vco.freq",
+      "default": 261.63
+    }
+  }
+}

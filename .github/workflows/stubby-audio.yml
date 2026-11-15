@@ -50,16 +50,10 @@ jobs:
           print('jackdaw=' + record['jackdaw']['revision'])
           print('rust=' + record['rust'])
           PYVERSIONS
-      - uses: actions/checkout@v5
-        with:
-          repository: buddha314/jackdaw
-          ref: ${{ steps.versions.outputs.jackdaw }}
-          path: jackdaw
-      - name: Configure upstream reference
-        run: git -C ../jackdaw remote add upstream https://github.com/jbuehler23/jackdaw.git
+      # Jackdaw crates are git dependencies pinned in Cargo.toml; no sibling checkout needed.
       - name: Fork drift (warning only)
         run: |
-          pinned=$(git -C ../jackdaw rev-parse HEAD)
+          pinned=${{ steps.versions.outputs.jackdaw }}
           head=$(git ls-remote https://github.com/buddha314/jackdaw.git refs/heads/main | cut -f1)
           if [ -n "$head" ] && [ "$head" != "$pinned" ]; then
             echo "::warning::Jackdaw pin $pinned is behind buddha314/jackdaw main ($head). Run tools/jackdaw.sh sync."

@@ -13,7 +13,7 @@
 //! on each downbeat of the audio clock (`add-mudpit-burbler` 2.7), and the voice is heard
 //! from the nearest point of the burbler or its streams (`add-localized-machine-voices`).
 use super::audio::{ClockTick, Synth};
-use super::controls::{LookCapture, Player, ScreenMode};
+use super::controls::{LookCapture, Player};
 use super::machine_config::Profiles;
 use super::prefab_presentation::AssetPart;
 use super::prefabs::{AssetClock, AssetState, PlacedAsset};
@@ -29,6 +29,7 @@ use bevy::{
 };
 use std::time::Instant;
 use stubby_audio::Command;
+use stubby_core::ScreenMode;
 
 /// The buildable whose cost each segment spends (`assets/recipes/buildables.json`).
 const SEGMENT: &str = "stream_segment";
@@ -846,13 +847,7 @@ fn hearing_gain(distance: f32, radius: f32) -> f32 {
 fn place_voices(
     synth: Option<Res<Synth>>,
     profiles: Option<Res<Profiles>>,
-    camera: Query<
-        &GlobalTransform,
-        (
-            With<Camera3d>,
-            Without<super::machine_config::RackHudCamera>,
-        ),
-    >,
+    camera: Query<&GlobalTransform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     machines: Query<(Entity, &PlacedAsset, &RackEngine, &GlobalTransform)>,
     streams: Query<&LaidStream>,
 ) {
