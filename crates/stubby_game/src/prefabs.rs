@@ -2,11 +2,11 @@
 use super::{
     audio::Synth,
     module_ids::ModuleIds,
-    resources::{MineNode, RecipeCatalog, ResourceNode},
     synth_modules::{ModuleCatalog, ModuleLights, ModuleParams, SynthModule},
 };
 use bevy::prelude::*;
 use bevy_stubby_audio::pulse::{PulseAliases, PulseBus, PulseFollower};
+use bevy_stubby_recipes::{MineNode, RecipeCatalog, ResourceNode};
 use std::collections::{BTreeMap, HashMap};
 use stubby_audio::{Command, ModuleId, ModuleKind};
 use stubby_core::PrefabBinding;
@@ -289,7 +289,7 @@ fn install(world: &mut World, entity: Entity, definition: &PlacedAsset) -> Resul
             .0
             .insert(engine.0, logical);
         let harvested = world
-            .get_resource::<super::resources::PlayerInventory>()
+            .get_resource::<bevy_stubby_recipes::PlayerInventory>()
             .is_some_and(|player| player.collected.collected(&definition.instance));
         let node = ResourceNode {
             resource: "lightning_bug".into(),
@@ -365,7 +365,7 @@ fn install(world: &mut World, entity: Entity, definition: &PlacedAsset) -> Resul
         }
     } else if asset.starts_with("reed_clump_") {
         let harvested = world
-            .get_resource::<super::resources::PlayerInventory>()
+            .get_resource::<bevy_stubby_recipes::PlayerInventory>()
             .is_some_and(|player| player.collected.collected(&definition.instance));
         world.entity_mut(entity).insert(ResourceNode {
             resource: "reed_clump".into(),

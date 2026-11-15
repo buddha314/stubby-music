@@ -18,10 +18,10 @@ class CompatibilityTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / 'game'
         self.source = Path(self.temp.name) / 'jackdaw'
-        for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
-                     'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'crates/stubby_jackdaw/Cargo.toml',
-                     'crates/stubby_audio/Cargo.toml', 'crates/stubby_recipes/Cargo.toml',
-                     'jackdaw.toml', 'compatibility.json'):
+        # Every workspace member's manifest, so a new crate never breaks the fixture.
+        members = [m + '/Cargo.toml' for m in versions.read_toml(REPO / 'Cargo.toml')['workspace']['members']]
+        for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'jackdaw.toml',
+                     'compatibility.json', *members):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / name, dest)

@@ -16,7 +16,7 @@
 ## 4. Systems (one PR each)
 
 - [ ] 4.1 `bevy_stubby_rack` from `rack.rs`, `synth_modules.rs` and the generic rack HUD, over `stubby_rack`; inventory reaches it only through `RackOffers` and `MountRequested` in glue
-- [ ] 4.2 Move `ResourceNode`, `MineNode` and harvesting into `bevy_stubby_recipes`; rewrite their saved type paths
+- [x] 4.2 Move `ResourceNode` and `MineNode` into `bevy_stubby_recipes` (neutral defaults; the game's `lightning_bug_node`/`scrub_oak_node` build its own); rewrite their saved type paths. E-key harvesting, the HUD and the popup stay in the game as presentation and glue, since they join crafting to the calendar and machine interaction
 - [ ] 4.3 `stubby_player` from the player half of `controls.rs`, `hand.rs` and `interaction.rs`
 - [ ] 4.4 `stubby_life` from the lightning bug, its voice and the flora presentation
 - [ ] 4.5 `stubby_world` from terrain, sky, ground, world generation, export, the prefab lifecycle and the calendar; the `ResourceTime` conversion moves to glue (schedule with Codex, `add-hybrid-world-placement`)

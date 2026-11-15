@@ -58,6 +58,8 @@ impl Plugin for RecipesPlugin {
             app.insert_resource(player);
         }
         app.init_resource::<PlayerInventory>()
+            .register_type::<ResourceNode>()
+            .register_type::<MineNode>()
             .add_message::<HarvestRequest>()
             .add_message::<ResourceCollected>()
             .add_message::<CraftRequest>()
@@ -230,5 +232,41 @@ mod tests {
             .drain()
             .collect();
         assert_eq!(collected.len(), 1);
+    }
+}
+
+/// A finite source placed in the world: which resource it is, its instance ID, and
+/// whether it has been collected this availability period. The game decides how it is
+/// collected (E pickup, a machine); this plugin owns what it is.
+#[derive(Component, Reflect, Clone, Default)]
+#[reflect(Component, Default)]
+pub struct ResourceNode {
+    pub resource: String,
+    pub instance: String,
+    pub collected: bool,
+}
+impl ResourceNode {
+    pub fn source_object(&self) -> stubby_recipes::SourceObject {
+        stubby_recipes::SourceObject::Exhaustible {
+            resource: self.resource.clone(),
+            instance: self.instance.clone(),
+            collected: self.collected,
+        }
+    }
+}
+
+/// An infinite source (a mine) placed in the world. Never a finite pickup.
+#[derive(Component, Reflect, Clone, Default)]
+#[reflect(Component, Default)]
+pub struct MineNode {
+    pub mine: String,
+    pub instance: String,
+}
+impl MineNode {
+    pub fn source_object(&self) -> stubby_recipes::SourceObject {
+        stubby_recipes::SourceObject::InfiniteMine {
+            mine: self.mine.clone(),
+            instance: self.instance.clone(),
+        }
     }
 }
