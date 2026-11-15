@@ -1,0 +1,19 @@
+{
+  "id": "clock_lamp",
+  "parts": [
+    {
+      "part": "clock",
+      "kind": "Clock"
+    }
+  ],
+  "jacks": {
+    "gate": "clock.gate",
+    "phase": "clock.phase"
+  },
+  "knobs": {
+    "bpm": {
+      "param": "clock.bpm",
+      "default": 120.0
+    }
+  }
+}
