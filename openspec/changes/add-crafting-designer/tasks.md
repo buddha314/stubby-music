@@ -1,17 +1,17 @@
 ## 1. Editing model (`stubby_recipes`, no Bevy)
 
-- [ ] 1.1 `rules::edit::RulesDocument`: load a rules directory; `Add`, `Set`, `Remove` edits on any registry, each recording its inverse
-- [ ] 1.2 Validate the whole rule set after each edit, reporting every error with registry, ID and field
-- [ ] 1.3 Undo and redo
-- [ ] 1.4 `Rename` updates every reference and adds a `migrations.json` row; removing a locked ID requires a target or retirement
-- [ ] 1.5 Save through `canonical_files` and `updated_ids_lock`, writing only changed files; refuse while invalid
-- [ ] 1.6 Where-used query over all registries
-- [ ] 1.7 Tests: add a recipe; dangling reference reported; undo restores; rename writes a migration; saved output passes `rules-fmt --check`
+- [x] 1.1 `rules::edit::RulesDocument`: load a rules directory; `Add`, `Set`, `Remove` edits on any registry, each recording its inverse
+- [x] 1.2 Validate the whole rule set after each edit, reporting every error with registry, ID and field
+- [x] 1.3 Undo and redo
+- [x] 1.4 `Rename` updates every reference and adds a `migrations.json` row; removing a locked ID requires a target or retirement
+- [x] 1.5 Save through `canonical_files` and `updated_ids_lock`, writing only changed files; refuse while invalid
+- [x] 1.6 Where-used query over all registries
+- [x] 1.7 Tests: add a recipe; dangling reference reported; undo restores; rename writes a migration; saved output passes `rules-fmt --check`
 
 ## 2. Schema annotations (Rule PR)
 
-- [ ] 2.1 Mark every ID-reference field with `x-stubby-ref: <registry>` through schemars
-- [ ] 2.2 Run `rules-fmt` to regenerate `schema/`; `cargo test -p stubby_recipes` passes
+- [x] 2.1 Mark every ID-reference field with `x-stubby-ref: <registry>` through schemars
+- [x] 2.2 Run `rules-fmt` to regenerate `schema/`; `cargo test -p stubby_recipes` passes
 
 ## 3. The Jackdaw extension
 

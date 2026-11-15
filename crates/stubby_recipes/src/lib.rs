@@ -37,6 +37,7 @@ pub struct ItemDefinition {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Stack {
+    #[schemars(extend("x-stubby-ref" = "items"))]
     pub item: String,
     pub quantity: u32,
 }

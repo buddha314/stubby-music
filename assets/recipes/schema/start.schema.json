@@ -32,7 +32,8 @@
       "type": "object",
       "properties": {
         "item": {
-          "type": "string"
+          "type": "string",
+          "x-stubby-ref": "items"
         },
         "quantity": {
           "type": "integer",

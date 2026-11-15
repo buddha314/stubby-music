@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
+pub mod edit;
+
 /// The file format every rules file is written in. Bump it (and migrate the files)
 /// only when a change to the schema is not backwards compatible.
 pub const FORMAT: u32 = 1;

@@ -21,6 +21,7 @@ pub struct MineDefinition {
     pub id: String,
     pub name: String,
     /// A resource definition ID, not an item ID. Each produced bug is finite.
+    #[schemars(extend("x-stubby-ref" = "resources"))]
     pub produces_resource: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub productivity_factors: Vec<ProductivityFactor>,
