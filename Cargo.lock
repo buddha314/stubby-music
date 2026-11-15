@@ -6525,6 +6525,7 @@ dependencies = [
  "serde",
  "serde_json",
  "stubby_audio",
+ "stubby_rack",
  "stubby_recipes",
  "tempfile",
 ]
@@ -6546,8 +6547,18 @@ dependencies = [
  "serde",
  "serde_json",
  "stubby_audio",
+ "stubby_rack",
  "stubby_recipes",
  "tempfile",
+]
+
+[[package]]
+name = "stubby_rack"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "stubby_audio",
 ]
 
 [[package]]

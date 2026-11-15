@@ -7,10 +7,10 @@ clock, a VCO slot and a volume module. The VCOs already exist; these are the oth
   (it starts at the burbler's own seeded tempo), a BPM display reads it, a
   jellyfish-bell lamp flashes on the beat, and GATE and PHASE are its outputs. Its
   crown is a row of bubbles.
-- `volume` (4HP, engine `Vca` with a built-in envelope): one large knob setting `gain`,
-  TRIG, IN and OUT jacks, and a soft ring of light around the knob. A trigger at TRIG
-  fires the envelope that opens it; the player patches the clock's GATE there. Its
-  crown is a rising wedge.
+- `volume` (4HP, engine `Vca`, no envelope): one large knob setting `gain`, TRIG, IN
+  and OUT jacks, and a soft ring of light around the knob. TRIG is the VCA's CV: it
+  opens while the gate is high, so the voice stays square; the player patches the
+  clock's GATE there. Its crown is a rising wedge. Engine wiring is in `module.json`.
 
 The player patches the voice with cables (`create_patch_cable.py`): clock GATE to
 volume TRIG, VCO OUT to volume IN. Volume OUT is normalled to the burbler's outlet.
@@ -210,11 +210,10 @@ def build_volume():
     profile = kit.profile({
         "silhouette": "rising_wedge",
         "ports": [{"node": "Port_trig", "port": "trig", "direction": "in",
-                   "note": "fires the built-in envelope that opens the VCA"},
+                   "note": "the VCA's CV: open while the gate is high"},
                   {"node": "Port_in", "port": "in", "direction": "in"},
                   {"node": "Port_out", "port": "out", "direction": "out",
                    "normalled_to": "the burbler's outlet when nothing is patched"}],
-        "envelope": {"built_in": True, "trigger": "trig", "note": "fixed shape; engine Envelope -> Vca cv"},
         "params": [{"node": "Knob_gain", "param": "gain", "min": 0.0, "max": 1.0, "taper": "linear",
                     "rotation_degrees": 300.0}],
         "lights": [{"node": "Light_level", "light": "level", "rest_strength": 0.0, "peak_strength": 6.0}],

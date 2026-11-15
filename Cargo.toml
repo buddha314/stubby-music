@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/stubby_audio", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes", "crates/stubby_jackdaw"]
+members = ["crates/stubby_audio", "crates/stubby_rack", "crates/stubby_game", "crates/stubby_recipes", "crates/bevy_stubby_recipes", "crates/stubby_jackdaw"]
 # Both game entry points and the crafting adapter follow shared Jackdaw.
 exclude = ["spikes"]
 

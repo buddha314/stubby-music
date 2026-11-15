@@ -306,24 +306,21 @@ fn audition_showcase(
     }
 }
 
-/// The engine module for a profile, with its starting parameters.
+/// The engine module behind a placed module asset, from its rack definition (the same
+/// one the rack uses, so the two never disagree): its one part, at the placed asset's
+/// knob values or the definition's defaults. `None` for modules without a definition
+/// or an engine part yet (saw and triangle VCOs).
 fn engine_kind(profile: &ModuleProfile, params: &ModuleParams) -> Option<ModuleKind> {
-    let get = |name: &str, default: f32| params.0.get(name).copied().unwrap_or(default);
-    Some(match profile.module_kind.as_str() {
-        "SineVco" => ModuleKind::SineVco {
-            freq_hz: get("freq", 261.63),
-        },
-        "SquareVco" => ModuleKind::SquareVco {
-            freq_hz: get("freq", 261.63),
-        },
-        "Clock" => ModuleKind::Clock {
-            bpm: get("bpm", 120.0),
-        },
-        "Vca" => ModuleKind::Vca {
-            gain: get("gain", 0.7),
-        },
-        // Saw and triangle oscillators don't exist in the engine yet.
-        _ => return None,
+    let module = super::rack::RACK_MODULES.get(&profile.id)?;
+    let [part] = module.parts.as_slice() else {
+        return None;
+    };
+    ModuleKind::from_params(part.kind, |param| {
+        let (name, knob) = module
+            .knobs
+            .iter()
+            .find(|(_, k)| k.part == part.part && k.param == param)?;
+        Some(params.0.get(name).copied().unwrap_or(knob.default))
     })
 }
 

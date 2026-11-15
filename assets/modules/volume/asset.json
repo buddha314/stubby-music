@@ -19,7 +19,7 @@
       "node": "Port_trig",
       "port": "trig",
       "direction": "in",
-      "note": "fires the built-in envelope that opens the VCA"
+      "note": "the VCA's CV: open while the gate is high"
     },
     {
       "node": "Port_in",
@@ -33,11 +33,6 @@
       "normalled_to": "the burbler's outlet when nothing is patched"
     }
   ],
-  "envelope": {
-    "built_in": true,
-    "trigger": "trig",
-    "note": "fixed shape; engine Envelope -> Vca cv"
-  },
   "params": [
     {
       "node": "Knob_gain",

@@ -49,7 +49,7 @@ layer that composes the systems.
 
 #### Scenario: Built alone
 - **WHEN** `cargo tree -p stubby_rack` is listed
-- **THEN** it shows no Bevy, `stubby_recipes` or `stubby_game` crate
+- **THEN** it shows no Bevy engine crate (`bevy`, `bevy_app`, `bevy_ecs`, as `stubby_audio`'s CI checks), and no `stubby_recipes` or `stubby_game`
 
 #### Scenario: No game names in rack data
 - **WHEN** the shipped module definitions are read
@@ -58,7 +58,7 @@ layer that composes the systems.
 ### Requirement: Knob defaults are numbers the caller can override
 A knob's default in a module definition SHALL be a number within the knob's range.
 Whoever instantiates a module MAY supply starting values for any of its knobs, which
-SHALL take precedence over the defaults and SHALL be range-checked the same way.
+SHALL take precedence over the defaults and SHALL be clamped to the knob's range.
 
 #### Scenario: The burbler clock starts at its seeded tempo
 - **WHEN** a burbler with a seeded tempo of 96 BPM opens its rack for the first time

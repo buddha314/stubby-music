@@ -129,6 +129,7 @@ docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
+  stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_jackdaw/         the game as Jackdaw builds it (adapter; keeps saved prefab type paths)
@@ -452,8 +453,12 @@ equivalent of an iron ore node, so the player does not pick it up.
   `machine_config.rs`): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the
   inventory), spare cables (colour, the suggested patch, a hint), the normalled output. A
-  module is one entry in `rack.rs` (its engine parts, internal wiring, jack → engine
-  port). The engine patch is exactly the patched cables; completing them sends
+  module is data too: `assets/modules/<id>/module.json` (its engine parts, internal
+  wiring, jack → engine port, knob → engine parameter, default), validated against its
+  panel `asset.json` by the Bevy-free `stubby_rack` crate, which also plans the engine
+  patch. `stubby_rack` never names items, creatures or machines; values that join the
+  rack to the world (a machine's seeded tempo, the bug's pitch) are passed in by
+  `rack.rs` (`refactor-rack-modules-as-data`). The engine patch is exactly the patched cables; completing them sends
   `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,
   design "The rack pattern as built").
 - **A rack plays only what it shows** (user rule, until the user gives an override).
