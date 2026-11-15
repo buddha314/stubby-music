@@ -5,8 +5,8 @@
    pushed to buddha314 as sync/<date>, merged by PR. Stops on a conflict.
 2. Fast-forward the shared Jackdaw checkout to the fork's main.
 3. Rebuild our Bevy-main forks of third-party crates (tools/bevy_main_forks.py).
-4. Re-pin the game: compatibility.json, jackdaw.toml pins, rust-toolchain.toml,
-   and Cargo.lock's Bevy revision to the one our Jackdaw locks.
+4. Re-pin the game: compatibility.json, jackdaw.toml pins, rust-toolchain.toml, the
+   Jackdaw git `rev` in Cargo.toml, and Cargo.lock's Jackdaw and Bevy revisions.
 5. Verify (tools/check_jackdaw_versions.py) and build the game and adapter.
 
 tools/jackdaw.sh sync runs this and then `prepare` (the shared editor build).
@@ -112,7 +112,13 @@ def repin(record, revision):
     toolchain = ROOT / 'rust-toolchain.toml'
     toolchain.write_text(re.sub(r'(?m)^channel = ".*"$', f'channel = "{rust}"', toolchain.read_text()))
 
-    # Refresh the lock for moved path crates, then pin Bevy and the forks.
+    # The Jackdaw crates are git dependencies on the fork, declared once in the workspace.
+    cargo = ROOT / 'Cargo.toml'
+    cargo.write_text(re.sub(
+        r'(?m)^(jackdaw_\w+ = \{ git = "[^"]+", rev = )"[0-9a-f]{40}"',
+        lambda m: f'{m[1]}"{revision}"', cargo.read_text()))
+
+    # Re-resolve the Jackdaw crates at the new rev, then pin Bevy and the forks.
     run('cargo', 'metadata', '--format-version', '1', capture=True)
     # Forks first: updating them re-resolves Bevy's git branch, so Bevy is pinned last.
     forks = json.loads((ROOT / 'bevy_main_forks.json').read_text())['forks']
@@ -130,7 +136,7 @@ def main():
     revision = advance_checkout(record)
     run(sys.executable, str(ROOT / 'tools/bevy_main_forks.py'), 'ensure')
     repin(record, revision)
-    run(sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--source', str(SOURCE))
+    run(sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--source', str(SOURCE), '--editor')
     # Separately: built together, Cargo unifies features and the adapter build that
     # embedded Play runs would start cold.
     if any(run('cargo', 'build', '--locked', '-p', package, check=False)
@@ -139,9 +145,9 @@ def main():
                  f'Shared Jackdaw moved {before[:8]} -> {revision[:8]}; '
                  f'roll back with: git -C {SOURCE} reset --keep {before} && '
                  f'git -C {ROOT} checkout -- jackdaw.toml compatibility.json '
-                 'rust-toolchain.toml Cargo.lock')
+                 'rust-toolchain.toml Cargo.toml Cargo.lock')
     print(f'Synced: Jackdaw {revision[:8]}, Bevy {record["bevy"]["source"].rsplit("#", 1)[-1][:8]}. '
-          'Commit the pins and Cargo.lock on a branch.')
+          'Commit the pins, Cargo.toml and Cargo.lock on a branch.')
 
 
 if __name__ == '__main__':

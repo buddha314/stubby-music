@@ -13,7 +13,12 @@ share one root Cargo workspace, one Bevy declaration and one Cargo.lock. The
 adapter package remains to preserve saved-prefab type paths. Domain/audio code
 remains independent of the game engine.
 
-Keep the shared source and game as sibling directories. Run
+The game builds from this repository alone: Jackdaw's crates are git dependencies on
+the fork at the pinned `rev` (`use-jackdaw-git-dependencies`, 2026-11-15; before then
+they were path dependencies into the sibling checkout, which let the build follow
+whatever the checkout held). The shared editor checkout still lives beside the game
+(or at `$JACKDAW_SOURCE`) and must equal the pin to launch. `tools/jackdaw.sh link` /
+`unlink` switch the build to that checkout for unpushed editor work. Run
 `tools/jackdaw.sh check` to detect source or version drift. Prepare builds matching
 shared editor/CLI binaries and records their local hashes; managed launches check
 that receipt. It refuses to rebuild an editor the user is running. No per-game

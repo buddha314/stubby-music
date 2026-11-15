@@ -4119,6 +4119,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 [[package]]
 name = "jackdaw_bind"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "thiserror 2.0.20",
@@ -4127,6 +4128,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_bsn"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "bevy_reflect 0.20.0-dev",
@@ -4142,6 +4144,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_camera_rig"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "jackdaw_scene_types",
@@ -4150,10 +4153,12 @@ dependencies = [
 [[package]]
 name = "jackdaw_data_path"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 
 [[package]]
 name = "jackdaw_geometry"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "bitflags 2.13.1",
@@ -4167,6 +4172,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_pie_protocol"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "ipc-channel",
@@ -4177,6 +4183,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_prefab"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "jackdaw_bsn",
@@ -4187,6 +4194,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_runtime"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "jackdaw_bind",
@@ -4207,6 +4215,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_scene_types"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "dunce",
@@ -4222,6 +4231,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_schema"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "jackdaw_scene_types",
@@ -4232,6 +4242,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_surface"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
  "half",
@@ -4241,6 +4252,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_terrain"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy_math",
  "jackdaw_data_path",
@@ -4249,6 +4261,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_widgets_runtime"
 version = "0.21.0-dev"
+source = "git+https://github.com/buddha314/jackdaw.git?rev=3c891ed14bebee8dda6dda9ddc18b29a7000296e#3c891ed14bebee8dda6dda9ddc18b29a7000296e"
 dependencies = [
  "bevy",
 ]
