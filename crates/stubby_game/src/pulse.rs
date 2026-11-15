@@ -178,7 +178,7 @@ fn initialize(world: &mut World) {
             },
             FlashVisual,
             BugInstance(index),
-            super::resources::ResourceNode::lightning_bug(index),
+            super::resources::lightning_bug_node(index),
             Transform::from_translation(position).with_scale(Vec3::ZERO),
             Visibility::Hidden,
         ));

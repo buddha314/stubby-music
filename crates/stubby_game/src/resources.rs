@@ -1,70 +1,28 @@
 //! World resource collection and the first inventory/recipe boundary.
 use bevy::prelude::*;
-use stubby_recipes::{SignalUse, SourceObject};
+use stubby_recipes::SignalUse;
 
 // The crafting system is the `bevy_stubby_recipes` plugin; these names stay importable
 // from here so the rest of the game is unchanged.
 pub use super::recipes_plugin::{
-    CraftCompleted, CraftRequest, HarvestRequest, PlayerInventory, RecipeCatalog, RecipesPlugin,
-    RecipesSystems, ResourceCollected,
+    CraftCompleted, CraftRequest, HarvestRequest, MineNode, PlayerInventory, RecipeCatalog,
+    RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode,
 };
 
-#[derive(Component, Reflect, Clone)]
-#[reflect(Component, Default)]
-pub struct ResourceNode {
-    pub resource: String,
-    pub instance: String,
-    pub collected: bool,
-}
-impl Default for ResourceNode {
-    fn default() -> Self {
-        Self {
-            resource: "lightning_bug".into(),
-            instance: "lightning_bug-0".into(),
-            collected: false,
-        }
-    }
-}
-impl ResourceNode {
-    pub fn source_object(&self) -> SourceObject {
-        SourceObject::Exhaustible {
-            resource: self.resource.clone(),
-            instance: self.instance.clone(),
-            collected: self.collected,
-        }
-    }
-    pub fn lightning_bug(index: usize) -> Self {
-        Self {
-            instance: format!("lightning_bug-{index}"),
-            ..default()
-        }
+/// The opening's placed lightning bug, as a source (`lightning_bug-<index>`).
+pub fn lightning_bug_node(index: usize) -> ResourceNode {
+    ResourceNode {
+        resource: "lightning_bug".into(),
+        instance: format!("lightning_bug-{index}"),
+        collected: false,
     }
 }
 
-/// An infinite source authoring object. Not queried as a finite E pickup.
-#[derive(Component, Reflect, Clone)]
-#[reflect(Component, Default)]
-pub struct MineNode {
-    pub mine: String,
-    pub instance: String,
-}
-impl Default for MineNode {
-    fn default() -> Self {
-        Self::scrub_oak(0)
-    }
-}
-impl MineNode {
-    pub fn scrub_oak(index: usize) -> Self {
-        Self {
-            mine: "scrub_oak".into(),
-            instance: format!("scrub_oak-{index}"),
-        }
-    }
-    pub fn source_object(&self) -> SourceObject {
-        SourceObject::InfiniteMine {
-            mine: self.mine.clone(),
-            instance: self.instance.clone(),
-        }
+/// A scrub oak, as an infinite mine (`scrub_oak-<index>`).
+pub fn scrub_oak_node(index: usize) -> MineNode {
+    MineNode {
+        mine: "scrub_oak".into(),
+        instance: format!("scrub_oak-{index}"),
     }
 }
 
@@ -87,8 +45,6 @@ impl Plugin for ResourceRecipesPlugin {
         }
         app.init_resource::<stubby_core::InteractTarget>()
             .init_resource::<RecipeBookView>()
-            .register_type::<ResourceNode>()
-            .register_type::<MineNode>()
             .add_systems(Startup, setup)
             .configure_sets(Update, RecipesSystems.after(stubby_core::PrefabBinding))
             .add_systems(
@@ -413,7 +369,7 @@ mod tests {
     fn night_return_restores_existing_pickup_without_free_items() {
         let catalog = stubby_recipes::shipped_catalog().unwrap();
         let mut player = PlayerInventory::default();
-        let mut node = ResourceNode::default();
+        let mut node = lightning_bug_node(0);
         let mut source = node.source_object();
         catalog
             .harvest_source_at(
@@ -461,7 +417,7 @@ mod tests {
     #[test]
     fn mine_objects_are_authorable_but_not_finite_collection_nodes() {
         let mut app = collection_app();
-        let tree = app.world_mut().spawn(MineNode::scrub_oak(7)).id();
+        let tree = app.world_mut().spawn(scrub_oak_node(7)).id();
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyE);
@@ -481,7 +437,7 @@ mod tests {
     #[test]
     fn e_collects_the_targeted_pickup_once_and_f_does_not() {
         let mut app = collection_app();
-        let bug = app.world_mut().spawn(ResourceNode::lightning_bug(0)).id();
+        let bug = app.world_mut().spawn(lightning_bug_node(0)).id();
         *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(bug);
         let squares = |app: &App| {
             app.world()
@@ -515,7 +471,7 @@ mod tests {
         let mut app = App::new();
         app.init_resource::<InteractTarget>()
             .add_systems(Update, update_collection_popup);
-        let bug = app.world_mut().spawn(ResourceNode::default()).id();
+        let bug = app.world_mut().spawn(lightning_bug_node(0)).id();
         let popup = app
             .world_mut()
             .spawn((CollectionPopup, Visibility::Hidden))
