@@ -1,6 +1,6 @@
 ## Why
 
-`stubby_game` and `stubby_jackdaw` depend on six Jackdaw crates (`jackdaw_terrain`,
+`stubby_game` and `stubby_jackdaw` depend on five Jackdaw crates (`jackdaw_terrain`,
 `jackdaw_prefab`, `jackdaw_runtime`, `jackdaw_scene_types`, and `jackdaw_bsn` for
 tests) by relative path: `../../../jackdaw/crates/...`. The game builds only when a
 Jackdaw checkout happens to sit beside this repository, and it builds against whatever

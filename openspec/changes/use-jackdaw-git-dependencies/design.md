@@ -1,6 +1,6 @@
 ## Context
 
-Six Jackdaw crates are path dependencies of two members:
+Five Jackdaw crates are path dependencies of two members:
 
 | Member | Crates |
 | --- | --- |
