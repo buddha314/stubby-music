@@ -43,7 +43,7 @@ joins the two by module ID and reports drift.
 carry it through. Rejected: it couples every wiring edit to a Blender run.
 
 ### A new Bevy-free crate, `stubby_rack`
-It holds the definition types, the loader and validator, the default-source enum and
+It holds the definition types, the loader and validator, and
 the patch planner. It depends on `stubby_audio` (for `ModuleKind`, `Command`,
 `PortRef`) and `serde`, never on Bevy, as `stubby_recipes` never does.
 *Alternatives:* put it in `stubby_recipes` (rejected: recipes are about items and
