@@ -40,11 +40,8 @@ pub struct RackConfiguration {
     #[serde(default)]
     pub patched_hint: String,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize)]
-pub struct JackRef {
-    pub place: String,
-    pub port: String,
-}
+/// A jack on a rack: the place and the module's panel jack (`stubby_rack`'s type).
+pub use stubby_rack::Jack as JackRef;
 #[derive(Clone, Deserialize)]
 pub struct RackCable {
     pub color: String,

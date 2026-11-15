@@ -129,6 +129,7 @@ docs/research/            research notes behind decisions
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   stubby_game/            the Bevy app
+  stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_jackdaw/         the game as Jackdaw builds it (adapter; keeps saved prefab type paths)
@@ -452,8 +453,12 @@ equivalent of an iron ore node, so the player does not pick it up.
   `machine_config.rs`): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the
   inventory), spare cables (colour, the suggested patch, a hint), the normalled output. A
-  module is one entry in `rack.rs` (its engine parts, internal wiring, jack → engine
-  port). The engine patch is exactly the patched cables; completing them sends
+  module is data too: `assets/modules/<id>/module.json` (its engine parts, internal
+  wiring, jack → engine port, knob → engine parameter, default), validated against its
+  panel `asset.json` by the Bevy-free `stubby_rack` crate, which also plans the engine
+  patch. `stubby_rack` never names items, creatures or machines; values that join the
+  rack to the world (a machine's seeded tempo, the bug's pitch) are passed in by
+  `rack.rs` (`refactor-rack-modules-as-data`). The engine patch is exactly the patched cables; completing them sends
   `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,
   design "The rack pattern as built").
 - **A rack plays only what it shows** (user rule, until the user gives an override).
@@ -540,17 +545,27 @@ package/type paths for existing saved prefabs. Do not independently upgrade Bevy
 or restore a separate adapter lockfile. `compatibility.json` records the
 shared editor source revision, upstream base, Bevy revision and compiler.
 
-Run `python3 tools/check_jackdaw_versions.py` before work involving the editor.
+**The game takes Jackdaw's crates as git dependencies on the fork, pinned by `rev`** in the
+root `[workspace.dependencies]` (`use-jackdaw-git-dependencies`), so the repository builds
+from a fresh clone. Members inherit them (`jackdaw_prefab.workspace = true`); never add a
+Jackdaw `path` dependency. To build against an unpushed editor fix in `~/src/jackdaw`, run
+`tools/jackdaw.sh link` (an untracked `.cargo/config.toml` `[patch]`) and `tools/jackdaw.sh
+unlink` before committing; the check refuses a linked `Cargo.lock`. The shared editor's
+checkout must still equal the pin to launch, because Play talks to the game over Jackdaw's
+PIE protocol.
+
+Run `python3 tools/check_jackdaw_versions.py` before work involving the editor (it checks
+the repository; `--editor` also checks the shared checkout, as `tools/jackdaw.sh` does).
 
 **We follow the chain Bevy main → jbuehler23/jackdaw main → our fork's main → this game**
 (user direction, 2026-11-03: use the latest Jackdaw features as they are published).
 **`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/jackdaw_sync.py`): it merges
 upstream main into the fork (temporary worktree, `sync/<date>` PR on buddha314; stops on a
 conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
-crates, re-pins `compatibility.json`, `jackdaw.toml` pins,
-`rust-toolchain.toml` and Cargo.lock's Bevy revision to the one our Jackdaw locks, then
-builds the game and adapter and the shared editor (`prepare`). Commit the pins and lock on
-a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
+crates, re-pins `compatibility.json`, `jackdaw.toml` pins, `rust-toolchain.toml`, the
+Jackdaw `rev` in `Cargo.toml` and Cargo.lock's Jackdaw and Bevy revisions, then builds the
+game and adapter and the shared editor (`prepare`). Commit the pins, `Cargo.toml` and lock
+on a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
 CI warns when the pin lags the fork.
 
 **Physics colliders on prefabs are planned in `add-prefab-colliders`:** Avian already runs on

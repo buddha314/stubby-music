@@ -1,7 +1,7 @@
 ## 1. Load the integration
 
 - [ ] 1.1 Jackdaw fork: add `exclude = ["integrations"]` to the root `Cargo.toml` on a `fix/` branch; confirm the fork still builds; add it to the fork-carried list, with nothing filed upstream
-- [ ] 1.2 Add `jackdaw_avian_integration` (`default-features = false`) to `crates/stubby_jackdaw` by path; confirm one Bevy and one avian (`tools/check_jackdaw_versions.py`, `Cargo.lock`)
+- [ ] 1.2 Add `jackdaw_avian_integration` (`default-features = false`) to the workspace's pinned Jackdaw git dependencies and `crates/stubby_jackdaw`; confirm one Bevy and one avian (`tools/check_jackdaw_versions.py`, `Cargo.lock`)
 - [ ] 1.3 Add `AvianColliderBridgePlugin` beside `JackdawPlugin`, and decide how the standalone `stubby_game` gets the same colliders
 - [ ] 1.4 Decide what `jackdaw.toml` needs: `[modules] physics = true` or nothing, given the editor does not ship the Physics module
 

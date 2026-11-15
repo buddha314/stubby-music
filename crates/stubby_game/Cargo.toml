@@ -9,10 +9,11 @@ dev = ["bevy/dynamic_linking"]
 embedded_recipes_plugin = []
 
 [dependencies]
-jackdaw_terrain = { path = "../../../jackdaw/crates/jackdaw_terrain", default-features = false }
+jackdaw_terrain.workspace = true
 stubby_recipes = { path = "../stubby_recipes" }
 bevy_stubby_recipes = { path = "../bevy_stubby_recipes" }
 stubby_audio = { path = "../stubby_audio" }
+stubby_rack = { path = "../stubby_rack" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]

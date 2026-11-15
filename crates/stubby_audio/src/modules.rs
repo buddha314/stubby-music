@@ -109,6 +109,91 @@ impl ModuleKind {
     pub fn param(&self, name: &str) -> Option<&'static ParamSpec> {
         self.params().iter().find(|p| p.name == name)
     }
+
+    /// The variant's name, as data files name it (`"SquareVco"`).
+    pub fn name(&self) -> &'static str {
+        match self {
+            ModuleKind::SineVco { .. } => "SineVco",
+            ModuleKind::SquareVco { .. } => "SquareVco",
+            ModuleKind::Clock { .. } => "Clock",
+            ModuleKind::RandomClock { .. } => "RandomClock",
+            ModuleKind::Constant { .. } => "Constant",
+            ModuleKind::Envelope { .. } => "Envelope",
+            ModuleKind::Vca { .. } => "Vca",
+        }
+    }
+
+    /// A module of the named kind at its parameters' defaults. `None` for an unknown
+    /// name, and for `RandomClock`, whose seed and bounds are not parameters.
+    pub fn default_of(name: &str) -> Option<ModuleKind> {
+        Self::from_params(name, |_| None)
+    }
+
+    /// A module of the named kind, each parameter taken from `value` or its default.
+    /// Values are not clamped here; callers validate against [`ParamSpec`] ranges.
+    pub fn from_params(name: &str, value: impl Fn(&str) -> Option<f32>) -> Option<ModuleKind> {
+        let get = |specs: &[ParamSpec], param: &str| {
+            let default = specs
+                .iter()
+                .find(|p| p.name == param)
+                .map_or(0.0, |p| p.default);
+            value(param).unwrap_or(default)
+        };
+        Some(match name {
+            "SineVco" => ModuleKind::SineVco {
+                freq_hz: get(VCO_PARAMS, "freq"),
+            },
+            "SquareVco" => ModuleKind::SquareVco {
+                freq_hz: get(VCO_PARAMS, "freq"),
+            },
+            "Clock" => ModuleKind::Clock {
+                bpm: get(CLOCK_PARAMS, "bpm"),
+            },
+            "Constant" => ModuleKind::Constant {
+                value: get(CONSTANT_PARAMS, "value"),
+            },
+            "Envelope" => ModuleKind::Envelope {
+                attack_s: get(ENVELOPE_PARAMS, "attack"),
+                decay_s: get(ENVELOPE_PARAMS, "decay"),
+            },
+            "Vca" => ModuleKind::Vca {
+                gain: get(VCA_PARAMS, "gain"),
+            },
+            _ => return None,
+        })
+    }
+}
+
+#[cfg(test)]
+mod kind_tests {
+    use super::*;
+
+    #[test]
+    fn every_buildable_kind_takes_exactly_its_params() {
+        for name in [
+            "SineVco",
+            "SquareVco",
+            "Clock",
+            "Constant",
+            "Envelope",
+            "Vca",
+        ] {
+            let kind = ModuleKind::default_of(name).unwrap_or_else(|| panic!("{name}"));
+            assert_eq!(kind.name(), name);
+            // Each listed parameter reaches the variant: set it to a marker and read it back.
+            for spec in kind.params() {
+                let marked = ModuleKind::from_params(name, |p| (p == spec.name).then_some(0.123))
+                    .unwrap_or_else(|| panic!("{name}"));
+                assert_ne!(
+                    marked, kind,
+                    "{name}.{} does not reach the module",
+                    spec.name
+                );
+            }
+        }
+        assert_eq!(ModuleKind::default_of("RandomClock"), None);
+        assert_eq!(ModuleKind::default_of("SawVco"), None);
+    }
 }
 
 fn node_info(
