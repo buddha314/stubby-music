@@ -85,19 +85,19 @@ impl Plugin for ResourceRecipesPlugin {
         if !app.is_plugin_added::<RecipesPlugin>() {
             app.add_plugins(RecipesPlugin::default());
         }
-        app.init_resource::<super::interaction::InteractTarget>()
+        app.init_resource::<stubby_core::InteractTarget>()
             .init_resource::<RecipeBookView>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
             .add_systems(Startup, setup)
-            .configure_sets(Update, RecipesSystems.after(super::prefabs::PrefabBinding))
+            .configure_sets(Update, RecipesSystems.after(stubby_core::PrefabBinding))
             .add_systems(
                 Update,
                 (
                     (replenish_nodes, collect_nearby)
                         .chain()
-                        .after(super::prefabs::PrefabBinding)
-                        .after(super::machine_config::MachineInteractionSet)
+                        .after(stubby_core::PrefabBinding)
+                        .after(stubby_core::MachineInteractionSet)
                         .before(RecipesSystems),
                     (mark_collected, update_hud, update_collection_popup)
                         .chain()
@@ -193,16 +193,16 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
 fn collect_nearby(
     keys: Res<ButtonInput<KeyCode>>,
     catalog: Option<Res<RecipeCatalog>>,
-    target: Res<super::interaction::InteractTarget>,
+    target: Res<stubby_core::InteractTarget>,
     mut player: ResMut<PlayerInventory>,
     nodes: Query<&ResourceNode, Without<super::prefabs::PrefabError>>,
     mut requests: MessageWriter<HarvestRequest>,
     calendar: Option<Res<super::calendar::Calendar>>,
-    screens: Option<Res<super::controls::ScreenMode>>,
+    screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
     if screens.as_ref().is_some_and(|s| s.open.is_some())
         || target.machine().is_some()
-        || !keys.pressed(super::controls::INTERACT)
+        || !keys.pressed(stubby_core::INTERACT)
         || catalog.is_none()
     {
         return;
@@ -238,13 +238,13 @@ fn mark_collected(
 }
 /// The one interaction prompt, for whatever E would act on: a pickup or a machine.
 fn update_collection_popup(
-    target: Res<super::interaction::InteractTarget>,
+    target: Res<stubby_core::InteractTarget>,
     nodes: Query<&ResourceNode, Without<super::prefabs::PrefabError>>,
     catalog: Option<Res<RecipeCatalog>>,
     machine: Option<Res<super::machine_config::MachineInteraction>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
     mut labels: Query<&mut Text, With<CollectionPopupText>>,
-    screens: Option<Res<super::controls::ScreenMode>>,
+    screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
     let action = if screens.as_ref().is_some_and(|s| s.open.is_some()) {
         None
@@ -282,7 +282,7 @@ fn update_collection_popup(
 }
 /// How every interaction prompt reads: the key, then the action.
 pub(crate) fn interaction_prompt(action: &str) -> String {
-    format!("[{}] {action}", key_label(super::controls::INTERACT))
+    format!("[{}] {action}", key_label(stubby_core::INTERACT))
 }
 fn key_label(key: KeyCode) -> &'static str {
     match key {
@@ -292,13 +292,13 @@ fn key_label(key: KeyCode) -> &'static str {
 }
 fn update_hud(
     keys: Res<ButtonInput<KeyCode>>,
-    target: Res<super::interaction::InteractTarget>,
+    target: Res<stubby_core::InteractTarget>,
     mut view: ResMut<RecipeBookView>,
     player: Res<PlayerInventory>,
     catalog: Option<Res<RecipeCatalog>>,
     mut hud: Query<&mut Text, With<InventoryHud>>,
     machine: Option<Res<super::machine_config::MachineInteraction>>,
-    screens: Option<Res<super::controls::ScreenMode>>,
+    screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
     let Ok(mut hud) = hud.single_mut() else {
         return;
@@ -327,7 +327,7 @@ fn update_hud(
     } else {
         format!("{recipe_count} recipes available")
     };
-    if keys.just_pressed(super::controls::RECIPE_BOOK) {
+    if keys.just_pressed(stubby_core::RECIPE_BOOK) {
         view.open = !view.open;
     }
     let mut text = format!(
@@ -391,8 +391,8 @@ fn replenish_nodes(
 
 #[cfg(test)]
 mod tests {
-    use super::super::interaction::InteractTarget;
     use super::*;
+    use stubby_core::InteractTarget;
     /// Collection as the game runs it: the plugin plus the game's systems around it.
     /// Reach is avian's (interaction.rs); here the target is set directly.
     fn collection_app() -> App {

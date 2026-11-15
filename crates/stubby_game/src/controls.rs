@@ -3,13 +3,8 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use stubby_core::{CROUCH, INVENTORY, JUMP, Screen, ScreenMode};
 
-pub const INTERACT: KeyCode = KeyCode::KeyE;
-pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
-pub const INVENTORY: KeyCode = KeyCode::Tab;
-pub const RECORDER: KeyCode = KeyCode::KeyH;
-pub const JUMP: KeyCode = KeyCode::Space;
-pub const CROUCH: KeyCode = KeyCode::KeyC;
 const EYE_HEIGHT: f32 = 1.65;
 const CROUCH_HEIGHT: f32 = 1.0;
 
@@ -42,25 +37,6 @@ impl LookCapture {
     }
 }
 
-/// Full-screen HUD panels. One is open at a time; while one is, the cursor is free and
-/// the player neither moves nor looks (add-inventory-and-goals-hud D7). The burbler's
-/// rack screen joins this when it lands.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Screen {
-    Inventory,
-    MachineConfiguration(Entity),
-}
-#[derive(Resource, Default)]
-pub struct ScreenMode {
-    pub open: Option<Screen>,
-    closed_this_frame: bool,
-}
-impl ScreenMode {
-    pub(crate) fn close(&mut self) {
-        self.open = None;
-        self.closed_this_frame = true;
-    }
-}
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
     fn build(&self, app: &mut App) {

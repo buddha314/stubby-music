@@ -6512,6 +6512,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "stubby_core"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "stubby_game"
 version = "0.1.0"
 dependencies = [
@@ -6525,6 +6532,7 @@ dependencies = [
  "serde",
  "serde_json",
  "stubby_audio",
+ "stubby_core",
  "stubby_rack",
  "stubby_recipes",
  "tempfile",

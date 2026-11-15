@@ -12,6 +12,7 @@ stubby_recipes = { path = "../stubby_recipes" }
 bevy_stubby_recipes = { path = "../bevy_stubby_recipes" }
 stubby_audio = { path = "../stubby_audio" }
 stubby_rack = { path = "../stubby_rack" }
+stubby_core = { path = "../stubby_core" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]

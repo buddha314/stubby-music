@@ -9,6 +9,7 @@ use super::{
 use bevy::prelude::*;
 use std::collections::{BTreeMap, HashMap};
 use stubby_audio::{Command, ModuleId, ModuleKind};
+use stubby_core::PrefabBinding;
 
 /// Insert before DesertPlugin when a level provides its own placements.
 #[derive(Resource)]
@@ -51,8 +52,6 @@ struct Binding {
 pub struct WorldSources(pub BTreeMap<String, (Entity, stubby_recipes::SourceKind)>);
 #[derive(Resource, Default)]
 struct Bindings(HashMap<Entity, Binding>);
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
-pub struct PrefabBinding;
 pub struct PlacedPrefabsPlugin;
 impl Plugin for PlacedPrefabsPlugin {
     fn build(&self, app: &mut App) {
@@ -588,8 +587,8 @@ mod tests {
         app.world_mut().entity_mut(reed).insert(ChildOf(parent));
         // Reach is avian's (interaction.rs); the reed is the target.
         *app.world_mut()
-            .resource_mut::<super::super::interaction::InteractTarget>() =
-            super::super::interaction::InteractTarget::Pickup(reed);
+            .resource_mut::<stubby_core::InteractTarget>() =
+            stubby_core::InteractTarget::Pickup(reed);
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyE);
