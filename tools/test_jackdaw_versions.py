@@ -20,6 +20,7 @@ class CompatibilityTests(unittest.TestCase):
         self.source = Path(self.temp.name) / 'jackdaw'
         for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
                      'crates/stubby_game/Cargo.toml', 'crates/bevy_stubby_recipes/Cargo.toml', 'crates/stubby_jackdaw/Cargo.toml',
+                     'crates/stubby_audio/Cargo.toml', 'crates/stubby_recipes/Cargo.toml',
                      'jackdaw.toml', 'compatibility.json'):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -39,7 +40,7 @@ class CompatibilityTests(unittest.TestCase):
         self.addCleanup(mock.stop)
 
     def check(self):
-        return versions.validate(self.root, self.source)
+        return versions.validate(self.root) + versions.validate_editor(self.root, self.source)
 
     def test_matching_configuration_is_read_only(self):
         before = {p: p.read_bytes() for p in Path(self.temp.name).rglob('*') if p.is_file()}
@@ -66,12 +67,42 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(any('inherit Bevy' in e for e in errors))
         self.assertTrue(any('separate adapter lockfile' in e for e in errors))
 
-    def test_published_runtime_cannot_replace_shared_source(self):
-        path = self.root / 'crates/stubby_jackdaw/Cargo.toml'
+    def replace_line(self, relative, prefix, replacement):
+        path = self.root / relative
         original = path.read_text()
-        line = next(line for line in original.splitlines() if line.startswith('jackdaw_runtime ='))
-        path.write_text(original.replace(line, 'jackdaw_runtime = "0.21"'))
-        self.assertTrue(any('jackdaw_runtime must use' in e for e in self.check()))
+        line = next(line for line in original.splitlines() if line.startswith(prefix))
+        path.write_text(original.replace(line, replacement))
+
+    def test_repository_checks_need_no_checkout(self):
+        self.assertEqual(versions.validate(self.root), [])
+
+    def test_published_runtime_cannot_replace_pinned_fork(self):
+        self.replace_line('crates/stubby_jackdaw/Cargo.toml', 'jackdaw_runtime =', 'jackdaw_runtime = "0.21"')
+        self.assertTrue(any('jackdaw_runtime must inherit the pinned Jackdaw' in e for e in self.check()))
+
+    def test_stray_path_dependency_is_rejected(self):
+        self.replace_line('crates/stubby_game/Cargo.toml', 'jackdaw_terrain',
+                          'jackdaw_terrain = { path = "../../../jackdaw/crates/jackdaw_terrain" }')
+        self.assertTrue(any('crates/stubby_game: jackdaw_terrain must inherit' in e for e in self.check()))
+
+    def test_workspace_pin_must_match_record(self):
+        rev = self.record['jackdaw']['revision']
+        path = self.root / 'Cargo.toml'
+        path.write_text(path.read_text().replace(f'rev = "{rev}"', 'rev = "' + '1' * 40 + '"', 1))
+        self.assertTrue(any('workspace jackdaw_' in e for e in self.check()))
+
+    def test_lock_revision_must_match_record(self):
+        rev = self.record['jackdaw']['revision']
+        path = self.root / 'Cargo.lock'
+        path.write_text(path.read_text().replace(f'#{rev}"', '#' + '2' * 40 + '"', 1))
+        errors = self.check()
+        self.assertTrue(any('Cargo.lock resolves jackdaw_' in e and '2' * 40 in e and rev in e for e in errors))
+
+    def test_linked_lock_is_rejected(self):
+        path = self.root / 'Cargo.lock'
+        source = versions.jackdaw_lock_source(self.record['jackdaw'])
+        path.write_text(path.read_text().replace(f'source = "{source}"\n', ''))
+        self.assertTrue(any('linked Jackdaw paths' in e and 'unlink' in e for e in self.check()))
 
     def test_wrong_fork_remote_is_rejected(self):
         self.responses[('remote', 'get-url', 'origin')] = self.record['jackdaw']['upstream']

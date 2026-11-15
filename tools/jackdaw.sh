@@ -8,7 +8,45 @@ cli_path="${source_dir}/target/debug/jd"
 project_dir="${repo_dir}"
 cd "$repo_dir"
 command_name="${1:-open}"
-python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir"
+# The game takes Jackdaw from the fork at the pinned revision (Cargo.toml). `link` builds it
+# against the shared checkout instead, through an untracked .cargo/config.toml [patch];
+# `unlink` returns to the pin. Neither edits a tracked file except Cargo.lock.
+link_config="${repo_dir}/.cargo/config.toml"
+case "$command_name" in
+    link)
+        python3 - "$repo_dir" "$source_dir" "$link_config" <<'PYLINK'
+import json, pathlib, sys, tomllib
+repo, source, config = map(pathlib.Path, sys.argv[1:])
+marker = '# Written by tools/jackdaw.sh link'
+if config.exists() and not config.read_text().startswith(marker):
+    sys.exit(f'{config} exists and was not written by link; merge the [patch] by hand.')
+origin = json.loads((repo / 'compatibility.json').read_text())['jackdaw']['origin']
+names = sorted(n for n in tomllib.loads((repo / 'Cargo.toml').read_text())['workspace']['dependencies']
+               if n.startswith('jackdaw_'))
+lines = [marker + '; tools/jackdaw.sh unlink removes it. Never commit it.', f'[patch."{origin}"]']
+for name in names:
+    crate = (source / 'crates' / name).resolve()
+    if not (crate / 'Cargo.toml').is_file():
+        sys.exit(f'{crate} is not a Jackdaw crate; set JACKDAW_SOURCE to the shared checkout.')
+    lines.append(f'{name} = {{ path = "{crate}" }}')
+config.parent.mkdir(exist_ok=True)
+config.write_text('\n'.join(lines) + '\n')
+print(f'Linked {len(names)} Jackdaw crates to {source.resolve()}; run tools/jackdaw.sh unlink before committing.')
+PYLINK
+        cargo metadata --format-version 1 >/dev/null
+        exit 0
+        ;;
+    unlink)
+        if [[ -f "$link_config" ]] && head -n1 "$link_config" | grep -q '^# Written by tools/jackdaw.sh link'; then
+            rm "$link_config"
+            rmdir --ignore-fail-on-non-empty "${repo_dir}/.cargo"
+        fi
+        cargo metadata --format-version 1 >/dev/null
+        python3 "${repo_dir}/tools/check_jackdaw_versions.py"
+        exit 0
+        ;;
+esac
+python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
 case "$command_name" in
     check)
         exit 0
@@ -31,7 +69,7 @@ PYIDLE
         cargo run --manifest-path "${repo_dir}/Cargo.toml" -p stubby_game --locked -- --export="${project_dir}/assets/generated"
         rust_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["rust"])' "${project_dir}/compatibility.json")"
         cargo "+${rust_version}" build --manifest-path "${source_dir}/Cargo.toml" -p jackdaw -p jd --locked
-        python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir"
+        python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
         python3 - "$project_dir" "$source_dir" <<'PYRECEIPT'
 import hashlib, json, pathlib, sys
 project, source = map(pathlib.Path, sys.argv[1:])
@@ -68,7 +106,7 @@ PYRECEIPT
         exec "${source_dir}/target/debug/jackdaw"
         ;;
     *)
-        echo "Usage: $0 [check|prepare|sync|doctor|build|run|open]" >&2
+        echo "Usage: $0 [check|prepare|sync|link|unlink|doctor|build|run|open]" >&2
         exit 2
         ;;
 esac
