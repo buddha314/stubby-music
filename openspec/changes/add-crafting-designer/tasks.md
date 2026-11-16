@@ -27,7 +27,7 @@
 
 ## 4. Playtest
 
-- [ ] 4.1 `bevy_stubby_recipes`: dev builds load rules from `assets/recipes/` and hot-reload on change, keeping the old rules and reporting errors on a failed reload; release builds stay embedded
+- [x] 4.1 `bevy_stubby_recipes`: dev builds load rules from `assets/recipes/` and hot-reload on change, keeping the old rules and reporting errors on a failed reload; release builds stay embedded (claimed: claude; checked live: editing `air.json` during Play reloads within a second)
 - [ ] 4.2 Smoke test: change the lightning bug's yield in the designer during Play and collect a bug
 
 ## 5. Docs

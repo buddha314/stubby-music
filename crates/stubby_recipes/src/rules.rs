@@ -291,6 +291,41 @@ impl Rules {
     }
 }
 
+/// Every rules file, in `RulesFiles` order.
+pub const FILES: [&str; 9] = [
+    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START, AIR,
+];
+
+/// Load and validate the rules from a directory on disk (dev builds reload the game's
+/// rules this way while it runs). An unreadable file is reported like any other problem.
+pub fn load_dir(dir: &std::path::Path) -> Result<Rules, RulesErrors> {
+    let mut texts = Vec::with_capacity(FILES.len());
+    let mut errors = Vec::new();
+    for file in FILES {
+        match std::fs::read_to_string(dir.join(file)) {
+            Ok(text) => texts.push(text),
+            Err(error) => {
+                errors.push(RulesError::new(file, "", "", error.to_string()));
+                texts.push(String::new());
+            }
+        }
+    }
+    if !errors.is_empty() {
+        return Err(RulesErrors(errors));
+    }
+    Rules::load(&RulesFiles {
+        items: &texts[0],
+        resources: &texts[1],
+        mines: &texts[2],
+        recipes: &texts[3],
+        buildables: &texts[4],
+        migrations: &texts[5],
+        goals: &texts[6],
+        start: &texts[7],
+        air: &texts[8],
+    })
+}
+
 /// The shipped rules, validated.
 pub fn shipped_rules() -> Result<Rules, RulesErrors> {
     Rules::load(&shipped_files())
