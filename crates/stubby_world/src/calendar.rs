@@ -83,7 +83,7 @@ pub struct Brightness {
 pub fn sky_profile() -> SkyProfile {
     serde_json::from_str(include_str!("../../../assets/lighting/sky.json")).expect("sky profile")
 }
-/// The game opens at the authored solar hour (sunrise by default), with a frame cap.
+/// The game opens at the authored solar hour (06:30, above the dawn ridges), with a frame cap.
 /// PreStartup, so reviews that set the clock at Startup win.
 fn open_at_authored_time(mut calendar: ResMut<Calendar>, mut time: ResMut<Time<Virtual>>) {
     calendar.elapsed =
@@ -467,6 +467,29 @@ mod tests {
         // It is up through the middle of the night.
         assert!(moon_direction(DAY_SECONDS as f32 + 450.).y > 0.5);
     }
+    #[test]
+    fn opening_sun_clears_ridges_slightly_right_of_view() {
+        let profile = sky_profile();
+        let sun = sun_direction(seconds_at_solar_hour(profile.opening_solar_hour));
+        let bearing = sun.x.atan2(-sun.z).to_degrees().rem_euclid(360.);
+        let offset = bearing - stubby_core::OPENING_HEADING_DEGREES;
+        assert!(
+            (10. ..25.).contains(&offset),
+            "opening sun offset: {offset}"
+        );
+        let highest_ridge = profile
+            .ridges
+            .base_deg
+            .iter()
+            .zip(&profile.ridges.amp_deg)
+            .map(|(base, amp)| base + amp)
+            .fold(0., f32::max);
+        assert!(
+            sun.y.asin().to_degrees() > highest_ridge,
+            "sun must clear the authored skyline"
+        );
+    }
+
     #[test]
     fn opening_hour_maps_back_to_calendar_seconds() {
         for hour in [0., 3.5, 6., 12., 17.9, 18., 21.] {

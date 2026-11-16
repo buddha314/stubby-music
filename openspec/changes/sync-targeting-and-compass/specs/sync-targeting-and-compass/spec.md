@@ -15,7 +15,7 @@ Only the targeted available pickup SHALL have a white data-driven outline with d
 - **THEN** its visible body remains identifiable while its flash light is off
 
 ### Requirement: Compass follows view
-The HUD SHALL show heading and cardinal directions during free play, hide behind screens, and open facing east. Compass and moon bearings SHALL share the same north/east convention.
+The HUD SHALL show heading and cardinal directions during free play, hide behind screens, and open at bearing 75 degrees so the eastward sunrise lies 15 degrees to the right. Compass and moon bearings SHALL share the same north/east convention.
 
 #### Scenario: Compass follows view
 - **WHEN** the player rotates from east to north

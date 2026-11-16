@@ -561,6 +561,10 @@ pub fn spawn_ridges(
     seed: u64,
 ) {
     let profile = crate::calendar::sky_profile().ridges;
+    let rotation = Quat::from_rotation_y(-stubby_core::OPENING_HEADING_DEGREES.to_radians());
+    let spawn = stubby_core::OPENING_SPAWN_XZ;
+    let pivot = Vec3::new(spawn.x, 0., spawn.y);
+    let frame = Transform::from_translation(pivot - rotation * pivot).with_rotation(rotation);
     for (ring, elevations) in ridge_elevations(seed, &profile).iter().enumerate() {
         let radius = profile.near_radius_m + ring as f32 * profile.ring_spacing_m;
         let point = |i: usize| {
@@ -577,6 +581,7 @@ pub fn spawn_ridges(
         }
         let [r, g, b] = profile.colors[ring];
         commands.spawn((
+            frame,
             Mesh3d(meshes.add(surface.mesh())),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: Color::srgb(r, g, b),

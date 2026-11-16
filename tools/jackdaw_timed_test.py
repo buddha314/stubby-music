@@ -161,6 +161,8 @@ def main():
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
     if args.standalone:
         command = [str(ROOT / 'target/debug/stubby_jackdaw'), '--seed=42']
+        if not args.prefabs:
+            command += [f'--screenshot=/tmp/stubby-opening-{args.name}.png']
         if args.prefabs:
             command += ['--scene=review_prefab_runtime.bsn',
                         f'--prefab-review=/tmp/stubby-lod-{args.name}']

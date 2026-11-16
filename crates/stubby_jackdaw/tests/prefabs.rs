@@ -293,3 +293,58 @@ fn migrated_authored_and_generated_models_load_without_editor_cache() {
         .collect();
     panic!("migrated models did not load all LODs without cache: {missing:?}");
 }
+
+#[test]
+fn production_opening_keeps_its_oak_and_burbler_in_front_of_spawn() {
+    let mut files = Vec::new();
+    prefab_files(&assets(), &mut files);
+    let library: std::collections::HashMap<_, _> = files
+        .into_iter()
+        .map(|file| {
+            (
+                file.strip_prefix(assets()).unwrap().to_path_buf(),
+                parse_bsn_text(&std::fs::read_to_string(file).unwrap()).unwrap(),
+            )
+        })
+        .collect();
+    let scene =
+        parse_bsn_text(&std::fs::read_to_string(assets().join("scene.bsn")).unwrap()).unwrap();
+    let resolved = resolve_scene(&scene, &|path: &Path| library.get(path)).unwrap();
+    let mut app = editor_world();
+    load_bsn_document(app.world_mut(), resolved);
+    assert!(app.world().resource::<UnresolvedTypes>().types().is_empty());
+    let camera = stubby_game::controls::spawn_transform(&Default::default());
+    let mut found = [false; 2];
+    for (source, transform) in app
+        .world_mut()
+        .query::<(&GltfSource, &Transform)>()
+        .iter(app.world())
+    {
+        let expected = if source.path.contains("scrub_oak_0.glb") {
+            found[0] = true;
+            Some((-24.144297, -94.36827))
+        } else if source.path.contains("mudpit_burbler.glb") {
+            found[1] = true;
+            Some((-1.45856, -41.11013))
+        } else {
+            None
+        };
+        if let Some((x, z)) = expected {
+            let in_view = camera.rotation.inverse() * (transform.translation - camera.translation);
+            assert!(
+                (in_view.x - x).abs() < 0.001,
+                "{}: {in_view:?}",
+                source.path
+            );
+            assert!(
+                (in_view.z - z).abs() < 0.001,
+                "{}: {in_view:?}",
+                source.path
+            );
+        }
+    }
+    assert!(
+        found.into_iter().all(|found| found),
+        "opening must keep its oak and burbler"
+    );
+}
