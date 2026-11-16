@@ -21,7 +21,7 @@ use super::FILES;
 
 impl Registry {
     /// The array in the registry's file that holds its rows.
-    fn rows_key(self) -> &'static str {
+    pub fn rows_key(self) -> &'static str {
         match self {
             Self::Items => "items",
             Self::Resources => "resources",
@@ -43,13 +43,16 @@ impl Registry {
     ];
 }
 
-/// One change to the rules.
-#[derive(Debug, Clone, PartialEq)]
+/// One change to the rules. Serialised with a `kind` tag (`{"kind": "set", ...}`), so a
+/// front end such as the web designer sends edits as JSON.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Edit {
     /// Add a row (it must carry a new, valid `id`), at `at` or at the end.
     Add {
         registry: Registry,
         row: Value,
+        #[serde(default)]
         at: Option<usize>,
     },
     /// Set (or, with `None`, remove) a value inside a row, by JSON pointer from the row
@@ -65,7 +68,9 @@ pub enum Edit {
     Remove {
         registry: Registry,
         id: String,
+        #[serde(default)]
         to: Option<String>,
+        #[serde(default)]
         retire: bool,
     },
     /// Rename a row's ID, every reference to it, and record the migration if it shipped.
@@ -122,7 +127,7 @@ impl fmt::Display for EditError {
 impl std::error::Error for EditError {}
 
 /// Where an ID is used: the file, the row that uses it and the field.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct Use {
     pub file: &'static str,
     pub row: String,
@@ -250,6 +255,65 @@ impl RulesDocument {
     }
 
     /// Every place an ID is referenced, across all rules files.
+    /// The JSON Schema of one row of `registry`, for building a form: the row's schema
+    /// from the generated file schema, its `$defs`, and every `x-stubby-ref` field given
+    /// an `enum` of the IDs its registry holds now (so a form offers only real IDs).
+    pub fn row_schema(&self, registry: Registry) -> Value {
+        let wanted = super::schema_ref(registry.file()).unwrap_or_default();
+        let file: Value = schemas()
+            .into_iter()
+            .find(|(path, _)| *path == wanted)
+            .and_then(|(_, text)| serde_json::from_str(&text).ok())
+            .unwrap_or(Value::Null);
+        let mut row = file["properties"][registry.rows_key()]["items"].clone();
+        // The row is usually a `$ref` to its definition: inline it, so the root of the
+        // schema is the row itself.
+        let target = row
+            .get("$ref")
+            .and_then(Value::as_str)
+            .and_then(|r| r.strip_prefix("#/$defs/"))
+            .and_then(|name| file["$defs"].get(name))
+            .cloned();
+        if let Some(target) = target {
+            row = target;
+        }
+        if let (Some(row), Some(defs)) = (row.as_object_mut(), file.get("$defs")) {
+            row.insert("$defs".into(), defs.clone());
+        }
+        self.offer_ids(&mut row);
+        row
+    }
+
+    fn offer_ids(&self, schema: &mut Value) {
+        match schema {
+            Value::Object(map) => {
+                let registry = map
+                    .get("x-stubby-ref")
+                    .and_then(|r| serde_json::from_value::<Registry>(r.clone()).ok());
+                if let Some(registry) = registry {
+                    let mut ids: Vec<Value> = self
+                        .rows(registry)
+                        .iter()
+                        .filter_map(|row| row.get("id").cloned())
+                        .collect();
+                    let nullable = map
+                        .get("type")
+                        .and_then(Value::as_array)
+                        .is_some_and(|types| types.iter().any(|t| t == "null"));
+                    if nullable {
+                        ids.push(Value::Null);
+                    }
+                    map.insert("enum".into(), Value::Array(ids));
+                }
+                for child in map.values_mut() {
+                    self.offer_ids(child);
+                }
+            }
+            Value::Array(items) => items.iter_mut().for_each(|item| self.offer_ids(item)),
+            _ => {}
+        }
+    }
+
     pub fn where_used(&self, id: &str) -> Vec<Use> {
         let mut uses = BTreeSet::new();
         for file in FILES {

@@ -142,6 +142,7 @@ crates/
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
+  stubby_rules_server/    tool: the rules designer, a web page on 127.0.0.1 (no Bevy, never the game)
   stubby_jackdaw/         the package Jackdaw builds: stubby_game plus the editor bridge
 assets/                   the one asset folder: scene.bsn, asset families (models + prefabs + profiles), shared textures/shaders
 jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
@@ -282,7 +283,13 @@ add a Bevy dependency to the core, not even optional; Bevy versions live only in
 plugin. Use community crates around it (serde, schemars, and as planned
 `bevy_common_assets`, `moonshine-save`).
 
-How to add or change a rule (designer or agent, same steps):
+**Designers use the rules designer** (`cargo run -p stubby_rules_server`, then
+http://127.0.0.1:7878/; `add-crafting-designer`): schema-driven forms over the editing
+model, live problems, undo, canonical save, and a live panel reading the running game over
+Bevy's remote protocol (dev builds serve it on 127.0.0.1:15702). Dev builds of the game
+reload `assets/recipes/` within a second of a save.
+
+How to add or change a rule by hand (designer or agent, same steps):
 
 1. Edit the domain file: `items.json`, `resources.json`, `mines.json` or
    `recipes.json` (goals will be `goals.json`). There is no `catalog.json`; do not

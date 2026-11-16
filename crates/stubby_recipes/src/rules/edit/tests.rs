@@ -235,3 +235,25 @@ fn saving_refuses_invalid_rules_and_newer_files() {
     assert_eq!(doc.save(&dir), Err(EditError::ChangedOnDisk(ITEMS.into())));
     std::fs::remove_dir_all(dir).ok();
 }
+
+#[test]
+fn row_schemas_offer_existing_ids_and_edits_arrive_as_json() {
+    let doc = shipped();
+    let schema = doc.row_schema(Registry::Recipes);
+    let stack = &schema["$defs"]["Stack"]["properties"]["item"];
+    let offered = stack["enum"].as_array().unwrap();
+    assert!(offered.contains(&json!("square_wave")));
+    assert!(schema["properties"]["id"].is_object());
+    let edit: Edit = serde_json::from_value(json!({
+        "kind": "set", "registry": "air", "id": "scrub_oak_air",
+        "pointer": "/radius_m", "value": 20.0
+    }))
+    .unwrap();
+    assert!(matches!(
+        edit,
+        Edit::Set {
+            registry: Registry::Air,
+            ..
+        }
+    ));
+}

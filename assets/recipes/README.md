@@ -14,11 +14,31 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 | `buildables.json` | What the player builds in the world and its item cost per one built: `stream_segment` (6 `reed`) |
 | `goals.json` | What the hub tells the player to do next. Chores are met by a `condition` (e.g. `machine_configured`), other goals by `requires` (items delivered). Kept in the order the hub offers them |
 | `start.json` | The starter inventory a new player gets: 10 patch cables |
+| `air.json` | Foliage that cleans the air: which placed assets, how far (`radius_m`), how strongly (`strength`), and what their cleaning follows (`growth`, `water_or_light`, `light`) |
 | `migrations.json` | Every renamed or removed ID, so saves survive the change |
 | `ids.lock` | Every ID ever shipped (maintained by the formatter; never delete lines) |
 | `schema/` | JSON Schemas generated from the Rust types (do not edit) |
 
-## Changing the rules
+## The rules designer
+
+The easiest way to change the rules is the designer, a page in your browser:
+
+```bash
+cargo run -p stubby_rules_server        # then open http://127.0.0.1:7878/
+```
+
+Pick a file and a row, and edit it in the form. ID fields offer only IDs that exist,
+problems appear as you type (click one to jump to it), **Used by** shows where an ID is
+used, and Undo, Redo and Save work as usual (Ctrl+Z, Ctrl+Shift+Z, Ctrl+S). Saving is
+refused while there are problems. A running dev build of the game (standalone or Play in
+Jackdaw) picks up a save within a second, and the **Live game** panel shows values from
+it, such as how clean the basin's air is. Link to a row with `#registry/id`, e.g.
+`http://127.0.0.1:7878/#air/scrub_oak_air`.
+
+Files saved by the designer are exactly what the formatter writes, so hand edits and the
+designer can be mixed; the designer picks up hand edits while it has nothing unsaved.
+
+## Changing the rules by hand
 
 1. Edit the JSON in an editor that reads JSON Schema (VS Code does by default: each file
    names its schema in `$schema`, so fields autocomplete and typos are underlined).

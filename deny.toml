@@ -11,6 +11,8 @@
 #   systems   bevy_stubby_rack, bevy_stubby_recipes, stubby_player, stubby_life,
 #             stubby_world, stubby_streams
 #   game      stubby_game, stubby_jackdaw
+#   tools     stubby_rules_server (the rules designer: a core and an HTTP server, never Bevy
+#             or the game; nothing depends on it)
 #
 # `wrappers` lists the only crates allowed to depend directly on a crate. Systems are used
 # only by the game; a system's own core only by that system and the game; services only by
@@ -31,7 +33,7 @@ deny = [
     { crate = "stubby_world", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
     { crate = "stubby_streams", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
     { crate = "stubby_rack", wrappers = ["bevy_stubby_rack", "stubby_game", "stubby_jackdaw"], reason = "the rack system's own core" },
-    { crate = "stubby_recipes", wrappers = ["bevy_stubby_recipes", "stubby_game", "stubby_jackdaw"], reason = "the crafting system's own core" },
+    { crate = "stubby_recipes", wrappers = ["bevy_stubby_recipes", "stubby_game", "stubby_jackdaw", "stubby_rules_server"], reason = "the crafting system's own core, and the rules designer's" },
     { crate = "stubby_core", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
     { crate = "stubby_ui", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
     { crate = "bevy_stubby_audio", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },

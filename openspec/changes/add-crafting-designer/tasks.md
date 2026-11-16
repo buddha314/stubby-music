@@ -13,24 +13,29 @@
 - [x] 2.1 Mark every ID-reference field with `x-stubby-ref: <registry>` through schemars
 - [x] 2.2 Run `rules-fmt` to regenerate `schema/`; `cargo test -p stubby_recipes` passes
 
-## 3. The Jackdaw extension
+## 3. The web designer (amended 2026-11-16; claimed: claude)
 
-- [ ] 3.1 Confirm how a project-local extension is built and installed as a `.jdext` against the shared editor; record the steps in the crate README (an editor gap is a fork fix)
-- [ ] 3.2 Create `crates/stubby_crafting_designer` (`cdylib` + `rlib`; `stubby_recipes`, Bevy, Jackdaw extension crates only) with a **Crafting** menu
-- [ ] 3.3 Rules window: registries, rows, search by name and ID, add and remove
-- [ ] 3.4 Row form built from the schema: numbers with bounds, enums, lists, ID pickers from `x-stubby-ref`
-- [ ] 3.5 Problems window; selecting a problem selects its row and field
-- [ ] 3.6 Where-used panel for the selected item
-- [ ] 3.7 Recipe graph window on `jackdaw_node_graph`: items and recipes as nodes, inputs to outputs; selecting a node selects its row
-- [ ] 3.8 Undo and redo while the designer has focus; save with Ctrl+S; reload from disk when files change and nothing is unsaved
-- [ ] 3.9 Check: `cargo tree -p stubby_crafting_designer` shows no game crate
+- [x] 3.1 Confirm how a project-local Jackdaw extension is built and installed (findings in design.md: separate project, signed bundle beside the game, no text input in the extension UI kit). Led to the web designer.
+- [x] 3.2 `crates/stubby_rules_server`: `tiny_http` on 127.0.0.1 over one `RulesDocument`; JSON API for registries and row schemas, rows, edits (`Edit` deserialised), undo, redo, save, problems, where-used; page and vendored `json-editor` embedded
+- [x] 3.3 Page: registries and rows, search by ID and name, add and remove
+- [x] 3.4 Row form from the schema with `json-editor`; `x-stubby-ref` fields as choices of existing IDs
+- [x] 3.5 Problems list; selecting a problem selects its row
+- [x] 3.6 Where-used for the selected row
+- [x] 3.7 Undo, redo and save (Ctrl+Z, Ctrl+Shift+Z, Ctrl+S); refuse to save while invalid; reload from disk when files change and nothing is unsaved
+- [x] 3.8 Live panel: dev builds of the game add `bevy_remote` (127.0.0.1, CORS); the page polls `world.get_resources` for `BasinAir`, `CameraLightQuality` and `Calendar`
+- [x] 3.9 `deny.toml`: the server is a tool (no Bevy, no game); licenses allowed
 
 ## 4. Playtest
 
 - [x] 4.1 `bevy_stubby_recipes`: dev builds load rules from `assets/recipes/` and hot-reload on change, keeping the old rules and reporting errors on a failed reload; release builds stay embedded (claimed: claude; checked live: editing `air.json` during Play reloads within a second)
-- [ ] 4.2 Smoke test: change the lightning bug's yield in the designer during Play and collect a bug
+- [ ] 4.2 Smoke test: change the lightning bug's yield in the designer while the game runs and collect a bug
 
 ## 5. Docs
 
-- [ ] 5.1 `assets/recipes/README.md`: designing with the Crafting menu; hand edits still work
-- [ ] 5.2 AGENTS.md: the designer and the editing model in the rules section and repo map
+- [x] 5.1 `assets/recipes/README.md`: designing with the web designer; hand edits still work
+- [x] 5.2 AGENTS.md: the designer and the editing model in the rules section and repo map
+
+## 6. Later
+
+- [ ] 6.1 A Jackdaw extension front end over the same model, if the extension UI kit gains a text input upstream
+- [ ] 6.2 Recipe graph in the page once recipes exist
