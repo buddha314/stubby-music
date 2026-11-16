@@ -6,12 +6,12 @@
 ## 1. Shared configuration and native scatter adapter
 - [x] 1.1 (claimed: codex) Share validated world configuration across game, adapter and export; record revisions and explicit seed 17 fixture; report malformed input.
 - [x] 1.2 (claimed: codex) Adapt existing ground height sampling to native heightmap/channel inputs in one finite region; call native scatter, preserving the mudflat renderer. Stop and document an API incompatibility before substituting a package.
-- [ ] 1.3 (claimed: codex) Resolve versioned masks, authored clearance and candidate keys before filtering; preserve authored IDs and transforms.
+- [x] 1.3 (claimed: codex; finished by claude 2026-11-15) Resolve versioned masks, authored clearance and candidate keys before filtering; preserve authored IDs and transforms. Masks and keys were Codex's (`resolve_layout`, `PlacementKey`, `blocked_cells` under the rule revision); authored clearance now comes from `WorldConfig::authored_clearance` over authored objects' positions and the per-asset `authored_footprints`, reading positions only.
 
 ## 2. Designer control and runtime binding
-- [ ] 2.1 (claimed: codex) Reuse native masks and supported promotion/edit persistence; add only missing suppression/transform overlay data through existing Serde and game extension points.
+- [x] 2.1 (claimed: codex; verified by claude 2026-11-15) Reuse native masks and supported promotion/edit persistence; add only missing suppression/transform overlay data through existing Serde and game extension points. Native `ScatterMask`/`ChannelData`; `PlacementEdit::{Suppress, Move}` in `WorldConfig` round-trip through `world-config.json` (Codex's seed-17 test). Showing them in preview is 2.2.
 - [ ] 2.2 Wire one decorative rule to matching preview and runtime; verify rerun does not recreate suppressed originals or duplicate promoted objects.
-- [ ] 2.3 (claimed: codex) Report conflicting/stale overrides and unsupported versions; retain edits without guessing a migration.
+- [x] 2.3 (claimed: codex; verified by claude 2026-11-15) Report conflicting/stale overrides and unsupported versions; retain edits without guessing a migration. Already in Codex's code and tests: unsupported schema/generator revisions are refused, conflicting moves and stale edits are reported, edits are kept.
 - [ ] 2.4 Before enabling any interactive scatter, instantiate existing prefabs with stable keys and existing bridge/ledger cleanup; verify batched decoration is never mistaken for a live resource.
 
 ## 3. Focused verification and handoff

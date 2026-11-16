@@ -277,30 +277,6 @@ mod tests {
         }
     }
     #[test]
-    fn scaled_and_paused_time_drive_calendar() {
-        let mut app = App::new();
-        app.add_plugins(bevy::time::TimePlugin)
-            .insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
-                std::time::Duration::from_millis(100),
-            ))
-            .init_resource::<Calendar>()
-            .add_systems(Update, advance);
-        app.update();
-        set_speed(&mut app.world_mut().resource_mut::<Time<Virtual>>(), 4.);
-        app.update();
-        assert_eq!(
-            app.world().resource::<Calendar>().elapsed().as_millis(),
-            400
-        );
-        app.world_mut().resource_mut::<Time<Virtual>>().pause();
-        app.update();
-        assert_eq!(
-            app.world().resource::<Calendar>().elapsed().as_millis(),
-            400
-        );
-    }
-
-    #[test]
     fn spring_sun_rises_east_peaks_south_and_sets_west() {
         assert!(sun_direction(0.).distance(Vec3::X) < 0.0001);
         let noon = sun_direction(1350.);

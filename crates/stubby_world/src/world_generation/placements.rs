@@ -154,6 +154,13 @@ impl WorldConfig {
                 return Err("invalid scatter domain, density or blocked cell".into());
             }
         }
+        if self
+            .authored_footprints
+            .values()
+            .any(|metres| !metres.is_finite() || *metres < 0.)
+        {
+            return Err("authored footprints need finite, non-negative metres".into());
+        }
         let mut edits = BTreeSet::new();
         for edit in &self.edits {
             if !edits.insert(edit.key()) {
@@ -166,6 +173,28 @@ impl WorldConfig {
             }
         }
         Ok(())
+    }
+
+    /// Clearance around the authored objects of a saved scene, from their world positions
+    /// and each asset's configured footprint, for [`Self::resolve_layout`] (which grows it
+    /// again by each candidate's own clearance). It reads positions only: authored objects
+    /// keep their IDs and transforms, and generated content never moves them.
+    pub fn authored_clearance<'a>(
+        &self,
+        authored: impl IntoIterator<Item = (&'a str, Vec3)>,
+    ) -> Vec<ProtectedArea> {
+        authored
+            .into_iter()
+            .filter(|(_, at)| at.is_finite())
+            .map(|(asset, at)| {
+                let reach = self.authored_footprints.get(asset).copied().unwrap_or(0.);
+                let center = at.xz();
+                ProtectedArea {
+                    min: (center - reach).to_array(),
+                    max: (center + reach).to_array(),
+                }
+            })
+            .collect()
     }
 
     /// Resolve data only. `authored_clearance` comes from the caller's saved scene
