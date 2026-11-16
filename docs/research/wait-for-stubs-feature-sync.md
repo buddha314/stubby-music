@@ -14,7 +14,7 @@ The sibling's archived `migrate-off-stubby-music` and `openspec/config.yaml` cal
 
 **Crafting finding:** both `assets/recipes/recipes.json` files contain an empty recipe array. `buildables.json`, `mines.json` and `start.json` match byte-for-byte. There are no ahead-of-Bevy production crafting recipes to copy. Actual rule deltas are `snail_shell` in items/resources and format-2 hierarchical goals, with new held-item and tree-growth conditions. Mounting a shell is an item-to-module interaction, not an invented crafting recipe. Preserve existing learned square-wave discoveries independently of inventory.
 
-**Sky/HDRI finding:** Godot uses procedural Sky3D, driven each frame by `Calendar.solar_hour()`, not an ahead-of-Bevy HDRI file sequence. Bevy `crates/stubby_game/src/calendar.rs` already modulates both generated and baked environment-map intensity with daylight after its first bake. The gap is moon/stars/cloud motion, opening-time configuration, solar-time readout and evaluating whether the static sky's colours/reflections need timed blends or rebakes. Do not undo the existing once-baked performance fix without measurements.
+**Sky/HDRI finding:** Godot uses procedural Sky3D, driven each frame by `Calendar.solar_hour()`, not an ahead-of-Bevy HDRI file sequence. Bevy's calendar (now `crates/stubby_world/src/calendar.rs`) already modulates both generated and baked environment-map intensity with daylight after its first bake. The gap is moon/stars/cloud motion, opening-time configuration, solar-time readout and evaluating whether the static sky's colours/reflections need timed blends or rebakes. Do not undo the existing once-baked performance fix without measurements.
 
 ## Complete change review
 
