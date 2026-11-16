@@ -101,6 +101,16 @@ fn read_master_clock(synth: Res<Synth>, mut clock: ResMut<MasterClock>) {
     });
 }
 
+/// A sequencer moved to `step` (0-based). `at` is when that step is heard; light its
+/// playhead then.
+#[derive(Message, Debug, Clone, Copy, PartialEq)]
+pub struct StepTick {
+    pub module: ModuleId,
+    pub step: u8,
+    pub sample_time: u64,
+    pub at: Option<Instant>,
+}
+
 /// A clock module crossed a beat. `at` is when that beat is heard, predicted from
 /// the audio clock; schedule visuals against it rather than the frame it arrived in.
 #[derive(Message, Debug, Clone, Copy, PartialEq)]
@@ -126,6 +136,7 @@ impl Plugin for SynthAudioPlugin {
             demo_playing: false,
         })
         .add_message::<ClockTick>()
+        .add_message::<StepTick>()
         .init_resource::<MasterClock>()
         .add_systems(
             PreUpdate,
@@ -144,7 +155,11 @@ impl Plugin for SynthAudioPlugin {
     }
 }
 
-fn receive_from_engine(synth: Res<Synth>, mut ticks: MessageWriter<ClockTick>) {
+fn receive_from_engine(
+    synth: Res<Synth>,
+    mut ticks: MessageWriter<ClockTick>,
+    mut steps: MessageWriter<StepTick>,
+) {
     let Some(thread) = &synth.thread else {
         return;
     };
@@ -158,6 +173,18 @@ fn receive_from_engine(synth: Res<Synth>, mut ticks: MessageWriter<ClockTick>) {
             }) => {
                 ticks.write(ClockTick {
                     module,
+                    sample_time,
+                    at: thread.sample_to_instant(sample_time),
+                });
+            }
+            Notice::Event(Event::Step {
+                module,
+                step,
+                sample_time,
+            }) => {
+                steps.write(StepTick {
+                    module,
+                    step,
                     sample_time,
                     at: thread.sample_to_instant(sample_time),
                 });

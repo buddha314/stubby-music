@@ -6,8 +6,8 @@
 //! published by [`Engine::flush`]. Events come back over one `rtrb` ring per clock.
 
 use crate::modules::{
-    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, VcaNode, VcoConfig, VcoNode,
-    Waveform,
+    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
+    VcoConfig, VcoNode, Waveform,
 };
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 use crate::random_clock::RandomClockNode;
@@ -59,6 +59,7 @@ enum NodeState {
     /// Timing is fixed at creation, so there is nothing to diff later.
     Envelope,
     Vca(VcaNode),
+    Sequencer(SequencerNode),
 }
 
 struct Module {
@@ -180,9 +181,8 @@ impl Engine {
                     });
                 }
                 let name = spec.name;
-                let value = value.clamp(spec.min, spec.max);
-                let value = if spec.whole { value.round() } else { value };
-                self.pending_params.insert((module, name), value);
+                self.pending_params
+                    .insert((module, name), spec.conform(value));
                 Ok(())
             }
         }
@@ -214,6 +214,11 @@ impl Engine {
                 }
                 (NodeState::Constant(old), "value") => {
                     let new = ConstantNode { value };
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
+                (NodeState::Sequencer(old), param) => {
+                    let new = old.with(param, value);
                     new.diff(old, PathBuilder::default(), &mut queue);
                     *old = new;
                 }
@@ -370,6 +375,22 @@ impl Engine {
                 };
                 (self.cx.add_node(state, None), NodeState::Vca(state))
             }
+            ModuleKind::StepSequencer { cv, gate } => {
+                let specs = kind.params();
+                let conform = |values: [f32; crate::SEQUENCER_STEPS], offset: usize| {
+                    std::array::from_fn(|i| specs[offset + i].conform(values[i]))
+                };
+                let state =
+                    SequencerNode::new(conform(cv, 0), conform(gate, crate::SEQUENCER_STEPS));
+                let config = ClockConfig {
+                    module: id,
+                    mailbox: self.mailbox.clone(),
+                };
+                (
+                    self.cx.add_node(state, Some(config)),
+                    NodeState::Sequencer(state),
+                )
+            }
         };
         let node = node.map_err(|e| EngineError::Graph(e.to_string()))?;
         self.modules.insert(id, Module { kind, node, state });
@@ -467,7 +488,8 @@ impl Engine {
             NodeState::Clock(_)
             | NodeState::RandomClock
             | NodeState::Constant(_)
-            | NodeState::Envelope => false,
+            | NodeState::Envelope
+            | NodeState::Sequencer(_) => false,
         };
         let spatial: Vec<NodeID> = self
             .emitters

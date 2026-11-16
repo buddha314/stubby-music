@@ -44,7 +44,20 @@ pub enum ModuleKind {
     /// Voltage-controlled amplifier: `out = in * max(cv, 0) * gain`. Inputs `"in"`
     /// and `"cv"`, output `"out"`, parameter `"gain"`. With no CV it is closed.
     Vca { gain: f32 },
+    /// Four-step sequencer (the snail shell; sync-snail-shell-sequencer). Inputs
+    /// `"clock"` and `"reset"`, outputs `"gate"` and `"cv"`; parameters `"cv_1"`..`"cv_4"`
+    /// (volts on V/OCT, 0..2, snapped to semitones) and `"gate_1"`..`"gate_4"` (0 or 1).
+    /// Each rising edge at CLOCK moves to the next step (1 to 4, then 1) and emits
+    /// [`Event::Step`]; a rising edge at RESET makes the next clock play step 1. GATE
+    /// passes the clock's level while the current step is lit; CV holds its voltage.
+    StepSequencer {
+        cv: [f32; SEQUENCER_STEPS],
+        gate: [f32; SEQUENCER_STEPS],
+    },
 }
+
+/// Steps in a snail-shell sequencer: one per whorl.
+pub const SEQUENCER_STEPS: usize = 4;
 
 /// One named port on one module.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -113,6 +126,13 @@ pub enum Event {
     /// A clock crossed a beat. `sample_time` is the exact frame of the tick on
     /// the audio clock (see [`Engine::sample_to_instant`](crate::Engine::sample_to_instant)).
     ClockTick { module: ModuleId, sample_time: u64 },
+    /// A sequencer moved to `step` (0-based) on the exact frame `sample_time`, so the
+    /// game can light its playhead at the heard instant.
+    Step {
+        module: ModuleId,
+        step: u8,
+        sample_time: u64,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
