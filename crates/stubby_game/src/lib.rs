@@ -8,10 +8,9 @@ pub use bevy_stubby_recipes as recipes_plugin;
 pub use bevy_stubby_audio as audio;
 pub use bevy_stubby_audio::module_ids;
 pub mod calendar;
-pub mod controls;
 pub mod export;
-mod hand;
-mod interaction;
+// The player system (stubby_player), under its old module names.
+pub use stubby_player::{controls, hand, interaction};
 mod inventory_screen;
 pub mod machine_config;
 pub mod prefab_presentation;
@@ -61,6 +60,8 @@ impl Plugin for DesertPlugin {
         ))
         .add_plugins((sky::StaticSkyPlugin, streams::StreamBuildPlugin))
         .insert_resource(WorldSeed(self.seed))
+        // The desert's terrain is the ground the player and creatures stand on.
+        .insert_resource(stubby_core::GroundHeight(terrain::height))
         .add_systems(Startup, setup)
         .add_systems(Update, capture_preview);
     }
@@ -156,6 +157,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut images: ResMut<Assets<Image>>,
+    ground: Res<stubby_core::GroundHeight>,
 ) {
     let (albedo, normal) = mud_texture(seed.0);
     let texture = images.add(albedo);
@@ -242,8 +244,8 @@ fn setup(
         bevy::post_process::bloom::Bloom::NATURAL,
         Exposure { ev100: 10.5 },
         bevy::ui::IsDefaultUiCamera,
-        controls::Player::default(),
-        controls::spawn_transform(),
+        controls::Player::on(&ground),
+        controls::spawn_transform(&ground),
         Skybox {
             image: Some(sky),
             brightness: 1500.,

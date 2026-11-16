@@ -6542,6 +6542,7 @@ dependencies = [
  "serde_json",
  "stubby_audio",
  "stubby_core",
+ "stubby_player",
  "stubby_rack",
  "stubby_recipes",
  "tempfile",
@@ -6561,6 +6562,17 @@ dependencies = [
  "serde_json",
  "stubby_game",
  "tempfile",
+]
+
+[[package]]
+name = "stubby_player"
+version = "0.1.0"
+dependencies = [
+ "avian3d",
+ "bevy",
+ "serde",
+ "serde_json",
+ "stubby_core",
 ]
 
 [[package]]

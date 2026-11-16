@@ -7,13 +7,7 @@
 //! cylinder is tall, so a bug hovering at 1.8 m is as near as one on the ground.
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use stubby_core::{HudCamera, InteractTarget};
-
-use super::{
-    machine_config::Profiles,
-    prefabs::{PlacedAsset, PrefabError},
-    resources::ResourceNode,
-};
+use stubby_core::{HudCamera, InteractTarget, Interactable};
 
 /// Horizontal reach of E, in metres (pickups and machines alike).
 pub const REACH_M: f32 = 3.0;
@@ -21,12 +15,6 @@ pub const REACH_M: f32 = 3.0;
 const REACH_HEIGHT_M: f32 = 8.0;
 /// The sensor every interactable carries: small, so it marks a point, not an area.
 const MARKER_RADIUS_M: f32 = 0.25;
-
-/// A machine's interaction point, pointing at the machine.
-#[derive(Component)]
-pub struct InteractPoint {
-    pub machine: Entity,
-}
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct InteractionTargeting;
@@ -39,7 +27,7 @@ impl Plugin for InteractionPlugin {
         }
         app.init_resource::<InteractTarget>().add_systems(
             Update,
-            (mark_pickups, mark_interact_points, follow, choose_target)
+            (mark, follow, choose_target)
                 .chain()
                 .in_set(InteractionTargeting)
                 .after(stubby_core::PrefabBinding),
@@ -47,8 +35,7 @@ impl Plugin for InteractionPlugin {
     }
 }
 
-/// A reach marker, following `owner` (a pickup's `ResourceNode` entity or an `Interact`
-/// node, which carries `InteractPoint`).
+/// A reach marker, following `owner` (an entity marked [`Interactable`]).
 #[derive(Component)]
 struct ReachMarker {
     owner: Entity,
@@ -68,37 +55,10 @@ fn spawn_marker(commands: &mut Commands, owner: Entity) {
     commands.entity(owner).insert(HasMarker);
 }
 
-fn mark_pickups(
-    mut commands: Commands,
-    pickups: Query<Entity, (With<ResourceNode>, Without<HasMarker>)>,
-) {
-    for entity in &pickups {
-        spawn_marker(&mut commands, entity);
-    }
-}
-
-/// Give each placed machine's `Interact` node (named in its profile) a marker.
-fn mark_interact_points(
-    mut commands: Commands,
-    profiles: Res<Profiles>,
-    names: Query<(Entity, &Name), Added<Name>>,
-    parents: Query<&ChildOf>,
-    machines: Query<&PlacedAsset>,
-) {
-    for (entity, name) in &names {
-        let Some((machine, _)) = parents
-            .iter_ancestors(entity)
-            .find_map(|a| machines.get(a).ok().map(|m| (a, m)))
-            .filter(|(_, m)| {
-                profiles
-                    .0
-                    .get(&m.asset)
-                    .is_some_and(|c| c.interact.node == name.as_str())
-            })
-        else {
-            continue;
-        };
-        commands.entity(entity).insert(InteractPoint { machine });
+/// Every interactable gets a marker the first time it becomes one. It keeps the marker
+/// while unavailable (a collected pickup), so it is not re-marked when it returns.
+fn mark(mut commands: Commands, owners: Query<Entity, (With<Interactable>, Without<HasMarker>)>) {
+    for entity in &owners {
         spawn_marker(&mut commands, entity);
     }
 }
@@ -123,10 +83,8 @@ fn follow(
 fn choose_target(
     spatial: SpatialQuery,
     cameras: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
-    pickups: Query<(&ResourceNode, &GlobalTransform), Without<PrefabError>>,
-    points: Query<(&InteractPoint, &GlobalTransform)>,
+    owners: Query<(&Interactable, &GlobalTransform)>,
     markers: Query<&ReachMarker>,
-    broken: Query<(), With<PrefabError>>,
     mut target: ResMut<InteractTarget>,
 ) {
     let Ok(eye) = cameras.single().map(GlobalTransform::translation) else {
@@ -146,18 +104,14 @@ fn choose_target(
         else {
             continue;
         };
-        let candidate = if let Ok((node, at)) = pickups.get(hit) {
-            (!node.collected).then(|| (horizontal(at.translation()), InteractTarget::Pickup(hit)))
-        } else if let Ok((point, at)) = points.get(hit) {
-            (!broken.contains(point.machine)).then(|| {
-                (
-                    horizontal(at.translation()),
-                    InteractTarget::Machine(point.machine),
-                )
-            })
-        } else {
-            None
-        };
+        // An owner that is not available now (collected, broken) has no Interactable.
+        let candidate = owners.get(hit).ok().map(|(what, at)| {
+            let target = match *what {
+                Interactable::Pickup => InteractTarget::Pickup(hit),
+                Interactable::Machine(machine) => InteractTarget::Machine(machine),
+            };
+            (horizontal(at.translation()), target)
+        });
         if let Some((d, t)) = candidate.filter(|(d, _)| *d <= REACH_M * REACH_M)
             && d < best.0
         {
@@ -165,4 +119,62 @@ fn choose_target(
         }
     }
     target.set_if_neq(best.1);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bevy::time::TimeUpdateStrategy;
+    use std::time::Duration;
+
+    fn app() -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, TransformPlugin, AssetPlugin::default()))
+            .init_asset::<Mesh>()
+            .add_plugins(InteractionPlugin)
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+                16,
+            )));
+        app.world_mut()
+            .spawn((Camera3d::default(), Transform::from_xyz(0., 1.6, 0.)));
+        // Avian sets up part of itself in `Plugin::finish`, which `App::run` would call.
+        app.finish();
+        app.cleanup();
+        app
+    }
+
+    fn settle(app: &mut App) {
+        for _ in 0..10 {
+            app.update();
+        }
+    }
+
+    #[test]
+    fn the_nearest_interactable_in_reach_is_the_target() {
+        let mut app = app();
+        let near = app
+            .world_mut()
+            .spawn((Interactable::Pickup, Transform::from_xyz(1., 0.5, 0.)))
+            .id();
+        let machine = app.world_mut().spawn_empty().id();
+        app.world_mut().spawn((
+            Interactable::Machine(machine),
+            Transform::from_xyz(2., 0.5, 0.),
+        ));
+        app.world_mut()
+            .spawn((Interactable::Pickup, Transform::from_xyz(10., 0.5, 0.)));
+        settle(&mut app);
+        assert_eq!(
+            *app.world().resource::<InteractTarget>(),
+            InteractTarget::Pickup(near)
+        );
+
+        // No longer available (collected): the machine behind it is next.
+        app.world_mut().entity_mut(near).remove::<Interactable>();
+        settle(&mut app);
+        assert_eq!(
+            *app.world().resource::<InteractTarget>(),
+            InteractTarget::Machine(machine)
+        );
+    }
 }

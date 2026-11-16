@@ -17,7 +17,7 @@
 
 - [ ] 4.1 `bevy_stubby_rack` from `rack.rs`, `synth_modules.rs` and the generic rack HUD, over `stubby_rack`; inventory reaches it only through `RackOffers` and `MountRequested` in glue
 - [x] 4.2 Move `ResourceNode` and `MineNode` into `bevy_stubby_recipes` (neutral defaults; the game's `lightning_bug_node`/`scrub_oak_node` build its own); rewrite their saved type paths. E-key harvesting, the HUD and the popup stay in the game as presentation and glue, since they join crafting to the calendar and machine interaction
-- [ ] 4.3 `stubby_player` from the player half of `controls.rs`, `hand.rs` and `interaction.rs`
+- [x] 4.3 `stubby_player` from `controls.rs`, `hand.rs` and `interaction.rs`. E reaches whatever carries `stubby_core::Interactable`, which the game's glue keeps on uncollected working pickups and on machines' `Interact` points; the ground comes from `stubby_core::GroundHeight`, which the game sets to the terrain
 - [ ] 4.4 `stubby_life` from the lightning bug, its voice and the flora presentation
 - [ ] 4.5 `stubby_world` from terrain, sky, ground, world generation, export, the prefab lifecycle and the calendar; the `ResourceTime` conversion moves to glue (schedule with Codex, `add-hybrid-world-placement`)
 - [ ] 4.6 `stubby_streams` from `streams.rs`; reed cost through `BuildBudget` and `SegmentLaid` in glue (schedule with the stream owner)
