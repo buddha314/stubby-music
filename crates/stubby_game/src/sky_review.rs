@@ -60,20 +60,21 @@ const SHOTS: [(u64, Vec2, Vec3, &str, bool); 8] = [
         "shell-by-the-reeds.png",
         false,
     ),
-    // The forensic flashlight's disco ball sweeping the reeds and shells
-    // (add-forensic-flashlight), at dusk and at night.
-    (
-        2650,
-        Vec2::new(8., -44.),
-        Vec3::new(-0.1, -0.3, -1.),
-        "flashlight-dusk.png",
-        true,
-    ),
+    // The forensic flashlight's disco ball sweeping the reeds and shells at night
+    // (add-forensic-flashlight).
     (
         3150,
         Vec2::new(8., -44.),
         Vec3::new(-0.1, -0.3, -1.),
         "flashlight-night.png",
+        true,
+    ),
+    // Still on, a glance up and to the left: the ball stays where it appeared.
+    (
+        3160,
+        Vec2::new(8., -44.),
+        Vec3::new(-0.75, 0.5, -0.45),
+        "flashlight-glance.png",
         true,
     ),
 ];

@@ -11,8 +11,11 @@ in the hand, its light the disco ball (D2). Holding it is being on: no separate 
 off. Not while a screen has the controls (as the hand already is).
 
 **D2. The light is a disco ball.** While the flashlight is held, a mirror ball (a
-generated model of square mirror facets) floats in front of the player at chest height,
-a child of the view, and spins. It carries a ring of narrow `SpotLight`s, aimed outward
+generated model of square mirror facets) appears, when switched on, above the player's
+head to the left: about 30 cm above the head and a little ahead, where a glance up and
+left finds it (user, 2026-11-16). It is placed once, from the eye's place and heading at
+that moment, and stays at that place in the world while on; it does not follow the view.
+It spins about the vertical. It carries a ring of narrow `SpotLight`s, aimed outward
 and down from the ball and spread round it, so their spots land on the ground and sweep
 as it turns. Colours alternate violet and cyan (forensic violet, disco sparkle). Shadows
 off: a dozen shadowed spotlights would be a dozen shadow passes. Count, colours, width,

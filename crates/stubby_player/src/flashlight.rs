@@ -182,12 +182,22 @@ fn hologram(style: &HologramStyle, strength: f32) -> HologramMaterial {
 
 // ---------------------------------------------------------------- the ball
 
-/// The disco ball: follows the eye's place and heading (not its pitch, so it spins about
-/// the vertical, as a hanging ball does).
+/// The disco ball: placed above the player's head to the left when switched on, it stays
+/// at that place in the world while on (user, 2026-11-16), spinning about the vertical as a
+/// hanging ball does.
 #[derive(Component)]
 struct DiscoBall {
     angle: f32,
     beams: Vec<Vec3>,
+    /// Whether it has been placed since it was switched on.
+    placed: bool,
+}
+
+/// Where the ball appears: `offset` (right, up, back) from the eye, turned to the way the
+/// player faces on the ground (the view's pitch does not tilt it).
+pub fn ball_place(eye: Vec3, forward: Vec3, offset: Vec3) -> Vec3 {
+    let heading = Quat::from_rotation_y(forward.x.atan2(forward.z) + std::f32::consts::PI);
+    eye + heading * offset
 }
 /// A collectible lit by the ball: its strength, material, overlays and beacon.
 #[derive(Component)]
@@ -242,6 +252,7 @@ fn setup(
             DiscoBall {
                 angle: 0.,
                 beams: beams.clone(),
+                placed: false,
             },
             Name::new("Disco ball"),
             Transform::default(),
@@ -273,8 +284,8 @@ fn setup(
     }
 }
 
-/// Show the ball while the flashlight is held (and no screen is open), keep it in front
-/// of the eye, and spin it.
+/// Show the ball while the flashlight is held (and no screen is open). Switching it on
+/// places it above the head to the left; it stays there while on, and spins.
 #[allow(clippy::type_complexity)] // The ball and the eye.
 fn follow_view(
     time: Res<Time<Real>>,
@@ -293,12 +304,21 @@ fn follow_view(
         } else {
             Visibility::Hidden
         });
-        let forward = eye.forward().as_vec3();
-        let heading = Quat::from_rotation_y(forward.x.atan2(forward.z) + std::f32::consts::PI);
+        if !on {
+            ball.placed = false;
+            continue;
+        }
+        if !ball.placed {
+            ball.placed = true;
+            transform.translation = ball_place(
+                eye.translation(),
+                eye.forward().as_vec3(),
+                Vec3::from(style.0.ball.offset),
+            );
+        }
         ball.angle = (ball.angle
             + style.0.ball.turns_per_second * std::f32::consts::TAU * time.delta_secs())
         .rem_euclid(std::f32::consts::TAU);
-        transform.translation = eye.translation() + heading * Vec3::from(style.0.ball.offset);
         transform.rotation = Quat::from_rotation_y(ball.angle);
     }
 }
@@ -475,6 +495,20 @@ mod tests {
         let after = flare(1., false, 0.6, 1.2);
         assert!((after - 0.5).abs() < 1e-5);
         assert_eq!(flare(0.1, false, 0.6, 1.2), 0.);
+    }
+    #[test]
+    fn the_ball_appears_above_the_head_to_the_left_whatever_the_pitch() {
+        let eye = Vec3::new(2., 1.7, 5.);
+        let offset = Vec3::from(FlashlightStyle::shipped().0.ball.offset);
+        // Facing north (-Z), looking level: left is -X, up is +Y, ahead is -Z.
+        let at = ball_place(eye, Vec3::NEG_Z, offset);
+        assert!(at.x < eye.x && at.y > eye.y + 0.3 && at.z < eye.z, "{at}");
+        // Looking down at the ground does not move it: only the heading counts.
+        let down = Vec3::new(0., -0.8, -0.6).normalize();
+        assert!(ball_place(eye, down, offset).distance(at) < 1e-4);
+        // Facing east (+X), left is north (-Z).
+        let east = ball_place(eye, Vec3::X, offset);
+        assert!(east.z < eye.z && east.x > eye.x, "{east}");
     }
     #[test]
     fn the_shipped_style_loads() {
