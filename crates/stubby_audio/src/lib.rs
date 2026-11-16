@@ -17,7 +17,7 @@ mod random_clock;
 pub mod signal;
 mod thread;
 
-pub use clock::{PeriodicClock, PulseClock, RandomClock};
+pub use clock::{MASTER_BPM, MAX_BPM, MasterLockedClock, PeriodicClock, PulseClock, RandomClock};
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
 pub use modules::ParamSpec;
 pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};

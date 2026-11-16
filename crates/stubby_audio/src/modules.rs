@@ -3,9 +3,9 @@
 //! Everything in an `AudioNodeProcessor` runs on the realtime thread: no allocation,
 //! no locks, no panics. `construct_processor` runs on the game thread and may allocate.
 
+use crate::MasterLockedClock;
 use crate::protocol::{Event, ModuleId, ModuleKind};
 use crate::signal::{GATE_HIGH, GATE_THRESHOLD, voct_to_hz};
-use crate::{PeriodicClock, PulseClock};
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
     diff::{Diff, Patch},
@@ -30,6 +30,8 @@ pub struct ParamSpec {
     pub min: f32,
     pub max: f32,
     pub default: f32,
+    /// Only whole values (a clock's BPM, a whole multiple of the 1 BPM master).
+    pub whole: bool,
 }
 
 const VCO_PARAMS: &[ParamSpec] = &[ParamSpec {
@@ -37,18 +39,21 @@ const VCO_PARAMS: &[ParamSpec] = &[ParamSpec {
     min: 0.01,
     max: 20_000.0,
     default: 261.63,
+    whole: false,
 }];
 const CLOCK_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "bpm",
     min: 1.0,
     max: 999.0,
     default: 120.0,
+    whole: true,
 }];
 const CONSTANT_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "value",
     min: -10.0,
     max: 10.0,
     default: 0.0,
+    whole: false,
 }];
 const ENVELOPE_PARAMS: &[ParamSpec] = &[
     ParamSpec {
@@ -56,12 +61,14 @@ const ENVELOPE_PARAMS: &[ParamSpec] = &[
         min: 0.0005,
         max: 10.0,
         default: 0.002,
+        whole: false,
     },
     ParamSpec {
         name: "decay",
         min: 0.001,
         max: 30.0,
         default: 0.2,
+        whole: false,
     },
 ];
 const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
@@ -69,6 +76,7 @@ const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
     min: 0.0,
     max: 1.0,
     default: 1.0,
+    whole: false,
 }];
 
 /// How long a VCA takes to follow a change of its gain parameter.
@@ -401,7 +409,7 @@ impl AudioNode for ClockNode {
         Ok(ClockProc {
             module: config.module,
             events: producer,
-            clock: PeriodicClock::new(cx.stream_info.sample_rate.get(), self.bpm),
+            clock: MasterLockedClock::new(cx.stream_info.sample_rate.get(), self.bpm),
         })
     }
 }
@@ -409,7 +417,8 @@ impl AudioNode for ClockNode {
 struct ClockProc {
     module: ModuleId,
     events: rtrb::Producer<Event>,
-    clock: PeriodicClock,
+    /// Locked to the 1 BPM master on the engine's sample counter (`lock-clocks-to-master`).
+    clock: MasterLockedClock,
 }
 
 impl AudioNodeProcessor for ClockProc {
@@ -432,16 +441,14 @@ impl AudioNodeProcessor for ClockProc {
         };
         let block_start = info.clock_samples.0.max(0) as u64;
         for (i, (g, p)) in gate.iter_mut().zip(phase.iter_mut()).enumerate() {
-            *p = self.clock.phase();
-            *g = if self.clock.gate_high() {
-                GATE_HIGH
-            } else {
-                0.
-            };
-            if self.clock.advance() {
+            let sample = block_start + i as u64;
+            let (_, beat_phase) = self.clock.at(sample);
+            *p = beat_phase;
+            *g = if beat_phase < 0.5 { GATE_HIGH } else { 0. };
+            if self.clock.tick_at(sample) {
                 let _ = self.events.push(Event::ClockTick {
                     module: self.module,
-                    sample_time: block_start + i as u64,
+                    sample_time: sample,
                 });
             }
         }

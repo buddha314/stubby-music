@@ -436,7 +436,9 @@ fn turn_open_knob(
     };
     let mut value = knob_value(knob_norm(current, param) + turn, param);
     if hit.param == "bpm" {
-        // The display shows whole BPM; the clock keeps to what it shows.
+        // Every clock runs at a whole BPM, a multiple of the 1 BPM master (the engine
+        // declares `bpm` whole and rounds it too; lock-clocks-to-master): the knob steps
+        // in whole BPM so the display and the clock agree.
         value = value.round();
     }
     if value != current {

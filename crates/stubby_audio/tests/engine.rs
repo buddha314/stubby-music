@@ -131,14 +131,11 @@ fn command_applies_at_next_block() {
     rig.connect(PortRef::new(clock, "gate"), PortRef::output());
     rig.flush();
     rig.render(BLOCK);
-    assert_eq!(
-        rig.events(),
-        vec![Event::ClockTick {
-            module: clock,
-            sample_time: (BLOCK * 4) as u64
-        }]
-    );
+    // The clock sounds from the next block, mid-beat on the master grid (lock-clocks-to-
+    // master): its gate is high there, and no beat starts inside this block.
+    assert_eq!(rig.left[BLOCK * 4 - 1], 0.0);
     assert_eq!(rig.left[BLOCK * 4], 1.0);
+    assert!(rig.events().is_empty());
 }
 
 #[test]
@@ -158,9 +155,11 @@ fn adding_a_module_does_not_interrupt_a_playing_one() {
 
     let window = &rig.left[edit - 1..edit + SR as usize / 20];
     assert!(click_ratio(window, &[220.0, 330.0]) <= 1.2, "click on add");
+    // The new clock's first beat is the next 120 BPM beat on the master grid.
+    let beat = SR as u64 / 2;
     assert!(rig.events().contains(&Event::ClockTick {
         module: clock,
-        sample_time: edit as u64
+        sample_time: (edit as u64).div_ceil(beat) * beat
     }));
 }
 
@@ -424,7 +423,7 @@ fn clock_phase_ramps_once_per_beat() {
 }
 
 #[test]
-fn tempo_change_keeps_the_beat_position() {
+fn tempo_change_keeps_the_master_grid() {
     let mut rig = Rig::new();
     let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
     rig.flush();
@@ -441,13 +440,9 @@ fn tempo_change_keeps_the_beat_position() {
         .into_iter()
         .map(|Event::ClockTick { sample_time, .. }| sample_time)
         .collect();
-    // Half a beat had elapsed, so the next tick is half a 60 BPM beat later.
-    assert_eq!(ticks[0], 0);
-    assert!(
-        ticks[1].abs_diff(12_032 + 23_936) <= 1,
-        "next tick at {}",
-        ticks[1]
-    );
+    // No tick at the change; the next falls on the 60 BPM grid, one master-locked
+    // beat (48,000 samples) from the start.
+    assert_eq!(ticks[..3], [0, SR as u64, 2 * SR as u64]);
 }
 
 // ------------------------------------------------------------- envelope and VCA
