@@ -69,6 +69,7 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
         app.init_resource::<SegmentCost>()
             .add_plugins(stubby_ui::ItemTooltipPlugin)
             .init_resource::<StreamBuild>()
+            .init_resource::<stubby_core::BuildMode>()
             .init_resource::<Templates>()
             .insert_resource(StaffProfile::shipped())
             .add_observer(harvest_template)
@@ -76,7 +77,9 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
             .add_systems(
                 Update,
                 (
-                    build_input.in_set(StreamSystems::Input),
+                    (build_input, publish_build_mode)
+                        .chain()
+                        .in_set(StreamSystems::Input),
                     (
                         plan::<S>,
                         lay::<S>,
@@ -1218,4 +1221,9 @@ mod tests {
         assert!(Vec3::from(p[0]).distance(Vec3::new(4., 0., 0.5)) < 1e-3);
         assert!(Vec3::from(p[1]).distance(Vec3::new(8., 0.1, -0.5)) < 1e-3);
     }
+}
+
+/// Tell the other systems (the player's outlines) whether build mode has the mouse.
+fn publish_build_mode(build: Res<StreamBuild>, mut mode: ResMut<stubby_core::BuildMode>) {
+    mode.set_if_neq(stubby_core::BuildMode(build.active));
 }

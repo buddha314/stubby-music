@@ -99,7 +99,43 @@ impl Plugin for PrefabReviewPlugin {
             PreUpdate,
             (drive_rack, drive).chain().after(bevy::input::InputSystems),
         )
-        .add_systems(PostUpdate, observe.after(super::pulse::BugEffects));
+        .add_systems(PostUpdate, observe.after(super::pulse::BugEffects))
+        .add_systems(Update, capture_outline);
+    }
+}
+
+/// Screenshot the first three pickups targeted with no screen open: the outline
+/// (sync-targeting-and-compass). The outline is drawn the frame after it is added, so wait
+/// a few frames on the same target.
+fn capture_outline(
+    mut commands: Commands,
+    review: Res<Review>,
+    target: Res<stubby_core::InteractTarget>,
+    screens: Res<stubby_core::ScreenMode>,
+    cameras: Query<&bevy::camera::RenderTarget, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
+    mut seen: Local<(Option<Entity>, u32, u32)>,
+) {
+    let (held, frames, shots) = &mut *seen;
+    if *shots >= 3 {
+        return;
+    }
+    let pickup = target.pickup().filter(|_| screens.open.is_none());
+    if pickup != *held {
+        *held = pickup;
+        *frames = 0;
+        return;
+    }
+    *frames += 1;
+    if pickup.is_some()
+        && *frames == 5
+        && let Ok(camera) = cameras.single()
+    {
+        *shots += 1;
+        commands
+            .spawn(bevy::render::view::screenshot::Screenshot(camera.clone()))
+            .observe(bevy::render::view::screenshot::save_to_disk(
+                review.path.join(format!("target-outline-{shots}.png")),
+            ));
     }
 }
 fn write(review: &Review, event: serde_json::Value) {

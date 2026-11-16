@@ -222,6 +222,11 @@ pub enum AirFollows {
     Light,
 }
 
+/// A world-building mode (laying streams) has the mouse: no pickup is outlined. The
+/// building system sets it; the player's targeting reads it.
+#[derive(Resource, Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BuildMode(pub bool);
+
 /// Whether the mouse is captured for looking around. The player owns it; anything that
 /// clicks in the world (building) reads it.
 #[derive(Resource)]
