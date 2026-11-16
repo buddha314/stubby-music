@@ -6,11 +6,17 @@ on:
     paths:
       - "assets/**"
       - "tools/check_asset_layout.py"
+      - "tools/jackdaw_lods.py"
+      - "tools/test_jackdaw_lods.py"
+      - "tools/assets/lod_policy.json"
       - ".github/workflows/asset-layout.yml"
   pull_request:
     paths:
       - "assets/**"
       - "tools/check_asset_layout.py"
+      - "tools/jackdaw_lods.py"
+      - "tools/test_jackdaw_lods.py"
+      - "tools/assets/lod_policy.json"
       - ".github/workflows/asset-layout.yml"
 
 jobs:
@@ -20,3 +26,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Resolve runtime model and prefab references
         run: python3 tools/check_asset_layout.py
+      - name: Check model LOD tuning
+        run: |
+          python3 tools/jackdaw_lods.py --check
+          python3 tools/test_jackdaw_lods.py

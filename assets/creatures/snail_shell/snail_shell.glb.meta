@@ -21,19 +21,19 @@
                 version: 1,
                 source: NodeSuffixes,
                 size: 0.03,
-                fade: Snap,
+                fade: CrossFade(width: 0.12),
                 levels: [
                     (
                         show: Nodes([
                             "snail_shell_LOD0",
                         ]),
-                        screen_height: 0.0763,
+                        screen_height: 0.036213,
                     ),
                     (
                         show: Nodes([
                             "snail_shell_LOD1",
                         ]),
-                        screen_height: 0.01,
+                        screen_height: 0.003018,
                     ),
                 ],
             )),

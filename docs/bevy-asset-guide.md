@@ -54,17 +54,20 @@ and share textures/materials where already shared.
 
 With this project open in Jackdaw, `python3 tools/jackdaw_lods.py --dry-run` lists
 the models to import/generate. Without `--dry-run` it calls Jackdaw's import,
-generate and apply operators, then writes the configured screen thresholds.
-`--switch` only rewrites thresholds, so use it intentionally after tuning.
+generate and apply operators, then applies the configured thresholds and crossfade.
+`--switch` applies the authoring policy to existing metadata without contacting the editor.
+`--check` validates metadata against that policy without writing it.
 Normal loading and this folder migration do not rewrite thresholds.
 
-`SWITCH_M` in the tool is an authoring aid: reference distances at 45 degrees
+`tools/assets/lod_policy.json` is an authoring aid: reference distances at 45 degrees
 vertical FOV, unit placement scale, using the model's largest-side `size`.
 For distance d and size s, screen height is `s / (2*d*tan(FOV/2))`.
 Jackdaw owns runtime conversion, including placement size and camera FOV. The
-last screen threshold controls final disappearance; tune it separately from the
-near/far handover. Existing transition styles (including Snap) are preserved;
-use Jackdaw's fade controls when deliberately changing them. Bevy's visibility
+last screen threshold controls final disappearance, with an explicit reference
+cull distance per family. Flora handovers come from each family's `far_lod.distance_m`.
+The first tuning pass uses a 12% crossfade band. The shell's reference handover is
+1 m and final cutoff 12 m; its placed 3x scale makes these about 3 m and 36 m.
+Keep the policy and committed metadata together when tuning. Bevy's visibility
 ranges support dithering; this does not imply streaming or automatic glTF LOD
 simplification in a plain Bevy loader.
 
@@ -89,3 +92,18 @@ and scale, and dormant/grown/harvested parts. Do not claim a rendering speedup
 from a folder move. Research and versioned engine sources are in
 [the LOD research](research/bevy-jackdaw-lod-assets.md); the complete path mapping is
 [lod-asset-paths.json](research/lod-asset-paths.json).
+
+## Bounded LOD review
+
+Build `stubby_jackdaw`, then use `tools/jackdaw_timed_test.py --lods flora --name=lod-flora`
+or `--lods machines --name=lod-machines`. Each launches a standalone tripod review
+under the independent 20-second watchdog. It holds noon to make geometry comparisons
+readable, without saving changes to the production opening's time or placements.
+Screenshots and `events.jsonl` go to `/tmp/stubby-lod-<name>/`. Review the normal dawn
+opening separately when changing atmosphere/materials.
+
+The evidence includes actual runtime requested/ready masks, ranges, FOV and scale.
+Requested/ready levels include Jackdaw's prefetch/hysteresis: readiness is not the
+same as a drawn mesh. `submitted_triangles` counts CPU-visible mesh index triangles,
+including scene-instance descendants; it is not a GPU timing measurement or the
+number of rasterized pixels. Degenerate scale-zero state meshes may still count.
