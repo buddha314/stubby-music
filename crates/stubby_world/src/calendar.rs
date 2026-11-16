@@ -31,6 +31,9 @@ pub struct CalendarPlugin;
 impl Plugin for CalendarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Calendar>()
+            .insert_resource(sky_profile().brightness)
+            .insert_resource(crate::lighting::LightingKeys::shipped())
+            .init_resource::<crate::lighting::CameraLightQuality>()
             .add_systems(PreStartup, open_at_authored_time)
             .add_systems(Startup, (setup, setup_sun))
             .add_systems(
@@ -64,6 +67,16 @@ pub struct SkyProfile {
     pub opening_solar_hour: f32,
     pub ridges: crate::sky::RidgeProfile,
     pub clouds: crate::sky::CloudProfile,
+    pub brightness: Brightness,
+}
+/// Physical light levels (`sky.json` `brightness`): the lighting keys colour the light,
+/// these set how bright it is. Lighten the night here.
+#[derive(serde::Deserialize, Clone, Copy, Resource)]
+pub struct Brightness {
+    pub sun_lux: f32,
+    pub moon_lux: f32,
+    pub day_ev100: f32,
+    pub night_ev100: f32,
 }
 pub fn sky_profile() -> SkyProfile {
     serde_json::from_str(include_str!("../../../assets/lighting/sky.json")).expect("sky profile")
@@ -221,8 +234,6 @@ pub struct Sunlight;
 /// its light, so a moonlit sky is faintly blue.
 #[derive(Component)]
 pub struct Moonlight;
-/// Moonlight at full height, in lux: enough to read silhouettes, still night.
-const MOON_LUX: f32 = 100.;
 fn setup_sun(mut commands: Commands) {
     commands.spawn((
         Moonlight,
@@ -241,12 +252,16 @@ fn setup_sun(mut commands: Commands) {
         Transform::default(),
     ));
 }
-const DAY_EV100: f32 = 10.5;
-const NIGHT_EV100: f32 = 8.5;
 /// The moon's disc brightness (a fraction of a sun of its illuminance): pale by day,
 /// bright by night.
 const MOON_DISC_DAY: f32 = 0.004;
 const MOON_DISC_NIGHT: f32 = 0.03;
+/// How much of the keys' fog colour is lit: 0.15 at night (navy-black haze), rising
+/// with the sun to 1 once it is high, so a low sun leaves the far haze dim.
+fn fog_light(sun: Vec3) -> f32 {
+    let t = (sun.y / 0.45).clamp(0., 1.);
+    0.15 + 0.85 * t * t * (3. - 2. * t)
+}
 /// 0 below the horizon, 1 once a body is about 7 degrees up.
 fn above_horizon(direction: Vec3) -> f32 {
     let t = (direction.y / 0.12).clamp(0., 1.);
@@ -255,6 +270,9 @@ fn above_horizon(direction: Vec3) -> f32 {
 #[allow(clippy::type_complexity)] // Disjoint Bevy light queries.
 fn move_sun(
     calendar: Res<Calendar>,
+    brightness: Res<Brightness>,
+    keys: Res<crate::lighting::LightingKeys>,
+    quality: Res<crate::lighting::CameraLightQuality>,
     mut sun: Query<(&mut Transform, &mut DirectionalLight), (With<Sunlight>, Without<Moonlight>)>,
     mut moon: Query<
         (
@@ -276,34 +294,44 @@ fn move_sun(
     let elapsed = (calendar.elapsed.as_secs_f64() % CYCLE_SECONDS as f64) as f32;
     let direction = sun_direction(elapsed);
     let daylight = above_horizon(direction);
+    // The art keys colour the light and set the fog; `brightness` sets the levels.
+    let key = keys.sample(direction, quality.0);
+    let night = keys.sample(Vec3::NEG_Y, quality.0);
+    let srgb = |[r, g, b]: [f32; 3]| Color::srgb(r, g, b);
     for (mut transform, mut light) in &mut sun {
         *transform = Transform::from_translation(direction * 900.).looking_at(Vec3::ZERO, Vec3::Y);
-        light.illuminance = 9500. * daylight;
-        light.color = Color::srgb(1., 0.71 + 0.22 * daylight, 0.43 + 0.4 * daylight);
+        light.illuminance = brightness.sun_lux * daylight;
+        light.color = srgb(key.sun_color);
     }
     let moon_direction = moon_direction(elapsed);
     for (mut transform, mut light, disc) in &mut moon {
         *transform =
             Transform::from_translation(moon_direction * 900.).looking_at(Vec3::ZERO, Vec3::Y);
-        light.illuminance = MOON_LUX * above_horizon(moon_direction);
+        light.illuminance = brightness.moon_lux * above_horizon(moon_direction);
+        // The night key's main light is the moon.
+        light.color = srgb(night.sun_color);
         if let Some(mut disc) = disc {
             disc.intensity = MOON_DISC_DAY.lerp(MOON_DISC_NIGHT, 1. - daylight);
         }
     }
-    // The sky's own light now comes from the atmosphere's environment map; this is a floor.
+    // The sky's own light comes from the atmosphere's environment map; this is a floor.
     ambient.brightness = 5. + 95. * daylight;
+    ambient.color = srgb(key.ambient_color);
     for (fog, exposure) in &mut cameras {
         if let Some(mut fog) = fog {
-            fog.color = Color::srgb(
-                0.015 + 0.545 * daylight,
-                0.018 + 0.412 * daylight,
-                0.03 + 0.3 * daylight,
-            );
+            // The keys give the fog's hue and density; its light follows the sun. Away from a
+            // low sun the haze is dim, toward it the haze glows in the sun's colour.
+            let lit = fog_light(direction);
+            fog.color = srgb(key.fog_color.map(|c| c * lit));
+            fog.directional_light_color = srgb(key.sun_color.map(|c| c * 0.6 * daylight));
+            fog.directional_light_exponent = 10.;
+            fog.falloff = FogFalloff::Exponential {
+                density: key.fog_density,
+            };
         }
-        // The eye adapts a little at night: two stops, so moonlit ground reads and the
-        // sky is deep navy rather than black (the art keys go further, to ev -2).
+        // The eye adapts a little at night (`brightness`), so the night stays navy.
         if let Some(mut exposure) = exposure {
-            exposure.ev100 = NIGHT_EV100.lerp(DAY_EV100, daylight);
+            exposure.ev100 = brightness.night_ev100.lerp(brightness.day_ev100, daylight);
         }
     }
 }
@@ -318,6 +346,9 @@ mod tests {
             elapsed: std::time::Duration::from_secs(1350),
         })
         .init_resource::<GlobalAmbientLight>()
+        .insert_resource(sky_profile().brightness)
+        .insert_resource(crate::lighting::LightingKeys::shipped())
+        .init_resource::<crate::lighting::CameraLightQuality>()
         .add_systems(Update, move_sun);
         let sun = app
             .world_mut()
@@ -360,7 +391,12 @@ mod tests {
         );
         assert_eq!(
             app.world().get::<DistanceFog>(camera_entity).unwrap().color,
-            Color::srgb(0.015, 0.018, 0.03)
+            {
+                let [r, g, b] = crate::lighting::LightingKeys::shipped()
+                    .sample(sun_direction(3150.), 0.)
+                    .fog_color;
+                Color::srgb(r * 0.15, g * 0.15, b * 0.15)
+            }
         );
         // Midnight: the moon is up and lights the desert.
         assert_eq!(
@@ -368,7 +404,7 @@ mod tests {
                 .get::<DirectionalLight>(moon)
                 .unwrap()
                 .illuminance,
-            MOON_LUX
+            sky_profile().brightness.moon_lux
         );
     }
     #[test]
