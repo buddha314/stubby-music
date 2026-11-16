@@ -6,6 +6,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 step() { printf '\n== %s\n' "$*"; }
 step "Version consistency";        python3 tools/check_jackdaw_versions.py
 step "Version-check regression";   python3 tools/test_jackdaw_versions.py
+step "Layer rules";                python3 tools/test_check_layers.py
+step "Layer check";                python3 tools/check_layers.py
 step "Active Bevy graph"
 tree="$(mktemp)"; trap 'rm -f "$tree"' EXIT
 cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$tree"

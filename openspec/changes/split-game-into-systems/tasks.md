@@ -24,10 +24,10 @@
 
 ## 5. Glue and enforcement
 
-- [ ] 5.1 `stubby_game` holds only plugin assembly, the translations between systems, the burbler composition, the inventory screen and review drivers
-- [ ] 5.2 `tools/check_layers.py` over `cargo metadata`, failing with both crate names; run it in CI
+- [ ] 5.1 `stubby_game` holds only plugin assembly, the translations between systems, the burbler composition, the inventory screen and review drivers. Reviewed after 4.1–4.4: glue is `glue.rs`, `resources.rs` (E harvest, HUD, `Interactable`/`Harvested` sync), `waveform_audio.rs` (collection cues), `inventory_screen.rs`; review drivers `review.rs`, `prefab_review.rs`. What remains is the world (4.5: `prefabs`, `prefab_presentation`, `terrain`, `sky`, `calendar`, `export`, `world_generation`, the ground setup in `lib.rs`) and `streams.rs` (4.6); this closes when they move
+- [x] 5.2 `tools/check_layers.py` over `cargo metadata`, failing with both crate names (and on an unplaced crate, and on Bevy in a core); its rules are tested by `tools/test_check_layers.py`; both run in CI and `tools/ci_local.sh`
 - [ ] 5.3 After each step: `cargo build -p stubby_game -p stubby_jackdaw` and the `prefabs` test; after the last, one bounded smoke test under `tools/jackdaw_timed_test.py`
 
 ## 6. Docs
 
-- [ ] 6.1 AGENTS.md: repo map with the layers, the "systems never depend on each other" rule, where cross-system rules go, and the type-path rule replacing "keep the adapter package/type paths"
+- [x] 6.1 AGENTS.md: repo map with the layers, the "systems never depend on each other" rule, where cross-system rules go, and the type-path rule replacing "keep the adapter package/type paths"
