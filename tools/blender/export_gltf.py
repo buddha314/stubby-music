@@ -11,6 +11,17 @@ def export_scene(scene, destination, only=None):
     destination.parent.mkdir(parents=True, exist_ok=True)
     window = bpy.context.window
     previous_scene = window.scene if window else None
+    # Parts posed hidden at scale 0 (dormant leaves, closed blooms, stubble, halos)
+    # would lose their children's transforms: Blender's exporter can't invert a
+    # zero-scale parent. Export them at scale 1, tagged `start_scale: 0` (a glTF extra);
+    # the game puts them back to 0 on load (stubby_world's presenter), so the model still
+    # ships posed as before. Same contract as wait-for-stubs (sync-blender-asset-contracts).
+    zeroed = [obj for obj in scene.objects
+              if (only is None or obj in only) and obj.type not in {"CAMERA", "LIGHT"}
+              and max(abs(c) for c in obj.scale) < 1e-6]
+    for obj in zeroed:
+        obj["start_scale"] = 0.0
+        obj.scale = (1.0, 1.0, 1.0)
     try:
         if window:
             window.scene = scene
@@ -25,6 +36,9 @@ def export_scene(scene, destination, only=None):
                 export_materials="EXPORT", export_extras=True,
             )
     finally:
+        for obj in zeroed:
+            obj.scale = (0.0, 0.0, 0.0)
+            del obj["start_scale"]
         if window and previous_scene:
             window.scene = previous_scene
 

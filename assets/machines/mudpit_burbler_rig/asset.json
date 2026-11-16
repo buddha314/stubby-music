@@ -61,6 +61,7 @@
       "place": "volume",
       "port": "out"
     },
+    "hearing_radius_metres": 30.0,
     "cables": [
       {
         "color": "verdigris",

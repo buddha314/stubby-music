@@ -55,6 +55,11 @@ def matrix(node):
     t = node.get("translation", [0, 0, 0])
     x, y, z, w = node.get("rotation", [0, 0, 0, 1])
     s = node.get("scale", [1, 1, 1])
+    # Parts exported at scale 1 but shipped hidden carry `start_scale` (export_gltf.py):
+    # collide with the shipped (hidden) pose, as before the export fix.
+    start = node.get("extras", {}).get("start_scale")
+    if start is not None:
+        s = [start] * 3
     r = np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
                   [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
                   [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
