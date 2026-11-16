@@ -180,8 +180,9 @@ impl Engine {
                     });
                 }
                 let name = spec.name;
-                self.pending_params
-                    .insert((module, name), value.clamp(spec.min, spec.max));
+                let value = value.clamp(spec.min, spec.max);
+                let value = if spec.whole { value.round() } else { value };
+                self.pending_params.insert((module, name), value);
                 Ok(())
             }
         }

@@ -68,7 +68,7 @@ impl Synth {
 /// The master clock (decided 2026-11-16, as the Godot game decided 2026-11-13): 1 BPM
 /// on the engine's sample counter. Every tempo clock is a whole multiple of it, so all
 /// clocks land together once a minute, and the calendar's day runs on it.
-pub const MASTER_BPM: f64 = 1.0;
+pub const MASTER_BPM: f64 = stubby_audio::MASTER_BPM as f64;
 pub const MASTER_BEATS_PER_BAR: u32 = 4;
 
 /// Master beats heard now (sample-timed), or `None` without a running engine. Read in
