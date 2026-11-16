@@ -130,6 +130,7 @@ def main():
     parser.add_argument('--refresh', type=int, choices=(60, 144, 165, 240), default=60)
     parser.add_argument('--adapter', help='Bevy WGPU_ADAPTER_NAME substring')
     parser.add_argument('--play', action='store_true')
+    parser.add_argument('--lods', choices=('flora', 'machines'), help='Review runtime LODs in standalone mode')
     parser.add_argument('--standalone', action='store_true',
                         help='Run the built stubby_jackdaw binary under the same watchdog (no editor)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
@@ -143,6 +144,10 @@ def main():
     args = parser.parse_args()
     if not 0 < args.seconds <= 20:
         parser.error('--seconds must be greater than zero and no more than 20')
+    if args.lods:
+        args.standalone = True
+    if args.lods and args.prefabs:
+        parser.error('--lods and --prefabs are separate reviews')
     if args.standalone and (args.command or args.play or args.review or args.streams or args.sky):
         parser.error('--standalone supports the opening or --prefabs review only')
     if not args.command:
@@ -161,7 +166,9 @@ def main():
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
     if args.standalone:
         command = [str(ROOT / 'target/debug/stubby_jackdaw'), '--seed=42']
-        if not args.prefabs:
+        if args.lods:
+            command += [f'--lod-review=/tmp/stubby-lod-{args.name}', f'--lod-review-set={args.lods}']
+        elif not args.prefabs:
             command += [f'--screenshot=/tmp/stubby-opening-{args.name}.png']
         if args.prefabs:
             command += ['--scene=review_prefab_runtime.bsn',

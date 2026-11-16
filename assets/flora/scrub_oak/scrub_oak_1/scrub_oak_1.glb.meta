@@ -21,19 +21,19 @@
                 version: 1,
                 source: NodeSuffixes,
                 size: 3.47785,
-                fade: Snap,
+                fade: CrossFade(width: 0.12),
                 levels: [
                     (
                         show: Nodes([
                             "scrub_oak_1_LOD0",
                         ]),
-                        screen_height: 0.0933,
+                        screen_height: 0.093292,
                     ),
                     (
                         show: Nodes([
                             "scrub_oak_1_LOD1",
                         ]),
-                        screen_height: 0.01,
+                        screen_height: 0.017492,
                     ),
                 ],
             )),

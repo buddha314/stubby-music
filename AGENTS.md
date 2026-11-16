@@ -437,6 +437,11 @@ Several agents work in this repo at once. To avoid stepping on each other:
 - **The game opens at 06:30**, just after astronomical sunrise, so the low sun
   clears the mountain skyline. Reviews set the calendar to midday for screenshots;
   if the opening reads too dark, start the clock later rather than brightening the night.
+- **LOD tuning (Codex, 2026-11-16):** model metadata is generated from
+  `tools/assets/lod_policy.json` via `tools/jackdaw_lods.py --switch`; `--check`
+  detects drift. Bounded `--lods flora` / `--lods machines` diagnostics and known
+  Jackdaw scale/generated-geometry limitations are documented in
+  `docs/research/lod-tuning-first-pass.md`.
 - **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,
   the stream and the base audio component are in the game, start iterating on the
   opening scene itself rather than on parts.

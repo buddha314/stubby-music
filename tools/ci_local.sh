@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 step() { printf '\n== %s\n' "$*"; }
+step "LOD authoring policy"; python3 tools/jackdaw_lods.py --check
+python3 tools/test_jackdaw_lods.py
 step "Runtime asset references"; python3 tools/check_asset_layout.py
 step "Version consistency";        python3 tools/check_jackdaw_versions.py
 step "Version-check regression";   python3 tools/test_jackdaw_versions.py

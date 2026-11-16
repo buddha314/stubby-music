@@ -21,19 +21,19 @@
                 version: 1,
                 source: NodeSuffixes,
                 size: 1.880801,
-                fade: Snap,
+                fade: CrossFade(width: 0.12),
                 levels: [
                     (
                         show: Nodes([
                             "reed_clump_1_LOD0",
                         ]),
-                        screen_height: 0.0757,
+                        screen_height: 0.075678,
                     ),
                     (
                         show: Nodes([
                             "reed_clump_1_LOD1",
                         ]),
-                        screen_height: 0.01,
+                        screen_height: 0.018919,
                     ),
                 ],
             )),
