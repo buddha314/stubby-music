@@ -24,6 +24,7 @@ impl Plugin for InteractionPlugin {
         if !app.is_plugin_added::<PhysicsSchedulePlugin>() {
             app.add_plugins(PhysicsPlugins::default());
         }
+        crate::outline::add(app);
         app.init_resource::<InteractTarget>().add_systems(
             Update,
             (mark, follow, choose_target)
@@ -79,6 +80,10 @@ fn follow(
     }
 }
 
+/// Within reach, the interactable closest to the view axis inside this cone wins; with
+/// none inside it, the nearest (sync-targeting-and-compass).
+pub const AIM_CONE_DEGREES: f32 = 20.;
+
 fn choose_target(
     spatial: SpatialQuery,
     cameras: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
@@ -86,12 +91,15 @@ fn choose_target(
     markers: Query<&ReachMarker>,
     mut target: ResMut<InteractTarget>,
 ) {
-    let Ok(eye) = cameras.single().map(GlobalTransform::translation) else {
+    let Ok(camera) = cameras.single() else {
         target.set_if_neq(InteractTarget::None);
         return;
     };
+    let eye = camera.translation();
+    let look = camera.forward().as_vec3();
     let horizontal = |p: Vec3| Vec2::new(p.x - eye.x, p.z - eye.z).length_squared();
-    let mut best = (f32::INFINITY, InteractTarget::None);
+    let off_axis = |p: Vec3| look.angle_between(p - eye).to_degrees();
+    let mut candidates = Vec::new();
     for hit in spatial.shape_intersections(
         &Collider::cylinder(REACH_M, REACH_HEIGHT_M * 2.),
         eye,
@@ -112,12 +120,25 @@ fn choose_target(
             (horizontal(at.translation()), target)
         });
         if let Some((d, t)) = candidate.filter(|(d, _)| *d <= REACH_M * REACH_M)
-            && d < best.0
+            && let Ok((_, at)) = owners.get(hit)
         {
-            best = (d, t);
+            candidates.push((off_axis(at.translation()), d, t));
         }
     }
-    target.set_if_neq(best.1);
+    target.set_if_neq(pick(&candidates));
+}
+
+/// From `(degrees off the view axis, horizontal distance², target)`: the most central
+/// inside the aim cone, else the nearest.
+fn pick(candidates: &[(f32, f32, InteractTarget)]) -> InteractTarget {
+    let aimed = candidates
+        .iter()
+        .filter(|(angle, ..)| *angle <= AIM_CONE_DEGREES)
+        .min_by(|a, b| a.0.total_cmp(&b.0));
+    let nearest = || candidates.iter().min_by(|a, b| a.1.total_cmp(&b.1));
+    aimed
+        .or_else(nearest)
+        .map_or(InteractTarget::None, |(_, _, target)| *target)
 }
 
 #[cfg(test)]
@@ -146,6 +167,17 @@ mod tests {
         for _ in 0..10 {
             app.update();
         }
+    }
+
+    #[test]
+    fn aim_beats_distance_inside_the_cone_and_nearest_wins_outside() {
+        let shell = InteractTarget::Pickup(Entity::from_raw_u32(1).unwrap());
+        let reed = InteractTarget::Pickup(Entity::from_raw_u32(2).unwrap());
+        // The shell is aimed at, the reed slightly nearer but off to the side.
+        assert_eq!(pick(&[(4., 2.0, shell), (35., 1.5, reed)]), shell);
+        // Nothing in the cone: the nearest.
+        assert_eq!(pick(&[(40., 2.0, shell), (35., 1.5, reed)]), reed);
+        assert_eq!(pick(&[]), InteractTarget::None);
     }
 
     #[test]

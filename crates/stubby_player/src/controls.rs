@@ -35,6 +35,7 @@ pub use stubby_core::LookCapture;
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
     fn build(&self, app: &mut App) {
+        crate::compass::add(app);
         app.init_resource::<GroundHeight>()
             .insert_resource(LookCapture(true))
             .init_resource::<ScreenMode>()
