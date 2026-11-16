@@ -30,30 +30,73 @@ pub struct ParamSpec {
     pub min: f32,
     pub max: f32,
     pub default: f32,
-    /// Only whole values (a clock's BPM, a whole multiple of the 1 BPM master).
-    pub whole: bool,
+    /// Values snap to multiples of this (0: continuous). 1 for a clock's BPM (a whole
+    /// multiple of the 1 BPM master); 1/12 for a sequencer step's V/OCT (semitones).
+    pub quantum: f32,
 }
+impl ParamSpec {
+    /// Clamp a value to the range and snap it to the quantum.
+    pub fn conform(&self, value: f32) -> f32 {
+        let value = value.clamp(self.min, self.max);
+        if self.quantum > 0. {
+            ((value / self.quantum).round() * self.quantum).clamp(self.min, self.max)
+        } else {
+            value
+        }
+    }
+}
+
+/// A semitone on V/OCT (1 V per octave).
+pub const SEMITONE_VOLTS: f32 = 1. / 12.;
 
 const VCO_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "freq",
     min: 0.01,
     max: 20_000.0,
     default: 261.63,
-    whole: false,
+    quantum: 0.0,
 }];
 const CLOCK_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "bpm",
     min: 1.0,
     max: 999.0,
     default: 120.0,
-    whole: true,
+    quantum: 1.0,
 }];
+const fn step_cv(name: &'static str) -> ParamSpec {
+    ParamSpec {
+        name,
+        min: 0.0,
+        max: 2.0,
+        default: 0.0,
+        quantum: SEMITONE_VOLTS,
+    }
+}
+const fn step_gate(name: &'static str) -> ParamSpec {
+    ParamSpec {
+        name,
+        min: 0.0,
+        max: 1.0,
+        default: 0.0,
+        quantum: 1.0,
+    }
+}
+const SEQUENCER_PARAMS: &[ParamSpec] = &[
+    step_cv("cv_1"),
+    step_cv("cv_2"),
+    step_cv("cv_3"),
+    step_cv("cv_4"),
+    step_gate("gate_1"),
+    step_gate("gate_2"),
+    step_gate("gate_3"),
+    step_gate("gate_4"),
+];
 const CONSTANT_PARAMS: &[ParamSpec] = &[ParamSpec {
     name: "value",
     min: -10.0,
     max: 10.0,
     default: 0.0,
-    whole: false,
+    quantum: 0.0,
 }];
 const ENVELOPE_PARAMS: &[ParamSpec] = &[
     ParamSpec {
@@ -61,14 +104,14 @@ const ENVELOPE_PARAMS: &[ParamSpec] = &[
         min: 0.0005,
         max: 10.0,
         default: 0.002,
-        whole: false,
+        quantum: 0.0,
     },
     ParamSpec {
         name: "decay",
         min: 0.001,
         max: 30.0,
         default: 0.2,
-        whole: false,
+        quantum: 0.0,
     },
 ];
 const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
@@ -76,7 +119,7 @@ const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
     min: 0.0,
     max: 1.0,
     default: 1.0,
-    whole: false,
+    quantum: 0.0,
 }];
 
 /// How long a VCA takes to follow a change of its gain parameter.
@@ -91,6 +134,7 @@ impl ModuleKind {
             | ModuleKind::Constant { .. } => &[],
             ModuleKind::Envelope { .. } => &["gate"],
             ModuleKind::Vca { .. } => &["in", "cv"],
+            ModuleKind::StepSequencer { .. } => &["clock", "reset"],
         }
     }
 
@@ -103,6 +147,7 @@ impl ModuleKind {
             | ModuleKind::Vca { .. } => &["out"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
             ModuleKind::RandomClock { .. } => &["gate"],
+            ModuleKind::StepSequencer { .. } => &["gate", "cv"],
         }
     }
 
@@ -114,6 +159,7 @@ impl ModuleKind {
             ModuleKind::Constant { .. } => CONSTANT_PARAMS,
             ModuleKind::Envelope { .. } => ENVELOPE_PARAMS,
             ModuleKind::Vca { .. } => VCA_PARAMS,
+            ModuleKind::StepSequencer { .. } => SEQUENCER_PARAMS,
         }
     }
 
@@ -131,6 +177,7 @@ impl ModuleKind {
             ModuleKind::Constant { .. } => "Constant",
             ModuleKind::Envelope { .. } => "Envelope",
             ModuleKind::Vca { .. } => "Vca",
+            ModuleKind::StepSequencer { .. } => "StepSequencer",
         }
     }
 
@@ -170,6 +217,10 @@ impl ModuleKind {
             "Vca" => ModuleKind::Vca {
                 gain: get(VCA_PARAMS, "gain"),
             },
+            "StepSequencer" => ModuleKind::StepSequencer {
+                cv: ["cv_1", "cv_2", "cv_3", "cv_4"].map(|p| get(SEQUENCER_PARAMS, p)),
+                gate: ["gate_1", "gate_2", "gate_3", "gate_4"].map(|p| get(SEQUENCER_PARAMS, p)),
+            },
             _ => return None,
         })
     }
@@ -188,6 +239,7 @@ mod kind_tests {
             "Constant",
             "Envelope",
             "Vca",
+            "StepSequencer",
         ] {
             let kind = ModuleKind::default_of(name).unwrap_or_else(|| panic!("{name}"));
             assert_eq!(kind.name(), name);
@@ -453,6 +505,253 @@ impl AudioNodeProcessor for ClockProc {
             }
         }
         ProcessStatus::OutputsModified
+    }
+}
+
+// ---------------------------------------------------------------- Step sequencer
+
+/// The snail-shell sequencer's settings: each step's voltage and whether it is lit.
+#[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
+pub(crate) struct SequencerNode {
+    pub cv_1: f32,
+    pub cv_2: f32,
+    pub cv_3: f32,
+    pub cv_4: f32,
+    pub gate_1: f32,
+    pub gate_2: f32,
+    pub gate_3: f32,
+    pub gate_4: f32,
+}
+impl SequencerNode {
+    pub fn new(cv: [f32; crate::SEQUENCER_STEPS], gate: [f32; crate::SEQUENCER_STEPS]) -> Self {
+        let [cv_1, cv_2, cv_3, cv_4] = cv;
+        let [gate_1, gate_2, gate_3, gate_4] = gate;
+        Self {
+            cv_1,
+            cv_2,
+            cv_3,
+            cv_4,
+            gate_1,
+            gate_2,
+            gate_3,
+            gate_4,
+        }
+    }
+    /// The node with one parameter changed (`cv_<n>` or `gate_<n>`).
+    pub fn with(self, param: &str, value: f32) -> Self {
+        let mut node = self;
+        match param {
+            "cv_1" => node.cv_1 = value,
+            "cv_2" => node.cv_2 = value,
+            "cv_3" => node.cv_3 = value,
+            "cv_4" => node.cv_4 = value,
+            "gate_1" => node.gate_1 = value,
+            "gate_2" => node.gate_2 = value,
+            "gate_3" => node.gate_3 = value,
+            "gate_4" => node.gate_4 = value,
+            _ => {}
+        }
+        node
+    }
+}
+
+/// The sequencer's stepping, apart from Firewheel so it is tested sample by sample.
+#[derive(Debug, Clone)]
+pub struct StepState {
+    pub cv: [f32; crate::SEQUENCER_STEPS],
+    pub gate: [f32; crate::SEQUENCER_STEPS],
+    /// The current step, or `None` before the first clock (and after a reset).
+    step: Option<usize>,
+    clock_high: bool,
+    reset_high: bool,
+}
+impl StepState {
+    pub fn new(cv: [f32; crate::SEQUENCER_STEPS], gate: [f32; crate::SEQUENCER_STEPS]) -> Self {
+        Self {
+            cv,
+            gate,
+            step: None,
+            clock_high: false,
+            reset_high: false,
+        }
+    }
+    /// One sample: the clock and reset inputs in, `(gate, cv, the step moved to)` out.
+    pub fn tick(&mut self, clock: f32, reset: f32) -> (f32, f32, Option<usize>) {
+        let reset_now = reset > GATE_HIGH * 0.5;
+        if reset_now && !self.reset_high {
+            self.step = None;
+        }
+        self.reset_high = reset_now;
+        let clock_now = clock > GATE_HIGH * 0.5;
+        let mut moved = None;
+        if clock_now && !self.clock_high {
+            let next = self.step.map_or(0, |s| (s + 1) % crate::SEQUENCER_STEPS);
+            self.step = Some(next);
+            moved = Some(next);
+        }
+        self.clock_high = clock_now;
+        let lit = self.step.is_some_and(|s| self.gate[s] >= 0.5);
+        let gate = if lit && clock_now { clock } else { 0. };
+        let cv = self.cv[self.step.unwrap_or(0)];
+        (gate, cv, moved)
+    }
+}
+
+impl AudioNode for SequencerNode {
+    type Configuration = ClockConfig;
+
+    fn info(&self, _: &ClockConfig) -> Result<AudioNodeInfo, NodeError> {
+        Ok(node_info(
+            "step_sequencer",
+            ChannelCount::STEREO,
+            ChannelCount::STEREO,
+        ))
+    }
+
+    fn construct_processor(
+        &self,
+        config: &ClockConfig,
+        _: ConstructProcessorContext,
+    ) -> Result<impl AudioNodeProcessor, NodeError> {
+        let (producer, consumer) = rtrb::RingBuffer::new(CLOCK_EVENT_CAPACITY);
+        if let Ok(mut mailbox) = config.mailbox.lock() {
+            mailbox.push((config.module, consumer));
+        }
+        Ok(SequencerProc {
+            module: config.module,
+            events: producer,
+            state: StepState::new(
+                [self.cv_1, self.cv_2, self.cv_3, self.cv_4],
+                [self.gate_1, self.gate_2, self.gate_3, self.gate_4],
+            ),
+        })
+    }
+}
+
+struct SequencerProc {
+    module: ModuleId,
+    events: rtrb::Producer<Event>,
+    state: StepState,
+}
+
+impl AudioNodeProcessor for SequencerProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, _: &mut ProcExtra) {
+        for patch in events.drain_patches::<SequencerNode>() {
+            let s = &mut self.state;
+            match patch {
+                SequencerNodePatch::Cv1(v) => s.cv[0] = v,
+                SequencerNodePatch::Cv2(v) => s.cv[1] = v,
+                SequencerNodePatch::Cv3(v) => s.cv[2] = v,
+                SequencerNodePatch::Cv4(v) => s.cv[3] = v,
+                SequencerNodePatch::Gate1(v) => s.gate[0] = v,
+                SequencerNodePatch::Gate2(v) => s.gate[1] = v,
+                SequencerNodePatch::Gate3(v) => s.gate[2] = v,
+                SequencerNodePatch::Gate4(v) => s.gate[3] = v,
+            }
+        }
+    }
+
+    fn process(
+        &mut self,
+        info: &ProcInfo,
+        buffers: ProcBuffers,
+        _: &mut ProcExtra,
+    ) -> ProcessStatus {
+        let [clock, reset, ..] = buffers.inputs else {
+            return ProcessStatus::ClearAllOutputs;
+        };
+        let [gate, cv, ..] = buffers.outputs else {
+            return ProcessStatus::ClearAllOutputs;
+        };
+        let block_start = info.clock_samples.0.max(0) as u64;
+        for i in 0..info.frames {
+            let (g, c, moved) = self.state.tick(clock[i], reset[i]);
+            gate[i] = g;
+            cv[i] = c;
+            if let Some(step) = moved {
+                let _ = self.events.push(Event::Step {
+                    module: self.module,
+                    step: step as u8,
+                    sample_time: block_start + i as u64,
+                });
+            }
+        }
+        ProcessStatus::OutputsModified
+    }
+}
+
+#[cfg(test)]
+mod sequencer_tests {
+    use super::*;
+    /// Run a clock of `period` samples (high for the first half) for `samples`.
+    fn run(
+        state: &mut StepState,
+        period: usize,
+        samples: usize,
+        reset_at: Option<usize>,
+    ) -> Vec<(f32, f32, Option<usize>)> {
+        (0..samples)
+            .map(|i| {
+                let clock = if i % period < period / 2 {
+                    GATE_HIGH
+                } else {
+                    0.
+                };
+                let reset = if reset_at.is_some_and(|r| i == r) {
+                    GATE_HIGH
+                } else {
+                    0.
+                };
+                state.tick(clock, reset)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn steps_one_to_four_on_rising_edges_and_wrap() {
+        let mut state = StepState::new([0.; 4], [0.; 4]);
+        let out = run(&mut state, 10, 50, None);
+        let moves: Vec<_> = out
+            .iter()
+            .enumerate()
+            .filter_map(|(i, o)| o.2.map(|s| (i, s)))
+            .collect();
+        assert_eq!(moves, [(0, 0), (10, 1), (20, 2), (30, 3), (40, 0)]);
+    }
+
+    #[test]
+    fn gate_passes_the_clock_pulse_on_lit_steps_only() {
+        // Steps 2 and 4 lit: a backbeat.
+        let mut state = StepState::new([0.; 4], [0., 1., 0., 1.]);
+        let out = run(&mut state, 10, 40, None);
+        let gated: Vec<bool> = (0..4).map(|beat| out[beat * 10].0 > 0.5).collect();
+        assert_eq!(gated, [false, true, false, true]);
+        // The gate lasts as long as the clock's pulse, not the whole step.
+        assert!(out[12].0 > 0.5 && out[16].0 == 0.);
+    }
+
+    #[test]
+    fn cv_holds_each_steps_voltage() {
+        let mut state = StepState::new([0., 0.25, 7. / 12., 1.], [1.; 4]);
+        let out = run(&mut state, 10, 40, None);
+        let held: Vec<f32> = (0..4).map(|beat| out[beat * 10 + 7].1).collect();
+        assert_eq!(held, [0., 0.25, 7. / 12., 1.]);
+    }
+
+    #[test]
+    fn reset_makes_the_next_clock_play_step_one() {
+        let mut state = StepState::new([0.; 4], [0.; 4]);
+        let out = run(&mut state, 10, 40, Some(25));
+        let moves: Vec<_> = out.iter().filter_map(|o| o.2).collect();
+        assert_eq!(moves, [0, 1, 2, 0]);
+    }
+
+    #[test]
+    fn step_voltages_snap_to_semitones() {
+        let spec = SEQUENCER_PARAMS[0];
+        assert!((spec.conform(0.3) - 4. / 12.).abs() < 1e-6);
+        assert_eq!(spec.conform(5.), 2.);
+        assert_eq!(SEQUENCER_PARAMS[4].conform(0.7), 1.);
     }
 }
 

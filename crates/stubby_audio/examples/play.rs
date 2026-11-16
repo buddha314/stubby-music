@@ -43,7 +43,10 @@ fn main() {
         while Instant::now() < end {
             engine.flush().expect("flush");
             engine.drain_events(&mut events);
-            for Event::ClockTick { sample_time, .. } in events.drain(..) {
+            for event in events.drain(..) {
+                let Event::ClockTick { sample_time, .. } = event else {
+                    continue;
+                };
                 let late_ms = engine
                     .sample_to_instant(sample_time)
                     .map(|at| Instant::now().saturating_duration_since(at).as_secs_f64() * 1e3);

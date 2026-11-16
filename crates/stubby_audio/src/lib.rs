@@ -19,6 +19,8 @@ mod thread;
 
 pub use clock::{MASTER_BPM, MAX_BPM, MasterLockedClock, PeriodicClock, PulseClock, RandomClock};
 pub use engine::{Engine, EngineConfig, OfflineRenderer};
-pub use modules::ParamSpec;
-pub use protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
+pub use modules::{ParamSpec, SEMITONE_VOLTS, StepState};
+pub use protocol::{
+    Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SEQUENCER_STEPS, SampleId,
+};
 pub use thread::{AudioThread, Notice};
