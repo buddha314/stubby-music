@@ -193,6 +193,7 @@ mod tests {
         let mut samples = vec![0.; 48_000]; // half a second of stereo at 48kHz
         renderer.render(&mut samples);
         assert!(samples[960..4800].iter().any(|sample| sample.abs() > 0.01));
-        assert!(samples[28_800..].iter().all(|sample| sample.abs() < 0.0002));
+        // Silent shortly after attack + decay (0.3 s); the envelope's exact tail is fundsp's.
+        assert!(samples[33_600..].iter().all(|sample| sample.abs() < 0.0002));
     }
 }

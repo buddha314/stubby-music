@@ -56,7 +56,8 @@ enum NodeState {
     Clock(ClockNode),
     RandomClock,
     Constant(ConstantNode),
-    Envelope(EnvelopeNode),
+    /// Timing is fixed at creation, so there is nothing to diff later.
+    Envelope,
     Vca(VcaNode),
 }
 
@@ -168,11 +169,16 @@ impl Engine {
                 param,
                 value,
             } => {
-                let spec = self
-                    .module(module)?
-                    .kind
+                let kind = self.module(module)?.kind;
+                let spec = kind
                     .param(param)
                     .ok_or(EngineError::UnknownParam { module, param })?;
+                if matches!(kind, ModuleKind::Envelope { .. }) {
+                    return Err(EngineError::FixedParam {
+                        module,
+                        param: spec.name,
+                    });
+                }
                 let name = spec.name;
                 self.pending_params
                     .insert((module, name), value.clamp(spec.min, spec.max));
@@ -207,21 +213,6 @@ impl Engine {
                 }
                 (NodeState::Constant(old), "value") => {
                     let new = ConstantNode { value };
-                    new.diff(old, PathBuilder::default(), &mut queue);
-                    *old = new;
-                }
-                (NodeState::Envelope(old), "attack" | "decay") => {
-                    let new = if param == "attack" {
-                        EnvelopeNode {
-                            attack: value,
-                            ..*old
-                        }
-                    } else {
-                        EnvelopeNode {
-                            decay: value,
-                            ..*old
-                        }
-                    };
                     new.diff(old, PathBuilder::default(), &mut queue);
                     *old = new;
                 }
@@ -369,7 +360,7 @@ impl Engine {
                     attack: attack_s,
                     decay: decay_s,
                 };
-                (self.cx.add_node(state, None), NodeState::Envelope(state))
+                (self.cx.add_node(state, None), NodeState::Envelope)
             }
             ModuleKind::Vca { gain } => {
                 let state = VcaNode {
@@ -475,7 +466,7 @@ impl Engine {
             NodeState::Clock(_)
             | NodeState::RandomClock
             | NodeState::Constant(_)
-            | NodeState::Envelope(_) => false,
+            | NodeState::Envelope => false,
         };
         let spatial: Vec<NodeID> = self
             .emitters

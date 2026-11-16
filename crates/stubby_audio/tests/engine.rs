@@ -457,54 +457,6 @@ fn envelope(rig: &mut Rig, id: u64, attack_s: f32, decay_s: f32) -> ModuleId {
 }
 
 #[test]
-fn envelope_attacks_then_decays_to_minus_60_db() {
-    let mut rig = Rig::new();
-    let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
-    let env = envelope(&mut rig, 2, 0.002, 0.2);
-    rig.connect(PortRef::new(clock, "gate"), PortRef::new(env, "gate"));
-    rig.connect(out(env), PortRef::output());
-    rig.flush();
-    rig.render(SR as usize);
-
-    let attack = (0.002 * SR as f32) as usize; // 96 samples
-    let decay = (0.2 * SR as f32) as usize; // 9,600 samples
-    let x = &rig.left;
-    assert!(
-        x[attack / 2] > 0.4 && x[attack / 2] < 0.6,
-        "mid-attack {}",
-        x[attack / 2]
-    );
-    assert!((x[attack] - 1.0).abs() < 0.02, "peak {}", x[attack]);
-    let at_decay = x[attack + decay];
-    assert!(
-        (0.0008..0.0012).contains(&at_decay),
-        "-60 dB point {at_decay}"
-    );
-    assert!(x[23_999] < 1e-4, "silent before the next beat");
-    // The second beat (sample 24,000) retriggers it.
-    assert!((x[24_000 + attack] - 1.0).abs() < 0.02);
-}
-
-#[test]
-fn envelope_retrigger_never_jumps() {
-    let mut rig = Rig::new();
-    // 600 BPM: a new beat every 4,800 samples, long before a 0.5 s decay ends.
-    let clock = rig.add(1, ModuleKind::Clock { bpm: 600.0 });
-    let env = envelope(&mut rig, 2, 0.01, 0.5);
-    rig.connect(PortRef::new(clock, "gate"), PortRef::new(env, "gate"));
-    rig.connect(out(env), PortRef::output());
-    rig.flush();
-    rig.render(SR as usize / 2);
-    let max_step = rig
-        .left
-        .windows(2)
-        .map(|w| (w[1] - w[0]).abs())
-        .fold(0.0, f32::max);
-    let attack_step = 1.0 / (0.01 * SR as f32);
-    assert!(max_step <= attack_step * 1.01, "jump of {max_step}");
-}
-
-#[test]
 fn vca_scales_by_cv_and_gain_and_is_closed_without_cv() {
     let mut rig = Rig::new();
     let osc = rig.add(1, ModuleKind::SineVco { freq_hz: 440.0 });

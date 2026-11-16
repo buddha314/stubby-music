@@ -36,9 +36,10 @@ pub enum ModuleKind {
     },
     /// Constant CV source. Output `"out"`, parameter `"value"`.
     Constant { value: f32 },
-    /// Attack/decay envelope. Input `"gate"`: each rising edge starts a linear attack
-    /// to 1.0, then an exponential decay. Output `"out"` (0..1). Parameters `"attack"`
-    /// (seconds to peak) and `"decay"` (seconds from peak to -60 dB).
+    /// Attack/decay envelope (fundsp's stock `adsr_live`, decaying to zero). Input
+    /// `"gate"`: a rise past the gate threshold starts it. Output `"out"` (0..1).
+    /// Parameters `"attack"` (seconds to peak) and `"decay"` (seconds back to zero) are
+    /// fixed at creation; replace the module to change them.
     Envelope { attack_s: f32, decay_s: f32 },
     /// Voltage-controlled amplifier: `out = in * max(cv, 0) * gain`. Inputs `"in"`
     /// and `"cv"`, output `"out"`, parameter `"gain"`. With no CV it is closed.
@@ -128,6 +129,11 @@ pub enum EngineError {
     NotAnInput(PortRef),
     #[error("module {module:?} has no parameter {param:?}")]
     UnknownParam {
+        module: ModuleId,
+        param: &'static str,
+    },
+    #[error("module {module:?}'s {param:?} is fixed at creation; replace the module to change it")]
+    FixedParam {
         module: ModuleId,
         param: &'static str,
     },

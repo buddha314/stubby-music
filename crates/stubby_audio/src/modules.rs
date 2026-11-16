@@ -16,7 +16,10 @@ use firewheel::{
         NodeError, ProcBuffers, ProcExtra, ProcInfo, ProcessStatus,
     },
 };
-use fundsp::prelude32::{AudioUnit, BufferVec, F32x, MAX_BUFFER_SIZE, Setting, sine, square};
+use fundsp::prelude32::{
+    AudioUnit, BufferVec, F32x, MAX_BUFFER_SIZE, Setting, Shared, adsr_live, clip_to, follow, pass,
+    shared, sine, square, tick, var,
+};
 use std::sync::{Arc, Mutex};
 
 const CLOCK_EVENT_CAPACITY: usize = 1024;
@@ -496,6 +499,10 @@ impl AudioNodeProcessor for ConstantProc {
 
 // ---------------------------------------------------------------- Envelope
 
+/// fundsp's stock envelope (`adsr_live`), as attack then decay to silence, started by a
+/// gate rising past the gate threshold. Its timing is fixed when the module is created, as
+/// a random clock's bounds are; re-add the module to change it. (Stock components until
+/// the game runs; sound design comes after.)
 #[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
 pub(crate) struct EnvelopeNode {
     pub attack: f32,
@@ -518,83 +525,73 @@ impl AudioNode for EnvelopeNode {
         _: &EmptyConfig,
         cx: ConstructProcessorContext,
     ) -> Result<impl AudioNodeProcessor, NodeError> {
-        let mut proc = EnvelopeProc {
-            sample_rate: cx.stream_info.sample_rate.get() as f64,
-            attack_step: 0.0,
-            decay_coeff: 0.0,
-            level: 0.0,
-            attacking: false,
-            gate_high: false,
-        };
-        proc.set_attack(self.attack);
-        proc.set_decay(self.decay);
-        Ok(proc)
+        let (attack, decay) = (self.attack.max(1e-4), self.decay.max(1e-4));
+        // A gate is high above GATE_THRESHOLD; the envelope starts when its input turns positive.
+        // `adsr_live` starts only on a rise it sees after a low input, so a gate already high
+        // on the first sample (a clock's first beat) would be missed: delay it one sample.
+        let unit = (tick() - GATE_THRESHOLD) >> adsr_live(attack, decay, 0.0, decay);
+        Ok(FundspProc::new(Box::new(unit), 1, cx))
     }
 }
 
-struct EnvelopeProc {
-    sample_rate: f64,
-    /// Level added per sample while attacking.
-    attack_step: f32,
-    /// Per-sample multiplier while decaying; reaches -60 dB after `decay` seconds.
-    decay_coeff: f32,
-    level: f32,
-    attacking: bool,
-    gate_high: bool,
+/// A fundsp unit run as a node: inputs and output copied through fundsp buffers.
+struct FundspProc {
+    unit: Box<dyn AudioUnit>,
+    inputs: BufferVec,
+    out: BufferVec,
 }
 
-impl EnvelopeProc {
-    fn set_attack(&mut self, seconds: f32) {
-        self.attack_step = (1.0 / (seconds.max(1e-4) as f64 * self.sample_rate)) as f32;
+impl FundspProc {
+    fn new(mut unit: Box<dyn AudioUnit>, inputs: usize, cx: ConstructProcessorContext) -> Self {
+        unit.set_sample_rate(cx.stream_info.sample_rate.get() as f64);
+        unit.reset();
+        unit.allocate();
+        Self {
+            unit,
+            inputs: BufferVec::new(inputs),
+            out: BufferVec::new(1),
+        }
     }
 
-    fn set_decay(&mut self, seconds: f32) {
-        let samples = seconds.max(1e-4) as f64 * self.sample_rate;
-        self.decay_coeff = 0.001f64.powf(1.0 / samples) as f32;
-    }
-}
-
-impl AudioNodeProcessor for EnvelopeProc {
-    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, _: &mut ProcExtra) {
-        for patch in events.drain_patches::<EnvelopeNode>() {
-            match patch {
-                EnvelopeNodePatch::Attack(s) => self.set_attack(s),
-                EnvelopeNodePatch::Decay(s) => self.set_decay(s),
+    fn run(&mut self, inputs: &[&[f32]], out: &mut [f32]) {
+        for (chunk_index, chunk) in out.chunks_mut(MAX_BUFFER_SIZE).enumerate() {
+            let start = chunk_index * MAX_BUFFER_SIZE;
+            for (channel, input) in inputs.iter().enumerate() {
+                for (i, &v) in input.iter().skip(start).take(chunk.len()).enumerate() {
+                    self.inputs.set_f32(channel, i, v);
+                }
+            }
+            self.unit.process(
+                chunk.len(),
+                &self.inputs.buffer_ref(),
+                &mut self.out.buffer_mut(),
+            );
+            for (o, s) in chunk.iter_mut().zip(self.out.channel_f32(0)) {
+                *o = *s;
             }
         }
+    }
+}
+
+impl AudioNodeProcessor for FundspProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, _: &mut ProcExtra) {
+        // Timing is fixed at creation; the engine refuses changes before they get here.
+        for _ in events.drain_patches::<EnvelopeNode>() {}
     }
 
     fn process(&mut self, _: &ProcInfo, buffers: ProcBuffers, _: &mut ProcExtra) -> ProcessStatus {
         let (Some(gate), Some(out)) = (buffers.inputs.first(), buffers.outputs.first_mut()) else {
             return ProcessStatus::ClearAllOutputs;
         };
-        for (o, &g) in out.iter_mut().zip(gate.iter()) {
-            let high = g > GATE_THRESHOLD;
-            if high && !self.gate_high {
-                // Retrigger from the current level, so the output never jumps.
-                self.attacking = true;
-            }
-            self.gate_high = high;
-            if self.attacking {
-                self.level += self.attack_step;
-                if self.level >= 1.0 {
-                    self.level = 1.0;
-                    self.attacking = false;
-                }
-            } else {
-                self.level *= self.decay_coeff;
-                if self.level < 1e-6 {
-                    self.level = 0.0;
-                }
-            }
-            *o = self.level;
-        }
+        self.run(&[gate], out);
         ProcessStatus::OutputsModified
     }
 }
 
 // ---------------------------------------------------------------- VCA
 
+/// A VCA from fundsp's stock parts: `in * max(cv, 0) * gain`, with the gain smoothed by
+/// `follow` so changes never zipper. With no CV it is closed.
 #[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
 pub(crate) struct VcaNode {
     pub gain: f32,
@@ -614,21 +611,21 @@ impl AudioNode for VcaNode {
         _: &EmptyConfig,
         cx: ConstructProcessorContext,
     ) -> Result<impl AudioNodeProcessor, NodeError> {
-        let sample_rate = cx.stream_info.sample_rate.get() as f64;
+        let gain = shared(self.gain);
+        let unit = (pass() * (pass() >> clip_to(0.0, f32::MAX)))
+            * (var(&gain) >> follow(GAIN_SMOOTH_SECONDS as f32));
         Ok(VcaProc {
-            target: self.gain,
-            gain: self.gain,
-            smooth: (1.0 - (-1.0 / (GAIN_SMOOTH_SECONDS * sample_rate)).exp()) as f32,
+            fundsp: FundspProc::new(Box::new(unit), 2, cx),
+            gain,
             fade: SourceFade::new(),
         })
     }
 }
 
 struct VcaProc {
-    target: f32,
-    /// The gain actually applied, easing toward `target` so changes never zipper.
-    gain: f32,
-    smooth: f32,
+    fundsp: FundspProc,
+    /// The gain target, read by the unit's `var`; setting it does not allocate.
+    gain: Shared,
     fade: SourceFade,
 }
 
@@ -636,7 +633,7 @@ impl AudioNodeProcessor for VcaProc {
     fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, extra: &mut ProcExtra) {
         for patch in events.drain_patches::<VcaNode>() {
             match patch {
-                VcaNodePatch::Gain(g) => self.target = g,
+                VcaNodePatch::Gain(g) => self.gain.set_value(g),
                 VcaNodePatch::Enabled(on) => self.fade.set_enabled(on, extra),
             }
         }
@@ -654,10 +651,7 @@ impl AudioNodeProcessor for VcaProc {
         let Some(out) = buffers.outputs.first_mut() else {
             return ProcessStatus::ClearAllOutputs;
         };
-        for ((o, &x), &c) in out.iter_mut().zip(input.iter()).zip(cv.iter()) {
-            self.gain += (self.target - self.gain) * self.smooth;
-            *o = x * c.max(0.0) * self.gain;
-        }
+        self.fundsp.run(&[input, cv], out);
         self.fade.apply(buffers.outputs, info.frames, extra);
         ProcessStatus::OutputsModified
     }
