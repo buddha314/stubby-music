@@ -1,0 +1,25 @@
+{
+  "id": "snail_shell",
+  "model": "models/creatures/snail_shell.glb",
+  "kind": "find",
+  "resource": "empty_snail_shell",
+  "item": "snail_shell",
+  "whorls": 4,
+  "size_metres": {
+    "height": 0.03
+  },
+  "world_scale": 3.0,
+  "coiling": {
+    "model": "Raup helicospiral",
+    "W_per_whorl": 1.45,
+    "T": 6.0,
+    "aperture": [
+      0.85,
+      1.25
+    ]
+  },
+  "triangles": [
+    9234,
+    1032
+  ]
+}

@@ -34,6 +34,7 @@ impl Plugin for GluePlugin {
                     .after(stubby_core::PrefabBinding)
                     .before(stubby_core::InteractionTargeting),
                 attach_air_cleaners.after(stubby_core::PrefabBinding),
+                hide_collected_finds.after(stubby_core::PrefabBinding),
             ),
         );
     }
@@ -205,6 +206,15 @@ impl Plugin for PrefabGluePlugin {
                 },
             },
             // Streams bind themselves when laid (streams.rs); a placed segment is scenery.
+            AssetBinder {
+                matches: |_, asset| asset == "snail_shell",
+                install: install_shell,
+                retire: |world, entity| {
+                    if world.get_entity(entity).is_ok() {
+                        world.entity_mut(entity).remove::<(ResourceNode, Find)>();
+                    }
+                },
+            },
             AssetBinder {
                 matches: |_, asset| asset == "stream_segment",
                 install: |_, _, _, _| Ok(()),
@@ -387,6 +397,83 @@ fn install_reeds(
         collected: harvested,
     });
     Ok(())
+}
+
+/// A find: a pickup that never returns (a snail shell), hidden once collected.
+#[derive(Component)]
+pub struct Find;
+
+/// The shell's profile (`assets/creatures/snail_shell/asset.json`, from its generator).
+#[derive(serde::Deserialize)]
+struct ShellProfile {
+    world_scale: f32,
+    size_metres: ShellSize,
+}
+#[derive(serde::Deserialize)]
+struct ShellSize {
+    height: f32,
+}
+/// How far a shell lying on the mud leans from upright (as the Godot game lays them).
+const SHELL_LIE_DEGREES: f32 = 72.;
+
+/// The pose of a shell placed at `at`: shown at its profile's world scale, lying on its
+/// side at an angle seeded by its instance, resting on the ground.
+fn shell_pose(instance: &str, at: Vec3, ground: &stubby_core::GroundHeight) -> Transform {
+    let profile: ShellProfile =
+        serde_json::from_str(include_str!("../../../assets/creatures/snail_shell/asset.json"))
+            .expect("snail shell profile");
+    let hash = instance.bytes().fold(0xcbf29ce484222325_u64, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(1099511628211)
+    });
+    let yaw = (hash % 3600) as f32 / 3600. * std::f32::consts::TAU;
+    let size = profile.size_metres.height * profile.world_scale;
+    Transform {
+        translation: Vec3::new(at.x, ground.at(at.x, at.z) + size * 0.25, at.z),
+        rotation: Quat::from_rotation_y(yaw) * Quat::from_rotation_x(SHELL_LIE_DEGREES.to_radians()),
+        scale: Vec3::splat(profile.world_scale),
+    }
+}
+
+fn install_shell(
+    world: &mut World,
+    entity: Entity,
+    definition: &PlacedAsset,
+    _binding: &mut Bound,
+) -> Result<(), String> {
+    let collected = world
+        .get_resource::<bevy_stubby_recipes::PlayerInventory>()
+        .is_some_and(|player| player.collected.collected(&definition.instance));
+    let at = world
+        .get::<Transform>(entity)
+        .map_or(Vec3::ZERO, |transform| transform.translation);
+    let pose = world
+        .get_resource::<stubby_core::GroundHeight>()
+        .map(|ground| shell_pose(&definition.instance, at, ground));
+    let mut shell = world.entity_mut(entity);
+    shell.insert((
+        ResourceNode {
+            resource: "empty_snail_shell".into(),
+            instance: definition.instance.clone(),
+            collected,
+        },
+        Find,
+    ));
+    if let Some(pose) = pose {
+        shell.insert(pose);
+    }
+    Ok(())
+}
+
+/// A collected find is gone (it never returns).
+fn hide_collected_finds(mut finds: Query<(&ResourceNode, &mut Visibility), With<Find>>) {
+    for (node, mut visibility) in &mut finds {
+        let wanted = if node.collected {
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
+        };
+        visibility.set_if_neq(wanted);
+    }
 }
 
 #[cfg(test)]

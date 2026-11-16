@@ -52,7 +52,12 @@ fn bridge(
             || asset.ends_with("_vco")
             || matches!(
                 asset,
-                "clock_lamp" | "mudpit_burbler" | "stream_segment" | "burbler_clock" | "volume"
+                "clock_lamp"
+                    | "mudpit_burbler"
+                    | "stream_segment"
+                    | "burbler_clock"
+                    | "volume"
+                    | "snail_shell"
             ))
         {
             if previous.is_some() {

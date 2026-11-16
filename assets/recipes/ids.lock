@@ -4,6 +4,7 @@ build_a_heartbeat
 clock
 clock_source
 desert_brush_air
+empty_snail_shell
 lightning_bug
 mudpit_burbler
 patch_cable
@@ -12,6 +13,7 @@ reed_air
 reed_clump
 scrub_oak
 scrub_oak_air
+snail_shell
 square_wave
 stream_segment
 water_the_tree

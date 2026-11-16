@@ -13,6 +13,16 @@
       ]
     },
     {
+      "id": "empty_snail_shell",
+      "name": "Empty snail shell",
+      "yields": [
+        {
+          "item": "snail_shell",
+          "quantity": 1
+        }
+      ]
+    },
+    {
       "id": "lightning_bug",
       "name": "Lightning bug",
       "yields": [

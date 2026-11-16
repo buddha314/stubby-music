@@ -1,6 +1,8 @@
-## Implementation (unclaimed)
+## Implementation (claimed: claude, 2026-11-16)
 
-- [ ] 1.1 Port shell and sequencer generators/profiles through sync-blender-asset-contracts; add a Jackdaw prefab and seeded placement.
-- [ ] 2.1 Extend rule uses, module definitions, optional places, buttons and route completion; run rules-fmt and preserve stable IDs.
-- [ ] 3.1 Implement sequencing with existing fundsp units where suitable plus sample-edge scheduling glue in stubby_audio; keep the existing signal ranges and Firewheel boundary.
+User decisions (2026-11-16): step CV knobs snap to semitones; about five shells in the opening scene; both finding aids (the aimed-pickup outline and the compass, `sync-targeting-and-compass`, done in #151).
+
+- [ ] 1.1 Port shell and sequencer generators/profiles through sync-blender-asset-contracts; add a Jackdaw prefab and seeded placement. (Shell done: `tools/blender/create_snail_shell.py`, `assets/prefabs/creatures/snail_shell.bsn`, five shells by the reed beds in `assets/scene.bsn`, posed lying at a seeded angle by the game's binder. Sequencer panel generator open.)
+- [ ] 2.1 Extend rule uses, module definitions, optional places, buttons and route completion; run rules-fmt and preserve stable IDs. (Rules done: item `snail_shell`, resource `empty_snail_shell`, never returns; IDs are unique across files here, so the resource is not also `snail_shell`. Module, places, buttons and routing open.)
+- [ ] 3.1 Implement sequencing with existing fundsp units where suitable plus sample-edge scheduling glue in stubby_audio; keep the existing signal ranges and Firewheel boundary. Step CV snaps to semitones (1/12 V on V/OCT).
 - [ ] 4.1 Offline-test reset, gate/CV, optional mounting, route completion, inventory failure and heard playhead timing.
