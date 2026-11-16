@@ -5,7 +5,7 @@ wings and light are completely hidden between pulses. No idle glow or continuous
 emitted. The flash attacks in 15 ms and decays to zero over a total of 180 ms.
 
 - Source: `assets-src/blender/creatures/lightning_bug.blend` (metres, isolated asset scene).
-- Runtime: `assets/models/creatures/lightning_bug.glb`, with a `white_flash` scale animation.
+- Runtime: `assets/creatures/lightning_bug/lightning_bug.glb`, with a `white_flash` scale animation.
 - Profile: `asset.json`. The game embeds this profile at build time.
 - Preview: `previews/creatures/lightning_bug/preview.png` shows the flash at its peak; scrub frames 1–19 in Blender
   to see it collapse to invisibility at 60 FPS.
@@ -40,8 +40,8 @@ Run the scene and optionally capture both real pulse states:
 cargo run -p stubby_game -- --seed=42 --pulse-preview=/tmp/lightning-bug
 ```
 
-The isolated Jackdaw adapter shares these source files and models. Its
-`assets/models` symlink points to the game's runtime models. In the editor, Play
+The Jackdaw adapter shares the root assets folder and source files with the game.
+The model, profile and prefab live together in `assets/creatures/lightning_bug/`. In the editor, Play
 shows the flashes; the edit viewport remains the static ground proxy.
 
 `PulseClock` is the common clock trait, with `PeriodicClock` and `RandomClock` implementations. Each bug owns its random state; reusing a follower clock ID is the explicit way to synchronize another asset to that bug.

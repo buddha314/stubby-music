@@ -23,7 +23,7 @@ struct HandItemDef {
 const HAND_ITEMS: &[HandItemDef] = &[HandItemDef {
     item: HandItem::FieldRecorder,
     key: RECORDER,
-    model: "models/equipment/field_recorder.glb#Scene0",
+    model: "equipment/field_recorder/field_recorder.glb#Scene0",
     // About a forearm's length out, windguard leaning forward to where it listens.
     pose: || {
         Transform::from_xyz(0.17, -0.165, -0.42).with_rotation(

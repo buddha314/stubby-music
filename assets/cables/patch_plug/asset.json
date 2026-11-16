@@ -1,6 +1,6 @@
 {
   "id": "patch_plug",
-  "model": "models/cables/patch_plug.glb#Scene0",
+  "model": "cables/patch_plug/patch_plug.glb#Scene0",
   "kind": "patch_plug",
   "fits": {
     "port_node": "Port_<port>",

@@ -66,7 +66,7 @@ prefabs SHALL use the type path of the crate that owns them, and a move that cha
 reflected path SHALL rewrite the saved prefabs in the same change.
 
 #### Scenario: A bug prefab after the move
-- **WHEN** `assets/prefabs/creatures/lightning_bug.bsn` is loaded after `PulseFollower` moves to `bevy_stubby_audio`
+- **WHEN** `assets/creatures/lightning_bug/lightning_bug.bsn` is loaded after `PulseFollower` moves to `bevy_stubby_audio`
 - **THEN** it names `bevy_stubby_audio::…::PulseFollower` and `cargo test -p stubby_jackdaw --test prefabs` passes
 
 ### Requirement: The layering is checked

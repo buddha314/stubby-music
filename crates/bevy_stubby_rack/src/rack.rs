@@ -1739,7 +1739,7 @@ fn live_cable(
                     commands
                         .spawn((
                             LiveCable,
-                            WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
+                            WorldAssetRoot(server.load("cables/patch_plug/patch_plug.glb#Scene0")),
                             PlugColour(material.clone()),
                             *at,
                             bevy::app::Propagate(layer.clone()),
@@ -1952,7 +1952,7 @@ fn draw_cables(
                 commands.spawn((
                     CableVisual,
                     CombCable(index),
-                    WorldAssetRoot(server.load("models/cables/patch_plug.glb#Scene0")),
+                    WorldAssetRoot(server.load("cables/patch_plug/patch_plug.glb#Scene0")),
                     PlugColour(mat.clone()),
                     plug.1,
                     bevy::app::Propagate(layer.clone()),

@@ -1,0 +1,6 @@
+#"Saw VCO"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "modules/saw_vco/saw_vco.glb", scene_index: 0 }

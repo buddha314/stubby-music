@@ -1,7 +1,0 @@
-#"Scrub oak 0"
-jackdaw::prefab::components::Prefab
-jackdaw::prefab::components::PrefabEntityId(0)
-bevy_transform::components::transform::Transform
-bevy_camera::visibility::Visibility::Visible
-jackdaw_scene_types::types::GltfSource { path: "models/flora/scrub_oak/scrub_oak_0.glb", scene_index: 0 }
-bevy_stubby_recipes::MineNode { mine: "scrub_oak", instance: "scrub_oak-0" }

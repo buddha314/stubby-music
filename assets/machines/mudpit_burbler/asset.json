@@ -1,6 +1,6 @@
 {
   "id": "mudpit_burbler",
-  "model": "models/machines/mudpit_burbler.glb#Scene0",
+  "model": "machines/mudpit_burbler/mudpit_burbler.glb#Scene0",
   "kind": "mine",
   "mine": "mudpit_burbler",
   "produces": "clock",
@@ -19,7 +19,7 @@
   },
   "configure": {
     "screen": "eurorack_hud",
-    "hud": "models/hud/rack_frame.glb",
+    "hud": "hud/rack_frame/rack_frame.glb",
     "title": "MUDPIT BURBLER",
     "interact": {
       "node": "Interact",

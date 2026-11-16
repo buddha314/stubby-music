@@ -24,7 +24,7 @@ authored. Cables are not emissive: the signal's own light belongs to the modules
   Cable_attach         where the cable leaves the plug's strain relief; +Z along it
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_patch_cable.py
-Writes assets/models/cables/patch_plug.glb and assets/cables/patch_plug/.
+Writes assets/cables/patch_plug/patch_plug.glb and assets/cables/patch_plug/.
 """
 from pathlib import Path
 import math

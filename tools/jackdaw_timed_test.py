@@ -130,6 +130,8 @@ def main():
     parser.add_argument('--refresh', type=int, choices=(60, 144, 165, 240), default=60)
     parser.add_argument('--adapter', help='Bevy WGPU_ADAPTER_NAME substring')
     parser.add_argument('--play', action='store_true')
+    parser.add_argument('--standalone', action='store_true',
+                        help='Run the built stubby_jackdaw binary under the same watchdog (no editor)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
     parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
@@ -141,8 +143,13 @@ def main():
     args = parser.parse_args()
     if not 0 < args.seconds <= 20:
         parser.error('--seconds must be greater than zero and no more than 20')
+    if args.standalone and (args.command or args.play or args.review or args.streams or args.sky):
+        parser.error('--standalone supports the opening or --prefabs review only')
     if not args.command:
-        subprocess.run([sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py'), '--binaries'], check=True)
+        check = [sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py')]
+        if not args.standalone:
+            check.append('--binaries')
+        subprocess.run(check, check=True)
     project = ROOT
     manifest = project / 'jackdaw.toml'
     original = manifest.read_text()
@@ -152,8 +159,15 @@ def main():
     if args.adapter:
         env['WGPU_ADAPTER_NAME'] = args.adapter
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
+    if args.standalone:
+        command = [str(ROOT / 'target/debug/stubby_jackdaw'), '--seed=42']
+        if args.prefabs:
+            command += ['--scene=review_prefab_runtime.bsn',
+                        f'--prefab-review=/tmp/stubby-lod-{args.name}']
+        if not Path(command[0]).is_file():
+            parser.error('build stubby_jackdaw before the standalone diagnostic')
     output = Path('/tmp') / f'jackdaw-flicker-{args.name}.log'
-    report = {'name': args.name, 'limit_seconds': args.seconds,
+    report = {'name': args.name, 'standalone': args.standalone, 'limit_seconds': args.seconds,
               'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play or args.review or args.prefabs or args.streams or args.sky, 'review': args.review, 'prefabs': args.prefabs}
     process = None
     display_changed = False
@@ -162,7 +176,7 @@ def main():
     try:
         if not args.command:
             try:
-                existing = rpc('jackdaw/status')
+                existing = None if args.standalone else rpc('jackdaw/status')
             except (OSError, RuntimeError, ValueError):
                 existing = None
             if existing is not None:
@@ -172,7 +186,7 @@ def main():
             else:
                 report['mode'] = display_mode(args.refresh)
             display_changed = True
-            if args.play or args.review or args.prefabs or args.streams or args.sky:
+            if not args.standalone and (args.play or args.review or args.prefabs or args.streams or args.sky):
                 block = '[[run]]\nname = "Live listen: clock + square"\nargs = ["--seed=42", "--module-demo"]\n'
                 if args.review:
                     block = '[[run]]\nname = "Review: dusk and replenishment"\nargs = ["--seed=42", "--replenishment-review=/tmp/stubby-replenishment-review"]\n'
@@ -196,7 +210,7 @@ def main():
             played = False
             states = []
             while process.poll() is None:
-                if not args.command:
+                if not args.command and not args.standalone:
                     try:
                         status = rpc('jackdaw/status')
                         if not states or states[-1] != status['pie']:

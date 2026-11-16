@@ -824,7 +824,7 @@ mod tests {
     #[test]
     fn shipped_bug_has_white_emission_and_a_scale_flash_clip() {
         let asset = gltf::Gltf::from_slice(include_bytes!(
-            "../../../assets/models/creatures/lightning_bug.glb"
+            "../../../assets/creatures/lightning_bug/lightning_bug.glb"
         ))
         .expect("lightning bug must remain a valid GLB");
         let root = asset

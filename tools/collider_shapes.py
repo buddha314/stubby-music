@@ -24,7 +24,7 @@ import struct
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
-MODELS = REPO / "assets/models"
+MODELS = REPO / "assets"
 PLAYER_STEP_M = 0.35   # what the player steps over; geometry below this stays walkable
 
 
@@ -147,14 +147,13 @@ def burbler(glb):
 
 
 FAMILIES = {
-    # family folder (under assets/): (model glob under models/, shaper or why it is walk-through)
-    "flora/scrub_oak": ("flora/scrub_oak/scrub_oak_*.glb", oak),
-    "flora/reeds": ("flora/reeds/reed_clump_*.glb", "thin reeds: the player walks through, like grass"),
-    "props/desert": ("props/desert/desert_*.glb", None),
-    "machines/mudpit_burbler": ("machines/mudpit_burbler.glb", burbler),
-    "modules": ("modules/*.glb", None),
-    "creatures/lightning_bug": ("creatures/lightning_bug.glb", "a small flying creature, collected with E"),
-    "streams/stream_segment": ("streams/stream_segment.glb", "low banks under the step height; the player wades across"),
+    # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
+    "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
+    "flora/reeds": ("flora/reeds/*/*.glb", "thin reeds: the player walks through, like grass"),
+    "props/desert": ("props/desert/*/*.glb", None),
+    "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
+    "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
+    "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),
 }
 
 
@@ -172,14 +171,19 @@ def props(glb):
 
 
 def main():
-    for family, (pattern, shaper) in FAMILIES.items():
+    families = dict(FAMILIES)
+    for model in sorted((MODELS / "modules").glob("*/*.glb")):
+        families[model.parent.relative_to(MODELS).as_posix()] = (model.relative_to(MODELS).as_posix(), modules)
+    for family, (pattern, shaper) in families.items():
         entries = {}
         for glb in sorted(MODELS.glob(pattern)):
-            rel = f"models/{glb.relative_to(MODELS).as_posix()}"
-            how = shaper if shaper is not None else (modules if family == "modules" else props)
+            rel = glb.relative_to(MODELS).as_posix()
+            how = shaper if shaper is not None else props
             result = how(glb) if callable(how) else how
             entries[rel] = ({"colliders": result, "rigid_body": "none (static)"} if isinstance(result, list)
                             else {"walk_through": True, "why": result})
+        if not entries:
+            raise SystemExit(f"{family}: no models matched {pattern}")
         out = REPO / "assets" / family / "colliders.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({

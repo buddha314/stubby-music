@@ -1,6 +1,6 @@
 {
   "id": "slot_outline_16hp",
-  "model": "models/hud/slot_outline_16hp.glb#Scene0",
+  "model": "hud/slot_outline_16hp/slot_outline_16hp.glb#Scene0",
   "kind": "slot_outline",
   "hp": 16,
   "width_m": 0.8128,

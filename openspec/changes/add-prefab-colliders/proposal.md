@@ -24,6 +24,6 @@ None.
 
 - **Jackdaw fork:** one line in the root `Cargo.toml`, a workspace bug fix. No game-specific editor change.
 - **`crates/stubby_jackdaw`, `crates/stubby_game`:** a new path dependency and plugin; `controls.rs` movement; `Cargo.lock`.
-- **`assets/prefabs/flora/scrub_oak_*.bsn`:** a child collider entity on each.
+- **`assets/flora/scrub_oak/scrub_oak_*/scrub_oak_*.bsn`:** a child collider entity on each.
 - **`add-desert-opening` 4.2d:** this change carries that task's collider work.
 - **Docs:** `docs/research/player-controller-and-physics.md` still says physics is gated.

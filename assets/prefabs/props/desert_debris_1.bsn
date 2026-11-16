@@ -1,6 +1,0 @@
-#"Desert debris 1"
-jackdaw::prefab::components::Prefab
-jackdaw::prefab::components::PrefabEntityId(0)
-bevy_transform::components::transform::Transform
-bevy_camera::visibility::Visibility::Visible
-jackdaw_scene_types::types::GltfSource { path: "models/props/desert/desert_debris_1.glb", scene_index: 0 }

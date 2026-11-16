@@ -27,7 +27,7 @@ placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_reeds.py
            (`-- 2` for one variant, `-- montage` for the lineup)
-Writes assets/models/flora/reeds/reed_clump_<k>.glb, assets/flora/reeds/ (profiles)
+Writes assets/flora/reeds/reed_clump_<k>/reed_clump_<k>.glb, assets/flora/reeds/ (profiles)
 and previews/flora/reeds/.
 """
 from pathlib import Path

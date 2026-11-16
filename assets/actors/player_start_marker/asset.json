@@ -1,6 +1,6 @@
 {
   "id": "player_start_marker",
-  "model": "models/actors/player_start_marker.glb#Scene0",
+  "model": "actors/player_start_marker/player_start_marker.glb#Scene0",
   "kind": "editor_marker",
   "marks": "PlayerStart (add-opening-region 2.7)",
   "hidden_in_game": true,

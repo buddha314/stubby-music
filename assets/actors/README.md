@@ -15,7 +15,7 @@ snaps to the floor when dropped.
   the camera starts.
 
 In the build colour (`#ffd39a`), emissive so it reads in dark scenes. 299 triangles.
-The prefab (`prefabs/actors/player_start.bsn`: this model, `HiddenInGame`,
+The prefab (`actors/player_start_marker/player_start.bsn`: this model, `HiddenInGame`,
 `PlayerStart`) follows once the game's `PlayerStart` component exists
 (`add-opening-region` 2.7).
 

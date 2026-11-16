@@ -52,7 +52,7 @@ are unchanged; their code moves.
   new crates. Root `Cargo.toml` members, `Cargo.lock`, `stubby_jackdaw/Cargo.toml`.
 - `crates/stubby_jackdaw/src/lib.rs` loses its `#[path]` include; `prefab_bridge.rs`
   imports from the new crates.
-- `assets/prefabs/**/*.bsn`, `assets/scene.bsn`, `assets/review_prefab_runtime.bsn`:
+- `assets/**/*.bsn`, `assets/scene.bsn`, `assets/review_prefab_runtime.bsn`:
   type paths rewritten.
 - `crates/stubby_game/src/calendar.rs`: the `stubby_recipes::ResourceTime` conversion
   moves to glue, so the world does not depend on crafting.

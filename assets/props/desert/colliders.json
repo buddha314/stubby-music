@@ -1,31 +1,31 @@
 {
   "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
   "models": {
-    "models/props/desert/desert_brush_0.glb": {
+    "props/desert/desert_brush_0/desert_brush_0.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_brush_1.glb": {
+    "props/desert/desert_brush_1/desert_brush_1.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_brush_2.glb": {
+    "props/desert/desert_brush_2/desert_brush_2.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_debris_0.glb": {
+    "props/desert/desert_debris_0/desert_debris_0.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_debris_1.glb": {
+    "props/desert/desert_debris_1/desert_debris_1.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_debris_2.glb": {
+    "props/desert/desert_debris_2/desert_debris_2.glb": {
       "walk_through": true,
       "why": "brush and mud debris: the player walks through them"
     },
-    "models/props/desert/desert_stump_0.glb": {
+    "props/desert/desert_stump_0/desert_stump_0.glb": {
       "colliders": [
         {
           "shape": "Cylinder",
@@ -40,7 +40,7 @@
       ],
       "rigid_body": "none (static)"
     },
-    "models/props/desert/desert_stump_1.glb": {
+    "props/desert/desert_stump_1/desert_stump_1.glb": {
       "colliders": [
         {
           "shape": "Cylinder",
@@ -55,7 +55,7 @@
       ],
       "rigid_body": "none (static)"
     },
-    "models/props/desert/desert_stump_2.glb": {
+    "props/desert/desert_stump_2/desert_stump_2.glb": {
       "colliders": [
         {
           "shape": "Cylinder",

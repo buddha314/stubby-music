@@ -645,7 +645,7 @@ class Burbler(ModuleKit):
             "params": {"bpm": {"min": 40.0, "max": 180.0, "default": 90.0,
                                "note": "set per instance from the world seed"}},
             # This machine's rack configurator: its configuration recipe's slots.
-            "configure": {"screen": "eurorack_hud", "hud": "models/hud/rack_frame.glb",
+            "configure": {"screen": "eurorack_hud", "hud": "hud/rack_frame/rack_frame.glb",
                           "title": "MUDPIT BURBLER", "interact": INTERACT,
                           "places": [{"place": p, "kind": RACK_KIND[p], "hp": hp, "fixed": p in RACK_FIXED,
                                       **({"module": RACK_FIXED[p]} if p in RACK_FIXED else {}),

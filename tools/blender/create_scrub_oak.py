@@ -44,7 +44,7 @@ is placed (Jackdaw, the game) before any game code poses it.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_scrub_oak.py
            (or `-- 3` for one variant; `-- montage` rebuilds the lineup only)
-Writes assets/models/flora/scrub_oak/scrub_oak_<k>.glb assets/flora/scrub_oak/ (profiles)
+Writes assets/flora/scrub_oak/scrub_oak_<k>/scrub_oak_<k>.glb assets/flora/scrub_oak/ (profiles)
 and previews/flora/scrub_oak/ (previews per variant and stage, and the lineup).
 """
 from pathlib import Path

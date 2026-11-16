@@ -184,8 +184,14 @@ struct Templates {
 
 fn load_templates(mut commands: Commands, server: Res<AssetServer>) {
     for (kind, path) in [
-        (Kind::Segment, "models/streams/stream_segment.glb#Scene0"),
-        (Kind::Hologram, "models/streams/stream_hologram.glb#Scene0"),
+        (
+            Kind::Segment,
+            "streams/stream_segment/stream_segment.glb#Scene0",
+        ),
+        (
+            Kind::Hologram,
+            "streams/stream_hologram/stream_hologram.glb#Scene0",
+        ),
     ] {
         commands.spawn((
             TemplateRoot(kind),

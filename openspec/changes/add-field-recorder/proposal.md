@@ -4,7 +4,7 @@ the collector is a handheld stereo field recorder with a fur windguard: the tool
 location recordist carries, generic and unbranded.
 
 ## What Changes
-- Art: `tools/blender/create_field_recorder.py` → `assets/models/equipment/field_recorder.glb`
+- Art: `tools/blender/create_field_recorder.py` → `assets/equipment/field_recorder/field_recorder.glb`
   and `assets/equipment/field_recorder/` (profile, previews). Real size, origin at the grip;
   X/Y capsules under a shell-fur windguard; a record fairy light and a level-meter screen.
 - Game: hold it in first person while playing, and use it for collection: the record light

@@ -8,7 +8,7 @@ Exporters SHALL preserve child transforms under hidden state parts using full-sc
 - **THEN** its foliage and catkins appear at their authored transforms without an initial full-bloom flash
 
 ### Requirement: Portable assets keep native paths
-Shared Blender geometry, materials, profiles and sources SHALL retain provenance and CC0 outside-asset licensing; the Bevy adapter SHALL emit assets/models paths, glTF scene selectors, previews outside assets, and Jackdaw model-owned LOD metadata. Godot scenes and import files SHALL NOT replace prefabs.
+Shared Blender geometry, materials, profiles and sources SHALL retain provenance and CC0 outside-asset licensing; the Bevy adapter SHALL emit asset-family paths under assets/, glTF scene selectors, previews outside assets, and Jackdaw model-owned LOD metadata. Godot scenes and import files SHALL NOT replace prefabs.
 
 #### Scenario: Portable assets keep native paths
 - **WHEN** an upstream generator changes

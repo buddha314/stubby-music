@@ -39,7 +39,7 @@ bevy_ecs::hierarchy::Children [
         jackdaw_scene_types::node_id::SceneNodeId(8620410544732437903)
         --
         jackdaw::prefab::components::IsA {
-            source: "prefabs/creatures/lightning_bug.bsn",
+            source: "creatures/lightning_bug/lightning_bug.bsn",
             deleted: [],
         }
         jackdaw::prefab::components::PrefabEntityId(0)
@@ -59,7 +59,7 @@ bevy_ecs::hierarchy::Children [
     #mudpit_burbler
     jackdaw_scene_types::node_id::SceneNodeId(2882634828979894752)
     jackdaw_scene_types::types::GltfSource {
-        path: "models/machines/mudpit_burbler.glb",
+        path: "machines/mudpit_burbler/mudpit_burbler.glb",
         scene_index: 0,
     }
     bevy_transform::components::transform::Transform {
@@ -77,7 +77,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -94,7 +94,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -111,7 +111,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -128,7 +128,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -145,7 +145,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -162,7 +162,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/lightning_bug.bsn",
+        source: "creatures/lightning_bug/lightning_bug.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -179,7 +179,7 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -193,7 +193,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -207,7 +207,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -221,7 +221,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -235,7 +235,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -249,7 +249,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/reed_clump_0.bsn",
+        source: "flora/reeds/reed_clump_0/reed_clump_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -263,7 +263,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/flora/scrub_oak_0.bsn",
+        source: "flora/scrub_oak/scrub_oak_0/scrub_oak_0.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)

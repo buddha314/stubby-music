@@ -34,7 +34,7 @@ running, the region keeps changing, and the world goes on past the region's edge
 
 ## Layout: prefabs in Jackdaw (decided)
 Levels are designed by placing **prefabs** in the Jackdaw opening scene. Every
-placeable world asset has one under `assets/prefabs/` (oaks, reed clumps,
+placeable world asset has one under `assets/<category>/<id>/` (oaks, reed clumps,
 props, the burbler, the lightning bug, world modules, stream segments), made and
 edited in Jackdaw and checked by `crates/stubby_jackdaw/tests/prefabs.rs`. The scene file
 is the region's layout, so it is deterministic by construction. Seeded scatter (props,
