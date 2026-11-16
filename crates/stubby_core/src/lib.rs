@@ -15,6 +15,8 @@ pub mod keys {
     pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
     pub const INVENTORY: KeyCode = KeyCode::Tab;
     pub const RECORDER: KeyCode = KeyCode::KeyH;
+    /// The forensic flashlight (add-forensic-flashlight).
+    pub const FLASHLIGHT: KeyCode = KeyCode::KeyB;
     pub const JUMP: KeyCode = KeyCode::Space;
     pub const CROUCH: KeyCode = KeyCode::KeyC;
 }

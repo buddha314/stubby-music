@@ -14,7 +14,7 @@ Nodes (glTF):
 
 Real size, about 3 cm tall; the game shows it at the profile's `world_scale`.
 
-Writes assets/creatures/snail_shell/snail_shell.glb, assets/creatures/snail_shell/asset.json,
+Writes assets/creatures/snail_shell/snail_shell.glb and asset.json,
 assets-src/blender/creatures/snail_shell.blend and previews/creatures/snail_shell/.
 
 Reproduce:
@@ -45,8 +45,8 @@ WORLD_SCALE = 3.0        # shown 3x real size so a find is findable (as the bugs
 LEVELS = [(64, 18), (16, 8)]  # (samples per whorl, segments round the tube) per LOD
 
 
-MODEL = PROJECT / "assets/models" / FOLDER / f"{ASSET_ID}.glb"
-MODEL_REF = f"models/{FOLDER}/{ASSET_ID}.glb"
+MODEL = PROJECT / "assets" / FOLDER / ASSET_ID / f"{ASSET_ID}.glb"
+MODEL_REF = f"{FOLDER}/{ASSET_ID}/{ASSET_ID}.glb"
 PROFILE_DIR = PROJECT / "assets" / FOLDER / ASSET_ID
 PREVIEWS = PROJECT / "previews" / FOLDER / ASSET_ID
 SOURCE = PROJECT / "assets-src/blender" / FOLDER / f"{ASSET_ID}.blend"
