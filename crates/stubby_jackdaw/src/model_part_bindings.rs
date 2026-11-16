@@ -207,6 +207,13 @@ fn bind_parts(
         if !rest.rotation.is_finite() {
             rest.rotation = info.rotation;
         }
+        // A part exported full-size but tagged `start_scale` (sync-blender-asset-contracts)
+        // starts hidden here too; the rest pose keeps its full size for the presenter.
+        if let Some(start) = info.extras["start_scale"].as_f64() {
+            commands
+                .entity(entity)
+                .insert(rest.with_scale(rest.scale * start as f32));
+        }
         commands.entity(entity).insert(AssetPart {
             root,
             name: info.name.clone(),

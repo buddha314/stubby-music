@@ -45,44 +45,44 @@ struct FloraProfiles {
 pub struct PrefabPresentationPlugin;
 impl Plugin for PrefabPresentationPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<HoveredAsset>()
-            .add_message::<AssetHoverEvent>()
-            .add_message::<AssetUsed>()
-            .insert_resource(FloraProfiles {
-                oak: serde_json::from_str(include_str!(
-                    "../../../assets/flora/scrub_oak/asset.json"
-                ))
+        app.add_systems(
+            PostUpdate,
+            restore_start_scale.before(bevy::transform::TransformSystems::Propagate),
+        )
+        .init_resource::<HoveredAsset>()
+        .add_message::<AssetHoverEvent>()
+        .add_message::<AssetUsed>()
+        .insert_resource(FloraProfiles {
+            oak: serde_json::from_str(include_str!("../../../assets/flora/scrub_oak/asset.json"))
                 .expect("oak profile"),
-                reeds: serde_json::from_str(include_str!("../../../assets/flora/reeds/asset.json"))
-                    .expect("reed profile"),
-                burbler: serde_json::from_str(include_str!(
-                    "../../../assets/machines/mudpit_burbler/asset.json"
-                ))
-                .expect("burbler profile"),
-                props: serde_json::from_str(include_str!(
-                    "../../../assets/props/desert/asset.json"
-                ))
+            reeds: serde_json::from_str(include_str!("../../../assets/flora/reeds/asset.json"))
+                .expect("reed profile"),
+            burbler: serde_json::from_str(include_str!(
+                "../../../assets/machines/mudpit_burbler/asset.json"
+            ))
+            .expect("burbler profile"),
+            props: serde_json::from_str(include_str!("../../../assets/props/desert/asset.json"))
                 .expect("prop profile"),
-            })
-            .add_systems(Startup, setup_hover)
-            .add_systems(
-                Update,
-                (
-                    find_parts,
-                    animation_sources,
-                    prepare_animations,
-                    update_hover,
-                    hover_ring,
-                    find_materials,
-                )
-                    .chain()
-                    .after(PrefabBinding)
-                    .after(stubby_core::MachineInteractionSet),
+        })
+        .add_systems(Startup, setup_hover)
+        .add_systems(
+            Update,
+            (
+                find_parts,
+                animation_sources,
+                prepare_animations,
+                update_hover,
+                hover_ring,
+                find_materials,
             )
-            .add_systems(
-                PostUpdate,
-                (pose_parts, shade_materials, seek_animations).before(bevy::app::AnimationSystems),
-            );
+                .chain()
+                .after(PrefabBinding)
+                .after(stubby_core::MachineInteractionSet),
+        )
+        .add_systems(
+            PostUpdate,
+            (pose_parts, shade_materials, seek_animations).before(bevy::app::AnimationSystems),
+        );
     }
 }
 fn setup_hover(
@@ -119,6 +119,22 @@ fn setup_hover(
         Visibility::Hidden,
     ));
 }
+/// Parts the exporter wrote at full scale but tagged `start_scale` (hidden at start:
+/// dormant leaves, closed blooms, stubble, halos) go back to that scale as they load,
+/// before transforms propagate, so they are never drawn grown on their first frame. Their
+/// children keep the transforms a zero-scale export would have lost
+/// (`sync-blender-asset-contracts`). The presenter reads a zero rest scale as full scale 1.
+fn restore_start_scale(mut parts: Query<(&GltfExtras, &mut Transform), Added<GltfExtras>>) {
+    for (extras, mut transform) in &mut parts {
+        let start = serde_json::from_str::<serde_json::Value>(&extras.value)
+            .ok()
+            .and_then(|value| value.get("start_scale")?.as_f64());
+        if let Some(start) = start {
+            transform.scale = Vec3::splat(start as f32);
+        }
+    }
+}
+
 fn find_parts(
     mut commands: Commands,
     nodes: Query<(Entity, &Name, &Transform, Option<&GltfExtras>), Without<AssetPart>>,
@@ -776,6 +792,32 @@ mod tests {
             .unwrap(),
         }
     }
+    #[test]
+    fn tagged_parts_load_hidden_and_others_keep_their_scale() {
+        let mut app = App::new();
+        app.add_systems(Update, restore_start_scale);
+        let extras = |value: &str| GltfExtras {
+            value: value.into(),
+        };
+        let tagged = app
+            .world_mut()
+            .spawn((extras(r#"{"start_scale":0.0}"#), Transform::default()))
+            .id();
+        let plain = app
+            .world_mut()
+            .spawn((extras(r#"{"other":1}"#), Transform::default()))
+            .id();
+        app.update();
+        assert_eq!(
+            app.world().get::<Transform>(tagged).unwrap().scale,
+            Vec3::ZERO
+        );
+        assert_eq!(
+            app.world().get::<Transform>(plain).unwrap().scale,
+            Vec3::ONE
+        );
+    }
+
     #[test]
     fn authored_zero_scale_nodes_can_bloom_and_reeds_show_stubble() {
         let profiles = profiles();

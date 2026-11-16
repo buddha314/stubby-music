@@ -317,7 +317,7 @@ def write_profile():
     profile = {
         "id": "desert_props",
         "kind": "prop",
-        "families": {f: [f"models/desert_{f}_{k}.glb#Scene0" for k in range(len(s))] for f, s in FAMILIES.items()},
+        "families": {f: [f"models/props/desert/desert_{f}_{k}.glb#Scene0" for k in range(len(s))] for f, s in FAMILIES.items()},
         "per_instance": PER_INSTANCE,
         "bloom": {
             "value": "0 bleak .. 1 bloomed; follow the local light quality",
