@@ -11,7 +11,7 @@ pub fn write_preview(directory: &Path, seed: u64) -> Result<(), Box<dyn std::err
 /// This records configuration, not a save or an archive of referenced content.
 pub fn write_world_preview(
     directory: &Path,
-    config: &super::world_generation::WorldConfig,
+    config: &crate::world_generation::WorldConfig,
 ) -> Result<(), Box<dyn std::error::Error>> {
     config.validate()?;
     write_preview(directory, config.seed_value()?)?;
@@ -25,7 +25,7 @@ fn write_preview_with_radius(
     radius: i32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(directory)?;
-    let (albedo, normal) = super::mud_texture(seed);
+    let (albedo, normal) = crate::mud_texture(seed);
     for (name, image) in [("mud.png", albedo), ("mud-normal.png", normal)] {
         let file = fs::File::create(directory.join(name))?;
         let mut encoder = png::Encoder::new(file, image.width(), image.height());
@@ -34,7 +34,7 @@ fn write_preview_with_radius(
         let mut writer = encoder.write_header()?;
         writer.write_image_data(image.data.as_deref().ok_or("missing texture pixels")?)?;
     }
-    let mesh = super::terrain::ground(seed, radius);
+    let mesh = crate::terrain::ground(seed, radius);
     let mut buffer = Vec::new();
     let mut views = Vec::new();
     let mut accessors = Vec::new();

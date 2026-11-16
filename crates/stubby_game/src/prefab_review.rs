@@ -94,7 +94,7 @@ impl Plugin for PrefabReviewPlugin {
             moved_to: None,
             rack_configured: false,
         })
-        .add_systems(Startup, start.after(super::setup))
+        .add_systems(Startup, start.after(super::spawn_camera))
         .add_systems(
             PreUpdate,
             (drive_rack, drive).chain().after(bevy::input::InputSystems),

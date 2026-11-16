@@ -32,7 +32,7 @@ impl Plugin for ReplenishmentReviewPlugin {
             sample_at: 0.,
             captures: [false; 3],
         })
-        .add_systems(Startup, start.after(super::setup))
+        .add_systems(Startup, start.after(super::spawn_camera))
         .add_systems(
             PreUpdate,
             drive

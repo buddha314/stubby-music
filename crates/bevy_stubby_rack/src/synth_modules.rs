@@ -178,6 +178,8 @@ pub fn unbind_module(world: &mut World, entity: Entity) {
 }
 impl Plugin for SynthModulesPlugin {
     fn build(&self, app: &mut App) {
+        // Modules are bound to placed prefabs first, then reach the engine.
+        app.configure_sets(Update, ModuleEngine.after(stubby_core::PrefabBinding));
         if !app.is_plugin_added::<PulseBusPlugin>() {
             app.add_plugins(PulseBusPlugin);
         }

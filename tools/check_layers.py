@@ -29,6 +29,7 @@ LAYERS = {
     'bevy_stubby_recipes': 'system',
     'stubby_player': 'system',
     'stubby_life': 'system',
+    'stubby_world': 'system',
     'stubby_game': 'game',
     'stubby_jackdaw': 'game',
 }

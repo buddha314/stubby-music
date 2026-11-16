@@ -1,0 +1,25 @@
+[package]
+name = "stubby_world"
+version = "0.1.0"
+edition.workspace = true
+description = "The seeded desert, simulation time, world generation and placed-prefab lifecycle"
+license = "MIT"
+publish = false
+
+# A system crate (split-game-into-systems): services, stubby_core, Bevy and Jackdaw's
+# terrain. Placed assets come alive through binders others register.
+[dependencies]
+stubby_core = { path = "../stubby_core" }
+bevy_stubby_audio = { path = "../bevy_stubby_audio" }
+stubby_audio = { path = "../stubby_audio" }
+jackdaw_terrain.workspace = true
+bevy.workspace = true
+bevy.features = ["3d", "ui", "mesh_picking"]
+serde = { version = "~1.0", features = ["derive"] }
+serde_json = "~1.0"
+half = "~2.7.1"
+png = "~0.18"
+
+[dev-dependencies]
+gltf = { version = "~1.4", features = ["extras"] }
+tempfile = "~3.27"
