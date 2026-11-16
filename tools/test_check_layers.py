@@ -24,8 +24,8 @@ class LayerRules(unittest.TestCase):
         self.assertTrue(any('stubby_rack (core) may not depend on stubby_core (service)' in e for e in errors))
 
     def test_an_unplaced_crate_is_reported(self):
-        errors = layers.layer_errors({'stubby_world': []})
-        self.assertTrue(any('stubby_world: not placed' in e for e in errors))
+        errors = layers.layer_errors({'stubby_unplaced': []})
+        self.assertTrue(any('stubby_unplaced: not placed' in e for e in errors))
 
 
 if __name__ == '__main__':

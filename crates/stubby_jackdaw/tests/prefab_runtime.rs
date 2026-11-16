@@ -64,6 +64,7 @@ fn saved_prefabs_become_live_runtime_assets() {
             ResourceRecipesPlugin,
             SynthModulesPlugin::default(),
             PlacedPrefabsPlugin,
+            stubby_jackdaw::prefabs::PrefabGluePlugin,
             prefab_bridge::PrefabBridgePlugin,
         ))
         .register_type::<Transform>()

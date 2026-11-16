@@ -229,7 +229,7 @@ fn collect_nearby(
         source: node.source_object(),
         now: calendar
             .as_ref()
-            .map(|c| c.resource_time())
+            .map(|c| resource_time(c))
             .unwrap_or_default(),
     });
 }
@@ -376,6 +376,14 @@ fn update_hud(
     }
 }
 
+/// Glue between the world's calendar and crafting's replenishment clock.
+pub fn resource_time(calendar: &stubby_world::calendar::Calendar) -> stubby_recipes::ResourceTime {
+    stubby_recipes::ResourceTime {
+        elapsed_millis: calendar.elapsed().as_millis().min(u64::MAX as u128) as u64,
+        nights_started: calendar.nights_started(),
+    }
+}
+
 fn replenish_nodes(
     calendar: Res<super::calendar::Calendar>,
     catalog: Option<Res<RecipeCatalog>>,
@@ -392,7 +400,7 @@ fn replenish_nodes(
         let mut source = node.source_object();
         if catalog
             .0
-            .replenish_source(&mut source, &mut player.collected, calendar.resource_time())
+            .replenish_source(&mut source, &mut player.collected, resource_time(&calendar))
         {
             node.collected = false;
         }

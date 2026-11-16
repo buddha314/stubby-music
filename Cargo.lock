@@ -6568,6 +6568,7 @@ dependencies = [
  "stubby_rack",
  "stubby_recipes",
  "stubby_ui",
+ "stubby_world",
  "tempfile",
 ]
 
@@ -6636,6 +6637,23 @@ name = "stubby_ui"
 version = "0.1.0"
 dependencies = [
  "bevy",
+]
+
+[[package]]
+name = "stubby_world"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_stubby_audio",
+ "gltf",
+ "half",
+ "jackdaw_terrain",
+ "png",
+ "serde",
+ "serde_json",
+ "stubby_audio",
+ "stubby_core",
+ "tempfile",
 ]
 
 [[package]]

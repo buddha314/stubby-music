@@ -122,7 +122,7 @@ pub fn ground_heightmap(resolution: u32, size: Vec2, origin: Vec2) -> Result<Hei
     for z in 0..resolution {
         for x in 0..resolution {
             let position = origin + Vec2::new(x as f32, z as f32) * size / (resolution - 1) as f32;
-            map.set_height(x, z, super::terrain::height(position));
+            map.set_height(x, z, crate::terrain::height(position));
         }
     }
     Ok(map)

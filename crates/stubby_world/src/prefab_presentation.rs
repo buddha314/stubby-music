@@ -1,13 +1,11 @@
 //! Named-node presentation and interaction hooks shared by authored assets.
-use super::{
-    audio::Synth,
-    prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError},
-};
+use crate::prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError};
 use bevy::{
     animation::graph::{AnimationGraph, AnimationGraphHandle, AnimationNodeIndex},
     gltf::{Gltf, GltfExtras},
     prelude::*,
 };
+use bevy_stubby_audio::Synth;
 use bevy_stubby_audio::pulse::PulseBus;
 use std::time::Instant;
 use stubby_core::PrefabBinding;
@@ -617,7 +615,7 @@ fn hover_ring(
         if let Some(position) = position {
             transform.translation = Vec3::new(
                 position.x,
-                super::terrain::height(Vec2::new(position.x, position.z)) + 0.06,
+                crate::terrain::height(Vec2::new(position.x, position.z)) + 0.06,
                 position.z,
             );
         }

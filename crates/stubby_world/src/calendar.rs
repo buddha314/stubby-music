@@ -1,22 +1,23 @@
 //! Simulation time is separate from sample-timed music.
 use bevy::prelude::*;
-use stubby_recipes::ResourceTime;
 
 pub const DAY_SECONDS: u64 = 2700;
 pub const CYCLE_SECONDS: u64 = 3600;
 const SPEEDS: [f32; 8] = [0.25, 0.5, 1., 2., 4., 8., 16., 64.];
 #[derive(Resource, Default)]
 pub struct Calendar {
-    pub(super) elapsed: std::time::Duration,
+    /// Simulation time since the world began; reviews set it to jump the clock.
+    pub elapsed: std::time::Duration,
 }
 impl Calendar {
-    pub fn resource_time(&self) -> ResourceTime {
+    /// Simulation time since the world began.
+    pub fn elapsed(&self) -> std::time::Duration {
+        self.elapsed
+    }
+    /// How many nights have begun.
+    pub fn nights_started(&self) -> u64 {
         let seconds = self.elapsed.as_secs();
-        ResourceTime {
-            elapsed_millis: self.elapsed.as_millis().min(u64::MAX as u128) as u64,
-            nights_started: seconds / CYCLE_SECONDS
-                + u64::from(seconds % CYCLE_SECONDS >= DAY_SECONDS),
-        }
+        seconds / CYCLE_SECONDS + u64::from(seconds % CYCLE_SECONDS >= DAY_SECONDS)
     }
     pub fn is_night(&self) -> bool {
         self.elapsed.as_secs() % CYCLE_SECONDS >= DAY_SECONDS
@@ -51,10 +52,10 @@ fn setup(mut commands: Commands) {
         },
     ));
 }
-pub(super) fn advance(time: Res<Time<Virtual>>, mut calendar: ResMut<Calendar>) {
+pub fn advance(time: Res<Time<Virtual>>, mut calendar: ResMut<Calendar>) {
     calendar.elapsed = calendar.elapsed.saturating_add(time.delta());
 }
-pub(super) fn set_speed(time: &mut Time<Virtual>, speed: f32) {
+pub fn set_speed(time: &mut Time<Virtual>, speed: f32) {
     // Bevy caps the scaled delta, so preserve a quarter-second real catch-up limit.
     time.set_max_delta(std::time::Duration::from_secs_f32(0.25 * speed));
     time.set_relative_speed(speed);
@@ -288,19 +289,13 @@ mod tests {
         set_speed(&mut app.world_mut().resource_mut::<Time<Virtual>>(), 4.);
         app.update();
         assert_eq!(
-            app.world()
-                .resource::<Calendar>()
-                .resource_time()
-                .elapsed_millis,
+            app.world().resource::<Calendar>().elapsed().as_millis(),
             400
         );
         app.world_mut().resource_mut::<Time<Virtual>>().pause();
         app.update();
         assert_eq!(
-            app.world()
-                .resource::<Calendar>()
-                .resource_time()
-                .elapsed_millis,
+            app.world().resource::<Calendar>().elapsed().as_millis(),
             400
         );
     }
@@ -328,7 +323,7 @@ mod tests {
             let calendar = Calendar {
                 elapsed: std::time::Duration::from_secs(seconds),
             };
-            assert_eq!(calendar.resource_time().nights_started, nights);
+            assert_eq!(calendar.nights_started(), nights);
             assert_eq!(calendar.is_night(), night);
         }
     }
