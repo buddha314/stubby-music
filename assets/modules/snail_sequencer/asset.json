@@ -1,0 +1,127 @@
+{
+  "id": "snail_sequencer",
+  "model": "modules/snail_sequencer/snail_sequencer.glb#Scene0",
+  "module_kind": "SnailSequencer",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.285,
+    "depth": 0.32
+  },
+  "silhouette": "plain",
+  "reference": "Intellijel Steppy, KORG SQ-1: clock in, a knob and a lit push button per step",
+  "steps": 4,
+  "ports": [
+    {
+      "node": "Port_clock",
+      "port": "clock",
+      "direction": "in"
+    },
+    {
+      "node": "Port_reset",
+      "port": "reset",
+      "direction": "in"
+    },
+    {
+      "node": "Port_gate",
+      "port": "gate",
+      "direction": "out"
+    },
+    {
+      "node": "Port_cv",
+      "port": "cv",
+      "direction": "out"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_cv_1",
+      "param": "cv_1",
+      "min": 0.0,
+      "max": 2.0,
+      "default": 0.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    },
+    {
+      "node": "Knob_cv_2",
+      "param": "cv_2",
+      "min": 0.0,
+      "max": 2.0,
+      "default": 0.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    },
+    {
+      "node": "Knob_cv_3",
+      "param": "cv_3",
+      "min": 0.0,
+      "max": 2.0,
+      "default": 0.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    },
+    {
+      "node": "Knob_cv_4",
+      "param": "cv_4",
+      "min": 0.0,
+      "max": 2.0,
+      "default": 0.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    }
+  ],
+  "buttons": [
+    {
+      "node": "Button_gate_1",
+      "param": "gate_1",
+      "light": "step_1"
+    },
+    {
+      "node": "Button_gate_2",
+      "param": "gate_2",
+      "light": "step_2"
+    },
+    {
+      "node": "Button_gate_3",
+      "param": "gate_3",
+      "light": "step_3"
+    },
+    {
+      "node": "Button_gate_4",
+      "param": "gate_4",
+      "light": "step_4"
+    }
+  ],
+  "lights": [
+    {
+      "node": "Button_gate_1",
+      "light": "step_1",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    },
+    {
+      "node": "Button_gate_2",
+      "light": "step_2",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    },
+    {
+      "node": "Button_gate_3",
+      "light": "step_3",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    },
+    {
+      "node": "Button_gate_4",
+      "light": "step_4",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    }
+  ],
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  }
+}

@@ -67,6 +67,10 @@ pub struct RackPlace {
     /// Items the player can mount here, each becoming a module.
     #[serde(default)]
     pub accepts: Vec<Accept>,
+    /// The voice does not need this place (the snail shell's sequencer): it sounds
+    /// whether or not something is mounted here.
+    #[serde(default)]
+    pub optional: bool,
 }
 #[derive(Resource)]
 pub struct Profiles(pub HashMap<String, RackConfiguration>);
@@ -136,6 +140,22 @@ pub struct JackHit(pub JackRef);
 pub struct KnobHit {
     pub place: String,
     pub param: String,
+}
+/// A lit push button's mesh on the rack screen (a sequencer's step key): clicking it
+/// toggles the place's module's param between 0 and 1.
+#[derive(Component, Clone)]
+pub struct ButtonHit {
+    pub place: String,
+    pub param: String,
+}
+/// A step key's glowing cap: lit while its param is on, inverted while the sequencer's
+/// heard playhead is on its step.
+#[derive(Component, Clone)]
+pub struct ButtonLight {
+    pub place: String,
+    pub param: String,
+    /// The step it lights (0-based), from its param's number (`gate_3` is step 2).
+    pub step: u8,
 }
 /// A module shown on the rack screen, in its place; its knobs follow the rack's values.
 #[derive(Component, Clone)]
@@ -708,6 +728,35 @@ fn prepare_parts(
                     },
                     Pickable::default(),
                 ));
+            } else if is_mesh
+                && let Some(param) = parents.iter_ancestors(entity).find_map(|a| {
+                    names
+                        .get(a)
+                        .ok()
+                        .and_then(|n| n.as_str().strip_prefix("Button_"))
+                        .map(str::to_owned)
+                })
+            {
+                let step = param
+                    .rsplit('_')
+                    .next()
+                    .and_then(|n| n.parse::<u8>().ok())
+                    .map_or(0, |n| n.saturating_sub(1));
+                let mut button = commands.entity(entity);
+                button.insert((
+                    ButtonHit {
+                        place: place.clone(),
+                        param: param.clone(),
+                    },
+                    Pickable::default(),
+                ));
+                if node.contains("ButtonCap") {
+                    button.insert(ButtonLight {
+                        place: place.clone(),
+                        param,
+                        step,
+                    });
+                }
             } else if is_mesh && node.contains("_JackHalo") {
                 commands.entity(entity).insert(PodMesh(jack(port)));
             } else if !is_mesh && let Some(port) = node.strip_prefix("Port_") {

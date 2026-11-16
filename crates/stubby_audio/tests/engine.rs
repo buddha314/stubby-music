@@ -395,7 +395,10 @@ fn clock_at_120_bpm_ticks_every_24000_samples_on_its_gate() {
     let ticks: Vec<u64> = rig
         .events()
         .into_iter()
-        .map(|Event::ClockTick { sample_time, .. }| sample_time)
+        .filter_map(|event| match event {
+            Event::ClockTick { sample_time, .. } => Some(sample_time),
+            _ => None,
+        })
         .filter(|&t| t < 10 * SR as u64)
         .collect();
     assert_eq!(ticks.len(), 20);
@@ -438,7 +441,10 @@ fn tempo_change_keeps_the_master_grid() {
     let ticks: Vec<u64> = rig
         .events()
         .into_iter()
-        .map(|Event::ClockTick { sample_time, .. }| sample_time)
+        .filter_map(|event| match event {
+            Event::ClockTick { sample_time, .. } => Some(sample_time),
+            _ => None,
+        })
         .collect();
     // No tick at the change; the next falls on the 60 BPM grid, one master-locked
     // beat (48,000 samples) from the start.
@@ -516,7 +522,10 @@ fn clock_blip_patch_sounds_on_every_tick() {
     let ticks: Vec<usize> = rig
         .events()
         .into_iter()
-        .map(|Event::ClockTick { sample_time, .. }| sample_time as usize)
+        .filter_map(|event| match event {
+            Event::ClockTick { sample_time, .. } => Some(sample_time as usize),
+            _ => None,
+        })
         .filter(|&t| t + 24_000 <= rig.left.len())
         .collect();
     assert_eq!(ticks, vec![0, 24_000, 48_000, 72_000]);
@@ -537,4 +546,53 @@ fn clock_blip_patch_sounds_on_every_tick() {
         };
         assert!(click_ratio(onset, &[880.0]) <= 1.2, "click at tick {t}");
     }
+}
+
+// ------------------------------------------------------------- step sequencer
+
+#[test]
+fn a_clocked_sequencer_steps_and_gates_its_lit_steps() {
+    let mut rig = Rig::new();
+    let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
+    let seq = rig.add(
+        2,
+        ModuleKind::StepSequencer {
+            cv: [0.0; 4],
+            gate: [0.0; 4],
+        },
+    );
+    rig.connect(PortRef::new(clock, "gate"), PortRef::new(seq, "clock"));
+    rig.connect(PortRef::new(seq, "gate"), PortRef::output());
+    // Light steps 2 and 4 (a backbeat); a fractional CV snaps to a semitone.
+    for (param, value) in [("gate_2", 1.0), ("gate_4", 1.0), ("cv_3", 0.3)] {
+        rig.send(Command::SetParam {
+            module: seq,
+            param,
+            value,
+        });
+    }
+    rig.flush();
+    rig.render(SR as usize * 2); // four beats at 120 BPM
+    let steps: Vec<(u8, u64)> = rig
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            Event::Step {
+                step, sample_time, ..
+            } => Some((step, sample_time)),
+            _ => None,
+        })
+        .collect();
+    let beat = SR as u64 / 2;
+    // The sequencer steps on each of the clock's beats (one sample later, the cable).
+    assert_eq!(steps.iter().map(|s| s.0).collect::<Vec<_>>(), [0, 1, 2, 3]);
+    for (k, (_, at)) in steps.iter().enumerate() {
+        assert!(at.abs_diff(k as u64 * beat) <= 1, "step {k} at {at}");
+    }
+    // Only beats 2 and 4 reach the output.
+    let loud = |k: u64| rig.left[(k * beat + 100) as usize] > 0.5;
+    assert_eq!(
+        (0..4).map(loud).collect::<Vec<_>>(),
+        [false, true, false, true]
+    );
 }

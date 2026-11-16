@@ -55,6 +55,19 @@
         "hp": 4,
         "fixed": true,
         "module": "volume"
+      },
+      {
+        "place": "seq",
+        "kind": "sequencer",
+        "hp": 8,
+        "fixed": false,
+        "optional": true,
+        "accepts": [
+          {
+            "item": "snail_shell",
+            "module": "snail_sequencer"
+          }
+        ]
       }
     ],
     "normalled_output": {

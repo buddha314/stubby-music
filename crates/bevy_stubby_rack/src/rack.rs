@@ -11,8 +11,8 @@
 //! reaches its input). Completing the last patch sends `MachineConfigured`, once.
 use crate::{
     machine_config::{
-        CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles, RackActions,
-        RackConfiguration, RackModuleView,
+        ButtonHit, ButtonLight, CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles,
+        RackActions, RackConfiguration, RackModuleView,
     },
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
@@ -62,9 +62,37 @@ impl RackState {
     pub fn input_taken(&self, input: &JackRef) -> bool {
         self.connections().any(|(_, t)| t == input)
     }
-    /// Every patch the machine's voice needs is made, by whichever cables.
+    /// Every patch the machine's voice needs is made, by whichever cables, directly or
+    /// through patched modules (the clock's gate through a sequencer still reaches the
+    /// volume's TRIG; sync-snail-shell-sequencer).
     pub fn complete(&self, config: &RackConfiguration) -> bool {
-        !config.cables.is_empty() && config.cables.iter().all(|c| self.joins(&c.from, &c.to))
+        !config.cables.is_empty() && config.cables.iter().all(|c| self.reaches(&c.from, &c.to))
+    }
+    /// Whether a signal from output `from` reaches input `to`: by a cable, or by a cable
+    /// into a module whose output (any of it, as a module carries its inputs to its
+    /// outputs) reaches `to`. A module visited once is not followed again, so loops end.
+    pub fn reaches(&self, from: &JackRef, to: &JackRef) -> bool {
+        let mut outputs = vec![from.clone()];
+        let mut visited: Vec<&str> = Vec::new();
+        while let Some(output) = outputs.pop() {
+            for (out, input) in self.connections() {
+                if *out != output {
+                    continue;
+                }
+                if input == to {
+                    return true;
+                }
+                if !visited.contains(&input.place.as_str()) {
+                    visited.push(&input.place);
+                    outputs.extend(
+                        self.connections()
+                            .filter(|(o, _)| o.place == input.place)
+                            .map(|(o, _)| o.clone()),
+                    );
+                }
+            }
+        }
+        false
     }
 }
 
@@ -136,6 +164,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .add_observer(drop_item::<S>)
             .add_observer(turn_knob)
             .add_observer(scroll_knob)
+            .add_observer(press_button)
             .add_systems(
                 Update,
                 (
@@ -152,6 +181,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
                     rack_ghost,
                     clear_feedback_on_open::<S>,
                     patch_engine,
+                    step_lights,
                     publish_voice,
                     pods,
                     draw_cables,
@@ -435,15 +465,134 @@ fn turn_open_knob(
         return;
     };
     let mut value = knob_value(knob_norm(current, param) + turn, param);
-    if hit.param == "bpm" {
-        // Every clock runs at a whole BPM, a multiple of the 1 BPM master (the engine
-        // declares `bpm` whole and rounds it too; lock-clocks-to-master): the knob steps
-        // in whole BPM so the display and the clock agree.
-        value = value.round();
+    // The knob steps as the engine does (whole BPM, semitones on a sequencer step), so
+    // the panel and the sound agree.
+    if let Some(spec) = engine_spec(&module, &hit.param) {
+        value = spec.conform(value);
     }
     if value != current {
         knobs.0.insert(key, value);
     }
+}
+
+/// The engine parameter a module's control sets, with its range and quantum.
+fn engine_spec(module: &str, control: &str) -> Option<&'static stubby_audio::ParamSpec> {
+    let knob = RACK_MODULES.knob(module, control)?;
+    let kind = RACK_MODULES
+        .0
+        .get(module)?
+        .parts
+        .iter()
+        .find(|part| part.part == knob.part)?
+        .kind;
+    stubby_audio::ModuleKind::default_of(kind)?.param(knob.param)
+}
+
+/// Click a lit push button (a sequencer's step key) to light its step or clear it, as on
+/// Intellijel's Steppy and KORG's SQ-1.
+fn press_button(
+    click: On<PointerClick>,
+    hits: Query<&ButtonHit>,
+    screens: Res<ScreenMode>,
+    profiles: Res<Profiles>,
+    mut racks: Query<(&PlacedAsset, &RackState, &mut RackKnobs)>,
+) {
+    let (Ok(hit), Some(machine)) = (hits.get(click.entity), open_rack(&screens)) else {
+        return;
+    };
+    let Ok((asset, state, mut knobs)) = racks.get_mut(machine) else {
+        return;
+    };
+    let Some(module) = profiles
+        .0
+        .get(&asset.asset)
+        .and_then(|config| modules(config, state).remove(&hit.place))
+    else {
+        return;
+    };
+    let key = (hit.place.clone(), hit.param.clone());
+    let current = knobs.0.get(&key).copied().unwrap_or_else(|| {
+        RACK_MODULES
+            .knob(&module, &hit.param)
+            .map_or(0., |knob| knob.default)
+    });
+    knobs.0.insert(key, if current >= 0.5 { 0. } else { 1. });
+}
+
+/// The step keys' lights: lit while their step is on; inverted while the sequencer's
+/// heard playhead is on their step, switched at the instant each step is heard.
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+fn step_lights(
+    mut commands: Commands,
+    mut steps: MessageReader<bevy_stubby_audio::StepTick>,
+    screens: Res<ScreenMode>,
+    racks: Query<(Entity, &RackEngine, &RackKnobs)>,
+    lights: Query<(
+        Entity,
+        &ButtonLight,
+        &MeshMaterial3d<StandardMaterial>,
+        Option<&OwnLight>,
+    )>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut pending: Local<Vec<(Entity, String, u8, Option<std::time::Instant>)>>,
+    mut playheads: Local<HashMap<(Entity, String), u8>>,
+) {
+    // Which machine and place each step belongs to.
+    for tick in steps.read() {
+        for (machine, engine, _) in &racks {
+            if let Some(((place, _), _)) = engine.parts.iter().find(|(_, id)| **id == tick.module) {
+                pending.push((machine, place.clone(), tick.step, tick.at));
+            }
+        }
+    }
+    let now = std::time::Instant::now();
+    pending.retain(|(machine, place, step, at)| {
+        if at.is_some_and(|at| at > now) {
+            return true;
+        }
+        playheads.insert((*machine, place.clone()), *step);
+        false
+    });
+    let Some(machine) = open_rack(&screens) else {
+        return;
+    };
+    let Ok((_, _, knobs)) = racks.get(machine) else {
+        return;
+    };
+    for (entity, light, material, own) in &lights {
+        // Each key gets its own copy of the cap's glowing material, so it can light alone.
+        let Some(own) = own else {
+            if let Some(cap) = materials.get(&material.0).cloned() {
+                let on = cap.emissive;
+                let handle = materials.add(cap);
+                commands
+                    .entity(entity)
+                    .insert((MeshMaterial3d(handle), OwnLight { on }));
+            }
+            continue;
+        };
+        let lit = knobs
+            .0
+            .get(&(light.place.clone(), light.param.clone()))
+            .is_some_and(|v| *v >= 0.5);
+        let playhead = playheads.get(&(machine, light.place.clone())) == Some(&light.step);
+        let glow = if lit != playhead {
+            own.on
+        } else {
+            LinearRgba::BLACK
+        };
+        if let Some(mut cap) = materials.get_mut(&material.0)
+            && cap.emissive != glow
+        {
+            cap.emissive = glow;
+        }
+    }
+}
+
+/// A step key's own material, and its glow when lit.
+#[derive(Component)]
+struct OwnLight {
+    on: LinearRgba,
 }
 
 /// Drag a knob up to turn it up, down to turn it down (VCV Rack).
@@ -2151,5 +2300,33 @@ mod tests {
             }
             std::fs::write(format!("{dir}/{name}.wav"), wav).unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod path_tests {
+    use super::*;
+    fn jack(place: &str, port: &str) -> JackRef {
+        JackRef {
+            place: place.into(),
+            port: port.into(),
+        }
+    }
+
+    #[test]
+    fn a_patch_through_a_sequencer_still_reaches_its_input() {
+        let mut state = RackState::default();
+        // Clock GATE → sequencer CLOCK, sequencer GATE → volume TRIG.
+        state
+            .own
+            .push((jack("clock", "gate"), jack("seq", "clock")));
+        state
+            .own
+            .push((jack("seq", "gate"), jack("volume", "trig")));
+        assert!(state.reaches(&jack("clock", "gate"), &jack("volume", "trig")));
+        assert!(!state.reaches(&jack("clock", "gate"), &jack("volume", "in")));
+        // A loop back into the sequencer ends.
+        state.own.push((jack("seq", "cv"), jack("seq", "reset")));
+        assert!(!state.reaches(&jack("vco", "out"), &jack("volume", "in")));
     }
 }

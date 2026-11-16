@@ -56,7 +56,10 @@ fn render(seed: u64, block: usize, patched: bool, fixed: bool) -> (Vec<u64>, Vec
     (
         events
             .iter()
-            .map(|Event::ClockTick { sample_time, .. }| *sample_time)
+            .filter_map(|event| match event {
+                Event::ClockTick { sample_time, .. } => Some(*sample_time),
+                _ => None,
+            })
             .collect(),
         samples,
     )
