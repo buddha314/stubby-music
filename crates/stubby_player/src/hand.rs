@@ -5,7 +5,7 @@
 use bevy::{light::NotShadowCaster, prelude::*};
 use stubby_core::{RECORDER, ScreenMode};
 
-use super::controls::Player;
+use crate::controls::Player;
 
 /// An item the hand can hold.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

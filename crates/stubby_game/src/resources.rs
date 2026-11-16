@@ -50,6 +50,9 @@ impl Plugin for ResourceRecipesPlugin {
             .add_systems(
                 Update,
                 (
+                    pickups_interactable
+                        .after(stubby_core::PrefabBinding)
+                        .before(super::interaction::InteractionTargeting),
                     (replenish_nodes, collect_nearby)
                         .chain()
                         .after(stubby_core::PrefabBinding)
@@ -62,6 +65,31 @@ impl Plugin for ResourceRecipesPlugin {
             );
     }
 }
+/// Glue between crafting and the player: an uncollected, working source is something E
+/// can pick up, so it is marked `Interactable` for the player's reach.
+fn pickups_interactable(
+    mut commands: Commands,
+    nodes: Query<(
+        Entity,
+        &ResourceNode,
+        Has<super::prefabs::PrefabError>,
+        Has<stubby_core::Interactable>,
+    )>,
+) {
+    for (entity, node, broken, marked) in &nodes {
+        let available = !node.collected && !broken;
+        if available && !marked {
+            commands
+                .entity(entity)
+                .insert(stubby_core::Interactable::Pickup);
+        } else if !available && marked {
+            commands
+                .entity(entity)
+                .remove::<stubby_core::Interactable>();
+        }
+    }
+}
+
 fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     let reticle = Image::from_buffer(
         include_bytes!("../../../assets/ui/sunflower_reticle.png"),

@@ -172,6 +172,50 @@ struct View {
     scene: Option<Entity>,
 }
 
+/// A machine's interaction point (its profile's `Interact` node), pointing at the machine.
+#[derive(Component)]
+pub struct InteractPoint {
+    pub machine: Entity,
+}
+
+/// Glue between machines and the player: each placed machine's `Interact` node (named in
+/// its profile) is something E can reach while the machine works.
+fn interact_points(
+    mut commands: Commands,
+    profiles: Res<Profiles>,
+    names: Query<(Entity, &Name), Added<Name>>,
+    parents: Query<&ChildOf>,
+    machines: Query<&PlacedAsset>,
+    points: Query<(Entity, &InteractPoint, Has<stubby_core::Interactable>)>,
+    broken: Query<(), With<PrefabError>>,
+) {
+    for (entity, name) in &names {
+        let Some(machine) = parents.iter_ancestors(entity).find(|a| {
+            machines.get(*a).is_ok_and(|m| {
+                profiles
+                    .0
+                    .get(&m.asset)
+                    .is_some_and(|c| c.interact.node == name.as_str())
+            })
+        }) else {
+            continue;
+        };
+        commands.entity(entity).insert(InteractPoint { machine });
+    }
+    for (entity, point, marked) in &points {
+        let working = !broken.contains(point.machine);
+        if working && !marked {
+            commands
+                .entity(entity)
+                .insert(stubby_core::Interactable::Machine(point.machine));
+        } else if !working && marked {
+            commands
+                .entity(entity)
+                .remove::<stubby_core::Interactable>();
+        }
+    }
+}
+
 pub struct MachineConfigurationPlugin;
 impl Plugin for MachineConfigurationPlugin {
     fn build(&self, app: &mut App) {
@@ -184,6 +228,12 @@ impl Plugin for MachineConfigurationPlugin {
         }
         app.add_plugins(HierarchyPropagatePlugin::<RenderLayers>::new(PostUpdate))
             .init_resource::<Profiles>()
+            .add_systems(
+                Update,
+                interact_points
+                    .after(PrefabBinding)
+                    .before(super::interaction::InteractionTargeting),
+            )
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
             .init_resource::<stubby_core::InteractTarget>()

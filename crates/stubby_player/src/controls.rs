@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use stubby_core::{CROUCH, INVENTORY, JUMP, Screen, ScreenMode};
+use stubby_core::{CROUCH, GroundHeight, INVENTORY, JUMP, Screen, ScreenMode};
 
 const EYE_HEIGHT: f32 = 1.65;
 const CROUCH_HEIGHT: f32 = 1.0;
@@ -14,25 +14,26 @@ pub struct Player {
     vertical_speed: f32,
     grounded: bool,
 }
-impl Default for Player {
-    fn default() -> Self {
+impl Player {
+    /// A player standing at the spawn point on `ground`.
+    pub fn on(ground: &GroundHeight) -> Self {
         Self {
-            feet: floor(0., 6.),
+            feet: floor(ground, 0., 6.),
             vertical_speed: 0.,
             grounded: true,
         }
     }
 }
-fn floor(x: f32, z: f32) -> f32 {
-    super::terrain::height(Vec2::new(x, z)) + 0.035
+fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
+    ground.at(x, z) + 0.035
 }
-pub fn spawn_transform() -> Transform {
-    Transform::from_xyz(0., floor(0., 6.) + EYE_HEIGHT, 6.)
+pub fn spawn_transform(ground: &GroundHeight) -> Transform {
+    Transform::from_xyz(0., floor(ground, 0., 6.) + EYE_HEIGHT, 6.)
 }
 #[derive(Resource)]
-pub(crate) struct LookCapture(bool);
+pub struct LookCapture(bool);
 impl LookCapture {
-    pub(crate) fn captured(&self) -> bool {
+    pub fn captured(&self) -> bool {
         self.0
     }
 }
@@ -40,7 +41,8 @@ impl LookCapture {
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(LookCapture(true))
+        app.init_resource::<GroundHeight>()
+            .insert_resource(LookCapture(true))
             .init_resource::<ScreenMode>()
             .add_systems(
                 Update,
@@ -49,7 +51,7 @@ impl Plugin for PlayerControlsPlugin {
     }
 }
 /// Tab opens and closes the inventory; Escape closes whatever is open.
-pub(crate) fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMut<ScreenMode>) {
+pub fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMut<ScreenMode>) {
     let was = screens.open;
     if keys.just_pressed(INVENTORY) {
         screens.open = match screens.open {
@@ -61,7 +63,7 @@ pub(crate) fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMu
     }
     screens.closed_this_frame = was.is_some() && screens.open.is_none();
 }
-pub(crate) fn capture_cursor(
+pub fn capture_cursor(
     keys: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     screens: Res<ScreenMode>,
@@ -91,6 +93,7 @@ fn move_player(
     capture: Res<LookCapture>,
     mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
     mut players: Query<(&mut Transform, &mut Player)>,
+    ground: Res<GroundHeight>,
 ) {
     let delta: Vec2 = motion.read().map(|event| event.delta).sum();
     if !capture.0 {
@@ -102,6 +105,7 @@ fn move_player(
             &mut transform,
             &mut player,
             &keys,
+            &ground,
             time.delta_secs().min(0.1 * time.relative_speed()),
         );
     }
@@ -115,7 +119,13 @@ fn look(transform: &mut Transform, delta: Vec2) {
         0.,
     );
 }
-fn step(transform: &mut Transform, player: &mut Player, keys: &ButtonInput<KeyCode>, dt: f32) {
+fn step(
+    transform: &mut Transform,
+    player: &mut Player,
+    keys: &ButtonInput<KeyCode>,
+    ground: &GroundHeight,
+    dt: f32,
+) {
     let crouched = keys.pressed(CROUCH);
     let speed = if crouched {
         2.
@@ -147,7 +157,7 @@ fn step(transform: &mut Transform, player: &mut Player, keys: &ButtonInput<KeyCo
         let dt = remaining.min(1. / 120.);
         remaining -= dt;
         transform.translation += direction * speed * dt;
-        let ground = floor(transform.translation.x, transform.translation.z);
+        let ground = floor(ground, transform.translation.x, transform.translation.z);
         if player.grounded {
             player.feet = ground;
         } else {
@@ -166,6 +176,8 @@ fn step(transform: &mut Transform, player: &mut Player, keys: &ButtonInput<KeyCo
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// A gentle slope, so staying grounded is tested on uneven ground.
+    const GROUND: GroundHeight = GroundHeight(|p| 0.05 * p.x - 0.03 * p.y);
     #[test]
     fn focus_loss_releases_cursor_and_click_recaptures() {
         let mut app = App::new();
@@ -214,46 +226,46 @@ mod tests {
 
     #[test]
     fn spawn_and_pitched_walking_stay_grounded() {
-        let mut t = spawn_transform();
-        let mut p = Player::default();
+        let mut t = spawn_transform(&GROUND);
+        let mut p = Player::on(&GROUND);
         assert_eq!(t.translation.y, p.feet + EYE_HEIGHT);
         look(&mut t, Vec2::new(0., 300.));
         let mut keys = ButtonInput::default();
         keys.press(KeyCode::KeyW);
         for _ in 0..120 {
-            step(&mut t, &mut p, &keys, 1. / 60.);
+            step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         }
         assert!((t.translation.z + 2.).abs() < 0.001);
         assert_eq!(
             t.translation.y,
-            floor(t.translation.x, t.translation.z) + EYE_HEIGHT
+            floor(&GROUND, t.translation.x, t.translation.z) + EYE_HEIGHT
         );
         assert!(p.grounded);
     }
     #[test]
     fn jump_lands_without_auto_repeat_and_crouch_preserves_feet() {
-        let mut t = spawn_transform();
-        let mut p = Player::default();
+        let mut t = spawn_transform(&GROUND);
+        let mut p = Player::on(&GROUND);
         let mut keys = ButtonInput::default();
         keys.press(JUMP);
-        step(&mut t, &mut p, &keys, 1. / 60.);
+        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         assert!(!p.grounded);
-        assert!(p.feet > floor(0., 6.));
+        assert!(p.feet > floor(&GROUND, 0., 6.));
         keys.clear();
         for _ in 0..120 {
-            step(&mut t, &mut p, &keys, 1. / 60.);
+            step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         }
         assert!(p.grounded);
         keys.press(CROUCH);
-        step(&mut t, &mut p, &keys, 1. / 60.);
+        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         assert_eq!(t.translation.y, p.feet + CROUCH_HEIGHT);
         keys.release(CROUCH);
-        step(&mut t, &mut p, &keys, 1. / 60.);
+        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         assert_eq!(t.translation.y, p.feet + EYE_HEIGHT);
     }
     #[test]
     fn mouse_turns_heading_and_pitch_without_roll_or_flip() {
-        let mut t = spawn_transform();
+        let mut t = spawn_transform(&GROUND);
         look(&mut t, Vec2::new(200., -10000.));
         let (yaw, pitch, roll) = t.rotation.to_euler(EulerRot::YXZ);
         assert!((yaw + 0.6).abs() < 0.001);

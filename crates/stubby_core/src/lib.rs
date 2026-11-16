@@ -72,3 +72,26 @@ pub struct PrefabBinding;
 /// Machine interaction (opening a rack with E) has run this frame.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MachineInteractionSet;
+
+/// The ground's height at a horizontal position. The world provides it; the player and
+/// anything that sits on the ground read it. Flat until a world installs its own.
+#[derive(Resource, Clone, Copy)]
+pub struct GroundHeight(pub fn(Vec2) -> f32);
+impl Default for GroundHeight {
+    fn default() -> Self {
+        Self(|_| 0.)
+    }
+}
+impl GroundHeight {
+    pub fn at(&self, x: f32, z: f32) -> f32 {
+        (self.0)(Vec2::new(x, z))
+    }
+}
+
+/// Something E can act on, marked by whichever system owns it while it is available: a
+/// finite pickup (the entity itself), or a machine's interaction point (the machine).
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Interactable {
+    Pickup,
+    Machine(Entity),
+}
