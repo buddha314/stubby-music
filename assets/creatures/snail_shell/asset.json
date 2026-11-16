@@ -1,6 +1,6 @@
 {
   "id": "snail_shell",
-  "model": "models/creatures/snail_shell.glb",
+  "model": "creatures/snail_shell/snail_shell.glb",
   "kind": "find",
   "resource": "empty_snail_shell",
   "item": "snail_shell",

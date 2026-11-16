@@ -18,7 +18,11 @@ impl Player {
     /// A player standing at the spawn point on `ground`.
     pub fn on(ground: &GroundHeight) -> Self {
         Self {
-            feet: floor(ground, 0., 6.),
+            feet: floor(
+                ground,
+                stubby_core::OPENING_SPAWN_XZ.x,
+                stubby_core::OPENING_SPAWN_XZ.y,
+            ),
             vertical_speed: 0.,
             grounded: true,
         }
@@ -28,7 +32,15 @@ fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
     ground.at(x, z) + 0.035
 }
 pub fn spawn_transform(ground: &GroundHeight) -> Transform {
-    Transform::from_xyz(0., floor(ground, 0., 6.) + EYE_HEIGHT, 6.)
+    let spawn = stubby_core::OPENING_SPAWN_XZ;
+    Transform::from_xyz(
+        spawn.x,
+        floor(ground, spawn.x, spawn.y) + EYE_HEIGHT,
+        spawn.y,
+    )
+    .with_rotation(Quat::from_rotation_y(
+        -stubby_core::OPENING_HEADING_DEGREES.to_radians(),
+    ))
 }
 pub use stubby_core::LookCapture;
 
@@ -226,6 +238,14 @@ mod tests {
     }
 
     #[test]
+    fn opening_faces_fifteen_degrees_left_of_sunrise() {
+        let camera = spawn_transform(&GROUND);
+        let heading = crate::compass::bearing(camera.forward().as_vec3());
+        assert!((heading - 75.).abs() < 0.001);
+        assert!((crate::compass::offset(heading, 90.) - 15.).abs() < 0.001);
+    }
+
+    #[test]
     fn spawn_and_pitched_walking_stay_grounded() {
         let mut t = spawn_transform(&GROUND);
         let mut p = Player::on(&GROUND);
@@ -236,7 +256,9 @@ mod tests {
         for _ in 0..120 {
             step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
         }
-        assert!((t.translation.z + 2.).abs() < 0.001);
+        let forward = spawn_transform(&GROUND).forward().as_vec3();
+        let expected = Vec3::new(0., 0., 6.) + forward * 8.;
+        assert!((t.translation.xz() - expected.xz()).length() < 0.001);
         assert_eq!(
             t.translation.y,
             floor(&GROUND, t.translation.x, t.translation.z) + EYE_HEIGHT
@@ -269,7 +291,7 @@ mod tests {
         let mut t = spawn_transform(&GROUND);
         look(&mut t, Vec2::new(200., -10000.));
         let (yaw, pitch, roll) = t.rotation.to_euler(EulerRot::YXZ);
-        assert!((yaw + 0.6).abs() < 0.001);
+        assert!((yaw + stubby_core::OPENING_HEADING_DEGREES.to_radians() + 0.6).abs() < 0.001);
         assert!((pitch - 1.54).abs() < 0.001);
         assert!(roll.abs() < 0.001);
     }

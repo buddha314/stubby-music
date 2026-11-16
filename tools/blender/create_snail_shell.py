@@ -14,7 +14,7 @@ Nodes (glTF):
 
 Real size, about 3 cm tall; the game shows it at the profile's `world_scale`.
 
-Writes assets/models/creatures/snail_shell.glb, assets/creatures/snail_shell/asset.json,
+Writes assets/creatures/snail_shell/snail_shell.glb, assets/creatures/snail_shell/asset.json,
 assets-src/blender/creatures/snail_shell.blend and previews/creatures/snail_shell/.
 
 Reproduce:

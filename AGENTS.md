@@ -430,9 +430,13 @@ Several agents work in this repo at once. To avoid stepping on each other:
   exporter path updates and the asset-layout documentation; geometry and artistic
   settings are preserved.
   Update this line when you claim work.
-- **The game opens at sunrise**, and since the sky's light dims with the day (#89) the
-  first ~2 minutes are dark. Reviews set the calendar to midday for screenshots; if the
-  opening reads too dark, start the clock later rather than brightening the night.
+- **Opening composition (2026-11-16):** spawn at x=0, z=6, bearing 75 degrees,
+  so the eastward sunrise is 15 degrees to the right (about 20 degrees at the
+  authored 06:30 opening, when the sun clears the mountain skyline). Scene placements and ridge
+  rings share that yaw around spawn; keep the physical sky/cardinal frame fixed.
+- **The game opens at 06:30**, just after astronomical sunrise, so the low sun
+  clears the mountain skyline. Reviews set the calendar to midday for screenshots;
+  if the opening reads too dark, start the clock later rather than brightening the night.
 - **Next milestone: the real opening scene.** Once the burbler, the lightning bugs,
   the stream and the base audio component are in the game, start iterating on the
   opening scene itself rather than on parts.

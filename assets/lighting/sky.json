@@ -1,6 +1,6 @@
 {
-  "about": "The sky (sync-calendar-and-night-sky). opening_solar_hour: when the game opens, 0-24 (6 is sunrise, the default; 0 is the Godot game's midnight opening). ridges: the mountain rings, one seeded skyline echoed outward; each ring's elevation is base_deg + amp_deg * f(angle - ring * echo_shift_deg), f a sum of whole-cycle harmonics with amplitudes falling as 1/k. clouds: one drifting layer on a dome; coverage 0..1 (Godot's cumulus used 0.55), drift_per_hour in texture repeats per simulated hour, night_color is darker than the Godot clouds_night_color (0.09, 0.094, 0.13) so clouds read as silhouettes on our darker night. brightness: physical light levels (the lighting keys set only colours and fog); raise night_ev100 lower or moon_lux higher to lighten the night.",
-  "opening_solar_hour": 6.0,
+  "about": "The sky (sync-calendar-and-night-sky). opening_solar_hour: when the game opens, 0-24 (6 is astronomical sunrise; the opening is 6.5 to clear the mountain skyline; 0 is the Godot game's midnight opening). ridges: the mountain rings, one seeded skyline echoed outward; each ring's elevation is base_deg + amp_deg * f(angle - ring * echo_shift_deg), f a sum of whole-cycle harmonics with amplitudes falling as 1/k. clouds: one drifting layer on a dome; coverage 0..1 (Godot's cumulus used 0.55), drift_per_hour in texture repeats per simulated hour, night_color is darker than the Godot clouds_night_color (0.09, 0.094, 0.13) so clouds read as silhouettes on our darker night. brightness: physical light levels (the lighting keys set only colours and fog); raise night_ev100 lower or moon_lux higher to lighten the night.",
+  "opening_solar_hour": 6.5,
   "ridges": {
     "rings": 3,
     "near_radius_m": 480.0,

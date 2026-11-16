@@ -3,6 +3,11 @@
 //! sets others order against. No behaviour lives here (split-game-into-systems).
 use bevy::prelude::*;
 
+/// Opening composition: east is +X (90 degrees); sunrise is 15 degrees to the right.
+pub const OPENING_HEADING_DEGREES: f32 = 75.;
+/// Ground-plane pivot shared by player spawn and the decorative mountain rings.
+pub const OPENING_SPAWN_XZ: Vec2 = Vec2::new(0., 6.);
+
 /// Key bindings, following Satisfactory's conventions where they apply (AGENTS.md).
 pub mod keys {
     use bevy::prelude::KeyCode;

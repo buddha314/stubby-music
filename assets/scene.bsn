@@ -3,9 +3,15 @@ bevy_ecs::hierarchy::Children [
     #"Desert opening · seed 42"
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -0.0792185515165329,
-            y: -0.00000040978193283081055,
-            z: 0.6021318435668945,
+            x: 5.193436989344,
+            y: -0.000000409782,
+            z: 4.526409673332,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_camera::visibility::Visibility::Visible
@@ -64,15 +70,15 @@ bevy_ecs::hierarchy::Children [
     }
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -1.4585599899291992,
-            y: -0.002964496612548828,
-            z: -35.110130310058594,
+            x: 39.331833484776,
+            y: -0.002964496613,
+            z: -6.048945434354,
         },
         rotation: glam::Quat {
-            x: 0.0,
-            y: 0.8999999761581421,
-            z: 0.0,
-            w: 0.5454691052436829,
+            x: 0.000000000000,
+            y: 0.381957435359,
+            z: 0.000000000000,
+            w: 0.980635008265,
         },
     }
     --
@@ -84,9 +90,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984839)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -6.836110591888428,
-            y: -0.017426662147045135,
-            z: -7.378628730773926,
+            x: 11.153447395780,
+            y: -0.017426662147,
+            z: -4.065819684953,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -101,9 +113,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984840)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 9.249051094055176,
-            y: 0.0028320029377937317,
-            z: -16.884952545166016,
+            x: 24.498997269043,
+            y: 0.002832002938,
+            z: 9.010835755459,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -118,9 +136,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984841)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 14.031987190246582,
-            y: 0.02649528533220291,
-            z: -11.764769554138184,
+            x: 20.791195235886,
+            y: 0.026495285332,
+            z: 14.955998128748,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -135,9 +159,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984842)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -21.030200958251953,
-            y: 0.014786548912525177,
-            z: 7.9905595779418945,
+            x: -7.365749435430,
+            y: 0.014786548913,
+            z: -13.798419508442,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -152,9 +182,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984843)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -17.613489151000977,
-            y: -0.02128308266401291,
-            z: 3.405090808868408,
+            x: -2.052216638397,
+            y: -0.021283082664,
+            z: -11.684935980991,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -169,9 +205,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6566083793249984844)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -13.984012603759766,
-            y: 0.03298170119524002,
-            z: 16.019393920898438,
+            x: -13.297320140766,
+            y: 0.032981701195,
+            z: -4.914308962010,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     bevy_ecs::hierarchy::Children [
@@ -186,9 +228,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437906)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 8.836631774902344,
-            y: 0.06288988143205643,
-            z: -54.51497268676758,
+            x: 60.740063593229,
+            y: 0.062889881432,
+            z: -1.126896596410,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -200,9 +248,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437907)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 4.303626537322998,
-            y: 0.027349062263965607,
-            z: -54.40945816040039,
+            x: 59.464916300127,
+            y: 0.027349062264,
+            z: -5.478134257132,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -214,9 +268,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437908)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -6.25757360458374,
-            y: 0.03355724364519119,
-            z: -76.20170593261719,
+            x: 77.781171500337,
+            y: 0.033557243645,
+            z: -21.319718989850,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -228,9 +288,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437909)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -21.9613037109375,
-            y: 0.005241461098194122,
-            z: -70.80561065673828,
+            x: 68.504519281575,
+            y: 0.005241461098,
+            z: -35.091745242065,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -242,9 +308,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437910)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 11.012310981750488,
-            y: 0.016292162239551544,
-            z: -41.25470733642578,
+            x: 48.494738042654,
+            y: 0.016292162240,
+            z: 4.406657354987,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -256,9 +328,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437911)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 21.521154403686523,
-            y: 0.02861601859331131,
-            z: -89.05773162841797,
+            x: 97.388802600610,
+            y: 0.028616018593,
+            z: 2.185087520397,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
@@ -270,79 +348,115 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437912)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -24.144296646118164,
-            y: 0.0,
-            z: -88.36827087402344,
+            x: 84.903746216841,
+            y: 0.000000000000,
+            z: -41.745905443661,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437913)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 6.5,
-            y: 0.0,
-            z: -51.5,
+            x: 57.223058804788,
+            y: 0.000000000000,
+            z: -2.603577222516,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437914)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 13.2,
-            y: 0.0,
-            z: -43.0,
+            x: 50.746776883518,
+            y: 0.000000000000,
+            z: 6.068087696992,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437915)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -4.0,
-            y: 0.0,
-            z: -73.8,
+            x: 76.045604757458,
+            y: 0.000000000000,
+            z: -18.517463104337,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437916)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -19.6,
-            y: 0.0,
-            z: -68.9,
+            x: 67.274991105042,
+            y: 0.000000000000,
+            z: -32.317692673445,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     jackdaw_scene_types::node_id::SceneNodeId(8620410544732437917)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 19.4,
-            y: 0.0,
-            z: -86.6,
+            x: 94.465820989357,
+            y: 0.000000000000,
+            z: 0.772317453515,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.608761429009,
+            z: 0.000000000000,
+            w: 0.793353340291,
         },
     }
 ]
