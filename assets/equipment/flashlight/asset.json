@@ -1,0 +1,29 @@
+{
+  "id": "flashlight",
+  "model": "equipment/flashlight/flashlight.glb#Scene0",
+  "kind": "held_equipment",
+  "role": "finder",
+  "size_metres": {
+    "length": 0.21369999999999997,
+    "head_diameter": 0.06148000000000001
+  },
+  "grip": "Grip",
+  "beam": {
+    "node": "Lens",
+    "along": "-Z (forward)",
+    "colour": "#7a3cff",
+    "note": "the game's spotlight and reveal start here (assets/ui/flashlight.json)"
+  },
+  "lights": [
+    {
+      "node": "Light_lens",
+      "light": "lens",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0,
+      "lit_while": "held"
+    }
+  ],
+  "held": {
+    "note": "first-person: hold at Grip in the right hand, lens forward; real size"
+  }
+}

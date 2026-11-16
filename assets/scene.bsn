@@ -277,7 +277,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -291,7 +291,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -305,7 +305,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -319,7 +319,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)
@@ -333,7 +333,7 @@ bevy_ecs::hierarchy::Children [
     }
     --
     jackdaw::prefab::components::IsA {
-        source: "prefabs/creatures/snail_shell.bsn",
+        source: "creatures/snail_shell/snail_shell.bsn",
         deleted: [],
     }
     jackdaw::prefab::components::PrefabEntityId(0)

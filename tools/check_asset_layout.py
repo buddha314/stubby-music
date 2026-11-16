@@ -44,6 +44,9 @@ def check(assets):
         if (assets / old).exists():
             errors.append(f'{old}/: split asset directory must not return')
     for model in sorted(assets.rglob('*.glb')):
+        # The same ignored, generated floor as above.
+        if model.relative_to(assets).as_posix() == "generated/mudflat.glb":
+            continue
         if model.parent.name != model.stem:
             errors.append(f'{model.relative_to(assets)}: model must live in its asset folder')
     return errors
