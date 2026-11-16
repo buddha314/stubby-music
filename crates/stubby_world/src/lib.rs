@@ -4,6 +4,7 @@
 //! itself names no creature, machine or crafting source.
 pub mod calendar;
 pub mod export;
+pub mod lighting;
 pub mod prefab_presentation;
 pub mod prefabs;
 pub mod sky;

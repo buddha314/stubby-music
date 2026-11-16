@@ -38,7 +38,7 @@ Retain the existing engine boundaries and native asset layout. Directly copying 
 
 **D12. The day runs on the 1 BPM master clock** (user decision, 2026-11-16). `bevy_stubby_audio::MasterClock` reads the engine's sample counter (`AudioThread::sample_position`); the calendar advances by its heard time times the speed, capped per frame. Without an engine it falls back to virtual time. Player movement moved to real time, as the spec always required. Tempo clocks as phase-locked whole multiples of the master are a separate change.
 
-**Open:** the art-authored lighting keys (`assets/lighting/lighting_keys.json`) are still read by no code. Their bleak night (ev100 -2, 0.6 lux moon) is far darker than D6; adopting them is the user's call.
+**D13. The lighting keys drive fog and colour only** (user decision, 2026-11-16: keep the navy night). `stubby_world::lighting` blends the keys by the sun's elevation (night, then dawn or dusk at their authored elevations, then day) and by `CameraLightQuality` (bleak 0 to bloomed 1; 0 until a light-quality field sets it). They set the sun, moon (the night key's light) and ambient colours and the fog's hue and density. Brightness stays physical, in `sky.json` `brightness` (sun and moon lux, day and night exposure), where the night can be lightened later. Fog lit uniformly by the key's colour made a low sun's far side brighter than its sky, so the key's fog colour is scaled by sun height (0.15 at night) and the fog glows toward the sun in the sun's colour (Bevy's directional fog light).
 
 ## Measurements (2026-11-16, RX 7700S, embedded Play, `--sky` review)
 
