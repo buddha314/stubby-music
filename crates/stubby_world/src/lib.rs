@@ -16,7 +16,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use terrain::{Surface, hash};
+use terrain::hash;
 
 /// The seeded desert: ground, mountains, sun and sky, time, and placed prefabs.
 pub struct DesertWorldPlugin {
@@ -154,36 +154,8 @@ fn setup_world(
         })),
         Transform::from_xyz(0., -0.15, 0.),
     ));
-    // Continuous overlapping ridges keep the basin enclosed without a sawtooth skyline.
-    for layer in 0..3 {
-        let mut mountains = Surface::default();
-        let radius = 480. + layer as f32 * 110.;
-        let ridge = |i: i32| {
-            let wrapped = i.rem_euclid(192);
-            let angle = wrapped as f32 * std::f32::consts::TAU / 192.;
-            let h = 8.
-                + hash(wrapped / 4, layer, seed.0 ^ 198) * 12.
-                + hash(wrapped, layer, seed.0 ^ 991) * 10.;
-            Vec3::new(angle.cos() * radius, h, angle.sin() * radius)
-        };
-        for i in 0..192 {
-            let a = ridge(i);
-            let b = ridge(i + 1);
-            let low_a = Vec3::new(a.x, -3., a.z);
-            let low_b = Vec3::new(b.x, -3., b.z);
-            mountains.triangle(low_a, a, b, [1.; 4]);
-            mountains.triangle(low_a, b, low_b, [1.; 4]);
-        }
-        commands.spawn((
-            Mesh3d(meshes.add(mountains.mesh())),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.18, 0.17, 0.20),
-                perceptual_roughness: 1.,
-                cull_mode: None,
-                ..default()
-            })),
-        ));
-    }
+    // Mountain rings: one seeded skyline, echoed outward (sky.json `ridges`).
+    sky::spawn_ridges(&mut commands, &mut meshes, &mut materials, seed.0);
     commands.insert_resource(GlobalAmbientLight {
         color: Color::srgb(0.68, 0.72, 0.83),
         brightness: 100.,

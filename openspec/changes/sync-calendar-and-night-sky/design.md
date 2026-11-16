@@ -32,6 +32,14 @@ Retain the existing engine boundaries and native asset layout. Directly copying 
 
 **D9. Editor preview lights are hidden in Play.** The level's "Desert sun" is `HiddenInGame`, but Jackdaw's embedded Play leaves such entities drawn, so it was a second, fixed 9,500 lux sun (it also doubled daylight in every earlier Play session). The adapter (`stubby_jackdaw`) keeps `HiddenInGame` lights hidden.
 
+**D10. Clouds are one drifting layer on a dome** (850 m, between the mountains and the stars; `depth_bias` draws them over the stars): seeded tileable noise thresholded at an authored coverage, projected onto a flat deck so they crowd toward the horizon, drifting with simulation time and tinted pale by day, warm at sunrise and sunset, near-black at night (darker than Godot's night colour, to match our darker night). No Godot cirrus layer yet.
+
+**D11. Echoed ridges** follow the Godot design: one seeded skyline per degree (harmonics 3–34 with 1/k amplitudes, plus smooth roughness), echoed outward by 9 degrees per ring, as elevation angles so each farther, softer ring peeks over the nearer. All in `sky.json` `ridges`.
+
+**D12. The day runs on the 1 BPM master clock** (user decision, 2026-11-16). `bevy_stubby_audio::MasterClock` reads the engine's sample counter (`AudioThread::sample_position`); the calendar advances by its heard time times the speed, capped per frame. Without an engine it falls back to virtual time. Player movement moved to real time, as the spec always required. Tempo clocks as phase-locked whole multiples of the master are a separate change.
+
+**Open:** the art-authored lighting keys (`assets/lighting/lighting_keys.json`) are still read by no code. Their bleak night (ev100 -2, 0.6 lux moon) is far darker than D6; adopting them is the user's call.
+
 ## Measurements (2026-11-16, RX 7700S, embedded Play, `--sky` review)
 
 | Pass | ms/frame |

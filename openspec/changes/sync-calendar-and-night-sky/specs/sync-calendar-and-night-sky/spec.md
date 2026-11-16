@@ -1,11 +1,18 @@
 ## ADDED Requirements
 
 ### Requirement: One solar-time mapping
-Sky, sun, moon, stars, direct light, fog and environment lighting SHALL use one calendar mapping: 2700 s day maps 06:00–18:00 and 900 s night maps 18:00–06:00. Opening time SHALL be authored data, defaulting to sunrise. Musical timing SHALL remain sample timed.
+Sky, sun, moon, stars, clouds, direct light, fog and environment lighting SHALL use one calendar mapping: 2700 s day maps 06:00–18:00 and 900 s night maps 18:00–06:00. Opening time SHALL be authored data (`assets/lighting/sky.json`), defaulting to sunrise. Musical timing SHALL remain sample timed.
 
 #### Scenario: One solar-time mapping
 - **WHEN** the calendar runs at 64x
 - **THEN** the sun, moon and stars move at 64x while pitch and BPM remain unchanged
+
+### Requirement: The day runs on the master clock
+The calendar SHALL advance by the 1 BPM master clock's heard time (the engine's sample counter) times the simulation speed, each frame capped at 0.1 s of clock time, so at 1x a day is 45 master beats and a night 15. Without a running engine it SHALL follow real time at the same speed and cap.
+
+#### Scenario: The day runs on the master clock
+- **WHEN** the master clock advances one tenth of a second at 1x
+- **THEN** the calendar advances one tenth of a second, and at 64x a two-second stall advances it at most 6.4 seconds
 
 ### Requirement: Night sky travels coherently
 The sky SHALL be drawn by an atmosphere lit by the sun and moon, so its colour follows their positions (warm, dusty dawn and dusk; hazy day; dark night). The moon SHALL be fixed among the stars, trailing the sun so it rises after dusk, crosses the night sky and is still setting in the west when the game opens at sunrise; by day it SHALL be pale. Stars SHALL be seeded from the world seed, turn about the celestial pole with solar time and fade in as the sun sets. Clouds SHALL drift and ridge rings SHALL repeat one seeded waveform with diminishing echoed amplitudes. Exact Godot (wait-for-stubs) positions and colours are a reference, not a requirement.

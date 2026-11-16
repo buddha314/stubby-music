@@ -172,6 +172,18 @@ impl AudioThread {
         }
     }
 
+    /// The engine's sample clock at a wall-clock instant: frames processed, extrapolated
+    /// from the last block. The inverse of [`Self::sample_to_instant`].
+    pub fn sample_position(&self, at: Instant) -> Option<f64> {
+        let s = self.snapshot()?;
+        let since = if at >= s.at {
+            at.duration_since(s.at).as_secs_f64()
+        } else {
+            -s.at.duration_since(at).as_secs_f64()
+        };
+        Some(s.samples as f64 + since * s.sample_rate as f64)
+    }
+
     /// Frames the offline renderer has produced (always 0 with a real device).
     pub fn offline_frames_rendered(&self) -> u64 {
         self.stats.frames_rendered.load(Ordering::Relaxed)

@@ -57,6 +57,7 @@ fn drive(
         (With<Camera3d>, Without<stubby_core::HudCamera>),
     >,
     ground: Res<stubby_core::GroundHeight>,
+    master: Option<Res<bevy_stubby_audio::MasterClock>>,
     lights: Query<(
         Option<&Name>,
         &DirectionalLight,
@@ -100,6 +101,7 @@ fn drive(
                 "sun": sun_direction(elapsed).to_array(),
                 "moon": moon_direction(elapsed).to_array(),
                 "fps": 1. / time.delta_secs().max(1e-6),
+                "master_beats": master.as_ref().and_then(|m| m.beats()),
                 "lights": lights.iter().map(|(name, light, visibility, view, at)| serde_json::json!({
                     "name": name.map(Name::as_str), "lux": light.illuminance,
                     "visibility": format!("{visibility:?}"), "drawn": view.get(),

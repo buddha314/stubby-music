@@ -65,6 +65,42 @@ impl Synth {
     }
 }
 
+/// The master clock (decided 2026-11-16, as the Godot game decided 2026-11-13): 1 BPM
+/// on the engine's sample counter. Every tempo clock is a whole multiple of it, so all
+/// clocks land together once a minute, and the calendar's day runs on it.
+pub const MASTER_BPM: f64 = 1.0;
+pub const MASTER_BEATS_PER_BAR: u32 = 4;
+
+/// Master beats heard now (sample-timed), or `None` without a running engine. Read in
+/// [`MasterClockRead`], before the frame's simulation.
+#[derive(Resource, Default, Debug, Clone, Copy)]
+pub struct MasterClock {
+    beats: Option<f64>,
+}
+impl MasterClock {
+    pub fn beats(&self) -> Option<f64> {
+        self.beats
+    }
+    /// Seconds of master-clock time for a span of beats.
+    pub fn seconds(beats: f64) -> f64 {
+        beats * 60. / MASTER_BPM
+    }
+    #[doc(hidden)]
+    pub fn at_beats(beats: f64) -> Self {
+        Self { beats: Some(beats) }
+    }
+}
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MasterClockRead;
+
+fn read_master_clock(synth: Res<Synth>, mut clock: ResMut<MasterClock>) {
+    clock.beats = synth.thread.as_ref().and_then(|thread| {
+        let rate = thread.sample_rate()? as f64;
+        let samples = thread.sample_position(Instant::now())?;
+        Some(samples / rate / 60. * MASTER_BPM)
+    });
+}
+
 /// A clock module crossed a beat. `at` is when that beat is heard, predicted from
 /// the audio clock; schedule visuals against it rather than the frame it arrived in.
 #[derive(Message, Debug, Clone, Copy, PartialEq)]
@@ -90,7 +126,14 @@ impl Plugin for SynthAudioPlugin {
             demo_playing: false,
         })
         .add_message::<ClockTick>()
-        .add_systems(PreUpdate, receive_from_engine)
+        .init_resource::<MasterClock>()
+        .add_systems(
+            PreUpdate,
+            (
+                receive_from_engine,
+                read_master_clock.in_set(MasterClockRead),
+            ),
+        )
         .add_systems(Update, toggle_demo)
         .add_systems(Last, commit_to_engine);
         if self.demo {

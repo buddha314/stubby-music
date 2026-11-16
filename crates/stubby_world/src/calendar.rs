@@ -31,8 +31,14 @@ pub struct CalendarPlugin;
 impl Plugin for CalendarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Calendar>()
+            .add_systems(PreStartup, open_at_authored_time)
             .add_systems(Startup, (setup, setup_sun))
-            .add_systems(PreUpdate, advance.in_set(CalendarAdvance))
+            .add_systems(
+                PreUpdate,
+                advance
+                    .in_set(CalendarAdvance)
+                    .after(bevy_stubby_audio::MasterClockRead),
+            )
             .add_systems(Update, (speed_controls, hud, move_sun).chain());
     }
 }
@@ -52,15 +58,79 @@ fn setup(mut commands: Commands) {
         },
     ));
 }
-pub fn advance(time: Res<Time<Virtual>>, mut calendar: ResMut<Calendar>) {
-    calendar.elapsed = calendar.elapsed.saturating_add(time.delta());
+/// The sky's authored settings (`assets/lighting/sky.json`).
+#[derive(serde::Deserialize)]
+pub struct SkyProfile {
+    pub opening_solar_hour: f32,
+    pub ridges: crate::sky::RidgeProfile,
+    pub clouds: crate::sky::CloudProfile,
 }
+pub fn sky_profile() -> SkyProfile {
+    serde_json::from_str(include_str!("../../../assets/lighting/sky.json")).expect("sky profile")
+}
+/// The game opens at the authored solar hour (sunrise by default), with a frame cap.
+/// PreStartup, so reviews that set the clock at Startup win.
+fn open_at_authored_time(mut calendar: ResMut<Calendar>, mut time: ResMut<Time<Virtual>>) {
+    calendar.elapsed =
+        std::time::Duration::from_secs_f32(seconds_at_solar_hour(sky_profile().opening_solar_hour));
+    set_speed(&mut time, 1.);
+}
+/// Calendar seconds (within the first cycle) at a solar hour: the inverse of [`solar_hour`].
+pub fn seconds_at_solar_hour(hour: f32) -> f32 {
+    let day_hours = (hour - 6.).rem_euclid(24.);
+    if day_hours < 12. {
+        day_hours / 12. * DAY_SECONDS as f32
+    } else {
+        DAY_SECONDS as f32 + (day_hours - 12.) / 12. * (CYCLE_SECONDS - DAY_SECONDS) as f32
+    }
+}
+/// The day runs on the 1 BPM master clock: each frame the calendar advances by the
+/// master-clock time heard since the last (capped at [`MAX_REAL_STEP`]) times the
+/// speed, so at 1x the 2700 s day is exactly 45 master beats and the night 15, and every
+/// boundary lands on a beat. Without a running engine (tests, no device) it follows
+/// Bevy's virtual time, which `set_speed` scales and caps the same way.
+pub fn advance(
+    time: Res<Time<Virtual>>,
+    master: Option<Res<bevy_stubby_audio::MasterClock>>,
+    mut last: Local<Option<f64>>,
+    mut calendar: ResMut<Calendar>,
+) {
+    let step = match master.and_then(|master| master.beats()) {
+        Some(beats) => {
+            let heard = last.map_or(0., |last| {
+                bevy_stubby_audio::MasterClock::seconds(beats - last).max(0.)
+            });
+            *last = Some(beats);
+            let speed = if time.is_paused() {
+                0.
+            } else {
+                time.relative_speed_f64()
+            };
+            std::time::Duration::from_secs_f64(heard.min(MAX_REAL_STEP as f64) * speed)
+        }
+        None => {
+            *last = None;
+            time.delta()
+        }
+    };
+    calendar.elapsed = calendar.elapsed.saturating_add(step);
+}
+/// A frame advances the calendar by at most this much real time times the speed, so a
+/// hitch never skips a stretch of day (or a night boundary).
+const MAX_REAL_STEP: f32 = 0.1;
 pub fn set_speed(time: &mut Time<Virtual>, speed: f32) {
-    // Bevy caps the scaled delta, so preserve a quarter-second real catch-up limit.
-    time.set_max_delta(std::time::Duration::from_secs_f32(0.25 * speed));
+    time.set_max_delta(std::time::Duration::from_secs_f32(MAX_REAL_STEP * speed));
     time.set_relative_speed(speed);
 }
-fn speed_controls(keys: Res<ButtonInput<KeyCode>>, mut time: ResMut<Time<Virtual>>) {
+/// Speed keys, ignored while a screen (inventory, a rack) owns the keyboard.
+fn speed_controls(
+    keys: Res<ButtonInput<KeyCode>>,
+    screens: Option<Res<stubby_core::ScreenMode>>,
+    mut time: ResMut<Time<Virtual>>,
+) {
+    if screens.is_some_and(|screens| screens.open.is_some()) {
+        return;
+    }
     let current = time.relative_speed();
     if keys.just_pressed(KeyCode::BracketRight) {
         set_speed(
@@ -91,8 +161,11 @@ fn hud(
     mut labels: Query<&mut Text, With<CalendarHud>>,
 ) {
     for mut label in &mut labels {
+        let hour = solar_hour(calendar.elapsed.as_secs_f32());
         **label = format!(
-            "{} | {:.2}x  [ / ] speed | \\ reset",
+            "{:02}:{:02} {} | {:.2}x  [ / ] speed | \\ reset",
+            hour as u32,
+            (hour.fract() * 60.) as u32,
             if calendar.is_night() { "Night" } else { "Day" },
             time.relative_speed()
         );
@@ -355,6 +428,57 @@ mod tests {
         );
         // It is up through the middle of the night.
         assert!(moon_direction(DAY_SECONDS as f32 + 450.).y > 0.5);
+    }
+    #[test]
+    fn opening_hour_maps_back_to_calendar_seconds() {
+        for hour in [0., 3.5, 6., 12., 17.9, 18., 21.] {
+            assert!((solar_hour(seconds_at_solar_hour(hour)) - hour).abs() < 1e-3);
+        }
+        assert_eq!(seconds_at_solar_hour(6.), 0.);
+        assert_eq!(seconds_at_solar_hour(0.), 3150.);
+    }
+    #[test]
+    fn screens_own_the_speed_keys_and_hitches_are_capped() {
+        let mut app = App::new();
+        app.init_resource::<Time<Virtual>>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .insert_resource(stubby_core::ScreenMode {
+                open: Some(stubby_core::Screen::Inventory),
+                closed_this_frame: false,
+            })
+            .add_systems(Update, speed_controls);
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::BracketRight);
+        app.update();
+        assert_eq!(app.world().resource::<Time<Virtual>>().relative_speed(), 1.);
+        // At 64x a two-second hitch advances the calendar at most 6.4 s.
+        let mut time = Time::<Virtual>::default();
+        set_speed(&mut time, 64.);
+        assert!((time.max_delta().as_secs_f32() - 6.4).abs() < 1e-4);
+    }
+    #[test]
+    fn the_day_runs_on_the_master_clock_times_speed_and_capped() {
+        let mut app = App::new();
+        app.init_resource::<Time<Virtual>>()
+            .init_resource::<Calendar>()
+            .insert_resource(bevy_stubby_audio::MasterClock::at_beats(10.))
+            .add_systems(Update, advance);
+        app.update();
+        assert_eq!(app.world().resource::<Calendar>().elapsed.as_secs_f64(), 0.);
+        // One frame hears 1/600 beat (0.1 s): the calendar moves 0.1 s at 1x.
+        let set = |app: &mut App, beats: f64| {
+            app.insert_resource(bevy_stubby_audio::MasterClock::at_beats(beats));
+        };
+        set(&mut app, 10. + 1. / 600.);
+        app.update();
+        let elapsed = |app: &App| app.world().resource::<Calendar>().elapsed.as_secs_f64();
+        assert!((elapsed(&app) - 0.1).abs() < 1e-6);
+        // At 64x, a two-second hitch on the clock advances at most 6.4 s.
+        set_speed(&mut app.world_mut().resource_mut::<Time<Virtual>>(), 64.);
+        set(&mut app, 10. + 1. / 600. + 2. / 60.);
+        app.update();
+        assert!((elapsed(&app) - 6.5).abs() < 1e-6);
     }
     #[test]
     fn counts_night_boundaries_including_skipped_days() {
