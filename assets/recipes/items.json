@@ -18,6 +18,11 @@
       "description": "A renewable stream-building ingredient."
     },
     {
+      "id": "snail_shell",
+      "name": "Snail shell",
+      "description": "An empty, high-spired snail shell of four whorls. Mounted in a rack it becomes a four-step sequencer: light the steps you want, patch a clock in, and take GATE and CV out."
+    },
+    {
       "id": "square_wave",
       "name": "Square wave",
       "description": "A square-wave primitive mined from a lightning bug, like coal in a factory builder. Use it in modular-synthesis recipes as a VCO waveform, LFO, or gate.",

@@ -13,14 +13,18 @@ struct SkyReview {
     step: usize,
 }
 
-/// (calendar seconds, where to look as a direction, screenshot name)
-const SHOTS: [(u64, Vec3, &str); 6] = [
-    (120, Vec3::new(1., 0.12, 0.), "dawn-east.png"),
-    (120, Vec3::new(-1., 0.25, 0.), "dawn-west-moon.png"),
-    (1350, Vec3::new(0., 0.45, 1.), "noon-south.png"),
-    (2620, Vec3::new(-1., 0.1, 0.), "dusk-west.png"),
-    (3150, Vec3::new(0., 0.9, 0.35), "midnight-moon.png"),
-    (3420, Vec3::new(0.3, 0.6, -1.), "stars-north.png"),
+/// (calendar seconds, where the camera stands on the ground (x, z), where to look as a
+/// direction, screenshot name)
+const SHOTS: [(u64, Vec2, Vec3, &str); 7] = [
+    (120, Vec2::ZERO, Vec3::new(1., 0.12, 0.), "dawn-east.png"),
+    (120, Vec2::ZERO, Vec3::new(-1., 0.25, 0.), "dawn-west-moon.png"),
+    (1350, Vec2::ZERO, Vec3::new(0., 0.45, 1.), "noon-south.png"),
+    (2620, Vec2::ZERO, Vec3::new(-1., 0.1, 0.), "dusk-west.png"),
+    (3150, Vec2::ZERO, Vec3::new(0., 0.9, 0.35), "midnight-moon.png"),
+    (3420, Vec2::ZERO, Vec3::new(0.3, 0.6, -1.), "stars-north.png"),
+    // Two metres from the first snail shell by the reeds, looking down at it: within
+    // reach and aimed at, so it is outlined.
+    (1350, Vec2::new(6.5, -49.5), Vec3::new(0., -0.75, -1.), "shell-by-the-reeds.png"),
 ];
 /// Real seconds: the first shot is set up at `START`, then a step every `STEP` (set the
 /// sky, then shoot it once the environment map has been filtered again).
@@ -69,7 +73,7 @@ fn drive(
     if time.elapsed_secs() < START + review.step as f32 * STEP {
         return;
     }
-    let Some(&(seconds, look, name)) = SHOTS.get(review.step / 2) else {
+    let Some(&(seconds, stand, look, name)) = SHOTS.get(review.step / 2) else {
         if review.step / 2 == SHOTS.len() {
             log(
                 &review,
@@ -81,7 +85,7 @@ fn drive(
     };
     if review.step % 2 == 0 {
         calendar.elapsed = std::time::Duration::from_secs(seconds);
-        let at = Vec3::new(0., (ground.0)(Vec2::ZERO) + 1.7, 0.);
+        let at = Vec3::new(stand.x, (ground.0)(stand) + 1.7, stand.y);
         for (mut camera, _) in &mut cameras {
             *camera = Transform::from_translation(at).looking_at(at + look, Vec3::Y);
         }

@@ -275,4 +275,74 @@ bevy_ecs::hierarchy::Children [
             z: -88.36827087402344,
         },
     }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/snail_shell.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437913)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 6.5,
+            y: 0.0,
+            z: -51.5,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/snail_shell.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437914)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 13.2,
+            y: 0.0,
+            z: -43.0,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/snail_shell.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437915)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -4.0,
+            y: 0.0,
+            z: -73.8,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/snail_shell.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437916)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -19.6,
+            y: 0.0,
+            z: -68.9,
+        },
+    }
+    --
+    jackdaw::prefab::components::IsA {
+        source: "prefabs/creatures/snail_shell.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437917)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 19.4,
+            y: 0.0,
+            z: -86.6,
+        },
+    }
 ]
