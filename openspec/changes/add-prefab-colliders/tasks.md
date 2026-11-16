@@ -7,7 +7,7 @@
 
 ## 2. Scrub oak colliders
 
-- [ ] 2.1 Author `AvianCollider` cylinders on child entities of `assets/prefabs/flora/scrub_oak_0..5.bsn`, from `assets/flora/scrub_oak/colliders.json`
+- [ ] 2.1 Author `AvianCollider` cylinders on child entities of `assets/flora/scrub_oak/scrub_oak_<k>/scrub_oak_<k>.bsn`, from `assets/flora/scrub_oak/colliders.json`
 - [ ] 2.2 `cargo test -p stubby_jackdaw --test prefabs` loads them with known types
 - [ ] 2.3 Confirm one placed oak has a static collider in Play and survives opening and saving in the editor; if prefabs cannot load `AvianCollider`, stop and use the private-component fallback in the design
 

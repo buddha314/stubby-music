@@ -1,6 +1,6 @@
 {
   "id": "slot_labels",
-  "model": "models/hud/slot_labels.glb#Scene0",
+  "model": "hud/slot_labels/slot_labels.glb#Scene0",
   "kind": "slot_labels",
   "labels": {
     "clock": {

@@ -11,7 +11,7 @@
 - [ ] 2.5 Greenness from local water or light quality; sway `Sway_<n>` with the wind
 
 ## 3. Prefabs carry their resource (found 2026-11-01)
-The reed prefabs (`assets/prefabs/flora/reed_clump_0..3.bsn`) hold only the
+The reed prefabs (`assets/flora/reeds/reed_clump_<k>/reed_clump_<k>.bsn`) hold only the
 model; Play adds `ResourceNode` by file stem. Bugs and oaks carry theirs on the prefab,
 so a placed reed shows no resource and no editable `instance` in the editor.
 **Do not apply 3.1 as written (found 2026-11-06):** a fixed `instance` on the prefab would make

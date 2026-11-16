@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 step() { printf '\n== %s\n' "$*"; }
+step "Runtime asset references"; python3 tools/check_asset_layout.py
 step "Version consistency";        python3 tools/check_jackdaw_versions.py
 step "Version-check regression";   python3 tools/test_jackdaw_versions.py
 step "cargo-deny: layering, licenses, advisories, sources (deny.toml)"

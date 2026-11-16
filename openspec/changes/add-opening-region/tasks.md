@@ -1,6 +1,6 @@
 ## 0. Decisions
 - [x] 0.1 Where the first clean water comes from: a filter mini-rack, HPF → pure liquid, LPF → solids/nutrients, controlled via audio (detailed design later, `add-fluid-quality-and-viscosity`)
-- [x] 0.2 Layout: prefabs placed in Jackdaw (`assets/prefabs/`, made with Jackdaw's Save as Prefab)
+- [x] 0.2 Layout: prefabs placed in Jackdaw (`assets/<category>/<id>/`, made with Jackdaw's Save as Prefab)
 - [ ] 0.3 Reconcile `add-desert-opening` discovery-progression (square from a bug; clock is the burbler)
 
 ## 1. Layout (Claude, art and scene)
@@ -16,7 +16,7 @@
     - **Rebase onto current `main` before merging.** The worktree is based on main from before PRs #36–#43, so its diff currently undoes merged work. Keep:
       - `tools/jackdaw_lods.py` (its diff deletes it)
       - task 0.1 resolved, with no option list: the first clean water comes from the filter mini-rack, and the design's "Where the first clean water comes from" open question was answered in #40 (its diff restores the old options)
-      - models in category folders (`models/<category>/...`), the oak and reed levels of detail as `<id>_LOD0`/`_LOD1` nodes inside each glb, and the `.glb.meta` import settings (#38, #42, #43)
+      - models in category folders (`<category>/<id>/<id>.glb`), the oak and reed levels of detail as `<id>_LOD0`/`_LOD1` nodes inside each glb, and the `.glb.meta` import settings (#38, #42, #43)
       - prefabs without `LodGroup` (the prefab test fails on one)
     - **Identify by model stem, not by node path:** levels now sit under `<id>_LOD0`, so `Limb_*`, `Foliage_*`, `Standing`, `Stubble` and so on are one level deeper than before.
     - **Reed yield conflict:** this design says "1 reed per clump", but `add-reeds` suggests 6 per clump (one stream segment's worth), because the user asked for reeds to be "very easy to get, like leaves in Satisfactory". Use 6, or ask the user, before writing the catalog entry.
@@ -28,7 +28,7 @@
 - [ ] 2.3 Starting conditions: winter, dormant oaks, light quality 0
 - [ ] 2.4 Wire the loop end to end once its parts land: bug → burbler voice → stream → oak growth → bug production
 - [ ] 2.7 Placed player start (Codex; design "Player start"): a `PlayerStart` marker component (reflected, registered, inspector category "Actor"); an `On<Insert<PlayerStart>>` observer reads its world `GlobalTransform` (Jackdaw's `insert_observer_global_transform.rs` shows it is final at scene load) and moves the `controls::Player` camera there, on the ground, facing its yaw; fall back to `controls::spawn_transform()` when none is placed; warn on more than one; a test that the opening scene's start is more than 35 m from every bug. No new crate, no editor change.
-- [ ] 2.7a Player start marker (Claude): the model is done (`tools/blender/create_player_start.py`, `models/actors/player_start_marker.glb`: footprint ring, facing arrow along −Z, eye post at 1.65 m); still to do, once 2.7 lands, a prefab made in Jackdaw with Save as Prefab: the marker glb, `HiddenInGame`, `PlayerStart`, under `prefabs/actors/`
+- [ ] 2.7a Player start marker (Claude): the model is done (`tools/blender/create_player_start.py`, `actors/player_start_marker/player_start_marker.glb`: footprint ring, facing arrow along −Z, eye post at 1.65 m); still to do, once 2.7 lands, a prefab made in Jackdaw with Save as Prefab: the marker glb, `HiddenInGame`, `PlayerStart`, under `actors/player_start_marker/`
 
 ### Runtime binding checks (task 2.5)
 

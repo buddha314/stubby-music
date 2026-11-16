@@ -6,7 +6,7 @@ settings (`<model>.glb.meta`). Its editor sets them one model at a time; this ru
 same operators for every model through Jackdaw's documented remote control
 (`jd mcp`, which drives the open editor over BRP). The editor itself is not changed.
 
-For each model under `assets/models/`:
+For each model under `assets/`:
 - it has `<id>_LOD<n>` nodes inside it  -> `model.lod.import` (the hand-made levels)
 - it is listed in GENERATE              -> `model.lod.generate` (simplified levels)
 - otherwise it is left alone
@@ -30,29 +30,29 @@ import sys
 
 REPO = Path(__file__).resolve().parents[1]
 PROJECT = REPO
-MODELS = REPO / "assets/models"
+MODELS = REPO / "assets"
 # Models without hand-made levels that are heavy enough to want generated ones.
 GENERATE = {
-    "machines/mudpit_burbler.glb": 3,
-    "props/desert/desert_brush_0.glb": 3,
-    "props/desert/desert_brush_1.glb": 3,
-    "props/desert/desert_brush_2.glb": 3,
-    "props/desert/desert_stump_0.glb": 2,
-    "props/desert/desert_stump_1.glb": 2,
-    "props/desert/desert_stump_2.glb": 2,
+    "machines/mudpit_burbler/mudpit_burbler.glb": 3,
+    "props/desert/desert_brush_0/desert_brush_0.glb": 3,
+    "props/desert/desert_brush_1/desert_brush_1.glb": 3,
+    "props/desert/desert_brush_2/desert_brush_2.glb": 3,
+    "props/desert/desert_stump_0/desert_stump_0.glb": 2,
+    "props/desert/desert_stump_1/desert_stump_1.glb": 2,
+    "props/desert/desert_stump_2/desert_stump_2.glb": 2,
 }
 
 
 # Distance (m) at which each level hands over to the next, per model (glob on the path
-# under models/). A level's screen height is size / (2 d tan(fov / 2)), with the game
+# under assets/). A level's screen height is size / (2 d tan(fov / 2)), with the game
 # camera's 45 degree vertical field of view (Bevy's default).
 VERTICAL_FOV = math.radians(45)
 SWITCH_M = {
-    "flora/scrub_oak/*": [45],          # the far level (asset.json far_lod.distance_m)
-    "flora/reeds/*": [30],
-    "machines/mudpit_burbler.glb": [30, 80],
-    "props/desert/desert_brush_*": [20, 50],
-    "props/desert/desert_stump_*": [25],
+    "flora/scrub_oak/*/*.glb": [45],          # the far level (asset.json far_lod.distance_m)
+    "flora/reeds/*/*.glb": [30],
+    "machines/mudpit_burbler/mudpit_burbler.glb": [30, 80],
+    "props/desert/desert_brush_*/*.glb": [20, 50],
+    "props/desert/desert_stump_*/*.glb": [25],
 }
 LAST_SCREEN_HEIGHT = 0.01   # below this the model is not drawn
 
@@ -90,7 +90,7 @@ def plan():
     jobs = []
     for glb in sorted(MODELS.rglob("*.glb")):
         rel = glb.relative_to(MODELS).as_posix()
-        path = f"models/{rel}"
+        path = rel
         if has_lod_nodes(glb):
             jobs.append((path, "model.lod.import", {"path": path}))
         elif rel in GENERATE:
@@ -161,7 +161,7 @@ def main():
         mcp.tool("wait", {"frames": 5})
         mcp.tool("call_operator", {"id": "model.lod.apply", "params": {"path": path}, "history": False})
         mcp.tool("wait", {"frames": 2})
-        meta = MODELS / (path.removeprefix("models/") + ".meta")
+        meta = MODELS / (path + ".meta")
         print(f"{'ok' if meta.exists() else 'NO META':8} {path}")
     mcp.close()
     switch_points()

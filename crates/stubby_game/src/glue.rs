@@ -444,7 +444,7 @@ mod prefab_tests {
             .spawn((
                 PlacedAsset {
                     asset: asset.into(),
-                    model: format!("models/{asset}.glb"),
+                    model: format!("test_assets/{asset}/{asset}.glb"),
                     instance: instance.into(),
                 },
                 transform,
@@ -724,7 +724,7 @@ mod reload_regressions {
         app.update();
         let old = app.world().resource::<Bindings>().0[&bug].ids[0];
         app.world_mut().get_mut::<PlacedAsset>(bug).unwrap().model =
-            "models/other/lightning_bug.glb".into();
+            "other/lightning_bug/lightning_bug.glb".into();
         app.update();
         assert!(app.world().get::<PrefabError>(bug).is_none());
         assert_ne!(app.world().resource::<Bindings>().0[&bug].ids[0], old);

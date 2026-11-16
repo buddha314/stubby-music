@@ -588,7 +588,7 @@ fn sync_view(
             .or_else(|| rack.and_then(|r| r.mounted.get(&place.place).cloned()));
         if let Some(module) = &mounted {
             let mut part = commands.spawn((
-                WorldAssetRoot(server.load(format!("models/modules/{module}.glb#Scene0"))),
+                WorldAssetRoot(server.load(format!("modules/{module}/{module}.glb#Scene0"))),
                 Transform::from_xyz(center, 0., 0.),
                 Visibility::Inherited,
                 HudScene {
@@ -617,9 +617,10 @@ fn sync_view(
             ));
         } else {
             commands.spawn((
-                WorldAssetRoot(
-                    server.load(format!("models/hud/slot_outline_{}hp.glb#Scene0", place.hp)),
-                ),
+                WorldAssetRoot(server.load(format!(
+                    "hud/slot_outline_{0}hp/slot_outline_{0}hp.glb#Scene0",
+                    place.hp
+                ))),
                 Transform::from_xyz(center, 0., 0.),
                 Visibility::Inherited,
                 HudScene {
@@ -630,7 +631,7 @@ fn sync_view(
                 ChildOf(root),
             ));
             commands.spawn((
-                WorldAssetRoot(server.load("models/hud/slot_labels.glb#Scene0")),
+                WorldAssetRoot(server.load("hud/slot_labels/slot_labels.glb#Scene0")),
                 Transform::from_xyz(center, 1.375 * 0.56, 0.18),
                 Visibility::Inherited,
                 HudScene {

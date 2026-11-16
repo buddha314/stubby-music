@@ -1,6 +1,6 @@
 {
   "id": "rack_frame",
-  "model": "models/hud/rack_frame.glb#Scene0",
+  "model": "hud/rack_frame/rack_frame.glb#Scene0",
   "kind": "hud_rack_frame",
   "rails": {
     "nodes": [

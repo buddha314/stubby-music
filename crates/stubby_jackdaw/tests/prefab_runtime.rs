@@ -19,7 +19,12 @@ fn files(dir: &Path, out: &mut Vec<PathBuf>) {
         let path = entry.unwrap().path();
         if path.is_dir() {
             files(&path, out);
-        } else if path.extension().is_some_and(|ext| ext == "bsn") {
+        } else if path.extension().is_some_and(|ext| ext == "bsn")
+            && std::fs::read_to_string(&path)
+                .unwrap()
+                .lines()
+                .any(|line| line.trim() == "jackdaw::prefab::components::Prefab")
+        {
             out.push(path);
         }
     }
@@ -28,7 +33,7 @@ fn files(dir: &Path, out: &mut Vec<PathBuf>) {
 fn saved_prefabs_become_live_runtime_assets() {
     let assets = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets");
     let mut prefabs = Vec::new();
-    files(&assets.join("prefabs"), &mut prefabs);
+    files(&assets, &mut prefabs);
     prefabs.sort();
     assert!(prefabs.len() >= 27);
     for path in prefabs {

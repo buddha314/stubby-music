@@ -5,7 +5,7 @@ before anything on top). Every module comes from a generator script in
 `tools/blender/`, which is the source of truth. The scripts share
 `tools/blender/module_kit.py` (materials, case, knobs, jacks, labels, glyph strokes,
 preview and export). It writes the `.blend` to
-`assets-src/blender/modules/`, the `.glb` to `assets/models/modules/`, `asset.json` here, and
+`assets-src/blender/modules/`, the `.glb` beside `asset.json` under `assets/modules/<id>/`, and
 `preview.png` and `preview_far.png` (the same view from about 12 m) to `previews/modules/`.
 
 **How a module sounds is not art's file.** Beside `asset.json` (the panel), each module that

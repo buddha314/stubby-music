@@ -1,0 +1,16 @@
+#"Lightning bug"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+bevy_ecs::hierarchy::Children [
+    #"Lightning bug hover"
+    jackdaw::prefab::components::PrefabEntityId(1)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 { x: 0.0, y: 1.8, z: 0.0 },
+    }
+    bevy_camera::visibility::Visibility::Visible
+    jackdaw_scene_types::types::GltfSource { path: "creatures/lightning_bug/lightning_bug.glb", scene_index: 0 }
+    bevy_stubby_recipes::ResourceNode { resource: "lightning_bug", instance: "lightning_bug-placed-0", collected: false }
+    bevy_stubby_audio::pulse::PulseFollower { clock: 1 }
+]

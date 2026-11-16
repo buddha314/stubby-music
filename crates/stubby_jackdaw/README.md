@@ -66,19 +66,18 @@ Levels are built from **prefabs**, the usual editor workflow: the art pipeline
 delivers a model (`.glb`), a prefab wraps it with its gameplay components, and level
 design places prefabs.
 
-The prefabs live under `assets/prefabs/`: `flora/` (scrub oaks, reed clumps),
+The prefabs live beside their models under `assets/<category>/<id>/`: `flora/<family>/<variant>/` (scrub oaks, reed clumps),
 `props/` (desert brush, stumps, mud debris), `creatures/` (the lightning bug),
 `modules/` (VCOs, clock lamp), `machines/` (the mudpit burbler) and `streams/` (a
 stream segment). Drag one from the Project window into the viewport to place an
 instance; move, rotate and scale it like any entity. Prefabs are ordinary editor
 assets: open one to edit it, and every instance follows.
 
-**Making a prefab for a new asset:** drag its `.glb` from `models/<category>/` into the viewport,
+**Making a prefab for a new asset:** drag its `.glb` from its asset folder into the viewport,
 add its game component in the inspector (such as `MineNode`), then right-click it in the hierarchy and choose
-**Save as Prefab**, saving under `prefabs/<group>/`.
+**Save as Prefab**, saving beside the model as `<id>.bsn`.
 
-- Each prefab names its model with a `GltfSource` (under `models/<category>/`, the shared
-  runtime models). Prefabs never carry their own levels of detail.
+- Each prefab names its model with a `GltfSource` (the model beside it). Prefabs never carry their own levels of detail.
 
 **Levels of detail belong to the model**, as in Unity, Unreal and Godot. Select the
 model in the Project window and open its import settings:

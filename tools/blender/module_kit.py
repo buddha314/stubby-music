@@ -45,14 +45,14 @@ def fit(points, cycles, centre_u, centre_z, half, amp):
 
 def model_file(asset_id):
     """The exported model for `asset_id`, wherever its category folder puts it."""
-    found = sorted((PROJECT / "assets/models").rglob(f"{asset_id}.glb"))
+    found = sorted((PROJECT / "assets").rglob(f"{asset_id}.glb"))
     if not found:
-        raise FileNotFoundError(f"no assets/models/**/{asset_id}.glb")
+        raise FileNotFoundError(f"no assets/**/{asset_id}.glb")
     return found[0]
 
 
 class ModuleKit:
-    # Category folder shared by the model (assets/models/<folder>/), its Blender
+    # Category folder shared by the model (assets/<folder>/<asset_id>/), its Blender
     # source (assets-src/blender/<folder>/), its profile (assets/<folder>/<asset_id>/)
     # and its previews (previews/<folder>/<asset_id>/). LODs sit beside their model.
     folder = "modules"
@@ -416,7 +416,7 @@ class ModuleKit:
     @property
     def model_ref(self):
         """The model's path as the game and Jackdaw load it (relative to assets/)."""
-        return f"models/{self.folder}/{self.asset_id}.glb"
+        return f"{self.folder}/{self.asset_id}/{self.asset_id}.glb"
 
     def finish(self, profile, aim=(0, 0, 0.66), camera_location=(1.05, -2.15, 1.25), before_render=None):
         """Preview lighting and camera, then save the .blend, export the .glb, write
@@ -451,7 +451,7 @@ class ModuleKit:
         scene.view_settings.look = "AgX - Medium High Contrast"
 
         source = PROJECT / f"assets-src/blender/{self.folder}/{self.asset_id}.blend"
-        model = PROJECT / f"assets/models/{self.folder}/{self.asset_id}.glb"
+        model = PROJECT / "assets" / self.model_ref
         profile_dir = PROJECT / f"assets/{self.folder}/{self.asset_id}"
         preview = PROJECT / f"previews/{self.folder}/{self.asset_id}/preview.png"
         model.parent.mkdir(parents=True, exist_ok=True)

@@ -144,7 +144,7 @@ crates/
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_rules_server/    tool: the rules designer, a web page on 127.0.0.1 (no Bevy, never the game)
   stubby_jackdaw/         the package Jackdaw builds: stubby_game plus the editor bridge
-assets/                   the one asset folder: scene.bsn, prefabs/, glTF, textures, shaders
+assets/                   the one asset folder: scene.bsn, asset families (models + prefabs + profiles), shared textures/shaders
 jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
@@ -323,10 +323,10 @@ testable by asserting identical output for identical seeds.
 - **Previews live in `previews/`, mirroring `assets/`** (`previews/flora/reeds/states.png`), so
   they stay out of the Jackdaw asset browser and the shipped assets. Only PNGs the game loads
   belong in `assets/`: today `assets/ui/` and the generated floor textures.
-- Sources live in `assets-src/blender/<category>/`. Export to **glTF binary (`.glb`)**
-  into the same folder under `assets/models/` (`creatures`, `flora/<family>`,
-  `machines`, `modules`, `props/<family>`, `streams`). Bevy loads `.glb`, never
-  `.blend`.
+- Sources live in `assets-src/blender/<category>/`. Export to **glTF binary (`.glb`)** into
+  `assets/<category>/<id>/<id>.glb`, beside its profile and master prefab. Variant
+  models sit beneath their family (`assets/flora/scrub_oak/scrub_oak_0/`). Bevy
+  loads `.glb`, never `.blend`. See `docs/bevy-asset-guide.md`.
 - Export headlessly and reproducibly with a script, not by hand:
   `blender -b assets-src/blender/<category>/<file>.blend -P tools/blender/export_gltf.py`.
 - Apply transforms before export. Use metres, +Y up in Bevy (the glTF exporter
@@ -338,7 +338,8 @@ testable by asserting identical output for identical seeds.
   props, machines/modules, cables, and the player.
 - **Levels are designed with Jackdaw prefabs**, the standard editor workflow: art
   delivers the glb, a prefab wraps it with its gameplay components, and levels place
-  prefabs. Every placeable world asset has one under `assets/prefabs/`. Make
+  prefabs. Every placeable world asset has one beside its model in its asset folder.
+  Each authored variant keeps its own master prefab; LODs never get prefabs. Make
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
   `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
@@ -406,7 +407,7 @@ Several agents work in this repo at once. To avoid stepping on each other:
   allocator replaces these ranges (`add-module-asset-binding` 2.1).
 - **Current owners (2026-10-31):** the work is split by discipline.
   - **Claude:** Blender assets and the art style guide — everything under
-    `tools/blender/`, `assets-src/blender/`, `assets/models/`, `assets/modules/`,
+    `tools/blender/`, `assets-src/blender/`, asset-family models/profiles, `assets/modules/`,
     `assets/lighting/` and `docs/art/`, and the `add-art-direction` change.
   - **Codex:** services and game logic — `crates/`, including the day/night cycle and
     light-quality field (desert-opening 3.4–3.7), placement (2.5), the module ID
@@ -425,6 +426,9 @@ Several agents work in this repo at once. To avoid stepping on each other:
   **Claude (2026-11-16):** the moving sky, `sync-calendar-and-night-sky`: Bevy's atmosphere
   with desert dust, the moon and seeded stars (`stubby_world/src/sky.rs`, `calendar.rs`);
   `tools/jackdaw_timed_test.py --sky` reviews it.
+  Codex implemented `organize-model-owned-lod-assets` (2026-11-16), including
+  exporter path updates and the asset-layout documentation; geometry and artistic
+  settings are preserved.
   Update this line when you claim work.
 - **The game opens at sunrise**, and since the sky's light dims with the day (#89) the
   first ~2 minutes are dark. Reviews set the calendar to midday for screenshots; if the

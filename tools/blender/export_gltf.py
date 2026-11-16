@@ -46,7 +46,7 @@ def export_scene(scene, destination, only=None):
 
 if __name__ == "__main__":
     project = Path(__file__).resolve().parents[2]
-    # assets-src/blender/<folder>/<id>.blend exports to assets/models/<folder>/<id>.glb.
+    # assets-src/blender/<folder>/<id>.blend exports to assets/<folder>/<id>/<id>.glb.
     source = Path(bpy.data.filepath).resolve()
     folder = source.parent.relative_to(project / "assets-src/blender")
-    export_scene(bpy.context.scene, project / "assets/models" / folder / (source.stem + ".glb"))
+    export_scene(bpy.context.scene, project / "assets" / folder / source.stem / (source.stem + ".glb"))

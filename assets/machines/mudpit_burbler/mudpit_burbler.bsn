@@ -1,0 +1,6 @@
+#"Mudpit burbler"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "machines/mudpit_burbler/mudpit_burbler.glb", scene_index: 0 }

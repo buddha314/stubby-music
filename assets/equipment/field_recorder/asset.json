@@ -1,6 +1,6 @@
 {
   "id": "field_recorder",
-  "model": "models/equipment/field_recorder.glb#Scene0",
+  "model": "equipment/field_recorder/field_recorder.glb#Scene0",
   "kind": "held_equipment",
   "role": "collector",
   "size_metres": {

@@ -1,4 +1,4 @@
-//! Every world-asset prefab under `assets/prefabs` places in Jackdaw: it parses, a
+//! Every world-asset prefab under `assets/` places in Jackdaw: it parses, a
 //! scene instancing it resolves, every component it names is a type the editor
 //! knows, the model it points at exists, and no prefab carries its own LodGroup
 //! (levels of detail belong to the model).
@@ -22,7 +22,12 @@ fn prefab_files(dir: &Path, out: &mut Vec<PathBuf>) {
         let path = entry.unwrap().path();
         if path.is_dir() {
             prefab_files(&path, out);
-        } else if path.extension().is_some_and(|e| e == "bsn") {
+        } else if path.extension().is_some_and(|e| e == "bsn")
+            && std::fs::read_to_string(&path)
+                .unwrap()
+                .lines()
+                .any(|line| line.trim() == "jackdaw::prefab::components::Prefab")
+        {
             out.push(path);
         }
     }
@@ -46,7 +51,7 @@ fn editor_world() -> App {
 #[test]
 fn every_prefab_places_with_known_types_and_real_models() {
     let mut files = Vec::new();
-    prefab_files(&assets().join("prefabs"), &mut files);
+    prefab_files(&assets(), &mut files);
     files.sort();
     assert!(
         files.len() >= 27,
@@ -96,7 +101,7 @@ fn every_prefab_places_with_known_types_and_real_models() {
             "{}: LodGroup on a prefab; put the levels in the model",
             rel.display()
         );
-        if rel.starts_with("prefabs/flora") && rel.to_string_lossy().contains("scrub_oak") {
+        if rel.starts_with("flora") && rel.to_string_lossy().contains("scrub_oak") {
             assert_eq!(
                 mine.map(|m| m.mine.as_str()),
                 Some("scrub_oak"),
@@ -110,7 +115,7 @@ fn every_prefab_places_with_known_types_and_real_models() {
 #[test]
 fn multi_prefab_review_scene_resolves_seven_separate_instances() {
     let mut files = Vec::new();
-    prefab_files(&assets().join("prefabs"), &mut files);
+    prefab_files(&assets(), &mut files);
     let library: std::collections::HashMap<_, _> = files
         .into_iter()
         .map(|file| {
@@ -135,4 +140,156 @@ fn multi_prefab_review_scene_resolves_seven_separate_instances() {
             .count(),
         7
     );
+}
+
+/// Validate our authored references using Jackdaw's actual metadata schema.
+fn validate_model_lods(
+    model: &Path,
+    settings: &jackdaw_scene_types::model_import::ModelSettings,
+) -> Result<(), String> {
+    use jackdaw_scene_types::model_import::LevelShow;
+    let gltf = gltf::Gltf::open(model).map_err(|error| format!("{}: {error}", model.display()))?;
+    let Some(lod) = &settings.lod else {
+        return Err(format!("{}: missing model LOD settings", model.display()));
+    };
+    let names: std::collections::HashSet<_> = gltf.nodes().filter_map(|node| node.name()).collect();
+    let mut previous = f32::INFINITY;
+    for level in &lod.levels {
+        if !level.screen_height.is_finite()
+            || level.screen_height < 0.0
+            || level.screen_height >= previous
+        {
+            return Err(format!("{}: unordered LOD thresholds", model.display()));
+        }
+        previous = level.screen_height;
+        if let LevelShow::Nodes(nodes) = &level.show {
+            for node in nodes {
+                if !names.contains(node.as_str()) {
+                    return Err(format!("{}: missing LOD node {node}", model.display()));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn check_model_tree(dir: &Path, count: &mut usize) {
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_dir() {
+            check_model_tree(&path, count);
+        } else if path.extension().is_some_and(|ext| ext == "glb") {
+            let gltf = gltf::Gltf::open(&path).unwrap();
+            let authored = gltf.nodes().filter_map(|node| node.name()).any(|name| {
+                name.rsplit_once("_LOD")
+                    .is_some_and(|(_, suffix)| suffix.parse::<usize>().is_ok())
+            });
+            let meta = path.with_extension("glb.meta");
+            assert!(
+                !authored || meta.is_file(),
+                "{}: missing LOD metadata",
+                path.display()
+            );
+            if meta.is_file() {
+                let settings = jackdaw_scene_types::model_import::read_model_meta(
+                    &std::fs::read(&meta).unwrap(),
+                )
+                .unwrap_or_else(|| panic!("{}: invalid Jackdaw metadata", meta.display()));
+                validate_model_lods(&path, &settings).unwrap_or_else(|error| panic!("{error}"));
+                *count += 1;
+            }
+        }
+    }
+}
+
+#[test]
+fn model_owned_lod_metadata_resolves_after_asset_moves() {
+    let mut count = 0;
+    check_model_tree(&assets(), &mut count);
+    assert_eq!(
+        count, 17,
+        "all authored and generated LOD models retain metadata"
+    );
+}
+
+#[test]
+fn missing_lod_node_reports_model_and_node() {
+    use jackdaw_scene_types::model_import::LevelShow;
+    let model = assets().join("flora/scrub_oak/scrub_oak_0/scrub_oak_0.glb");
+    let mut settings = jackdaw_scene_types::model_import::read_model_meta(
+        &std::fs::read(model.with_extension("glb.meta")).unwrap(),
+    )
+    .unwrap();
+    settings.lod.as_mut().unwrap().levels[1].show = LevelShow::Nodes(vec!["missing_LOD1".into()]);
+    let error = validate_model_lods(&model, &settings).unwrap_err();
+    assert!(error.contains("scrub_oak_0.glb"), "{error}");
+    assert!(error.contains("missing_LOD1"), "{error}");
+}
+
+#[test]
+fn migrated_authored_and_generated_models_load_without_editor_cache() {
+    use jackdaw_scene_types::model_import::{GeneratedLevelCache, level_key};
+    use jackdaw_scene_types::model_parts::ModelParts;
+    // Stage just the shipped model and meta pairs. No editor project/cache is copied.
+    let project = tempfile::tempdir().unwrap();
+    let paths = [
+        "flora/scrub_oak/scrub_oak_0/scrub_oak_0.glb",
+        "machines/mudpit_burbler/mudpit_burbler.glb",
+    ];
+    let mut keys = Vec::new();
+    for path in paths {
+        let target = project.path().join(path);
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::copy(assets().join(path), &target).unwrap();
+        let meta = format!("{path}.meta");
+        std::fs::copy(assets().join(&meta), project.path().join(&meta)).unwrap();
+        let settings = jackdaw_scene_types::model_import::read_model_meta(
+            &std::fs::read(assets().join(meta)).unwrap(),
+        )
+        .unwrap();
+        keys.extend(
+            settings
+                .lod
+                .unwrap()
+                .levels
+                .iter()
+                .enumerate()
+                .map(|(i, level)| level_key(path, i, &level.show)),
+        );
+    }
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, TransformPlugin));
+    app.add_plugins(AssetPlugin {
+        file_path: project.path().to_string_lossy().into_owned(),
+        ..default()
+    });
+    app.add_plugins(bevy::world_serialization::WorldSerializationPlugin);
+    app.init_asset::<Mesh>();
+    app.init_asset::<AnimationClip>();
+    app.add_plugins(bevy::gltf::GltfPlugin::default());
+    app.add_plugins(jackdaw_runtime::JackdawPlugin);
+    app.finish();
+    app.cleanup();
+    app.world().resource::<GeneratedLevelCache>().set(None);
+    for key in &keys {
+        app.world_mut().resource_mut::<ModelParts>().request(key);
+    }
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    while std::time::Instant::now() < deadline {
+        app.update();
+        let models = app.world().resource::<ModelParts>();
+        if keys
+            .iter()
+            .all(|key| models.get(key).is_some_and(|model| !model.parts.is_empty()))
+        {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    let models = app.world().resource::<ModelParts>();
+    let missing: Vec<_> = keys
+        .iter()
+        .filter(|key| models.get(key).is_none())
+        .collect();
+    panic!("migrated models did not load all LODs without cache: {missing:?}");
 }

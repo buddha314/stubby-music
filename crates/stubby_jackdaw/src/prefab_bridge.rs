@@ -142,7 +142,7 @@ mod tests {
                 .world_mut()
                 .spawn((
                     IsA {
-                        source: "prefabs/creatures/lightning_bug.bsn".into(),
+                        source: "creatures/lightning_bug/lightning_bug.bsn".into(),
                         deleted: vec![],
                     },
                     SceneNodeId(1_u64 << 40 | index),
@@ -153,7 +153,7 @@ mod tests {
                 .world_mut()
                 .spawn((
                     GltfSource {
-                        path: "models/creatures/lightning_bug.glb".into(),
+                        path: "creatures/lightning_bug/lightning_bug.glb".into(),
                         scene_index: 0,
                     },
                     ResourceNode {
@@ -173,7 +173,7 @@ mod tests {
             .world_mut()
             .spawn((
                 GltfSource {
-                    path: "models/creatures/lightning_bug.glb".into(),
+                    path: "creatures/lightning_bug/lightning_bug.glb".into(),
                     scene_index: 0,
                 },
                 ResourceNode {

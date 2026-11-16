@@ -1,0 +1,22 @@
+name: Asset layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/**"
+      - "tools/check_asset_layout.py"
+      - ".github/workflows/asset-layout.yml"
+  pull_request:
+    paths:
+      - "assets/**"
+      - "tools/check_asset_layout.py"
+      - ".github/workflows/asset-layout.yml"
+
+jobs:
+  references:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Resolve runtime model and prefab references
+        run: python3 tools/check_asset_layout.py

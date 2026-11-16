@@ -30,7 +30,7 @@ mocks in docs/art/ are rendered from these assets (render_hud_mock.py).
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_hud_rack.py
            (or `-- rack_frame`, `-- slot_outlines`, `-- slot_labels`)
-Writes assets/models/hud/ and assets/hud/.
+Writes models and profiles together under assets/hud/<id>/.
 """
 from pathlib import Path
 import sys

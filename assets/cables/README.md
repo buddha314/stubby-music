@@ -7,7 +7,7 @@
 The general cable that patches any module jack to any other, in the HUD rack and in
 the world. Two parts:
 
-- **The plug** (`models/cables/patch_plug.glb`): a titanium sleeve that fits the
+- **The plug** (`cables/patch_plug/patch_plug.glb`): a titanium sleeve that fits the
   module jacks (3.5 mm at the world's x10 scale), a knurled graphene grip, and a
   coloured collar and strain relief. Seat it by giving its root a jack's `Port_<port>`
   transform; the cable leaves from `Cable_attach`.

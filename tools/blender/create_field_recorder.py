@@ -19,7 +19,7 @@ Game-facing nodes (empties, glTF extras):
   Screen              the display; its `Level_<n>` bars can be lit as an input meter
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_field_recorder.py
-Writes assets/models/equipment/field_recorder.glb and assets/equipment/field_recorder/.
+Writes assets/equipment/field_recorder/field_recorder.glb and assets/equipment/field_recorder/.
 """
 from pathlib import Path
 import math

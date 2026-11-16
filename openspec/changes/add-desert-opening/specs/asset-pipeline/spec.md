@@ -2,7 +2,7 @@
 
 ### Requirement: Blender sources, glTF at runtime
 Source models SHALL live as `.blend` files under `assets-src/blender/`, and the game
-SHALL load only exported `.glb` files from `assets/models/`, grouped in category
+SHALL load only exported `.glb` files from `assets/<category>/<id>/`, grouped in asset-family
 folders that mirror the sources.
 
 #### Scenario: No blend at runtime
@@ -15,7 +15,7 @@ with transforms applied and Bevy-compatible axes and units.
 
 #### Scenario: One-command export
 - **WHEN** `blender -b assets-src/blender/modules/square_vco.blend -P tools/blender/export_gltf.py` runs
-- **THEN** `assets/models/modules/square_vco.glb` is written and loads in Bevy at the correct scale and orientation
+- **THEN** `assets/modules/square_vco/square_vco.glb` is written and loads in Bevy at the correct scale and orientation
 
 ### Requirement: Engine-compatible materials
 Exported materials SHALL use only glTF PBR properties (base colour, metallic,

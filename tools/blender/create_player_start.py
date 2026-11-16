@@ -14,7 +14,7 @@ The origin is on the ground at the footprint's centre, so dropping the prefab sn
 it to the floor; the game stands the player there, facing the marker's yaw.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_player_start.py
-Writes assets/models/actors/player_start_marker.glb and assets/actors/player_start_marker/.
+Writes assets/actors/player_start_marker/player_start_marker.glb and assets/actors/player_start_marker/.
 """
 from pathlib import Path
 import math

@@ -1,0 +1,6 @@
+#"Reed clump 2"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "flora/reeds/reed_clump_2/reed_clump_2.glb", scene_index: 0 }

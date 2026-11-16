@@ -21,7 +21,7 @@ Variation: seeded variants here; per-instance scale, yaw and tilt in the game.
 
 Reproduce: blender -b --factory-startup -P tools/blender/create_desert_props.py
            (`-- brush 1` for one prop, `-- montage` for the sheets)
-Writes assets/models/props/desert/desert_<family>_<k>.glb and assets/props/desert/.
+Writes assets/props/desert/desert_<family>_<k>/desert_<family>_<k>.glb and assets/props/desert/.
 """
 from pathlib import Path
 import json
@@ -317,7 +317,7 @@ def write_profile():
     profile = {
         "id": "desert_props",
         "kind": "prop",
-        "families": {f: [f"models/props/desert/desert_{f}_{k}.glb#Scene0" for k in range(len(s))] for f, s in FAMILIES.items()},
+        "families": {f: [f"props/desert/desert_{f}_{k}/desert_{f}_{k}.glb#Scene0" for k in range(len(s))] for f, s in FAMILIES.items()},
         "per_instance": PER_INSTANCE,
         "bloom": {
             "value": "0 bleak .. 1 bloomed; follow the local light quality",

@@ -1,6 +1,0 @@
-#"Triangle VCO"
-jackdaw::prefab::components::Prefab
-jackdaw::prefab::components::PrefabEntityId(0)
-bevy_transform::components::transform::Transform
-bevy_camera::visibility::Visibility::Visible
-jackdaw_scene_types::types::GltfSource { path: "models/modules/triangle_vco.glb", scene_index: 0 }
