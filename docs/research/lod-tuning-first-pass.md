@@ -53,6 +53,9 @@ Both sets were captured before and after. Evidence lives under
 Watchdog logs/reports are `/tmp/jackdaw-flicker-lod-*.{log,json}`. The four runs took
 20.018–20.025 seconds each with expected exit -9, display mode restored, and no
 asset errors or panics. The review's complete event reports 12 shots in each run.
+The tuned machine set was repeated after integrating the concurrent sequencer
+merge (`70f638b`) and its refreshed burbler asset; all 12 shots completed and the
+reported burbler geometry counts/cutoff behavior were unchanged.
 
 ## Observed results
 
