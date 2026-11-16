@@ -12,7 +12,8 @@ reserved for the flashlight (AGENTS.md).
   alternate light source of the kind used at crime scenes: a black anodised body, knurled
   grip, wide bezel and a violet lens, made by a Blender generator.
 - **Its light is a disco ball** (user, 2026-11-16). The torch's light manifests as a
-  mirror ball floating in front of the player. It spins and throws a ring of narrow
+  mirror ball that appears above the player's head to the left (about 30 cm above it, at a
+  comfortable glance) when switched on and stays there in the world while on. It spins and throws a ring of narrow
   violet and cyan beams that sweep across the ground and anything near, as a disco ball's
   spots do.
 - **Collectibles the beams touch turn holographic.** Every available pickup (whatever E

@@ -10,14 +10,20 @@ nothing while a screen has the controls.
 - **THEN** the flashlight is held and casting its beam, then put away and dark
 
 ### Requirement: The light is a spinning disco ball
-While the flashlight is held, its light SHALL appear as a mirror ball floating in front of
-the player that spins and throws a ring of narrow violet and cyan beams, without shadows,
-whose spots sweep the ground as it turns. Its size, place, spin and beams SHALL come from
+While the flashlight is held, its light SHALL appear as a mirror ball that spins and throws
+a ring of narrow violet and cyan beams, without shadows, whose spots sweep the ground as it
+turns. When switched on, the ball SHALL appear above the player's head to the left, about
+30 cm above the head, where a comfortable glance up and left finds it, and SHALL stay at that
+place in the world while on, not following the player's view (user, 2026-11-16). Its size, place, spin and beams SHALL come from
 `assets/ui/flashlight.json`.
 
 #### Scenario: The spots sweep
 - **WHEN** the player holds the flashlight still for a few seconds
 - **THEN** the ball turns and its spots move across the ground
+
+#### Scenario: The ball stays put
+- **WHEN** the player switches the flashlight on and then turns to look the other way
+- **THEN** the ball stays where it appeared, above and to the left of where they stood
 
 ### Requirement: Collectibles the beams touch show as holograms
 Every available collectible within range that a beam passes over SHALL show a holographic
