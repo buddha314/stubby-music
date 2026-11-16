@@ -11,3 +11,6 @@ publish = false
 # no behaviour.
 [dependencies]
 bevy.workspace = true
+# Key bindings name KeyCode.
+bevy.features = ["keyboard"]
+stubby_audio = { path = "../stubby_audio" }

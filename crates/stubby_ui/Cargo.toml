@@ -1,0 +1,12 @@
+[package]
+name = "stubby_ui"
+version = "0.1.0"
+edition.workspace = true
+description = "Shared HUD widgets: item icons, slots and their tooltips"
+license = "MIT"
+publish = false
+
+# A service crate (split-game-into-systems): Bevy only.
+[dependencies]
+bevy.workspace = true
+bevy.features = ["3d", "ui", "mesh_picking"]

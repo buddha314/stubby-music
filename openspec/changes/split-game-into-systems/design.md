@@ -85,9 +85,12 @@ Rejected: cargo already forbids crate cycles; the problem is the web, not loops.
 Each system publishes what it needs and what it did as its own messages and
 resources, without naming another system. Examples:
 
-- **Rack offers:** `bevy_stubby_rack` shows a "Relevant" list from a `RackOffers`
-  resource (module ID, icon, count) and emits `MountRequested { place, module }`. Glue
-  fills the offers from the inventory and, on a request, takes the item and confirms.
+- **The player's stock:** `bevy_stubby_rack` takes and gives items through the
+  `stubby_core::Stock` trait, which the crafting plugin implements for its inventory;
+  `RackPlugin<S: Stock>` is generic over it. (A message pair, `RackOffers` /
+  `MountRequested`, was the first idea; it was dropped because a mount or a cable must
+  succeed or fail in the frame the player acts, which a request answered next frame
+  cannot give.)
 - **Stream cost:** `stubby_streams` reads a `BuildBudget` resource and emits
   `SegmentLaid`. Glue keeps the budget equal to reeds held and removes six per segment.
 - **Ground height:** `stubby_core` defines a `GroundHeight` resource (a function

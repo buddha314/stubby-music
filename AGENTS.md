@@ -133,6 +133,8 @@ crates/
                           GroundHeight, Interactable)
   stubby_player/          system: movement and look, the hand, what E reaches (Interactable)
   stubby_life/            system: plants and animals; today the lightning bug (Harvested, GroundHeight)
+  bevy_stubby_rack/       system: the rack screen, cables, knobs, module assets; takes items via Stock
+  stubby_ui/              service: shared HUD widgets (item icons, slots, tooltips)
   stubby_game/            the Bevy app
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
@@ -455,8 +457,8 @@ equivalent of an iron ore node, so the player does not pick it up.
   that cannot fit sends `InventoryFull` (`bevy_stubby_recipes`) and shows Satisfactory's
   **INVENTORY FULL** banner (red, with the item's icon, under the reticle or under an
   open machine window), fading after about 2 s; nothing is taken or lost.
-- **Every machine gets a rack, and all racks share one implementation** (`rack.rs`,
-  `machine_config.rs`): this is the general pattern. A machine is data, its profile's
+- **Every machine gets a rack, and all racks share one implementation** (the
+  `bevy_stubby_rack` crate): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the
   inventory), spare cables (colour, the suggested patch, a hint), the normalled output. A
   module is data too: `assets/modules/<id>/module.json` (its engine parts, internal
@@ -464,7 +466,7 @@ equivalent of an iron ore node, so the player does not pick it up.
   panel `asset.json` by the Bevy-free `stubby_rack` crate, which also plans the engine
   patch. `stubby_rack` never names items, creatures or machines; values that join the
   rack to the world (a machine's seeded tempo, the bug's pitch) are passed in by
-  `rack.rs` (`refactor-rack-modules-as-data`). The engine patch is exactly the patched cables; completing them sends
+  the game's glue (`stubby_game/src/glue.rs`, `KnobDefaults`) (`refactor-rack-modules-as-data`). The engine patch is exactly the patched cables; completing them sends
   `MachineConfigured`. New machines add data, not systems (`add-rack-configurations`,
   design "The rack pattern as built").
 - **A rack plays only what it shows** (user rule, until the user gives an override).

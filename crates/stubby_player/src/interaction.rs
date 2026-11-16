@@ -16,8 +16,7 @@ const REACH_HEIGHT_M: f32 = 8.0;
 /// The sensor every interactable carries: small, so it marks a point, not an area.
 const MARKER_RADIUS_M: f32 = 0.25;
 
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct InteractionTargeting;
+pub use stubby_core::InteractionTargeting;
 
 pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {

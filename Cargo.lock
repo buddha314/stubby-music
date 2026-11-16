@@ -1929,10 +1929,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_stubby_rack"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_stubby_audio",
+ "gltf",
+ "half",
+ "serde",
+ "serde_json",
+ "stubby_audio",
+ "stubby_core",
+ "stubby_player",
+ "stubby_rack",
+ "stubby_ui",
+]
+
+[[package]]
 name = "bevy_stubby_recipes"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "stubby_core",
  "stubby_recipes",
 ]
 
@@ -6525,6 +6543,7 @@ name = "stubby_core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "stubby_audio",
 ]
 
 [[package]]
@@ -6534,6 +6553,7 @@ dependencies = [
  "avian3d",
  "bevy",
  "bevy_stubby_audio",
+ "bevy_stubby_rack",
  "bevy_stubby_recipes",
  "gltf",
  "half",
@@ -6547,6 +6567,7 @@ dependencies = [
  "stubby_player",
  "stubby_rack",
  "stubby_recipes",
+ "stubby_ui",
  "tempfile",
 ]
 
@@ -6608,6 +6629,13 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "thiserror 2.0.20",
+]
+
+[[package]]
+name = "stubby_ui"
+version = "0.1.0"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

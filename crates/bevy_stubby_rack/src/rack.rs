@@ -9,31 +9,29 @@
 //! Sound starts when every spare cable is patched: the engine patch is exactly the
 //! cables, so a half-patched voice is naturally silent (no CV opens the VCA, or nothing
 //! reaches its input). Completing the last patch sends `MachineConfigured`, once.
-use super::{
-    audio::Synth,
+use crate::{
     machine_config::{
         CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles, RackActions,
         RackConfiguration, RackModuleView,
     },
-    module_ids::ModuleIds,
-    prefabs::{AssetClock, PlacedAsset},
-    resources::{PlayerInventory, RecipeCatalog},
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
 use bevy::{
     asset::RenderAssetUsages, mesh::Indices, picking::events::PointerClick, prelude::*,
     render::render_resource::PrimitiveTopology,
 };
+use bevy_stubby_audio::{Synth, module_ids::ModuleIds};
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::sync::LazyLock;
 use stubby_audio::{Command, ModuleId, PortRef};
+use stubby_core::{AssetClock, ItemNames, PlacedAsset, Stock};
 use stubby_core::{Screen, ScreenMode};
 use stubby_rack::{Modules, Plan, RackPatch};
-use stubby_recipes::Stack;
 
 /// Every rack module's definition, validated once. The data is embedded, so a bad
 /// definition fails the first rack that opens, with every error listed.
-pub(crate) static RACK_MODULES: LazyLock<Modules> = LazyLock::new(|| {
+pub static RACK_MODULES: LazyLock<Modules> = LazyLock::new(|| {
     stubby_rack::shipped_modules().unwrap_or_else(|e| panic!("rack module definitions:\n{e}"))
 });
 
@@ -72,12 +70,12 @@ impl RackState {
 
 /// Engine modules this rack owns (not the machine's clock), and whether it has sounded.
 #[derive(Component, Default)]
-pub(crate) struct RackEngine {
+pub struct RackEngine {
     owned: Vec<ModuleId>,
     /// The voice's normalled output, which the streams place in the world.
-    pub(crate) voice: Option<PortRef>,
+    pub voice: Option<PortRef>,
     /// Every spare cable is patched, so the voice sounds and its stream carries it.
-    pub(crate) sounding: bool,
+    pub sounding: bool,
     /// (place, part) -> engine module, so a knob reaches the module it turns.
     parts: HashMap<(String, String), ModuleId>,
     configured: bool,
@@ -100,33 +98,42 @@ struct PatchSelection(Option<JackRef>);
 
 /// A cable taken from the comb: which spare cable, and the jack its first end went into.
 #[derive(Resource, Default)]
-pub(crate) struct HeldCable {
-    pub(crate) cable: Option<usize>,
+pub struct HeldCable {
+    pub cable: Option<usize>,
     first: Option<JackRef>,
 }
 
 /// A hanging spare cable's tube or plug on the comb (spare cable index), pickable.
 #[derive(Component, Clone, Copy)]
-pub(crate) struct CombCable(pub usize);
+pub struct CombCable(pub usize);
 
-pub struct RackPlugin;
-impl Plugin for RackPlugin {
+/// The rack, taking items from the stock `S` (the player's inventory, in the game).
+pub struct RackPlugin<S>(PhantomData<S>);
+impl<S> Default for RackPlugin<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+impl<S: Stock> Plugin for RackPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PatchSelection>()
+        app.add_plugins(stubby_ui::ItemTooltipPlugin)
+            .init_resource::<ItemNames>()
+            .init_resource::<KnobDefaults>()
+            .init_resource::<PatchSelection>()
             .init_resource::<HeldCable>()
             .add_observer(take_cable)
-            .add_observer(drop_cable)
+            .add_observer(drop_cable::<S>)
             .add_observer(drag_cable)
-            .add_observer(drag_from_jack)
-            .add_observer(drop_on_jack)
+            .add_observer(drag_from_jack::<S>)
+            .add_observer(drop_on_jack::<S>)
             .init_resource::<DraggedJack>()
             .add_message::<MachineConfigured>()
-            .add_observer(click_jack)
-            .add_observer(press_mount)
+            .add_observer(click_jack::<S>)
+            .add_observer(press_mount::<S>)
             .add_observer(start_item_drag)
             .add_observer(move_item_drag)
             .add_observer(end_item_drag)
-            .add_observer(drop_item)
+            .add_observer(drop_item::<S>)
             .add_observer(turn_knob)
             .add_observer(scroll_knob)
             .add_systems(
@@ -135,20 +142,20 @@ impl Plugin for RackPlugin {
                     attach,
                     apply_knobs,
                     show_knobs,
-                    mount_buttons,
-                    number_keys,
+                    mount_buttons::<S>,
+                    number_keys::<S>,
                     comb_parts_pickable,
                     live_parts_unpickable,
                     tint_plugs,
                     load_snaps,
                     snap_on_plug,
                     rack_ghost,
-                    clear_feedback_on_open,
+                    clear_feedback_on_open::<S>,
                     patch_engine,
                     pods,
                     draw_cables,
                     live_cable,
-                    snap_release,
+                    snap_release::<S>,
                 )
                     .chain()
                     .after(stubby_core::MachineInteractionSet),
@@ -161,7 +168,12 @@ impl Plugin for RackPlugin {
 /// Starting values the game supplies for a module's knobs, joining the rack to the
 /// world: a machine's clock starts at its seeded tempo, and a Square VCO, made from a
 /// lightning bug's square wave, starts at the bug's pitch. Rack data never names these.
-fn starting_value(module: &str, knob: &str, clock: Option<&AssetClock>) -> Option<f32> {
+fn starting_value(
+    module: &str,
+    knob: &str,
+    clock: Option<&AssetClock>,
+    defaults: &KnobDefaults,
+) -> Option<f32> {
     let k = RACK_MODULES.knob(module, knob)?;
     let part = RACK_MODULES
         .get(module)?
@@ -170,15 +182,28 @@ fn starting_value(module: &str, knob: &str, clock: Option<&AssetClock>) -> Optio
         .find(|p| p.part == k.part)?;
     match (part.kind, k.param) {
         ("Clock", "bpm") => clock.map(|c| c.bpm),
-        ("SquareVco", "freq") => Some(stubby_life::bug_click().freq_hz),
-        _ => None,
+        (kind, param) => defaults
+            .0
+            .get(&(kind.to_owned(), param.to_owned()))
+            .copied(),
     }
 }
 
+/// Starting knob values the game supplies, by engine kind and parameter (a Square VCO
+/// made from a lightning bug's square wave starts at the bug's pitch). Rack data never
+/// names where they come from.
+#[derive(Resource, Default, Clone)]
+pub struct KnobDefaults(pub HashMap<(String, String), f32>);
+
 /// A knob's value before the player turns it: the game's starting value, else the
 /// module's default.
-fn initial_knob(module: &str, knob: &str, clock: Option<&AssetClock>) -> Option<f32> {
-    starting_value(module, knob, clock)
+fn initial_knob(
+    module: &str,
+    knob: &str,
+    clock: Option<&AssetClock>,
+    defaults: &KnobDefaults,
+) -> Option<f32> {
+    starting_value(module, knob, clock, defaults)
         .or_else(|| RACK_MODULES.knob(module, knob).map(|k| k.default))
 }
 
@@ -206,6 +231,7 @@ fn plan(
     state: &RackState,
     knobs: &RackKnobs,
     clock: Option<&AssetClock>,
+    defaults: &KnobDefaults,
     fresh: impl FnMut() -> Option<ModuleId>,
 ) -> Plan {
     let modules = modules(config, state);
@@ -234,7 +260,7 @@ fn plan(
                 .copied()
                 .or_else(|| {
                     let module = modules.get(place)?;
-                    starting_value(module, knob, clock)
+                    starting_value(module, knob, clock, defaults)
                 })
         },
         fresh,
@@ -279,12 +305,13 @@ fn patch_engine(
         Changed<RackState>,
     >,
     mut configured: MessageWriter<MachineConfigured>,
+    defaults: Res<KnobDefaults>,
 ) {
     for (machine, asset, state, knobs, mut engine, clock) in &mut racks {
         let Some(config) = profiles.0.get(&asset.asset) else {
             continue;
         };
-        let plan = plan(config, state, knobs, clock, || ids.allocate());
+        let plan = plan(config, state, knobs, clock, &defaults, || ids.allocate());
         if let Some(synth) = &synth {
             for id in engine.owned.drain(..) {
                 synth.send(Command::RemoveModule { id });
@@ -350,6 +377,7 @@ fn turn_open_knob(
         Option<&AssetClock>,
     )>,
     machine: Entity,
+    defaults: &KnobDefaults,
 ) {
     let Ok((asset, state, mut knobs, clock)) = racks.get_mut(machine) else {
         return;
@@ -372,7 +400,7 @@ fn turn_open_knob(
         .0
         .get(&key)
         .copied()
-        .or_else(|| initial_knob(&module, &hit.param, clock))
+        .or_else(|| initial_knob(&module, &hit.param, clock, defaults))
     else {
         return;
     };
@@ -399,12 +427,15 @@ fn turn_knob(
         &mut RackKnobs,
         Option<&AssetClock>,
     )>,
+    defaults: Res<KnobDefaults>,
 ) {
     let (Ok(hit), Some(machine)) = (hits.get(drag.entity), open_rack(&screens)) else {
         return;
     };
     let turn = -drag.delta.y / KNOB_DRAG_PX;
-    turn_open_knob(hit, turn, &profiles, &catalog, &mut racks, machine);
+    turn_open_knob(
+        hit, turn, &profiles, &catalog, &mut racks, machine, &defaults,
+    );
 }
 
 /// The scroll wheel over a knob turns it in small steps.
@@ -420,6 +451,7 @@ fn scroll_knob(
         &mut RackKnobs,
         Option<&AssetClock>,
     )>,
+    defaults: Res<KnobDefaults>,
 ) {
     let (Ok(hit), Some(machine)) = (hits.get(scroll.entity), open_rack(&screens)) else {
         return;
@@ -430,7 +462,9 @@ fn scroll_knob(
     };
     let turn = notches.signum() * notches.abs().max(1.) * KNOB_SCROLL_STEP;
     if notches != 0. {
-        turn_open_knob(hit, turn, &profiles, &catalog, &mut racks, machine);
+        turn_open_knob(
+            hit, turn, &profiles, &catalog, &mut racks, machine, &defaults,
+        );
     }
 }
 
@@ -485,6 +519,7 @@ fn apply_knobs(
 
 /// The open rack's modules show their knobs' values (knob angle, the BPM display).
 fn show_knobs(
+    defaults: Res<KnobDefaults>,
     screens: Res<ScreenMode>,
     catalog: Res<ModuleCatalog>,
     racks: Query<(&RackKnobs, Option<&AssetClock>)>,
@@ -502,7 +537,7 @@ fn show_knobs(
                 .0
                 .get(&(view.place.clone(), p.param.clone()))
                 .copied()
-                .or_else(|| initial_knob(&module.asset, &p.param, clock));
+                .or_else(|| initial_knob(&module.asset, &p.param, clock, &defaults));
             if let Some(value) = value
                 && params.0.get(&p.param) != Some(&value)
             {
@@ -515,7 +550,7 @@ fn show_knobs(
 // ------------------------------------------------------------------ mounting
 
 #[derive(Component)]
-pub(crate) struct MountButton {
+pub struct MountButton {
     machine: Entity,
     place: String,
     item: String,
@@ -523,16 +558,16 @@ pub(crate) struct MountButton {
 }
 
 /// One button per open place the player can fill from the inventory.
-fn mount_buttons(
+fn mount_buttons<S: Stock>(
     mut commands: Commands,
     server: Res<AssetServer>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
-    player: Res<PlayerInventory>,
-    catalog: Option<Res<RecipeCatalog>>,
+    player: Res<S>,
+    names: Res<ItemNames>,
     racks: Query<(&PlacedAsset, &RackState)>,
     actions: Query<Entity, With<RackActions>>,
-    boxes: Query<Entity, With<super::machine_config::RackInventory>>,
+    boxes: Query<Entity, With<crate::machine_config::RackInventory>>,
     mut last: Local<Option<(Entity, u32, u32)>>,
 ) {
     let (Ok(area), Ok(grid)) = (actions.single(), boxes.single()) else {
@@ -547,7 +582,7 @@ fn mount_buttons(
         }
         return;
     };
-    let held: u32 = player.items.items().map(|(_, n)| n).sum();
+    let held: u32 = player.boxes().iter().map(|(_, n)| n).sum();
     if *last == Some((machine, state.version, held)) {
         return;
     }
@@ -560,7 +595,7 @@ fn mount_buttons(
     // The player's inventory, Satisfactory-style: a "Relevant" strip of what this rack's
     // open places accept (number keys 1-0 insert them, as does a click), then the rest
     // of what you carry, dimmed.
-    let relevant: Vec<_> = relevant(config, state, &player.items);
+    let relevant: Vec<_> = relevant(config, state, &*player);
     let amber = Color::srgb(1., 0.7, 0.31);
     let muted = Color::srgb(0.55, 0.53, 0.49);
     let text = |value: String, size: f32, color: Color| {
@@ -574,14 +609,9 @@ fn mount_buttons(
             Pickable::IGNORE,
         )
     };
-    let name = |id: &str| {
-        catalog
-            .as_ref()
-            .and_then(|c| c.0.item(id))
-            .map_or(id.to_string(), |i| i.name.clone())
-    };
-    let mount = |place: &super::machine_config::RackPlace,
-                 accept: &super::machine_config::Accept| {
+    let name = |id: &str| names.name(id);
+    let mount = |place: &crate::machine_config::RackPlace,
+                 accept: &crate::machine_config::Accept| {
         MountButton {
             machine,
             place: place.place.clone(),
@@ -593,7 +623,7 @@ fn mount_buttons(
     // row into its slot, or click it, or press its number.
     commands.entity(area).with_children(|list| {
         for (place, accept) in &relevant {
-            let count = player.items.quantity(&accept.item);
+            let count = player.quantity(&accept.item);
             list.spawn((
                 Node {
                     column_gap: px(10),
@@ -607,7 +637,7 @@ fn mount_buttons(
             .with_children(|row| {
                 row.spawn((
                     item_icon(&server, &accept.item),
-                    super::inventory_screen::ItemName(name(&accept.item)),
+                    stubby_ui::ItemName(name(&accept.item)),
                     Node {
                         width: px(36),
                         height: px(36),
@@ -632,8 +662,8 @@ fn mount_buttons(
     // Right: the inventory, 16 boxes; an item that fits an open slot can be dragged
     // from its box into the rack.
     commands.entity(grid).with_children(|grid| {
-        let held: Vec<_> = player.items.boxes().collect();
-        for index in 0..stubby_recipes::INVENTORY_BOXES as usize {
+        let held = player.boxes();
+        for index in 0..player.box_count() {
             let mut cell = grid.spawn((
                 Node {
                     width: px(64),
@@ -663,10 +693,10 @@ fn mount_buttons(
 fn relevant<'a>(
     config: &'a RackConfiguration,
     state: &RackState,
-    held: &stubby_recipes::Inventory,
+    held: &impl Stock,
 ) -> Vec<(
-    &'a super::machine_config::RackPlace,
-    &'a super::machine_config::Accept,
+    &'a crate::machine_config::RackPlace,
+    &'a crate::machine_config::Accept,
 )> {
     config
         .places
@@ -680,11 +710,11 @@ fn relevant<'a>(
 }
 
 /// Number keys 1-0 insert the matching relevant item, as in Satisfactory.
-fn number_keys(
+fn number_keys<S: Stock>(
     keys: Res<ButtonInput<KeyCode>>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
 ) {
     const DIGITS: [KeyCode; 10] = [
@@ -711,16 +741,16 @@ fn number_keys(
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
-    let Some((place, accept)) = relevant(config, &state, &player.items)
+    let Some((place, accept)) = relevant(config, &state, &*player)
         .get(index)
         .map(|(p, a)| (p.place.clone(), (*a).clone()))
     else {
         return;
     };
-    if player.items.take(&accept.item, 1).is_ok() {
+    if player.take(&accept.item, 1) {
         state.mounted.insert(place, accept.module.clone());
         state.version += 1;
-        player.feedback = format!("Mounted a {}.", module_name(&accept.module));
+        player.say(format!("Mounted a {}.", module_name(&accept.module)));
     }
 }
 
@@ -732,11 +762,11 @@ fn module_name(module: &str) -> String {
 }
 
 /// Clicking a mount button (or its label) takes the item and mounts the module.
-fn press_mount(
+fn press_mount<S: Stock>(
     click: On<PointerClick>,
     buttons: Query<&MountButton>,
     parents: Query<&ChildOf>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
     mut racks: Query<&mut RackState>,
 ) {
     let Some(mount) = mount_of(click.entity, &buttons, &parents) else {
@@ -748,16 +778,16 @@ fn press_mount(
     if state.mounted.contains_key(&mount.place) {
         return;
     }
-    if player.items.take(&mount.item, 1).is_ok() {
+    if player.take(&mount.item, 1) {
         state
             .mounted
             .insert(mount.place.clone(), mount.module.clone());
         state.version += 1;
-        player.feedback = format!("Mounted a {}.", module_name(&mount.module));
+        player.say(format!("Mounted a {}.", module_name(&mount.module)));
     }
 }
 
-use super::inventory_screen::{icon_slot, item_icon};
+use stubby_ui::{icon_slot, item_icon};
 
 /// The icon following the pointer while an item is dragged from the Relevant strip.
 #[derive(Component)]
@@ -892,18 +922,18 @@ fn rack_ghost(
             ..default()
         })),
         transform,
-        bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER),
+        bevy::camera::visibility::RenderLayers::layer(crate::machine_config::HUD_LAYER),
         Pickable::IGNORE,
     ));
 }
 
 /// Dropping a Relevant item on its empty slot mounts the module, Satisfactory-style.
-fn drop_item(
+fn drop_item<S: Stock>(
     drop: On<bevy::picking::events::PointerDragDrop>,
-    slots: Query<&super::machine_config::SlotHit>,
+    slots: Query<&crate::machine_config::SlotHit>,
     buttons: Query<&MountButton>,
     parents: Query<&ChildOf>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
     mut racks: Query<&mut RackState>,
 ) {
     let (Ok(slot), Some(mount)) = (
@@ -913,18 +943,21 @@ fn drop_item(
         return;
     };
     if slot.0 != mount.place {
-        player.feedback = format!("A {} does not fit there.", module_name(&mount.module));
+        player.say(format!(
+            "A {} does not fit there.",
+            module_name(&mount.module)
+        ));
         return;
     }
     let Ok(mut state) = racks.get_mut(mount.machine) else {
         return;
     };
-    if !state.mounted.contains_key(&mount.place) && player.items.take(&mount.item, 1).is_ok() {
+    if !state.mounted.contains_key(&mount.place) && player.take(&mount.item, 1) {
         state
             .mounted
             .insert(mount.place.clone(), mount.module.clone());
         state.version += 1;
-        player.feedback = format!("Mounted a {}.", module_name(&mount.module));
+        player.say(format!("Mounted a {}.", module_name(&mount.module)));
     }
 }
 
@@ -933,7 +966,7 @@ fn drop_item(
 /// Click one jack, then the other: if a spare cable joins those two, it is patched.
 /// Clicking a patched jack unplugs its cable back onto the comb.
 #[allow(clippy::too_many_arguments)] // A click reads the rack, its cables and the inventory.
-fn click_jack(
+fn click_jack<S: Stock>(
     click: On<PointerClick>,
     jacks: Query<&JackHit>,
     screens: Res<ScreenMode>,
@@ -942,7 +975,7 @@ fn click_jack(
     mut held: ResMut<HeldCable>,
     mut dragged: ResMut<DraggedJack>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
 ) {
     // A drag that started here already pressed this jack; its click is the same gesture.
     if dragged.0.take() == Some(click.entity) {
@@ -952,14 +985,14 @@ fn click_jack(
         return;
     };
     on_rack(&screens, &profiles, &mut racks, |config, state| {
-        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+        press_jack(jack, config, state, &mut selection, &mut held, &mut *player)
     });
 }
 
 /// VCV Rack's gesture: drag from a jack (or a hanging cable) and drop on another jack.
 /// Starting a drag presses the jack it starts on; dropping presses the jack under it.
 #[allow(clippy::too_many_arguments)] // As `click_jack`.
-fn drag_from_jack(
+fn drag_from_jack<S: Stock>(
     drag: On<bevy::picking::events::PointerDragStart>,
     jacks: Query<&JackHit>,
     screens: Res<ScreenMode>,
@@ -968,19 +1001,19 @@ fn drag_from_jack(
     mut held: ResMut<HeldCable>,
     mut dragged: ResMut<DraggedJack>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
 ) {
     let Ok(JackHit(jack)) = jacks.get(drag.entity) else {
         return;
     };
     dragged.0 = Some(drag.entity);
     on_rack(&screens, &profiles, &mut racks, |config, state| {
-        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+        press_jack(jack, config, state, &mut selection, &mut held, &mut *player)
     });
 }
 
 #[allow(clippy::too_many_arguments)] // As `click_jack`.
-fn drop_on_jack(
+fn drop_on_jack<S: Stock>(
     drop: On<bevy::picking::events::PointerDragDrop>,
     jacks: Query<&JackHit>,
     screens: Res<ScreenMode>,
@@ -988,7 +1021,7 @@ fn drop_on_jack(
     mut selection: ResMut<PatchSelection>,
     mut held: ResMut<HeldCable>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
 ) {
     let (Ok(JackHit(jack)), true) = (jacks.get(drop.entity), jacks.contains(drop.dropped)) else {
         return;
@@ -997,7 +1030,7 @@ fn drop_on_jack(
         return;
     }
     on_rack(&screens, &profiles, &mut racks, |config, state| {
-        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+        press_jack(jack, config, state, &mut selection, &mut held, &mut *player)
     });
 }
 
@@ -1024,13 +1057,13 @@ fn on_rack(
 }
 
 /// One press of a jack, by click or by the drag gesture.
-fn press_jack(
+fn press_jack<S: Stock>(
     jack: &JackRef,
     config: &RackConfiguration,
     state: &mut RackState,
     selection: &mut PatchSelection,
     held: &mut HeldCable,
-    player: &mut PlayerInventory,
+    player: &mut S,
 ) {
     let mounted = modules(config, state);
     // A cable joins an output to a free input, whichever end goes in first.
@@ -1067,29 +1100,20 @@ fn press_jack(
         state.patched[i] = None;
         state.version += 1;
         selection.0 = None;
-        player.feedback = "Cable back on the comb.".into();
+        player.say("Cable back on the comb.".into());
         return;
     }
     // One of the player's own cables at this jack: back into the inventory.
     if let Some(i) = state.own.iter().position(|(a, b)| a == jack || b == jack) {
-        let back = player.items.grant(&[Stack {
-            item: PATCH_CABLE.into(),
-            quantity: 1,
-        }]);
         // No room for it: the cable stays patched rather than being lost.
-        if back.is_err() {
+        if !player.give(PATCH_CABLE, 1) {
             return;
         }
         state.own.remove(i);
         state.version += 1;
         selection.0 = None;
-        player.feedback = match back {
-            Ok(()) => format!(
-                "Patch cable back in your inventory ({}).",
-                player.items.quantity(PATCH_CABLE)
-            ),
-            Err(error) => error.to_string(),
-        };
+        let left = player.quantity(PATCH_CABLE);
+        player.say(format!("Patch cable back in your inventory ({left})."));
         return;
     }
     let Some(first) = selection.0.take() else {
@@ -1114,15 +1138,15 @@ fn press_jack(
         state.version += 1;
         return;
     }
-    if player.items.take(PATCH_CABLE, 1).is_ok() {
+    if player.take(PATCH_CABLE, 1) {
         state.own.push((from, to));
         state.version += 1;
-        player.feedback = format!(
+        player.say(format!(
             "Patched one of your cables ({} left).",
-            player.items.quantity(PATCH_CABLE)
-        );
+            player.quantity(PATCH_CABLE)
+        ));
     } else {
-        player.feedback = "You have no patch cables.".into();
+        player.say("You have no patch cables.".into());
     }
 }
 
@@ -1173,7 +1197,7 @@ fn drag_cable(
 /// Dropping a hanging cable on one of its jacks plugs that end in; the other end stays
 /// in hand, following the pointer, until it goes into its other jack (VCV Rack).
 #[allow(clippy::too_many_arguments)] // As `click_jack`.
-fn drop_cable(
+fn drop_cable<S: Stock>(
     drop: On<bevy::picking::events::PointerDragDrop>,
     parts: Query<&CombCable>,
     jacks: Query<&JackHit>,
@@ -1182,14 +1206,14 @@ fn drop_cable(
     mut selection: ResMut<PatchSelection>,
     mut held: ResMut<HeldCable>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
-    mut player: ResMut<PlayerInventory>,
+    mut player: ResMut<S>,
 ) {
     let (Ok(CombCable(_)), Ok(JackHit(jack))) = (parts.get(drop.dropped), jacks.get(drop.entity))
     else {
         return;
     };
     on_rack(&screens, &profiles, &mut racks, |config, state| {
-        press_jack(jack, config, state, &mut selection, &mut held, &mut player)
+        press_jack(jack, config, state, &mut selection, &mut held, &mut *player)
     });
 }
 
@@ -1296,7 +1320,7 @@ fn decode_wav(bytes: &[u8]) -> Option<(u32, Vec<Vec<f32>>)> {
 }
 
 /// Load the snaps into the engine once its thread is up.
-fn load_snaps(synth: Option<Res<super::audio::Synth>>, mut done: Local<bool>) {
+fn load_snaps(synth: Option<Res<Synth>>, mut done: Local<bool>) {
     let Some(thread) = synth.as_ref().and_then(|s| s.thread()) else {
         return;
     };
@@ -1313,7 +1337,7 @@ fn load_snaps(synth: Option<Res<super::audio::Synth>>, mut done: Local<bool>) {
 
 /// A cable going into a jack (a comb cable patched, or one of your own) snaps.
 fn snap_on_plug(
-    synth: Option<Res<super::audio::Synth>>,
+    synth: Option<Res<Synth>>,
     racks: Query<(Entity, &RackState), Changed<RackState>>,
     mut plugged: Local<HashMap<Entity, usize>>,
     mut next: Local<u32>,
@@ -1348,13 +1372,13 @@ fn live_parts_unpickable(
 }
 
 /// Feedback on the rack screen starts fresh each time it opens.
-fn clear_feedback_on_open(
-    mut opened: MessageReader<super::machine_config::MachineConfigurationOpened>,
-    mut player: ResMut<PlayerInventory>,
+fn clear_feedback_on_open<S: Stock>(
+    mut opened: MessageReader<crate::machine_config::MachineConfigurationOpened>,
+    mut player: ResMut<S>,
     mut held: ResMut<HeldCable>,
 ) {
     if opened.read().next().is_some() {
-        player.feedback.clear();
+        player.say(String::new());
         *held = HeldCable::default();
     }
 }
@@ -1486,7 +1510,7 @@ fn snap_target(
 /// Letting go near a valid jack plugs the cable in there, even off the jack itself
 /// (a direct hit on a jack is already handled by picking).
 #[allow(clippy::too_many_arguments)] // The release, the hand, the rack and the screen.
-fn snap_release(
+fn snap_release<S: Stock>(
     mut inputs: MessageReader<bevy::picking::pointer::PointerInput>,
     hovers: Res<bevy::picking::hover::HoverMap>,
     jacks: Query<(), With<JackHit>>,
@@ -1494,11 +1518,7 @@ fn snap_release(
     profiles: Res<Profiles>,
     hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     ports: Query<(&PortNode, &GlobalTransform)>,
-    mut hand: (
-        ResMut<HeldCable>,
-        ResMut<PatchSelection>,
-        ResMut<PlayerInventory>,
-    ),
+    mut hand: (ResMut<HeldCable>, ResMut<PatchSelection>, ResMut<S>),
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
 ) {
     use bevy::picking::pointer::{PointerAction, PointerButton, PointerId};
@@ -1672,7 +1692,7 @@ fn live_cable(
         .cable
         .and_then(|i| config.cables.get(i))
         .map_or("bone".to_string(), |c| c.color.clone());
-    let layer = bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER);
+    let layer = bevy::camera::visibility::RenderLayers::layer(crate::machine_config::HUD_LAYER);
     let material = sim
         .colours
         .entry(colour.clone())
@@ -1831,7 +1851,7 @@ fn draw_cables(
             .find(|(_, c, ..)| c.0 == name)
             .map(|(e, _, _, t)| (e, *t))
     };
-    let layer = bevy::camera::visibility::RenderLayers::layer(super::machine_config::HUD_LAYER);
+    let layer = bevy::camera::visibility::RenderLayers::layer(crate::machine_config::HUD_LAYER);
     let ready = config
         .places
         .iter()
@@ -1973,6 +1993,7 @@ mod tests {
                 state,
                 &RackKnobs::default(),
                 Some(&machine_clock(ModuleId(1))),
+                &KnobDefaults::default(),
                 || {
                     next += 1;
                     Some(ModuleId(next))
@@ -1985,8 +2006,7 @@ mod tests {
         };
         // The normalled output only: no tone.
         assert_eq!(connections(&state), 1);
-        let link =
-            |c: &super::super::machine_config::RackCable| Some((c.from.clone(), c.to.clone()));
+        let link = |c: &crate::machine_config::RackCable| Some((c.from.clone(), c.to.clone()));
         state.patched = vec![link(&config.cables[0]), None];
         assert!(!state.complete(config));
         state.patched = vec![link(&config.cables[0]), link(&config.cables[1])];
@@ -2023,6 +2043,7 @@ mod tests {
             &state,
             &knobs,
             Some(&machine_clock(ModuleId(1))),
+            &KnobDefaults::default(),
             || {
                 next += 1;
                 Some(ModuleId(next))
@@ -2098,6 +2119,7 @@ mod tests {
                 &state,
                 &RackKnobs::default(),
                 Some(&machine),
+                &KnobDefaults::default(),
                 || {
                     next += 1;
                     Some(ModuleId(next))

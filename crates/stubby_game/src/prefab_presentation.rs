@@ -23,12 +23,7 @@ pub struct AssetHoverEvent {
     pub instance: String,
     pub entered: bool,
 }
-#[derive(Message, Clone, Debug)]
-pub struct AssetUsed {
-    pub entity: Entity,
-    pub instance: String,
-    pub asset: String,
-}
+pub use stubby_core::AssetUsed;
 #[derive(Component)]
 struct HoverLabel;
 #[derive(Component)]
