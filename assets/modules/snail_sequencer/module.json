@@ -1,0 +1,25 @@
+{
+  "id": "snail_sequencer",
+  "parts": [
+    {
+      "part": "seq",
+      "kind": "StepSequencer"
+    }
+  ],
+  "jacks": {
+    "clock": "seq.clock",
+    "reset": "seq.reset",
+    "gate": "seq.gate",
+    "cv": "seq.cv"
+  },
+  "knobs": {
+    "cv_1": {"param": "seq.cv_1", "default": 0.0},
+    "cv_2": {"param": "seq.cv_2", "default": 0.0},
+    "cv_3": {"param": "seq.cv_3", "default": 0.0},
+    "cv_4": {"param": "seq.cv_4", "default": 0.0},
+    "gate_1": {"param": "seq.gate_1", "default": 0.0},
+    "gate_2": {"param": "seq.gate_2", "default": 0.0},
+    "gate_3": {"param": "seq.gate_3", "default": 0.0},
+    "gate_4": {"param": "seq.gate_4", "default": 0.0}
+  }
+}

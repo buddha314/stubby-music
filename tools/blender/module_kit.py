@@ -324,36 +324,50 @@ class ModuleKit:
     def title(self, text):
         self.label("Title", text, (0, PANEL_FRONT - 0.0005, HEIGHT - 0.06), size=0.04)
 
-    def knob(self, param, z, text, **extras):
-        """A pivot empty the game rotates, with the knob parts as children."""
+    def knob(self, param, z, text, x=0.0, radius=0.085, label_dz=-0.13, **extras):
+        """A pivot empty the game rotates, with the knob parts as children. `x` places it
+        off the panel's centre line; `text` "" leaves it unlabelled."""
         front = PANEL_FRONT
-        knob = self.socket(f"Knob_{param}", (0, front, z), param=param, **extras)
-        self.cylinder("KnobSkirt", 0.085, 0.02, (0, 0, 0.01), self.knob_mat, segments=48, parent=knob)
-        self.cylinder("KnobCap", 0.065, 0.055, (0, 0, 0.0475), self.knob_mat, segments=48, parent=knob)
-        pointer = self.box("KnobPointer", (0.008, 0.004, 0.05), (0, 0, 0), self.pointer_mat)
+        scale = radius / 0.085
+        knob = self.socket(f"Knob_{param}", (x, front, z), param=param, **extras)
+        self.cylinder("KnobSkirt", 0.085 * scale, 0.02, (0, 0, 0.01), self.knob_mat, segments=48, parent=knob)
+        self.cylinder("KnobCap", 0.065 * scale, 0.055, (0, 0, 0.0475), self.knob_mat, segments=48, parent=knob)
+        pointer = self.box("KnobPointer", (0.008, 0.004, 0.05 * scale), (0, 0, 0), self.pointer_mat)
         pointer.parent = knob
-        pointer.location = (0, 0.035, 0.0755)
+        pointer.location = (0, 0.035 * scale, 0.0755)
         pointer.rotation_euler = (math.pi / 2, 0, 0)
-        self.label(f"{param.capitalize()}Label", text, (0, front - 0.0005, z - 0.13))
+        if text:
+            self.label(f"{param.capitalize()}Label", text, (x, front - 0.0005, z + label_dz))
         return knob
 
-    def jack(self, port, direction, z, text, on_patch=False):
+    def button(self, param, light, x, z, mat, size=0.07):
+        """A lit push button (a step key, as on hardware sequencers): `Button_<param>`
+        is the pivot the game picks; its cap glows with `mat`, driven as light
+        `light` (list the node under `lights` too)."""
+        node = self.socket(f"Button_{param}", (x, PANEL_FRONT, z), param=param, control="button", light=light)
+        self.box(f"ButtonBezel_{param}", (size + 0.016, size + 0.016, 0.008), (0, 0, 0.004), self.knob_mat).parent = node
+        cap = self.box(f"ButtonCap_{param}", (size, size, 0.03), (0, 0, 0.0), mat, bevel=0.006)
+        cap.parent = node
+        cap.location = (0, 0, 0.022)
+        return node
+
+    def jack(self, port, direction, z, text, on_patch=False, x=0.0):
         """Brass nut, dark hole, and the cable socket the game attaches to."""
         front = PANEL_FRONT
-        nut = self.cylinder(f"Nut_{port}", 0.032, 0.012, (0, front - 0.006, z), self.brass_mat,
+        nut = self.cylinder(f"Nut_{port}", 0.032, 0.012, (x, front - 0.006, z), self.brass_mat,
                             segments=6, smooth=False)
         nut["port"] = port
-        self.cylinder(f"Bushing_{port}", 0.024, 0.02, (0, front - 0.01, z), self.brass_mat, segments=24)
-        self.cylinder(f"Hole_{port}", 0.0175, 0.022, (0, front - 0.0115, z), self.hole_mat, segments=24)
-        self.socket(f"Port_{port}", (0, front - 0.022, z), port=port, direction=direction, signal="audio_or_cv")
+        self.cylinder(f"Bushing_{port}", 0.024, 0.02, (x, front - 0.01, z), self.brass_mat, segments=24)
+        self.cylinder(f"Hole_{port}", 0.0175, 0.022, (x, front - 0.0115, z), self.hole_mat, segments=24)
+        self.socket(f"Port_{port}", (x, front - 0.022, z), port=port, direction=direction, signal="audio_or_cv")
         # The patch pod's halo: a soft ring around the nut the game pulses while the jack
         # waits for a cable, so the player sees where to patch.
-        halo = self.socket(f"Jack_{port}_Halo", (0, front - 0.004, z), port=port, pulse="until_patched",
+        halo = self.socket(f"Jack_{port}_Halo", (x, front - 0.004, z), port=port, pulse="until_patched",
                            rest_strength=0.0, peak_strength=2.0, period_s=1.2)
         self.ring(f"JackHalo_{port}", 0.041, 0.006, self.halo(), halo)
         self.ring(f"JackHaloOuter_{port}", 0.044, 0.011, self.halo(), halo)
         mat = self.inverted_print_mat if on_patch else None
-        self.label(f"{port.capitalize()}Label", text, (0, front - 0.0015, z + 0.065), mat=mat)
+        self.label(f"{port.capitalize()}Label", text, (x, front - 0.0015, z + 0.065), mat=mat)
 
     def output_patch(self, z, height):
         """Outputs sit on a dark patch, the usual Eurorack cue."""

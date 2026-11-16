@@ -45,6 +45,7 @@ pub fn shipped_sources() -> Vec<Source<'static>> {
         module!("clock_lamp"),
         module!("sine_vco"),
         module!("square_vco"),
+        module!("snail_sequencer"),
         module!("volume"),
     ]
 }
@@ -98,6 +99,32 @@ struct Panel {
     ports: Vec<PanelPort>,
     #[serde(default)]
     params: Vec<PanelParam>,
+    /// Lit push buttons (a sequencer's step keys): each toggles a parameter between 0
+    /// and 1, bound in `module.json` under `knobs` like any control.
+    #[serde(default)]
+    buttons: Vec<PanelButton>,
+}
+#[derive(Deserialize)]
+struct PanelButton {
+    param: String,
+}
+impl Panel {
+    /// Every control on the panel: its knobs, and its buttons as 0..1 controls.
+    fn controls(&self) -> Vec<PanelParam> {
+        self.params
+            .iter()
+            .map(|p| PanelParam {
+                param: p.param.clone(),
+                min: p.min,
+                max: p.max,
+            })
+            .chain(self.buttons.iter().map(|b| PanelParam {
+                param: b.param.clone(),
+                min: 0.,
+                max: 1.,
+            }))
+            .collect()
+    }
 }
 
 #[derive(Deserialize)]
@@ -326,9 +353,10 @@ fn validate(
 
     // Knobs: exactly the panel's params, defaults inside both ranges.
     let mut knobs = BTreeMap::new();
+    let controls = panel.controls();
     for (name, knob) in &definition.knobs {
         let field = format!("knobs.{name}");
-        let Some(panel_param) = panel.params.iter().find(|p| &p.param == name) else {
+        let Some(panel_param) = controls.iter().find(|p| &p.param == name) else {
             fail(&field, format!("the panel has no `{name}` knob"));
             continue;
         };
@@ -373,7 +401,7 @@ fn validate(
             },
         );
     }
-    for panel_param in &panel.params {
+    for panel_param in &controls {
         if !definition.knobs.contains_key(&panel_param.param) {
             fail(
                 "knobs",

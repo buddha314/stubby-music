@@ -431,9 +431,9 @@ fn drive_rack(
     slots: Query<(&super::machine_config::SlotHit, &GlobalTransform)>,
     plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
     buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
-    racks: Query<(
-        &super::rack::RackState,
-        Option<&super::rack::RackKnobs>,
+    mut racks: Query<(
+        &mut super::rack::RackState,
+        Option<&mut super::rack::RackKnobs>,
         Option<&super::prefabs::AssetClock>,
     )>,
     knobs: Query<(&super::machine_config::KnobHit, &GlobalTransform)>,
@@ -537,7 +537,8 @@ fn drive_rack(
     };
     let slot = || {
         let (camera, transform) = hud.single().ok()?;
-        let (_, world) = slots.iter().next()?;
+        // The VCO's place: the burbler also has an open sequencer place now.
+        let (_, world) = slots.iter().find(|(s, _)| s.0 == "vco")?;
         camera
             .world_to_viewport(transform, world.translation())
             .ok()
@@ -550,6 +551,22 @@ fn drive_rack(
             .ok()
     };
     let step = review.rack_step;
+    // First show a snail sequencer in its optional place with steps 1 and 3 lit, so the
+    // patched screenshot shows its panel and step keys (sync-snail-shell-sequencer). The
+    // review mounts it directly (the VCO takes the drag-to-mount path), then lets the
+    // rebuilt rack settle before the first click. The voice needs no sequencer.
+    if step == 0
+        && let Some((mut state, Some(mut knobs), _)) = racks.iter_mut().next()
+        && !state.mounted.contains_key("seq")
+    {
+        state.mounted.insert("seq".into(), "snail_sequencer".into());
+        state.version += 1;
+        for param in ["gate_1", "gate_3"] {
+            knobs.0.insert(("seq".into(), param.into()), 1.);
+        }
+        review.rack_wait = 0.6;
+        return;
+    }
     // Beside a jack, inside the snap reach but off the jack itself.
     let near = |p: Vec2| p + Vec2::new(22., 14.);
     // (press here, then drag to, or None for a click), or a pointer move only.
@@ -628,10 +645,10 @@ fn drive_rack(
         }
     }
     let rack = racks.iter().next();
-    let state = rack.map(|(s, _, _)| s);
-    let knob_values = rack.map(|(_, k, c)| {
+    let state = rack.as_ref().map(|(s, _, _)| &**s);
+    let knob_values = rack.as_ref().map(|(_, k, c)| {
         let mut values: Vec<_> = k
-            .into_iter()
+            .iter()
             .flat_map(|k| k.0.iter())
             .map(|((place, param), v)| format!("{place}.{param}={v:.3}"))
             .collect();
