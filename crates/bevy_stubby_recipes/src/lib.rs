@@ -68,6 +68,12 @@ impl Plugin for RecipesPlugin {
             }
             app.insert_resource(player);
         }
+        // Dev builds pick up edits to `assets/recipes/` while the game runs.
+        #[cfg(debug_assertions)]
+        if self.catalog.is_none() {
+            app.add_systems(First, reload::reload_rules);
+        }
+        app.add_message::<RulesReloaded>();
         app.init_resource::<PlayerInventory>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
@@ -92,6 +98,89 @@ pub struct RecipesSystems;
 /// The validated rules.
 #[derive(Resource)]
 pub struct RecipeCatalog(pub Catalog);
+
+/// Where dev builds watch for rules edits: `assets/recipes/` in this checkout unless set.
+#[derive(Resource, Clone, Debug)]
+pub struct RulesDir(pub std::path::PathBuf);
+
+/// The rules on disk changed and loaded cleanly; the catalog and air rules now hold
+/// them. Dev builds only (`add-crafting-designer` 4.1).
+#[derive(Message, Debug, Clone, Copy)]
+pub struct RulesReloaded;
+
+#[cfg(debug_assertions)]
+mod reload {
+    use super::*;
+    use std::path::PathBuf;
+    use std::time::SystemTime;
+
+    /// The rules directory in this checkout.
+    pub(super) fn default_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/recipes")
+    }
+
+    /// The newest modification time among the rules files.
+    fn newest(dir: &std::path::Path) -> Option<SystemTime> {
+        stubby_recipes::rules::FILES
+            .iter()
+            .filter_map(|file| std::fs::metadata(dir.join(file)).ok()?.modified().ok())
+            .max()
+    }
+
+    /// Once a second, if a rules file changed, reload and validate them all: on success
+    /// swap in the new catalog, item names and air rules; on failure keep the old rules
+    /// and report every problem.
+    pub(super) fn reload_rules(
+        dir: Option<Res<RulesDir>>,
+        time: Option<Res<Time<Real>>>,
+        mut since: Local<f32>,
+        mut seen: Local<Option<SystemTime>>,
+        mut commands: Commands,
+        mut reloaded: MessageWriter<RulesReloaded>,
+    ) {
+        let Some(time) = time else { return };
+        let dir = dir.map_or_else(default_dir, |dir| dir.0.clone());
+        if seen.is_none() {
+            // The game started with the rules as they are now.
+            *seen = newest(&dir);
+            return;
+        }
+        *since += time.delta_secs();
+        if *since < 1. {
+            return;
+        }
+        *since = 0.;
+        let Some(modified) = newest(&dir) else { return };
+        if *seen == Some(modified) {
+            return;
+        }
+        *seen = Some(modified);
+        let rules = match stubby_recipes::rules::load_dir(&dir) {
+            Ok(rules) => rules,
+            Err(errors) => {
+                error!("Rules not reloaded, keeping the previous ones: {errors}");
+                return;
+            }
+        };
+        let catalog = match Catalog::new(rules.definition.clone()) {
+            Ok(catalog) => catalog,
+            Err(error) => {
+                error!("Rules not reloaded, keeping the previous ones: {error}");
+                return;
+            }
+        };
+        commands.insert_resource(stubby_core::ItemNames(
+            catalog
+                .item_definitions()
+                .map(|item| (item.id.clone(), item.name.clone()))
+                .collect(),
+        ));
+        commands.insert_resource(RecipeCatalog(catalog));
+        commands.insert_resource(AirRules(rules.air));
+        reloaded.write(RulesReloaded);
+        info!("Rules reloaded from {}", dir.display());
+    }
+}
 
 /// The air cleaners (`air.json`): which placed assets clean the air, how far and how much.
 #[derive(Resource, Clone, Default)]
@@ -313,5 +402,53 @@ impl stubby_core::Stock for PlayerInventory {
     }
     fn say(&mut self, message: String) {
         self.feedback = message;
+    }
+}
+
+#[cfg(all(test, debug_assertions))]
+mod reload_tests {
+    use super::*;
+    #[test]
+    fn edited_rules_reload_and_broken_ones_are_kept_out() {
+        let dir = std::env::temp_dir().join(format!("stubby-rules-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for file in stubby_recipes::rules::FILES {
+            std::fs::copy(reload::default_dir().join(file), dir.join(file)).unwrap();
+        }
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .insert_resource(RulesDir(dir.clone()))
+            .add_plugins(RecipesPlugin::default());
+        let tick = |app: &mut App| {
+            std::thread::sleep(std::time::Duration::from_millis(1100));
+            app.update();
+        };
+        tick(&mut app); // first look: the files the game started with
+        let radius = |app: &App| {
+            app.world()
+                .resource::<AirRules>()
+                .0
+                .iter()
+                .find(|a| a.asset == "scrub_oak")
+                .unwrap()
+                .radius_m
+        };
+        assert_eq!(radius(&app), 18.);
+        let air = dir.join("air.json");
+        let text = std::fs::read_to_string(&air).unwrap();
+        std::fs::write(
+            &air,
+            text.replace("\"radius_m\": 18.0", "\"radius_m\": 25.0"),
+        )
+        .unwrap();
+        tick(&mut app);
+        tick(&mut app);
+        assert_eq!(radius(&app), 25.);
+        // A broken edit is reported and the last good rules stay.
+        std::fs::write(&air, "{ not json").unwrap();
+        tick(&mut app);
+        tick(&mut app);
+        assert_eq!(radius(&app), 25.);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

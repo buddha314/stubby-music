@@ -8,9 +8,8 @@
 //! Which fields hold IDs comes from the generated JSON Schema's `x-stubby-ref` marks, so
 //! renames and where-used follow the schema code without a second list here.
 use super::{
-    AIR, BUILDABLES, GOALS, IDS_LOCK, ITEMS, MIGRATIONS, MINES, RECIPES, RESOURCES, Registry,
-    Rules, RulesError, RulesFiles, START, canonical_files, check_ids_lock, schemas,
-    updated_ids_lock, valid_id,
+    IDS_LOCK, MIGRATIONS, Registry, Rules, RulesError, RulesFiles, canonical_files, check_ids_lock,
+    schemas, updated_ids_lock, valid_id,
 };
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -18,9 +17,7 @@ use std::fmt;
 use std::path::Path;
 
 /// Every rules file the document holds, in `RulesFiles` order.
-const FILES: [&str; 9] = [
-    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START, AIR,
-];
+use super::FILES;
 
 impl Registry {
     /// The array in the registry's file that holds its rows.

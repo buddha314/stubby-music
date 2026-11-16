@@ -41,13 +41,39 @@ impl Plugin for GluePlugin {
 
 /// Placed foliage named by an `air` rule cleans the air (clean-air-by-foliage): the rules
 /// (crafting's data) meet the world's placed assets here, so neither system names the other.
+#[allow(clippy::type_complexity)] // Assets with and without a cleaner.
 fn attach_air_cleaners(
     mut commands: Commands,
     rules: Option<Res<bevy_stubby_recipes::AirRules>>,
     placed: Query<(Entity, &stubby_core::PlacedAsset), Without<stubby_core::AirCleaner>>,
+    mut cleaners: Query<(
+        Entity,
+        &stubby_core::PlacedAsset,
+        &mut stubby_core::AirCleaner,
+    )>,
     mut unmatched: Local<std::collections::HashSet<Entity>>,
 ) {
+    // A reload retunes existing cleaners in place (keeping how far they have eased) or
+    // removes those no rule names any more.
+    if let Some(rules) = rules.as_ref().filter(|rules| rules.is_changed()) {
+        for (entity, asset, mut cleaner) in &mut cleaners {
+            match rules.0.iter().find(|rule| rule.applies_to(&asset.asset)) {
+                Some(rule) => {
+                    let strength = cleaner.strength;
+                    *cleaner = air_cleaner(rule);
+                    cleaner.strength = strength;
+                }
+                None => {
+                    commands.entity(entity).remove::<stubby_core::AirCleaner>();
+                }
+            }
+        }
+    }
     let Some(rules) = rules else { return };
+    if rules.is_changed() {
+        // Rules reloaded (or first seen): every asset is matched again.
+        unmatched.clear();
+    }
     for (entity, asset) in &placed {
         if unmatched.contains(&entity) {
             continue;
@@ -56,18 +82,22 @@ fn attach_air_cleaners(
             unmatched.insert(entity);
             continue;
         };
-        use stubby_recipes::air::AirFollows as Rule;
-        commands.entity(entity).insert(stubby_core::AirCleaner {
-            radius_m: rule.radius_m,
-            max_strength: rule.strength,
-            follows: match rule.follows {
-                Rule::Growth => stubby_core::AirFollows::Growth,
-                Rule::WaterOrLight => stubby_core::AirFollows::WaterOrLight,
-                Rule::Light => stubby_core::AirFollows::Light,
-            },
-            stops_when_harvested: rule.stops_when_harvested,
-            strength: 0.,
-        });
+        commands.entity(entity).insert(air_cleaner(rule));
+    }
+}
+
+fn air_cleaner(rule: &stubby_recipes::air::AirCleanerDefinition) -> stubby_core::AirCleaner {
+    use stubby_recipes::air::AirFollows as Rule;
+    stubby_core::AirCleaner {
+        radius_m: rule.radius_m,
+        max_strength: rule.strength,
+        follows: match rule.follows {
+            Rule::Growth => stubby_core::AirFollows::Growth,
+            Rule::WaterOrLight => stubby_core::AirFollows::WaterOrLight,
+            Rule::Light => stubby_core::AirFollows::Light,
+        },
+        stops_when_harvested: rule.stops_when_harvested,
+        strength: 0.,
     }
 }
 
