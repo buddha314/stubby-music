@@ -6543,6 +6543,7 @@ name = "stubby_core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "serde_json",
  "stubby_audio",
 ]
 
@@ -6567,6 +6568,7 @@ dependencies = [
  "stubby_player",
  "stubby_rack",
  "stubby_recipes",
+ "stubby_streams",
  "stubby_ui",
  "stubby_world",
  "tempfile",
@@ -6630,6 +6632,19 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "thiserror 2.0.20",
+]
+
+[[package]]
+name = "stubby_streams"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_stubby_audio",
+ "serde",
+ "serde_json",
+ "stubby_audio",
+ "stubby_core",
+ "stubby_ui",
 ]
 
 [[package]]

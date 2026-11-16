@@ -30,6 +30,7 @@ LAYERS = {
     'stubby_player': 'system',
     'stubby_life': 'system',
     'stubby_world': 'system',
+    'stubby_streams': 'system',
     'stubby_game': 'game',
     'stubby_jackdaw': 'game',
 }

@@ -177,3 +177,46 @@ pub struct AssetUsed {
     pub instance: String,
     pub asset: String,
 }
+
+/// A named node of a placed asset's model: its root, its name, its rest pose and glTF
+/// extras. The world's presenter poses parts; other systems find ports and outlets by name.
+#[derive(Component)]
+pub struct AssetPart {
+    pub root: Entity,
+    pub name: String,
+    pub rest: Transform,
+    pub extras: serde_json::Value,
+    pub flattened: bool,
+    pub sway: Option<(Vec3, f32)>,
+}
+
+/// A placed asset's living state, which its presentation follows: how grown it is, the
+/// water and light around it, and whether a stream reaches it or a port is highlighted.
+#[derive(Component, Reflect, Clone, Debug, Default)]
+#[reflect(Component, Default)]
+pub struct AssetState {
+    pub growth: f32,
+    pub water_quality: f32,
+    pub light_quality: f32,
+    pub stream_connected: bool,
+    pub port_highlight: bool,
+}
+
+/// Whether the mouse is captured for looking around. The player owns it; anything that
+/// clicks in the world (building) reads it.
+#[derive(Resource)]
+pub struct LookCapture(pub bool);
+impl LookCapture {
+    pub fn captured(&self) -> bool {
+        self.0
+    }
+}
+
+/// A machine's voice in the world: the engine output it plays, whether it sounds, and
+/// how far it carries. The rack writes it; streams carry it and place it in the world.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct MachineVoice {
+    pub output: Option<stubby_audio::PortRef>,
+    pub sounding: bool,
+    pub hearing_radius_metres: f32,
+}

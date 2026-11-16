@@ -30,13 +30,7 @@ fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
 pub fn spawn_transform(ground: &GroundHeight) -> Transform {
     Transform::from_xyz(0., floor(ground, 0., 6.) + EYE_HEIGHT, 6.)
 }
-#[derive(Resource)]
-pub struct LookCapture(bool);
-impl LookCapture {
-    pub fn captured(&self) -> bool {
-        self.0
-    }
-}
+pub use stubby_core::LookCapture;
 
 pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
