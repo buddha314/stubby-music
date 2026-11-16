@@ -26,15 +26,7 @@ pub use stubby_core::AssetUsed;
 struct HoverLabel;
 #[derive(Component)]
 struct HoverRing;
-#[derive(Component)]
-pub struct AssetPart {
-    pub root: Entity,
-    pub name: String,
-    pub rest: Transform,
-    pub extras: serde_json::Value,
-    pub flattened: bool,
-    pub sway: Option<(Vec3, f32)>,
-}
+pub use stubby_core::AssetPart;
 #[derive(Component)]
 struct AnimationSource(Handle<Gltf>);
 #[derive(Component)]

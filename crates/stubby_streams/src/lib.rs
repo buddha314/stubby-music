@@ -12,13 +12,6 @@
 //! A laid stream carries its burbler's voice in two ways. Bar lines ride the staff, one
 //! on each downbeat of the audio clock (`add-mudpit-burbler` 2.7), and the voice is heard
 //! from the nearest point of the burbler or its streams (`add-localized-machine-voices`).
-use super::audio::{ClockTick, Synth};
-use super::controls::{LookCapture, Player};
-use super::machine_config::Profiles;
-use super::prefab_presentation::AssetPart;
-use super::prefabs::{AssetClock, AssetState, PlacedAsset};
-use super::rack::RackEngine;
-use super::recipes_plugin::{PlayerInventory, RecipeCatalog};
 use bevy::{
     camera::visibility::NoFrustumCulling,
     ecs::message::Messages,
@@ -27,12 +20,15 @@ use bevy::{
     prelude::*,
     world_serialization::{WorldAssetRoot, WorldInstanceReady},
 };
+use bevy_stubby_audio::{ClockTick, Synth};
+use std::marker::PhantomData;
 use std::time::Instant;
 use stubby_audio::Command;
 use stubby_core::ScreenMode;
+use stubby_core::{
+    AssetClock, AssetPart, AssetState, HudCamera, LookCapture, MachineVoice, PlacedAsset, Stock,
+};
 
-/// The buildable whose cost each segment spends (`assets/recipes/buildables.json`).
-const SEGMENT: &str = "stream_segment";
 const SEGMENT_LENGTH: f32 = 4.0;
 /// How far from a port the aim may be to pick it.
 const PORT_REACH: f32 = 3.0;
@@ -44,30 +40,55 @@ const MIN_RADIUS: f32 = 2.0;
 const FLOW_SPEED: f32 = 1.5;
 const CHEVRON_SPACING: f32 = 0.5;
 /// Port nodes sit this high above a stream's ground origin.
-const PORT_HEIGHT: f32 = 0.07;
+pub const PORT_HEIGHT: f32 = 0.07;
 const COST_RED: Color = Color::srgb(1., 0.35, 0.27);
 
-pub struct StreamBuildPlugin;
-impl Plugin for StreamBuildPlugin {
+/// What one stream segment costs, item by item. The game sets it from its rules
+/// (`buildables.json`); streams only take it from the player's stock.
+#[derive(Resource, Default, Clone)]
+pub struct SegmentCost(pub Vec<(String, u32)>);
+
+/// Stream building's steps, for anything that drives it (a scripted review).
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum StreamSystems {
+    /// Build-mode input (Q, clicks).
+    Input,
+    /// Planning, laying and showing the plan.
+    Plan,
+}
+
+/// Laying streams, taking each segment's cost from the stock `S`.
+pub struct StreamBuildPlugin<S>(PhantomData<S>);
+impl<S> Default for StreamBuildPlugin<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+impl<S: Stock> Plugin for StreamBuildPlugin<S> {
     fn build(&self, app: &mut App) {
-        review::install(app);
-        app.init_resource::<StreamBuild>()
+        app.init_resource::<SegmentCost>()
+            .add_plugins(stubby_ui::ItemTooltipPlugin)
+            .init_resource::<StreamBuild>()
             .init_resource::<Templates>()
             .insert_resource(StaffProfile::shipped())
             .add_observer(harvest_template)
             .add_systems(Startup, (load_templates, spawn_cost))
             .add_systems(
                 Update,
-                review::drive
-                    .after(build_input)
-                    .before(plan)
-                    .run_if(resource_exists::<review::StreamReview>),
-            )
-            .add_systems(
-                Update,
-                (build_input, plan, lay, show_hologram, show_ports, show_cost)
+                (
+                    build_input.in_set(StreamSystems::Input),
+                    (
+                        plan::<S>,
+                        lay::<S>,
+                        show_hologram,
+                        show_ports,
+                        show_cost::<S>,
+                    )
+                        .chain()
+                        .in_set(StreamSystems::Plan),
+                )
                     .chain()
-                    .before(super::controls::capture_cursor),
+                    .before(stubby_core::CursorCapture),
             )
             .add_systems(
                 Update,
@@ -77,54 +98,54 @@ impl Plugin for StreamBuildPlugin {
                     place_voices,
                 )
                     .chain()
-                    .after(lay),
+                    .after(StreamSystems::Plan),
             );
     }
 }
 
 /// Where a stream can start: a ground-level origin and a horizontal flow direction.
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct Port {
-    at: Vec3,
-    dir: Vec3,
-    owner: PortOwner,
+pub struct Port {
+    pub at: Vec3,
+    pub dir: Vec3,
+    pub owner: PortOwner,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum PortOwner {
+pub enum PortOwner {
     Burbler(Entity),
     Stream(Entity),
 }
 
 #[derive(Resource, Default)]
-struct StreamBuild {
-    active: bool,
+pub struct StreamBuild {
+    pub active: bool,
     /// A left click this frame, while the cursor was captured.
-    click: bool,
-    anchor: Option<Port>,
-    hover: Option<Port>,
-    plan: Option<Plan>,
+    pub click: bool,
+    pub anchor: Option<Port>,
+    pub hover: Option<Port>,
+    pub plan: Option<Plan>,
 }
 #[derive(Clone)]
-struct Plan {
-    path: Path,
-    segments: u32,
-    affordable: bool,
-    valid: bool,
+pub struct Plan {
+    pub path: Path,
+    pub segments: u32,
+    pub affordable: bool,
+    pub valid: bool,
 }
 
 /// A laid stream; its far end is a port until another stream is laid from it.
 #[derive(Component)]
-struct LaidStream {
-    end: Port,
-    end_used: bool,
-    end_halo: Vec<Entity>,
-    path: Path,
+pub struct LaidStream {
+    pub end: Port,
+    pub end_used: bool,
+    pub end_halo: Vec<Entity>,
+    pub path: Path,
     /// The length of one bent segment: `path.length() / segments`.
-    span: f32,
+    pub span: f32,
     /// The burbler whose water this is, through any chain of streams.
-    source: Option<Entity>,
+    pub source: Option<Entity>,
     /// How far along the whole chain from the burbler this stream starts.
-    start: f32,
+    pub start: f32,
 }
 
 // ---------- Templates: the glTFs' meshes, baked into root space ----------
@@ -345,10 +366,10 @@ fn transform_mesh(mesh: &mut Mesh, affine: Mat4) {
 // ---------- The plan's path: a cubic Bézier with an arc-length table ----------
 
 #[derive(Clone, Debug)]
-struct Path {
-    points: [Vec3; 4],
+pub struct Path {
+    pub points: [Vec3; 4],
     /// (arc length, curve parameter), increasing.
-    table: Vec<(f32, f32)>,
+    pub table: Vec<(f32, f32)>,
 }
 impl Path {
     /// Leave `from` along its direction and curve to `to` (design D3).
@@ -372,7 +393,7 @@ impl Path {
         }
         Self { points, table }
     }
-    fn length(&self) -> f32 {
+    pub fn length(&self) -> f32 {
         self.table.last().map_or(0., |(s, _)| *s)
     }
     fn parameter(&self, s: f32) -> f32 {
@@ -530,14 +551,23 @@ fn build_input(
     }
 }
 
-fn plan(
+/// Whether the stock holds `segments` segments' worth of the cost.
+fn affordable(cost: &SegmentCost, stock: &impl Stock, segments: u32) -> bool {
+    !cost.0.is_empty()
+        && cost
+            .0
+            .iter()
+            .all(|(item, n)| stock.quantity(item) >= n * segments)
+}
+
+fn plan<S: Stock>(
     mut build: ResMut<StreamBuild>,
-    cameras: Query<&GlobalTransform, With<Player>>,
+    cameras: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
     burblers: Query<(Entity, &PlacedAsset, &mut AssetState)>,
     outlets: Query<(&AssetPart, &GlobalTransform)>,
     streams: Query<&mut LaidStream>,
-    catalog: Option<Res<RecipeCatalog>>,
-    inventory: Option<Res<PlayerInventory>>,
+    cost: Res<SegmentCost>,
+    inventory: Option<Res<S>>,
 ) {
     build.hover = None;
     build.plan = None;
@@ -562,13 +592,9 @@ fn plan(
     let path = Path::new(&anchor, aim(camera, anchor.at.y, anchor.at));
     let length = path.length();
     let segments = ((length / SEGMENT_LENGTH).round() as u32).max(1);
-    let affordable = match (&catalog, &inventory) {
-        (Some(catalog), Some(inventory)) => catalog
-            .0
-            .build_shortfall(SEGMENT, segments, &inventory.items)
-            .is_ok_and(|short| short.is_empty()),
-        _ => false,
-    };
+    let affordable = inventory
+        .as_ref()
+        .is_some_and(|stock| affordable(&cost, stock.as_ref(), segments));
     let shape_ok = length >= SEGMENT_LENGTH * 0.75 && path.min_radius() >= MIN_RADIUS;
     build.plan = Some(Plan {
         path,
@@ -579,13 +605,13 @@ fn plan(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn lay(
+fn lay<S: Stock>(
     mut commands: Commands,
     mut build: ResMut<StreamBuild>,
     templates: Res<Templates>,
     mut meshes: ResMut<Assets<Mesh>>,
-    catalog: Option<Res<RecipeCatalog>>,
-    mut inventory: Option<ResMut<PlayerInventory>>,
+    cost: Res<SegmentCost>,
+    mut inventory: Option<ResMut<S>>,
     mut burblers: Query<(Entity, &PlacedAsset, &mut AssetState)>,
     mut streams: Query<&mut LaidStream>,
 ) {
@@ -599,16 +625,14 @@ fn lay(
     let Some(plan) = build.plan.clone().filter(|plan| plan.valid) else {
         return;
     };
-    let (Some(catalog), Some(inventory)) = (catalog, inventory.as_mut()) else {
+    let Some(inventory) = inventory.as_mut() else {
         return;
     };
-    if templates.segment.is_empty()
-        || catalog
-            .0
-            .build(SEGMENT, plan.segments, &mut inventory.items)
-            .is_err()
-    {
+    if templates.segment.is_empty() || !affordable(&cost, inventory.as_ref(), plan.segments) {
         return;
+    }
+    for (item, count) in &cost.0 {
+        inventory.take(item, count * plan.segments);
     }
     let span = plan.path.length() / plan.segments as f32;
     let (source, start) = match anchor.owner {
@@ -720,12 +744,12 @@ impl StaffProfile {
 
 /// A bar line riding the staff of one burbler's stream.
 #[derive(Component)]
-struct BarLine {
-    machine: Entity,
+pub struct BarLine {
+    pub machine: Entity,
     /// When its downbeat is heard, from the audio clock.
-    at: Instant,
+    pub at: Instant,
     /// Half a beat in flow time: a bar line sits between the measures.
-    lead_seconds: f32,
+    pub lead_seconds: f32,
 }
 
 /// How far down the chain a bar line is, `elapsed` seconds after its downbeat.
@@ -756,7 +780,7 @@ fn emit_bars(
     mut beats: Local<HashMap<Entity, u32>>,
     staff: Res<StaffProfile>,
     templates: Res<Templates>,
-    machines: Query<(Entity, &AssetClock, &RackEngine)>,
+    machines: Query<(Entity, &AssetClock, &MachineVoice)>,
     streams: Query<&LaidStream>,
 ) {
     for tick in ticks.read() {
@@ -846,17 +870,16 @@ fn hearing_gain(distance: f32, radius: f32) -> f32 {
 /// Tell the engine where each rack's voice is, relative to the player's ears.
 fn place_voices(
     synth: Option<Res<Synth>>,
-    profiles: Option<Res<Profiles>>,
-    camera: Query<&GlobalTransform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
-    machines: Query<(Entity, &PlacedAsset, &RackEngine, &GlobalTransform)>,
+    camera: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
+    machines: Query<(Entity, &MachineVoice, &GlobalTransform)>,
     streams: Query<&LaidStream>,
 ) {
-    let (Some(synth), Some(profiles), Ok(camera)) = (synth, profiles, camera.single()) else {
+    let (Some(synth), Ok(camera)) = (synth, camera.single()) else {
         return;
     };
     let (_, ears, listener) = camera.to_scale_rotation_translation();
-    for (machine, asset, engine, transform) in &machines {
-        let (Some(output), Some(config)) = (engine.voice, profiles.0.get(&asset.asset)) else {
+    for (machine, voice, transform) in &machines {
+        let Some(output) = voice.output else {
             continue;
         };
         let paths: Vec<&Path> = streams
@@ -868,7 +891,7 @@ fn place_voices(
         synth.send(Command::SetEmitter {
             output,
             offset: (ears.inverse() * (source - listener)).to_array(),
-            volume: hearing_gain(source.distance(listener), config.hearing_radius_metres),
+            volume: hearing_gain(source.distance(listener), voice.hearing_radius_metres),
         });
     }
 }
@@ -1001,7 +1024,12 @@ struct CostBox;
 #[derive(Component)]
 struct CostText;
 
-fn spawn_cost(mut commands: Commands, server: Option<Res<AssetServer>>) {
+fn spawn_cost(mut commands: Commands, server: Option<Res<AssetServer>>, cost: Res<SegmentCost>) {
+    let cost_item = cost
+        .0
+        .first()
+        .map(|(item, _)| item.clone())
+        .unwrap_or_default();
     commands
         .spawn((
             CostBox,
@@ -1028,7 +1056,7 @@ fn spawn_cost(mut commands: Commands, server: Option<Res<AssetServer>>) {
         .with_children(|row| {
             if let Some(server) = &server {
                 row.spawn((
-                    super::inventory_screen::item_icon(server, "reed"),
+                    stubby_ui::item_icon(server, &cost_item),
                     Node {
                         width: px(32),
                         height: px(32),
@@ -1050,20 +1078,18 @@ fn spawn_cost(mut commands: Commands, server: Option<Res<AssetServer>>) {
         });
 }
 
-fn show_cost(
+fn show_cost<S: Stock>(
     build: Res<StreamBuild>,
-    catalog: Option<Res<RecipeCatalog>>,
-    inventory: Option<Res<PlayerInventory>>,
+    cost: Res<SegmentCost>,
+    inventory: Option<Res<S>>,
     mut boxes: Query<&mut Visibility, With<CostBox>>,
     mut texts: Query<(&mut Text, &mut TextColor), With<CostText>>,
 ) {
     let segments = build.plan.as_ref().map_or(1, |plan| plan.segments);
-    let need = catalog
-        .as_ref()
-        .and_then(|catalog| catalog.0.build_cost(SEGMENT, segments).ok())
-        .and_then(|cost| cost.into_iter().find(|s| s.item == "reed"))
-        .map_or(0, |s| s.quantity);
-    let have = inventory.as_ref().map_or(0, |i| i.items.quantity("reed"));
+    // The first item of the cost is the one shown (reeds, in the game).
+    let (item, per_segment) = cost.0.first().map_or(("", 0), |(i, n)| (i.as_str(), *n));
+    let need = per_segment * segments;
+    let have = inventory.as_ref().map_or(0, |i| i.quantity(item));
     for mut visibility in &mut boxes {
         visibility.set_if_neq(if build.active {
             Visibility::Visible
@@ -1078,161 +1104,6 @@ fn show_cost(
         }
         let short = build.plan.as_ref().is_some_and(|plan| !plan.affordable) || have < need;
         color.set_if_neq(TextColor(if short { COST_RED } else { Color::WHITE }));
-    }
-}
-
-/// `--stream-review=<dir>`: a scripted pass over the scene's burbler that plans, lays
-/// and fails to afford a stream, saving screenshots and `events.jsonl` to `<dir>`. Run
-/// it under the graphical watchdog (`tools/jackdaw_timed_test.py`).
-mod review {
-    use super::*;
-    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
-    use std::path::PathBuf;
-
-    #[derive(Resource)]
-    pub(super) struct StreamReview {
-        dir: PathBuf,
-        step: usize,
-    }
-    pub(super) fn install(app: &mut App) {
-        if let Some(dir) =
-            std::env::args().find_map(|arg| arg.strip_prefix("--stream-review=").map(PathBuf::from))
-        {
-            let _ = std::fs::create_dir_all(&dir);
-            app.insert_resource(StreamReview { dir, step: 0 });
-        }
-    }
-    fn log(review: &StreamReview, event: serde_json::Value) {
-        use std::io::Write;
-        if let Ok(mut file) = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(review.dir.join("events.jsonl"))
-        {
-            let _ = writeln!(file, "{event}");
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn drive(
-        mut commands: Commands,
-        time: Res<Time<Real>>,
-        mut review: ResMut<StreamReview>,
-        mut build: ResMut<StreamBuild>,
-        mut cameras: Query<&mut Transform, With<Player>>,
-        outlets: Query<(&AssetPart, &GlobalTransform)>,
-        mut inventory: Option<ResMut<PlayerInventory>>,
-        streams: Query<&LaidStream>,
-        bars: Query<&BarLine>,
-        mut racks: Query<&mut RackEngine>,
-        mut calendar: ResMut<super::super::calendar::Calendar>,
-    ) {
-        let Some((_, outlet)) = outlets.iter().find(|(part, _)| part.name == "Outlet_0") else {
-            return;
-        };
-        let at = outlet.translation() - Vec3::Y * PORT_HEIGHT;
-        let mut dir = outlet.right().as_vec3();
-        dir.y = 0.;
-        let dir = dir.normalize_or(Vec3::X);
-        let side = dir.cross(Vec3::Y);
-        let times = [4., 5., 5.5, 7., 7.5, 8.5, 9.5, 11., 12., 13.];
-        let t = time.elapsed_secs();
-        let Some(&due) = times.get(review.step) else {
-            return;
-        };
-        if t < due {
-            return;
-        }
-        let shoot = |commands: &mut Commands, review: &StreamReview, name: &str| {
-            commands
-                .spawn(Screenshot::primary_window())
-                .observe(save_to_disk(review.dir.join(name)));
-        };
-        let Ok(mut camera) = cameras.single_mut() else {
-            return;
-        };
-        let look = |camera: &mut Transform, from: Vec3, to: Vec3| {
-            *camera = Transform::from_translation(from).looking_at(to, Vec3::Y);
-        };
-        match review.step {
-            // Stand by the mouth with 18 reeds, enter build mode, aim at the mouth.
-            0 => {
-                // Midday, so the screenshots show the stream (the game opens at dawn).
-                calendar.elapsed = std::time::Duration::from_secs(1350);
-                if let Some(inventory) = inventory.as_mut() {
-                    let _ = inventory.items.grant(&[stubby_recipes::Stack {
-                        item: "reed".into(),
-                        quantity: 18,
-                    }]);
-                }
-                build.active = true;
-                look(&mut camera, at - dir * 4. + side * 3. + Vec3::Y * 1.7, at);
-            }
-            1 => {
-                shoot(&mut commands, &review, "1-port-hover.png");
-                build.click = true;
-            }
-            // Aim off to the side: a curving two-segment plan, affordable.
-            2 => look(
-                &mut camera,
-                at - dir * 3. + side * 4. + Vec3::Y * 2.2,
-                at + dir * 7. + side * 4.,
-            ),
-            3 => shoot(&mut commands, &review, "2-plan-valid.png"),
-            4 => {
-                build.click = true;
-                // Show bar lines without patching anything: their gate stays silent.
-                for mut rack in &mut racks {
-                    rack.sounding = true;
-                }
-            }
-            // Plan on from the new end: 6 reeds left, too few.
-            5 => {
-                if let Some(end) = streams.iter().next().map(|s| s.end) {
-                    look(
-                        &mut camera,
-                        end.at - end.dir * 3. + Vec3::Y * 2.2,
-                        end.at + end.dir * 9.,
-                    );
-                }
-            }
-            6 => shoot(&mut commands, &review, "3-plan-unaffordable.png"),
-            // Leave build mode and look over what was laid, then the join at the mouth.
-            7 => {
-                build.active = false;
-                // From the side at eye height (the controller keeps the player grounded).
-                look(
-                    &mut camera,
-                    at + dir * 3. - side * 7. + Vec3::Y * 1.7,
-                    at + dir * 4. + side * 2.,
-                );
-            }
-            8 => shoot(&mut commands, &review, "4-laid.png"),
-            9 => {
-                // From behind the mouth, over the pool, down the stream.
-                look(&mut camera, at - dir * 2.5 + Vec3::Y * 2.2, at + dir * 4.);
-                shoot(&mut commands, &review, "5-mouth.png");
-            }
-            _ => {}
-        }
-        log(
-            &review,
-            serde_json::json!({
-                "step": review.step,
-                "seconds": t,
-                "active": build.active,
-                "hover": build.hover.is_some(),
-                "anchor": build.anchor.is_some(),
-                "plan": build.plan.as_ref().map(|p| serde_json::json!({
-                    "segments": p.segments, "length": p.path.length(),
-                    "valid": p.valid, "affordable": p.affordable,
-                })),
-                "streams": streams.iter().count(),
-                "bars": bars.iter().count(),
-                "reeds": inventory.as_ref().map(|i| i.items.quantity("reed")),
-            }),
-        );
-        review.step += 1;
     }
 }
 

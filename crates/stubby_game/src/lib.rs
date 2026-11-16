@@ -24,7 +24,9 @@ pub mod prefabs {
 pub use stubby_life::bug as pulse;
 pub mod resources;
 mod review;
-mod streams;
+// Stream laying (stubby_streams), under its old module name.
+pub use stubby_streams as streams;
+mod stream_review;
 mod waveform_audio;
 
 use bevy::{camera::Exposure, light::Skybox, prelude::*};
@@ -51,7 +53,10 @@ impl Plugin for DesertPlugin {
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
-        .add_plugins(streams::StreamBuildPlugin)
+        .add_plugins((
+            streams::StreamBuildPlugin::<resources::PlayerInventory>::default(),
+            stream_review::StreamReviewPlugin,
+        ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup))
         .add_systems(Update, capture_preview);
     }

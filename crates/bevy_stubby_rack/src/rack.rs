@@ -152,6 +152,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
                     rack_ghost,
                     clear_feedback_on_open::<S>,
                     patch_engine,
+                    publish_voice,
                     pods,
                     draw_cables,
                     live_cable,
@@ -327,6 +328,35 @@ fn patch_engine(
         if state.complete(config) && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });
+        }
+    }
+}
+
+/// Each rack's voice, as other systems see it (`stubby_core::MachineVoice`).
+fn publish_voice(
+    mut commands: Commands,
+    profiles: Res<Profiles>,
+    racks: Query<
+        (
+            Entity,
+            &PlacedAsset,
+            &RackEngine,
+            Option<&stubby_core::MachineVoice>,
+        ),
+        Changed<RackEngine>,
+    >,
+) {
+    for (machine, asset, engine, current) in &racks {
+        let voice = stubby_core::MachineVoice {
+            output: engine.voice,
+            sounding: engine.sounding,
+            hearing_radius_metres: profiles
+                .0
+                .get(&asset.asset)
+                .map_or(0., |c| c.hearing_radius_metres),
+        };
+        if current.is_none_or(|c| c.output != voice.output || c.sounding != voice.sounding) {
+            commands.entity(machine).insert(voice);
         }
     }
 }

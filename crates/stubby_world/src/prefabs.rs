@@ -6,18 +6,10 @@ use std::collections::HashMap;
 use stubby_audio::{Command, ModuleId};
 use stubby_core::PrefabBinding;
 
+pub use stubby_core::AssetState;
 /// Insert before DesertPlugin when a level provides its own placements.
 pub use stubby_core::AuthoredLevel;
 pub use stubby_core::{AssetClock, PlacedAsset, PrefabError};
-#[derive(Component, Reflect, Clone, Debug, Default)]
-#[reflect(Component, Default)]
-pub struct AssetState {
-    pub growth: f32,
-    pub water_quality: f32,
-    pub light_quality: f32,
-    pub stream_connected: bool,
-    pub port_highlight: bool,
-}
 /// One bound placed asset: what it was bound as and what the lifecycle cleans up.
 #[derive(Clone)]
 pub struct Binding {

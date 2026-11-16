@@ -135,6 +135,7 @@ crates/
   stubby_life/            system: plants and animals; today the lightning bug (Harvested, GroundHeight)
   bevy_stubby_rack/       system: the rack screen, cables, knobs, module assets; takes items via Stock
   stubby_world/           system: the desert, time, world generation, placed-prefab lifecycle (binders)
+  stubby_streams/         system: laying mud streams; bar lines and voices ride them (MachineVoice)
   stubby_ui/              service: shared HUD widgets (item icons, slots, tooltips)
   stubby_game/            the Bevy app
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
@@ -175,7 +176,7 @@ Each part of the game is its own crate, and dependencies only point down
 | --- | --- | --- |
 | cores | `stubby_audio`, `stubby_rack`, `stubby_recipes` | other cores; never Bevy |
 | services | `stubby_core`, `stubby_ui`, `bevy_stubby_audio` | cores |
-| systems | `bevy_stubby_rack`, `bevy_stubby_recipes`, `stubby_player`, `stubby_life`, `stubby_world` | services, shared cores, their own core |
+| systems | `bevy_stubby_rack`, `bevy_stubby_recipes`, `stubby_player`, `stubby_life`, `stubby_world`, `stubby_streams` | services, shared cores, their own core |
 | game | `stubby_game`, `stubby_jackdaw` | anything |
 
 - **Systems never depend on each other**, nor on another system's core. They talk
@@ -191,7 +192,7 @@ Each part of the game is its own crate, and dependencies only point down
 - **Placed prefabs come alive through binders.** `stubby_world`'s lifecycle names no
   asset kind; whoever owns a kind registers an `AssetBinder` (the game's glue does for
   the bug, modules, mines, reeds). A new placeable kind adds a binder, not a branch.
-- Still in `stubby_game`, waiting to become a system: streams (4.6).
+- `stubby_game` is now only assembly, glue, the inventory screen and review drivers.
 
 
 ### The audio engine is not a Bevy system

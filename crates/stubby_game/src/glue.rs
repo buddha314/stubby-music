@@ -17,6 +17,7 @@ use stubby_world::prefabs::{AssetBinder, AssetBinders, Bound, allocate};
 pub struct GluePlugin;
 impl Plugin for GluePlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(PreStartup, segment_cost);
         app.insert_resource(bevy_stubby_rack::rack::KnobDefaults(
             // A Square VCO is made from a lightning bug's square wave: it starts at the
             // bug's pitch.
@@ -77,6 +78,16 @@ fn interact_points(
                 .remove::<stubby_core::Interactable>();
         }
     }
+}
+
+/// A stream segment costs what the rules' `stream_segment` buildable says.
+fn segment_cost(mut commands: Commands, catalog: Option<Res<RecipeCatalog>>) {
+    let cost = catalog
+        .and_then(|c| c.0.build_cost("stream_segment", 1).ok())
+        .unwrap_or_default();
+    commands.insert_resource(stubby_streams::SegmentCost(
+        cost.into_iter().map(|s| (s.item, s.quantity)).collect(),
+    ));
 }
 
 // ---------------------------------------------------------------- placed-asset binders

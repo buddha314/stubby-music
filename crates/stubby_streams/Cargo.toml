@@ -1,0 +1,18 @@
+[package]
+name = "stubby_streams"
+version = "0.1.0"
+edition.workspace = true
+description = "Laying mud streams from ports, and the music they carry"
+license = "MIT"
+publish = false
+
+# A system crate (split-game-into-systems): services, stubby_core and Bevy only.
+[dependencies]
+stubby_core = { path = "../stubby_core" }
+stubby_ui = { path = "../stubby_ui" }
+bevy_stubby_audio = { path = "../bevy_stubby_audio" }
+stubby_audio = { path = "../stubby_audio" }
+bevy.workspace = true
+bevy.features = ["3d", "ui", "mesh_picking"]
+serde = { version = "~1.0", features = ["derive"] }
+serde_json = "~1.0"
