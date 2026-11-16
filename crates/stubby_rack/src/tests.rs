@@ -24,7 +24,16 @@ fn load_with(id: &str, definition: &str) -> Result<Modules, RackErrors> {
 #[test]
 fn shipped_modules_load_and_match_their_panels() {
     let modules = shipped();
-    assert_eq!(modules.0.len(), 5);
+    assert_eq!(modules.0.len(), 6);
+    // The snail sequencer's step buttons bind like knobs, 0..1; its CV knobs 0..2 V.
+    let gate = modules.knob("snail_sequencer", "gate_2").unwrap();
+    assert_eq!((gate.min, gate.max, gate.param), (0., 1., "gate_2"));
+    assert_eq!(modules.knob("snail_sequencer", "cv_1").unwrap().max, 2.);
+    assert_eq!(
+        modules.jack_is_output("snail_sequencer", "clock"),
+        Some(false)
+    );
+    assert_eq!(modules.jack_is_output("snail_sequencer", "cv"), Some(true));
     assert_eq!(modules.jack_is_output("volume", "trig"), Some(false));
     assert_eq!(modules.jack_is_output("volume", "out"), Some(true));
     assert_eq!(
