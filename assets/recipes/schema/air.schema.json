@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AirFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "air": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AirCleanerDefinition"
+      }
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "air"
+  ],
+  "$defs": {
+    "AirCleanerDefinition": {
+      "type": "object",
+      "properties": {
+        "asset": {
+          "description": "Placed assets whose asset ID is this or starts with `<this>_` clean the air.",
+          "type": "string"
+        },
+        "follows": {
+          "$ref": "#/$defs/AirFollows"
+        },
+        "id": {
+          "type": "string"
+        },
+        "radius_m": {
+          "description": "How far it cleans, in metres. Its cleaning falls smoothly to 0 at this distance.",
+          "type": "number",
+          "format": "float"
+        },
+        "stops_when_harvested": {
+          "description": "Harvested assets (cut reeds) stop cleaning until they regrow.",
+          "type": "boolean"
+        },
+        "strength": {
+          "description": "How strongly it cleans at its centre at full life, 0..1.",
+          "type": "number",
+          "format": "float"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "asset",
+        "radius_m",
+        "strength",
+        "follows"
+      ]
+    },
+    "AirFollows": {
+      "description": "What part of an asset's life its cleaning follows.",
+      "oneOf": [
+        {
+          "description": "How grown it is (a tree from dormant to full bloom).",
+          "type": "string",
+          "const": "growth"
+        },
+        {
+          "description": "How green it is: the better of the water and light around it (reeds).",
+          "type": "string",
+          "const": "water_or_light"
+        },
+        {
+          "description": "The light around it (desert brush blooms where the air is already clean).",
+          "type": "string",
+          "const": "light"
+        }
+      ]
+    }
+  }
+}

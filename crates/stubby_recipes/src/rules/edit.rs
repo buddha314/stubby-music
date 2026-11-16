@@ -8,9 +8,9 @@
 //! Which fields hold IDs comes from the generated JSON Schema's `x-stubby-ref` marks, so
 //! renames and where-used follow the schema code without a second list here.
 use super::{
-    BUILDABLES, GOALS, IDS_LOCK, ITEMS, MIGRATIONS, MINES, RECIPES, RESOURCES, Registry, Rules,
-    RulesError, RulesFiles, START, canonical_files, check_ids_lock, schemas, updated_ids_lock,
-    valid_id,
+    AIR, BUILDABLES, GOALS, IDS_LOCK, ITEMS, MIGRATIONS, MINES, RECIPES, RESOURCES, Registry,
+    Rules, RulesError, RulesFiles, START, canonical_files, check_ids_lock, schemas,
+    updated_ids_lock, valid_id,
 };
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -18,8 +18,8 @@ use std::fmt;
 use std::path::Path;
 
 /// Every rules file the document holds, in `RulesFiles` order.
-const FILES: [&str; 8] = [
-    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START,
+const FILES: [&str; 9] = [
+    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START, AIR,
 ];
 
 impl Registry {
@@ -32,15 +32,17 @@ impl Registry {
             Self::Recipes => "recipes",
             Self::Buildables => "buildables",
             Self::Goals => "goals",
+            Self::Air => "air",
         }
     }
-    pub const ALL: [Registry; 6] = [
+    pub const ALL: [Registry; 7] = [
         Self::Items,
         Self::Resources,
         Self::Mines,
         Self::Recipes,
         Self::Buildables,
         Self::Goals,
+        Self::Air,
     ];
 }
 
@@ -466,6 +468,7 @@ fn files_of(texts: &[String]) -> RulesFiles<'_> {
         migrations: &texts[5],
         goals: &texts[6],
         start: &texts[7],
+        air: &texts[8],
     }
 }
 

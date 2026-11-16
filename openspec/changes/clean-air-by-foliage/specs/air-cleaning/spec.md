@@ -16,10 +16,10 @@ Each air-cleaning asset SHALL clean the air within its authored radius, with a s
 - **THEN** light quality there eases back toward 0
 
 ### Requirement: Cleaning is data
-Each air-cleaning asset kind SHALL declare its cleaning radius and strength in its asset profile, and code SHALL NOT name asset kinds to decide what cleans.
+Each air-cleaning asset kind SHALL declare its cleaning radius and strength as a rule (`assets/recipes/air.json`), and code SHALL NOT name asset kinds to decide what cleans.
 
 #### Scenario: A new plant cleans
-- **WHEN** a designer adds an `air` block to a new flora profile
+- **WHEN** a designer adds an `air` rule for a new flora asset
 - **THEN** placed instances of it clean the air with no code change
 
 ### Requirement: Everything samples one light quality
@@ -28,3 +28,10 @@ The global lights, materials that vary by place and mine productivity SHALL all 
 #### Scenario: Walking into a grove
 - **WHEN** the player walks from bare desert into a blooming grove at night
 - **THEN** the lighting eases from the bleak toward the bloomed night key without a visible step
+
+### Requirement: The windstorm follows the basin
+The windstorm's strength SHALL follow how clean the basin's air is on average, not the light quality where the camera stands. Until the windstorm is built, the dust in the sky SHALL thin as the basin is cleaned.
+
+#### Scenario: Cleaning the basin calms the storm
+- **WHEN** foliage cleans more of the basin
+- **THEN** the dust in the sky thins everywhere, also where the player is not standing

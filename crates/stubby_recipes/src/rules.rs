@@ -25,6 +25,7 @@ pub const MINES: &str = "mines.json";
 pub const RECIPES: &str = "recipes.json";
 pub const BUILDABLES: &str = "buildables.json";
 pub const MIGRATIONS: &str = "migrations.json";
+pub use crate::air::AIR;
 pub use crate::goals::GOALS;
 pub const START: &str = "start.json";
 pub const IDS_LOCK: &str = "ids.lock";
@@ -96,6 +97,7 @@ rules_file!(RecipesFile, recipes, RecipeDefinition);
 rules_file!(BuildablesFile, buildables, BuildableDefinition);
 rules_file!(MigrationsFile, migrations, Migration);
 rules_file!(GoalsFile, goals, crate::goals::GoalDefinition);
+rules_file!(AirFile, air, crate::air::AirCleanerDefinition);
 // What a new player starts with.
 rules_file!(StartFile, inventory, Stack);
 
@@ -123,6 +125,7 @@ pub enum Registry {
     Recipes,
     Buildables,
     Goals,
+    Air,
 }
 impl Registry {
     fn file(self) -> &'static str {
@@ -133,6 +136,7 @@ impl Registry {
             Self::Recipes => RECIPES,
             Self::Buildables => BUILDABLES,
             Self::Goals => GOALS,
+            Self::Air => AIR,
         }
     }
 }
@@ -149,6 +153,7 @@ pub struct RulesFiles<'a> {
     pub migrations: &'a str,
     pub goals: &'a str,
     pub start: &'a str,
+    pub air: &'a str,
 }
 
 /// The rules shipped with the game, embedded at build time.
@@ -162,6 +167,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
         migrations: include_str!("../../../assets/recipes/migrations.json"),
         goals: include_str!("../../../assets/recipes/goals.json"),
         start: include_str!("../../../assets/recipes/start.json"),
+        air: include_str!("../../../assets/recipes/air.json"),
     }
 }
 
@@ -173,6 +179,8 @@ pub struct Rules {
     pub goals: Vec<crate::goals::GoalDefinition>,
     /// The starter inventory.
     pub start: Vec<Stack>,
+    /// Foliage that cleans the air (clean-air-by-foliage).
+    pub air: Vec<crate::air::AirCleanerDefinition>,
 }
 impl Rules {
     /// Parse every file strictly and validate the set. Reports every problem found.
@@ -189,6 +197,7 @@ impl Rules {
             parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
         let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
         let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
+        let air = parse::<AirFile>(AIR, files.air, "air", &mut errors);
         let (
             Some(items),
             Some(resources),
@@ -198,8 +207,9 @@ impl Rules {
             Some(migrations),
             Some(goals),
             Some(start),
+            Some(air),
         ) = (
-            items, resources, mines, recipes, buildables, migrations, goals, start,
+            items, resources, mines, recipes, buildables, migrations, goals, start, air,
         )
         else {
             return Err(RulesErrors(errors));
@@ -213,6 +223,7 @@ impl Rules {
             (MIGRATIONS, migrations.format),
             (GOALS, goals.format),
             (START, start.format),
+            (AIR, air.format),
         ] {
             if format != FORMAT {
                 errors.push(RulesError::new(
@@ -237,9 +248,11 @@ impl Rules {
             &rule_ids,
             &goals.goals,
         ));
+        errors.extend(crate::air::validate_air(&air.air));
         errors.extend(validate_migrations(
             &definition,
             &goals.goals,
+            &air.air,
             &migrations.migrations,
         ));
         for stack in &start.inventory {
@@ -261,6 +274,7 @@ impl Rules {
                 migrations: migrations.migrations,
                 goals: goals.goals,
                 start: start.inventory,
+                air: air.air,
             })
         } else {
             Err(RulesErrors(errors))
@@ -272,6 +286,7 @@ impl Rules {
             .into_iter()
             .map(|(id, _)| id)
             .chain(self.goals.iter().map(|g| g.id.clone()))
+            .chain(self.air.iter().map(|a| a.id.clone()))
             .collect()
     }
 }
@@ -524,10 +539,12 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
 pub fn validate_migrations(
     definition: &CatalogDefinition,
     goals: &[crate::goals::GoalDefinition],
+    air: &[crate::air::AirCleanerDefinition],
     migrations: &[Migration],
 ) -> Vec<RulesError> {
     let mut current: BTreeSet<(String, &str)> = ids(definition).into_iter().collect();
     current.extend(goals.iter().map(|g| (g.id.clone(), GOALS)));
+    current.extend(air.iter().map(|a| (a.id.clone(), AIR)));
     let mut errors = Vec::new();
     let mut seen = BTreeSet::new();
     for migration in migrations {
@@ -638,6 +655,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         parse::<MigrationsFile>(MIGRATIONS, files.migrations, "migrations", &mut errors);
     let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
     let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
+    let air = parse::<AirFile>(AIR, files.air, "air", &mut errors);
     let (
         Some(mut items),
         Some(mut resources),
@@ -647,8 +665,9 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         Some(mut migrations),
         Some(mut goals),
         Some(mut start),
+        Some(mut air),
     ) = (
-        items, resources, mines, recipes, buildables, migrations, goals, start,
+        items, resources, mines, recipes, buildables, migrations, goals, start, air,
     )
     else {
         return Err(RulesErrors(errors));
@@ -668,6 +687,8 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     // Goals keep their authored order: it is the order the hub offers them in.
     goals.schema = schema_ref(GOALS);
     start.schema = schema_ref(START);
+    air.schema = schema_ref(AIR);
+    air.air.sort_by(|a, b| a.id.cmp(&b.id));
     Ok(vec![
         (ITEMS, pretty(&items)),
         (RESOURCES, pretty(&resources)),
@@ -677,6 +698,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         (MIGRATIONS, pretty(&migrations)),
         (GOALS, pretty(&goals)),
         (START, pretty(&start)),
+        (AIR, pretty(&air)),
     ])
 }
 
@@ -692,6 +714,7 @@ pub fn schemas() -> Vec<(String, String)> {
         (MIGRATIONS, schemars::schema_for!(MigrationsFile)),
         (GOALS, schemars::schema_for!(GoalsFile)),
         (START, schemars::schema_for!(StartFile)),
+        (AIR, schemars::schema_for!(AirFile)),
     ] {
         out.push((schema_ref(file).unwrap_or_default(), pretty(&schema)));
     }
@@ -716,6 +739,7 @@ mod tests {
             "buildables" => files.buildables = text,
             "goals" => files.goals = text,
             "start" => files.start = text,
+            "air" => files.air = text,
             _ => files.migrations = text,
         }
         files

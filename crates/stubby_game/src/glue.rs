@@ -29,10 +29,45 @@ impl Plugin for GluePlugin {
         ))
         .add_systems(
             Update,
-            interact_points
-                .after(stubby_core::PrefabBinding)
-                .before(stubby_core::InteractionTargeting),
+            (
+                interact_points
+                    .after(stubby_core::PrefabBinding)
+                    .before(stubby_core::InteractionTargeting),
+                attach_air_cleaners.after(stubby_core::PrefabBinding),
+            ),
         );
+    }
+}
+
+/// Placed foliage named by an `air` rule cleans the air (clean-air-by-foliage): the rules
+/// (crafting's data) meet the world's placed assets here, so neither system names the other.
+fn attach_air_cleaners(
+    mut commands: Commands,
+    rules: Option<Res<bevy_stubby_recipes::AirRules>>,
+    placed: Query<(Entity, &stubby_core::PlacedAsset), Without<stubby_core::AirCleaner>>,
+    mut unmatched: Local<std::collections::HashSet<Entity>>,
+) {
+    let Some(rules) = rules else { return };
+    for (entity, asset) in &placed {
+        if unmatched.contains(&entity) {
+            continue;
+        }
+        let Some(rule) = rules.0.iter().find(|rule| rule.applies_to(&asset.asset)) else {
+            unmatched.insert(entity);
+            continue;
+        };
+        use stubby_recipes::air::AirFollows as Rule;
+        commands.entity(entity).insert(stubby_core::AirCleaner {
+            radius_m: rule.radius_m,
+            max_strength: rule.strength,
+            follows: match rule.follows {
+                Rule::Growth => stubby_core::AirFollows::Growth,
+                Rule::WaterOrLight => stubby_core::AirFollows::WaterOrLight,
+                Rule::Light => stubby_core::AirFollows::Light,
+            },
+            stops_when_harvested: rule.stops_when_harvested,
+            strength: 0.,
+        });
     }
 }
 

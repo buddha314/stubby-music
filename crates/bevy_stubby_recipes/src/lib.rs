@@ -51,6 +51,10 @@ impl Plugin for RecipesPlugin {
             ));
             app.insert_resource(RecipeCatalog(catalog));
         }
+        // Foliage that cleans the air (`air.json`, clean-air-by-foliage).
+        if let Ok(rules) = stubby_recipes::shipped_rules() {
+            app.insert_resource(AirRules(rules.air));
+        }
         // A new player starts with the shipped starter inventory (`start.json`).
         if self.catalog.is_none() && !app.world().contains_resource::<PlayerInventory>() {
             let mut player = PlayerInventory::default();
@@ -88,6 +92,10 @@ pub struct RecipesSystems;
 /// The validated rules.
 #[derive(Resource)]
 pub struct RecipeCatalog(pub Catalog);
+
+/// The air cleaners (`air.json`): which placed assets clean the air, how far and how much.
+#[derive(Resource, Clone, Default)]
+pub struct AirRules(pub Vec<stubby_recipes::air::AirCleanerDefinition>);
 
 /// The player's items, harvest ledger and recipe book, plus the last feedback line.
 /// One player for now; machines with their own inventories come later.

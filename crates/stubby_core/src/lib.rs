@@ -202,6 +202,26 @@ pub struct AssetState {
     pub port_highlight: bool,
 }
 
+/// Foliage that cleans the air within a radius (clean-air-by-foliage). The game's glue
+/// puts it on placed assets from the `air` rules; the world eases `strength` toward
+/// `max_strength` times the asset's life and computes light quality from every cleaner.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct AirCleaner {
+    pub radius_m: f32,
+    pub max_strength: f32,
+    pub follows: AirFollows,
+    pub stops_when_harvested: bool,
+    /// How strongly it cleans now, 0..1 (eased).
+    pub strength: f32,
+}
+/// What part of an asset's life its cleaning follows (`AssetState`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AirFollows {
+    Growth,
+    WaterOrLight,
+    Light,
+}
+
 /// Whether the mouse is captured for looking around. The player owns it; anything that
 /// clicks in the world (building) reads it.
 #[derive(Resource)]

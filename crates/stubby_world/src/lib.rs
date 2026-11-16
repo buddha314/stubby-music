@@ -2,6 +2,7 @@
 //! simulation time, world generation, and the lifecycle and presentation of placed
 //! prefabs. Placed assets come alive through binders other systems register; the world
 //! itself names no creature, machine or crafting source.
+pub mod air;
 pub mod calendar;
 pub mod export;
 pub mod lighting;
@@ -27,6 +28,7 @@ impl Plugin for DesertWorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             sky::SkyPlugin,
+            air::AirPlugin,
             calendar::CalendarPlugin,
             prefabs::PlacedPrefabsPlugin,
         ))

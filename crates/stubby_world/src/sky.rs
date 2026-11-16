@@ -29,13 +29,15 @@ pub fn camera_sky() -> impl Bundle {
 const DUST_SCATTERING: f32 = 14e-6;
 const DUST_ABSORPTION: Vec3 = Vec3::new(0.5e-6, 1.2e-6, 3.2e-6);
 
-/// Earth's air with a low layer of desert dust.
-pub fn desert_air() -> bevy::light::atmosphere::ScatteringMedium {
+/// Earth's air with a low layer of desert dust, `storm` 0..1 of it: the windstorm's
+/// dust thins as the basin's air is cleaned (`air::BasinAir`), down to a light haze.
+pub fn desert_air(storm: f32) -> bevy::light::atmosphere::ScatteringMedium {
     use bevy::light::atmosphere::{Falloff, PhaseFunction, ScatteringMedium, ScatteringTerm};
+    let dust = 0.15 + 0.85 * storm.clamp(0., 1.);
     let mut air = ScatteringMedium::earth(256, 256);
     air.terms.push(ScatteringTerm {
-        absorption: DUST_ABSORPTION,
-        scattering: Vec3::splat(DUST_SCATTERING),
+        absorption: DUST_ABSORPTION * dust,
+        scattering: Vec3::splat(DUST_SCATTERING * dust),
         // Thickness is a fraction of the 100 km atmosphere: ~3 km of dust.
         falloff: Falloff::Exponential { scale: 3. / 100. },
         phase: PhaseFunction::Mie { asymmetry: 0.7 },
@@ -43,16 +45,45 @@ pub fn desert_air() -> bevy::light::atmosphere::ScatteringMedium {
     air.with_label("desert_air")
 }
 
-/// The planet the atmosphere belongs to: Earth, under desert air.
+/// The sky's air, and the storm it was last built for.
+#[derive(Resource)]
+pub struct DesertAirMedium {
+    handle: Handle<bevy::light::atmosphere::ScatteringMedium>,
+    storm: f32,
+}
+
+/// The planet the atmosphere belongs to: Earth, under desert air (full storm at first).
 pub fn spawn_atmosphere(
     commands: &mut Commands,
     mediums: &mut Assets<bevy::light::atmosphere::ScatteringMedium>,
 ) {
-    let medium = mediums.add(desert_air());
+    let medium = mediums.add(desert_air(1.));
+    commands.insert_resource(DesertAirMedium {
+        handle: medium.clone(),
+        storm: 1.,
+    });
     let mut atmosphere = bevy::light::Atmosphere::earth(medium);
     // Dry, pale mud: brighter multiscattering than Earth's average.
     atmosphere.ground_albedo = Vec3::new(0.42, 0.36, 0.30);
     commands.spawn(atmosphere);
+}
+
+/// The windstorm follows the basin: rebuild the sky's air when the storm has moved 2%
+/// (each rebuild recomputes the atmosphere's medium tables, so not every frame).
+fn follow_the_storm(
+    basin: Res<crate::air::BasinAir>,
+    medium: Option<ResMut<DesertAirMedium>>,
+    mut mediums: ResMut<Assets<bevy::light::atmosphere::ScatteringMedium>>,
+) {
+    let Some(mut medium) = medium else { return };
+    let storm = basin.storm();
+    if (storm - medium.storm).abs() < 0.02 {
+        return;
+    }
+    if let Some(mut air) = mediums.get_mut(&medium.handle) {
+        *air = desert_air(storm);
+        medium.storm = storm;
+    }
 }
 
 /// Stars: a seeded sphere of points that turns about the celestial pole with solar time
@@ -360,7 +391,13 @@ impl Plugin for SkyPlugin {
             .add_systems(Startup, (spawn_stars, spawn_clouds))
             .add_systems(
                 Update,
-                (stop_regenerating, rebake, turn_stars, drift_clouds),
+                (
+                    stop_regenerating,
+                    rebake,
+                    turn_stars,
+                    drift_clouds,
+                    follow_the_storm,
+                ),
             );
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
             render_app.insert_resource(baked).add_systems(
