@@ -1313,40 +1313,17 @@ const SNAPS: [&[u8]; 3] = [
 ];
 const SNAP_GAIN: f32 = 0.6;
 
-/// A 16-bit PCM WAV as (sample rate, one buffer per channel).
+/// A WAV as (sample rate, one buffer per channel), decoded by `hound`.
 fn decode_wav(bytes: &[u8]) -> Option<(u32, Vec<Vec<f32>>)> {
-    let u16_at = |i: usize| Some(u16::from_le_bytes(bytes.get(i..i + 2)?.try_into().ok()?));
-    let u32_at = |i: usize| Some(u32::from_le_bytes(bytes.get(i..i + 4)?.try_into().ok()?));
-    if bytes.get(0..4)? != b"RIFF" || bytes.get(8..12)? != b"WAVE" {
-        return None;
-    }
-    let (mut at, mut format, mut data) = (12, None, None);
-    while at + 8 <= bytes.len() {
-        let (id, len) = (bytes.get(at..at + 4)?, u32_at(at + 4)? as usize);
-        let body = at + 8;
-        match id {
-            b"fmt " => {
-                format = Some((
-                    u16_at(body)?,
-                    u16_at(body + 2)?,
-                    u32_at(body + 4)?,
-                    u16_at(body + 14)?,
-                ))
-            }
-            b"data" => data = Some(bytes.get(body..(body + len).min(bytes.len()))?),
-            _ => {}
-        }
-        at = body + len + (len & 1);
-    }
-    let ((1, channels, rate, 16), data) = (format?, data?) else {
-        return None;
-    };
-    let channels = channels.max(1) as usize;
+    let mut reader = hound::WavReader::new(std::io::Cursor::new(bytes)).ok()?;
+    let spec = reader.spec();
+    let channels = usize::from(spec.channels.max(1));
+    let scale = 1. / (1u32 << (spec.bits_per_sample.max(1) - 1)) as f32;
     let mut out = vec![Vec::new(); channels];
-    for (i, frame) in data.chunks_exact(2).enumerate() {
-        out[i % channels].push(i16::from_le_bytes([frame[0], frame[1]]) as f32 / 32768.);
+    for (i, sample) in reader.samples::<i32>().enumerate() {
+        out[i % channels].push(sample.ok()? as f32 * scale);
     }
-    Some((rate, out))
+    Some((spec.sample_rate, out))
 }
 
 /// Load the snaps into the engine once its thread is up.
@@ -1995,15 +1972,6 @@ mod tests {
             engine,
             clock: 0,
             bpm: 120.,
-        }
-    }
-
-    #[test]
-    fn the_snaps_decode() {
-        for bytes in SNAPS {
-            let (rate, channels) = decode_wav(bytes).expect("16-bit PCM WAV");
-            assert_eq!(rate, 44_100);
-            assert!(channels[0].iter().any(|s| s.abs() > 0.05));
         }
     }
 

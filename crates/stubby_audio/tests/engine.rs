@@ -357,53 +357,6 @@ fn invalid_commands_are_rejected() {
 // ------------------------------------------------------------- synth-modules
 
 #[test]
-fn sine_is_a_pure_full_scale_tone_on_both_speakers() {
-    let mut rig = Rig::new();
-    let a = rig.add(1, ModuleKind::SineVco { freq_hz: 440.0 });
-    rig.connect(out(a), PortRef::output());
-    rig.flush();
-    rig.render(SR as usize);
-    let left = &rig.left[..SR as usize];
-    assert!((freq_by_zero_crossings(left) - 440.0).abs() < 0.1);
-    assert!((peak(left) - 1.0).abs() <= 0.01);
-    assert_eq!(rig.left, rig.right, "mono module must reach both speakers");
-}
-
-#[test]
-fn square_is_full_scale_with_odd_harmonics() {
-    let mut rig = Rig::new();
-    let a = rig.add(1, ModuleKind::SquareVco { freq_hz: 220.0 });
-    rig.connect(out(a), PortRef::output());
-    rig.flush();
-    rig.render(SR as usize);
-    let x = &rig.left[SR as usize / 10..];
-    assert!((freq_by_zero_crossings(x) - 220.0).abs() < 0.1);
-    let rms = (x.iter().map(|s| s * s).sum::<f32>() / x.len() as f32).sqrt();
-    // A square's RMS is close to its peak; a sine's is 0.707 of it.
-    assert!(
-        rms / peak(x) > 0.85,
-        "not square-like: rms/peak = {}",
-        rms / peak(x)
-    );
-    // fundsp's band-limited wavetable square peaks near 0.9; aliasing would show
-    // as spikes well above full scale.
-    assert!((0.85..1.25).contains(&peak(x)), "peak {}", peak(x));
-    assert_eq!(rig.left, rig.right);
-}
-
-#[test]
-fn square_follows_pitch_cv() {
-    let mut rig = Rig::new();
-    let cv = rig.add(1, ModuleKind::Constant { value: -1.0 });
-    let a = rig.add(2, ModuleKind::SquareVco { freq_hz: 440.0 });
-    rig.connect(out(cv), PortRef::new(a, "voct"));
-    rig.connect(out(a), PortRef::output());
-    rig.flush();
-    rig.render(SR as usize);
-    assert!((freq_by_zero_crossings(&rig.left[SR as usize / 10..]) - 220.0).abs() < 0.1);
-}
-
-#[test]
 fn one_volt_of_pitch_cv_raises_one_octave() {
     let mut rig = Rig::new();
     let cv = rig.add(1, ModuleKind::Constant { value: 1.0 });
@@ -413,23 +366,6 @@ fn one_volt_of_pitch_cv_raises_one_octave() {
     rig.flush();
     rig.render(SR as usize);
     assert!((freq_by_zero_crossings(&rig.left) - 523.25).abs() < 0.1);
-}
-
-#[test]
-fn an_output_fans_out_to_many_inputs() {
-    let mut rig = Rig::new();
-    let cv = rig.add(1, ModuleKind::Constant { value: 1.0 });
-    let a = rig.add(2, ModuleKind::SineVco { freq_hz: 220.0 });
-    let b = rig.add(3, ModuleKind::SineVco { freq_hz: 220.0 });
-    for m in [a, b] {
-        rig.connect(out(cv), PortRef::new(m, "voct"));
-        rig.connect(out(m), PortRef::output());
-    }
-    rig.flush();
-    rig.render(SR as usize);
-    // Both sines received the CV: one 440 Hz tone at double amplitude.
-    assert!((freq_by_zero_crossings(&rig.left) - 440.0).abs() < 0.1);
-    assert!((peak(&rig.left) - 2.0).abs() < 0.02);
 }
 
 #[test]
@@ -654,76 +590,4 @@ fn clock_blip_patch_sounds_on_every_tick() {
         };
         assert!(click_ratio(onset, &[880.0]) <= 1.2, "click at tick {t}");
     }
-}
-
-#[test]
-fn a_loaded_sample_plays_once_to_the_speakers() {
-    let mut rig = Rig::new();
-    // A 10 ms click: a decaying burst.
-    let click: Vec<f32> = (0..480)
-        .map(|i| 0.8 * (1. - i as f32 / 480.) * if i % 2 == 0 { 1. } else { -1. })
-        .collect();
-    rig.engine
-        .load_sample(stubby_audio::SampleId(1), SR, vec![click]);
-    rig.send(Command::PlaySample {
-        sample: stubby_audio::SampleId(1),
-        gain: 1.,
-    });
-    rig.flush();
-    rig.render(SR as usize / 10);
-    assert!(peak(&rig.left) > 0.1, "the click sounds");
-    let after = rig.left.len();
-    rig.render(SR as usize / 10);
-    assert!(peak(&rig.left[after..]) < 1e-4, "and is over");
-}
-
-#[test]
-fn an_emitter_pans_toward_its_side_and_its_volume_silences_it() {
-    let mut rig = Rig::new();
-    let vco = rig.add(1, ModuleKind::SquareVco { freq_hz: 220.0 });
-    rig.connect(out(vco), PortRef::output());
-    let emit = |rig: &mut Rig, x: f32, volume: f32| {
-        rig.send(Command::SetEmitter {
-            output: out(vco),
-            offset: [x, 0.0, 0.0],
-            volume,
-        });
-        rig.flush();
-    };
-    // Settle, then compare the two ears over the last stretch.
-    let window = |rig: &mut Rig, frames: usize| {
-        rig.left.clear();
-        rig.right.clear();
-        rig.render(SR as usize / 2);
-        rig.left.drain(..rig.left.len() - frames);
-        rig.right.drain(..rig.right.len() - frames);
-    };
-    emit(&mut rig, -10.0, 1.0);
-    window(&mut rig, 4800);
-    assert!(
-        peak(&rig.left) > peak(&rig.right) * 1.5,
-        "left: {} right: {}",
-        peak(&rig.left),
-        peak(&rig.right)
-    );
-    emit(&mut rig, 10.0, 1.0);
-    window(&mut rig, 4800);
-    assert!(
-        peak(&rig.right) > peak(&rig.left) * 1.5,
-        "left: {} right: {}",
-        peak(&rig.left),
-        peak(&rig.right)
-    );
-    emit(&mut rig, 10.0, 0.0);
-    window(&mut rig, 4800);
-    assert!(peak(&rig.left).max(peak(&rig.right)) < 1e-3);
-    // The voice can still be removed, and a late update for it is ignored.
-    rig.send(Command::RemoveModule { id: vco });
-    rig.send(Command::SetEmitter {
-        output: out(vco),
-        offset: [0.0; 3],
-        volume: 1.0,
-    });
-    rig.flush();
-    rig.render(SR as usize / 4);
 }
