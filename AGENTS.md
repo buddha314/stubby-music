@@ -243,6 +243,13 @@ machines firing on beats — is driven by **events from the audio thread carryin
 sample timestamp**, not by Bevy's `Time`. Frame timing jitters; the sample counter
 does not. Visuals interpolate toward the audio clock.
 
+**The master clock is 1 BPM** (user decision, 2026-11-16, as the Godot game decided
+2026-11-13): `bevy_stubby_audio::MasterClock`, read from the engine's sample counter. The
+day cycle runs on it: the calendar advances by master-clock time times the speed keys'
+setting, so at 1x a day is 45 master beats and a night 15. Tempo clocks are meant to be
+whole multiples of it (a 90 BPM burbler is x90, all clocks landing together once a
+minute); that phase-locking is not built yet. Player movement and UI stay on real time.
+
 ### Signals follow Eurorack conventions
 
 All module ports carry `f32` at audio rate, as in VCV Rack — there is no separate

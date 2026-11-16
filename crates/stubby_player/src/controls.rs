@@ -87,7 +87,8 @@ pub fn capture_cursor(
     };
 }
 fn move_player(
-    time: Res<Time<Virtual>>,
+    // Real time: the simulation speed keys never speed up the player.
+    time: Res<Time<Real>>,
     keys: Res<ButtonInput<KeyCode>>,
     capture: Res<LookCapture>,
     mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
@@ -105,7 +106,7 @@ fn move_player(
             &mut player,
             &keys,
             &ground,
-            time.delta_secs().min(0.1 * time.relative_speed()),
+            time.delta_secs().min(0.1),
         );
     }
 }
