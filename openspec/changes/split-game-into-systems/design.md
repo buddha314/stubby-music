@@ -114,7 +114,8 @@ saved files never change. Rejected: it fossilises a module that no longer exists
 hides which crate owns a component. The rewrite is small now and only gets bigger.
 
 ### Enforce with cargo plus one small script
-Crate boundaries make module cycles impossible. `tools/check_layers.py` adds the rules
+Crate boundaries make module cycles impossible. `cargo-deny`'s bans (`deny.toml`, `wrappers`; it replaced a
+hand-written `tools/check_layers.py` on 2026-11-15) add the rules
 cargo cannot express (layer order, no system → system edge, no Bevy in cores), from
 `cargo metadata --no-deps`, in well under a second. CI runs it with the other checks.
 

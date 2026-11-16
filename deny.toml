@@ -1,0 +1,32 @@
+# Crate layering (split-game-into-systems), enforced by cargo-deny: `cargo deny check bans`.
+#
+#   cores     stubby_audio, stubby_rack, stubby_recipes       (never Bevy; see tools/ci_local.sh)
+#   services  stubby_core, stubby_ui, bevy_stubby_audio
+#   systems   bevy_stubby_rack, bevy_stubby_recipes, stubby_player, stubby_life,
+#             stubby_world, stubby_streams
+#   game      stubby_game, stubby_jackdaw
+#
+# `wrappers` lists the only crates allowed to depend directly on a crate. Systems are used
+# only by the game; a system's own core only by that system and the game; services only by
+# systems and the game (so no core reaches up). A new crate gets a line here.
+
+[graph]
+# Tests may assemble several systems; the layering is about what ships.
+exclude-dev = true
+
+[bans]
+multiple-versions = "allow"
+wildcards = "allow"
+deny = [
+    { crate = "bevy_stubby_rack", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "bevy_stubby_recipes", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "stubby_player", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "stubby_life", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "stubby_world", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "stubby_streams", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "systems never depend on each other" },
+    { crate = "stubby_rack", wrappers = ["bevy_stubby_rack", "stubby_game", "stubby_jackdaw"], reason = "the rack system's own core" },
+    { crate = "stubby_recipes", wrappers = ["bevy_stubby_recipes", "stubby_game", "stubby_jackdaw"], reason = "the crafting system's own core" },
+    { crate = "stubby_core", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
+    { crate = "stubby_ui", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
+    { crate = "bevy_stubby_audio", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
+]

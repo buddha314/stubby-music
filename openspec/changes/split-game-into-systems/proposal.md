@@ -32,7 +32,7 @@ understood, tested and replaced on its own, as in Rust and Bevy best practice.
   `#[path]` and depends on the crates normally; reflected type paths in saved prefabs
   change (`stubby_jackdaw::desert::…` → the owning crate). 11 lines across the `.bsn`
   files are rewritten in the same PRs. `embedded_recipes_plugin` is removed.
-- A **layer check** (`tools/check_layers.py`, over `cargo metadata`) fails when a crate
+- A **layer check** (`cargo deny check bans` over `deny.toml`) fails when a crate
   breaks the layering.
 - No gameplay, look or sound changes.
 
