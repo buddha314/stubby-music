@@ -14,7 +14,8 @@ const SAMPLE_SECONDS: f32 = 0.1;
 pub const BASIN_RADIUS_M: f32 = 450.;
 
 /// How clean the basin's air is on average, 0..1. The windstorm follows it.
-#[derive(Resource, Default, Clone, Copy, Debug)]
+#[derive(Resource, Default, Clone, Copy, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct BasinAir {
     pub clean: f32,
 }
@@ -28,12 +29,15 @@ impl BasinAir {
 pub struct AirPlugin;
 impl Plugin for AirPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<BasinAir>().add_systems(
-            Update,
-            (ease_cleaners, sample_light_quality, sample_basin)
-                .chain()
-                .after(stubby_core::PrefabBinding),
-        );
+        app.init_resource::<BasinAir>()
+            .register_type::<BasinAir>()
+            .register_type::<crate::lighting::CameraLightQuality>()
+            .add_systems(
+                Update,
+                (ease_cleaners, sample_light_quality, sample_basin)
+                    .chain()
+                    .after(stubby_core::PrefabBinding),
+            );
     }
 }
 

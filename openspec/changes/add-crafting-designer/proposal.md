@@ -9,10 +9,18 @@ started. The right time to give it a real tool is now, before it does.
 
 ## What Changes
 
-- A **crafting designer**: a Jackdaw editor extension, built in this repository, that
-  shows the rules as items, recipes and goals instead of files. It has a browser of every
-  registry, a form for the selected row with pickers for IDs, a live problems list, a
-  where-used view, and a recipe graph of items flowing through recipes.
+- A **crafting designer** as a **local web tool** (amended 2026-11-16, user decision):
+  `cargo run -p stubby_rules_server` serves one page on localhost that shows the rules
+  as registries and rows, with a form for the selected row built from the JSON Schema,
+  pickers for IDs, a live problems list, undo and redo, where-used, and save. The game's
+  dev builds reload saved rules within a second, so you tune while it runs, in Jackdaw's
+  Play or standalone.
+- **Live game values beside the rules:** dev builds of the game serve Bevy's own remote
+  protocol (`bevy_remote`) on localhost, and the page reads chosen resources from the
+  running game (the basin's clean air, light quality at the camera, the time of day).
+- A Jackdaw extension front end is **deferred**: its UI kit has no text input for
+  extensions, and an extension loads beside the game project only as a signed, installed
+  bundle (task 3.1, findings in design.md). It can come later over the same model.
 - A Bevy-free **editing model** in `stubby_recipes` (`rules::edit`): typed edits with
   undo, renames that write their own migration row, live validation, and saving through
   the same canonical writer and `ids.lock` update as `rules-fmt`. Both the designer and
@@ -31,8 +39,9 @@ started. The right time to give it a real tool is now, before it does.
 ## Capabilities
 
 ### New Capabilities
-- `crafting-designer`: designing game rules in Jackdaw through forms, pickers, a
-  problems list and a recipe graph, saved as the canonical rules files.
+- `crafting-designer`: designing game rules in a local web designer through forms,
+  pickers, a problems list and where-used, saved as the canonical rules files, with live
+  game values beside them.
 - `rules-editing`: the Bevy-free editing model: typed edits, undo, renames with
   migrations, live validation and canonical saving.
 
@@ -45,12 +54,14 @@ the designer follows its files, IDs, `ids.lock` and migrations rules exactly.
 - `crates/stubby_recipes`: new `rules::edit` module; schema annotations on ID fields
   (a Rule PR in the AGENTS.md sense: schema code plus regenerated `schema/`). Still
   no Bevy.
-- New crate `crates/stubby_crafting_designer` (`cdylib` + `rlib`): depends on
-  `stubby_recipes`, Bevy and the Jackdaw extension crates only, never on `stubby_game`.
-  It is a tool, outside the game's layers (`split-game-into-systems`).
+- New tool crate `crates/stubby_rules_server` (binary): depends on `stubby_recipes`,
+  `tiny_http`, serde and `serde_json` only; no Bevy, never the game. It is a tool,
+  outside the game's layers (`split-game-into-systems`). The page is static HTML in the
+  crate with `json-editor` (MIT) vendored, so it works offline.
+- `stubby_game` dev builds add Bevy's `RemotePlugin` and `RemoteHttpPlugin` (localhost,
+  CORS for the page); the resources the page shows derive `Reflect`.
 - `bevy_stubby_recipes`: dev-build hot reload of the rules from disk; release builds
   keep the embedded rules.
-- No change to the Jackdaw editor itself (editor policy: extension points only). A
-  blocking editor bug is fixed in the buddha314 fork.
+- No change to the Jackdaw editor.
 - `assets/recipes/README.md` and AGENTS.md: the designer is the normal way to author
   rules; hand edits still work.

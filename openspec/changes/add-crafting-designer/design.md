@@ -33,14 +33,38 @@ extension points are exactly what it allows.
 
 ## Decisions
 
-### Jackdaw extension first, in-game later
-Jackdaw is where levels and prefabs are already designed, and it gives us docking,
-menus, operators, an inspector-style UI kit and the node graph for free. An in-game
-tool would have to build all of that in Bevy UI first, and is only usable while
-playing. The in-game view is still worth having for tuning while playing, and the
-editing model makes it cheap later.
-*Alternative:* in-game first. Rejected for now: more UI to build, and less of the
-editor's tooling.
+### A local web designer first (amended 2026-11-16)
+The user asked for a rules editor to iterate on gameplay, preferred a tool beside the
+game over an in-game panel, and chose a small local HTML server after this research:
+
+- **Jackdaw extension** (the original plan): extensions get only buttons, cards, field
+  rows and scrub chips from the editor's UI kit, no text input, and an extension loads
+  beside the open game project only as a signed `.jdext` bundle (publisher key, trust
+  prompt, reinstall on every change). Exposing a text field to extensions would be an
+  editor feature, which the editor policy rules out. Deferred.
+- **In-game panel**: every form hand-built in Bevy UI, usable only while playing.
+- **Spreadsheet tools (Depot, CastleDB)**: their own file formats; we would lose the
+  canonical rules files, `rules-fmt` and the validator.
+- **VS Code on the JSON**: already works (every file names its `$schema`), but it is
+  not a designer: no ID pickers across files, no where-used, no undo across files.
+- **Local web designer** (chosen): the schemas already exist and `json-editor` renders
+  forms from JSON Schema with no framework; the editing model already validates, undoes
+  and saves; the game already hot-reloads. Least new code, usable while the game runs.
+
+### The server: `tiny_http` over the editing model
+`stubby_rules_server` holds one `RulesDocument` behind a mutex and exposes it as a small
+JSON API on `127.0.0.1` (never another interface): registries and their row schemas,
+rows, edits (the model's own `Edit`, deserialised as sent), undo, redo, save,
+problems and where-used. `tiny_http` (MIT/Apache) is a small synchronous server, right
+for one user on localhost; `axum` would bring tokio for nothing this tool needs. The page
+and `json-editor` are embedded with `include_str!`, so the binary is self-contained.
+
+### Live game values through Bevy's remote protocol
+Dev builds of the game add `bevy_remote` (`RemotePlugin`, `RemoteHttpPlugin` on
+127.0.0.1:15702 with CORS for the page). The page calls `world.get_resources` once a
+second for a list of resource type paths it shows; the resources derive `Reflect`.
+Nothing new is written for it: it is Bevy's protocol, and later tools (an MCP bridge, a
+graph of the basin's air) can use it the same way.
 
 ### A Bevy-free editing model in `stubby_recipes`
 `rules::edit::RulesDocument` wraps the loaded files and applies `Edit` values
@@ -74,17 +98,17 @@ shipped behaviour is unchanged. This is also the `bevy_common_assets` direction 
 `docs/research/crafting-and-inventory-crates.md`.
 
 ### The designer is a tool, outside the game's layers
-`stubby_crafting_designer` depends on `stubby_recipes`, Bevy and Jackdaw's extension
-crates. It never depends on the game, so it builds and loads in the editor whether
-or not the game compiles, and the game never depends on it.
+`stubby_rules_server` depends on `stubby_recipes` and its HTTP and serde crates. It
+never depends on the game or Bevy, so it builds in seconds and runs whether or not the
+game compiles, and the game never depends on it.
 
 ## Risks / Trade-offs
 
-- [Extension ABI must match the shared editor exactly] → build it with
-  `tools/jackdaw.sh prepare` against the same SDK; `tools/jackdaw.sh sync` rebuilds it
-  with the editor.
-- [Jackdaw's UI kit lacks a widget the forms need (e.g. a searchable picker)] → build
-  it in the extension from the kit's parts; fix only genuine editor bugs in the fork.
+- [`json-editor` is in maintenance mode] → it is vendored at a fixed version and does
+  one job (forms from a schema); its successor or a hand-written form can replace it
+  behind the same API.
+- [A local server is reachable by other local processes] → it binds 127.0.0.1 only and
+  writes only the rules directory, through the editing model's checks.
 - [Two writers: the designer and a hand edit or an agent at the same time] → the model
   reloads when files change on disk while it has no unsaved edits, and refuses to save
   over a newer file, showing both versions.
@@ -95,12 +119,10 @@ or not the game compiles, and the game never depends on it.
 ## Migration Plan
 
 Additive. Hand editing and `rules-fmt` keep working; files written by either are
-identical. Rollback is disabling the extension.
+identical. Rollback is not running the server.
 
 ## Open Questions
 
-- Installing a project's own extension: does `jd` install a local `cdylib` as a
-  `.jdext` for development without publishing, and does signing allow a local key?
-  (Task 3.1 confirms; if not, the gap goes to the fork as an extension-API fix.)
 - Should goals get their own tree view (long-term goals over short-term chores),
   or is the generic form enough at first? (Proposed: generic first.)
+- A recipe graph: draw it in the page later (a small graph library), once recipes exist.

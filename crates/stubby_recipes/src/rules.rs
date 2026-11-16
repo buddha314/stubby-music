@@ -31,7 +31,7 @@ pub const START: &str = "start.json";
 pub const IDS_LOCK: &str = "ids.lock";
 
 /// One problem in the rules, located well enough to fix without searching.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RulesError {
     pub file: String,
     /// The row's ID, or empty when the problem is not in one row.
@@ -128,7 +128,8 @@ pub enum Registry {
     Air,
 }
 impl Registry {
-    fn file(self) -> &'static str {
+    /// The rules file holding this registry.
+    pub fn file(self) -> &'static str {
         match self {
             Self::Items => ITEMS,
             Self::Resources => RESOURCES,
@@ -665,7 +666,7 @@ pub fn updated_ids_lock(lock: &str, rules: &Rules) -> String {
     out
 }
 
-fn schema_ref(file: &str) -> Option<String> {
+pub(crate) fn schema_ref(file: &str) -> Option<String> {
     Some(format!("schema/{}", file.replace(".json", ".schema.json")))
 }
 

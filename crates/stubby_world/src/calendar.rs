@@ -4,7 +4,8 @@ use bevy::prelude::*;
 pub const DAY_SECONDS: u64 = 2700;
 pub const CYCLE_SECONDS: u64 = 3600;
 const SPEEDS: [f32; 8] = [0.25, 0.5, 1., 2., 4., 8., 16., 64.];
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Reflect)]
+#[reflect(Resource)]
 pub struct Calendar {
     /// Simulation time since the world began; reviews set it to jump the clock.
     pub elapsed: std::time::Duration,
@@ -31,6 +32,7 @@ pub struct CalendarPlugin;
 impl Plugin for CalendarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Calendar>()
+            .register_type::<Calendar>()
             .insert_resource(sky_profile().brightness)
             .insert_resource(crate::lighting::LightingKeys::shipped())
             .init_resource::<crate::lighting::CameraLightQuality>()
