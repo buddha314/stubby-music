@@ -170,7 +170,7 @@ fn starting_value(module: &str, knob: &str, clock: Option<&AssetClock>) -> Optio
         .find(|p| p.part == k.part)?;
     match (part.kind, k.param) {
         ("Clock", "bpm") => clock.map(|c| c.bpm),
-        ("SquareVco", "freq") => Some(super::waveform_audio::bug_click().freq_hz),
+        ("SquareVco", "freq") => Some(stubby_life::bug_click().freq_hz),
         _ => None,
     }
 }

@@ -1924,6 +1924,7 @@ name = "bevy_stubby_audio"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "serde",
  "stubby_audio",
 ]
 
@@ -6542,6 +6543,7 @@ dependencies = [
  "serde_json",
  "stubby_audio",
  "stubby_core",
+ "stubby_life",
  "stubby_player",
  "stubby_rack",
  "stubby_recipes",
@@ -6562,6 +6564,19 @@ dependencies = [
  "serde_json",
  "stubby_game",
  "tempfile",
+]
+
+[[package]]
+name = "stubby_life"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_stubby_audio",
+ "gltf",
+ "serde",
+ "serde_json",
+ "stubby_audio",
+ "stubby_core",
 ]
 
 [[package]]

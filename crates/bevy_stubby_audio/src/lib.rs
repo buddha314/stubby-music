@@ -11,6 +11,7 @@ use bevy::prelude::*;
 
 pub mod module_ids;
 pub mod pulse;
+pub mod voice;
 use std::time::Instant;
 use stubby_audio::{
     AudioThread, Command, EngineConfig, Event, ModuleId, ModuleKind, Notice, PortRef,

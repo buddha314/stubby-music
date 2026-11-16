@@ -16,7 +16,8 @@ pub mod machine_config;
 pub mod prefab_presentation;
 mod prefab_review;
 pub mod prefabs;
-pub mod pulse;
+// The lightning bug (stubby_life), under its old module name.
+pub use stubby_life::bug as pulse;
 pub mod rack;
 pub mod resources;
 mod review;

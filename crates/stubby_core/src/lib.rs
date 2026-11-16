@@ -95,3 +95,13 @@ pub enum Interactable {
     Pickup,
     Machine(Entity),
 }
+
+/// The level was authored in Jackdaw (placed prefabs), not the built-in opening layout.
+#[derive(Resource, Default)]
+pub struct AuthoredLevel;
+
+/// A source that has been harvested and not yet returned. Whichever system owns the
+/// harvest marks it; anything that shows the source (a bug that stops flashing, reeds cut
+/// to stubble) reads it.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct Harvested;
