@@ -26,10 +26,11 @@ pub mod resources;
 mod review;
 // Stream laying (stubby_streams), under its old module name.
 pub use stubby_streams as streams;
+mod sky_review;
 mod stream_review;
 mod waveform_audio;
 
-use bevy::{camera::Exposure, light::Skybox, prelude::*};
+use bevy::{camera::Exposure, prelude::*};
 
 pub struct DesertPlugin {
     pub seed: u64,
@@ -56,35 +57,22 @@ impl Plugin for DesertPlugin {
         .add_plugins((
             streams::StreamBuildPlugin::<resources::PlayerInventory>::default(),
             stream_review::StreamReviewPlugin,
+            sky_review::SkyReviewPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup))
         .add_systems(Update, capture_preview);
     }
 }
 
-fn spawn_camera(
-    mut commands: Commands,
-    ground: Res<stubby_core::GroundHeight>,
-    sky: Res<stubby_world::DesertSky>,
-) {
-    let sky = sky.0.clone();
+fn spawn_camera(mut commands: Commands, ground: Res<stubby_core::GroundHeight>) {
     commands.spawn((
-        GeneratedEnvironmentMapLight {
-            environment_map: sky.clone(),
-            intensity: 1500.,
-            ..default()
-        },
+        stubby_world::sky::camera_sky(),
         Camera3d::default(),
         bevy::post_process::bloom::Bloom::NATURAL,
         Exposure { ev100: 10.5 },
         bevy::ui::IsDefaultUiCamera,
         controls::Player::on(&ground),
         controls::spawn_transform(&ground),
-        Skybox {
-            image: Some(sky),
-            brightness: 1500.,
-            ..default()
-        },
         DistanceFog {
             color: Color::srgb(0.56, 0.43, 0.33),
             falloff: FogFalloff::Exponential { density: 0.004 },

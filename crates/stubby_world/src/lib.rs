@@ -25,7 +25,7 @@ pub struct DesertWorldPlugin {
 impl Plugin for DesertWorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            sky::StaticSkyPlugin,
+            sky::SkyPlugin,
             calendar::CalendarPlugin,
             prefabs::PlacedPrefabsPlugin,
         ))
@@ -36,13 +36,9 @@ impl Plugin for DesertWorldPlugin {
     }
 }
 
-/// The world's startup: ground, mountains, light and [`DesertSky`] exist after it.
+/// The world's startup: ground, mountains, light and the atmosphere exist after it.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct WorldSetup;
-
-/// The desert sky, for the camera's skybox and environment light.
-#[derive(Resource)]
-pub struct DesertSky(pub Handle<Image>);
 
 #[derive(Resource)]
 pub struct WorldSeed(pub u64);
@@ -134,7 +130,9 @@ fn setup_world(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut images: ResMut<Assets<Image>>,
+    mut mediums: ResMut<Assets<bevy::light::atmosphere::ScatteringMedium>>,
 ) {
+    sky::spawn_atmosphere(&mut commands, &mut mediums);
     let (albedo, normal) = mud_texture(seed.0);
     let texture = images.add(albedo);
     let normal = images.add(normal);
@@ -199,6 +197,11 @@ fn setup_world(
             shadow_maps_enabled: true,
             ..default()
         },
+        // The atmosphere draws the disc; twice Earth's, as the Godot sky's.
+        bevy::light::SunDisk {
+            angular_size: 0.019,
+            intensity: 1.,
+        },
         // Two cascades, not Bevy's four: halves the shadow pass on integrated GPUs
         // (780M: 3.2 -> 1.6 ms). Raise if long dawn/dusk shadows look too soft.
         bevy::light::CascadeShadowConfigBuilder {
@@ -209,5 +212,4 @@ fn setup_world(
         .build(),
         Transform::from_xyz(-48., 7.5, -87.).looking_at(Vec3::ZERO, Vec3::Y),
     ));
-    commands.insert_resource(DesertSky(images.add(sky::desert_sky())));
 }

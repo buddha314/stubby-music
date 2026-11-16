@@ -132,6 +132,7 @@ def main():
     parser.add_argument('--play', action='store_true')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
+    parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
     parser.add_argument('--review', action='store_true', help='Run the opt-in dusk/replenishment review')
     parser.add_argument('--reset-output', action='store_true', help='Force display power-cycle after a 60Hz test too')
     parser.add_argument('--name', default='baseline')
@@ -153,7 +154,7 @@ def main():
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
     output = Path('/tmp') / f'jackdaw-flicker-{args.name}.log'
     report = {'name': args.name, 'limit_seconds': args.seconds,
-              'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play or args.review or args.prefabs or args.streams, 'review': args.review, 'prefabs': args.prefabs}
+              'refresh_hz': args.refresh, 'adapter': args.adapter, 'play': args.play or args.review or args.prefabs or args.streams or args.sky, 'review': args.review, 'prefabs': args.prefabs}
     process = None
     display_changed = False
     kde_original = {}
@@ -171,7 +172,7 @@ def main():
             else:
                 report['mode'] = display_mode(args.refresh)
             display_changed = True
-            if args.play or args.review or args.prefabs or args.streams:
+            if args.play or args.review or args.prefabs or args.streams or args.sky:
                 block = '[[run]]\nname = "Live listen: clock + square"\nargs = ["--seed=42", "--module-demo"]\n'
                 if args.review:
                     block = '[[run]]\nname = "Review: dusk and replenishment"\nargs = ["--seed=42", "--replenishment-review=/tmp/stubby-replenishment-review"]\n'
@@ -179,6 +180,8 @@ def main():
                     block = '[[run]]\nname = "Review: placed prefab runtime"\nargs = ["--seed=42", "--scene=review_prefab_runtime.bsn", "--prefab-review=/tmp/stubby-prefab-review"]\n'
                 if args.streams:
                     block = '[[run]]\nname = "Review: laying a stream"\nargs = ["--seed=42", "--stream-review=/tmp/stubby-stream-review"]\n'
+                if args.sky:
+                    block = '[[run]]\nname = "Review: sky through the day"\nargs = ["--seed=42", "--sky-review=/tmp/stubby-sky-review"]\n'
                 if block not in original:
                     raise RuntimeError('Requested review/live-listen run config missing')
                 remainder = original.replace('\n' + block, '')
@@ -198,8 +201,8 @@ def main():
                         status = rpc('jackdaw/status')
                         if not states or states[-1] != status['pie']:
                             states.append(status['pie'])
-                        if (args.play or args.review or args.prefabs or args.streams) and not played:
-                            if args.review or args.prefabs or args.streams:
+                        if (args.play or args.review or args.prefabs or args.streams or args.sky) and not played:
+                            if args.review or args.prefabs or args.streams or args.sky:
                                 rpc('jackdaw/call_operator', {'id': 'window.resize_panel', 'params': {'window_id': 'jackdaw.game', 'height': 600.0}})
                             rpc('jackdaw/call_operator', {'id': 'pie.play'})
                             played = True
