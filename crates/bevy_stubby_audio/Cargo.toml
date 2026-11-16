@@ -9,5 +9,6 @@ publish = false
 # A service crate (split-game-into-systems): the engine and Bevy, never a game system.
 [dependencies]
 stubby_audio = { path = "../stubby_audio" }
+serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]

@@ -1,0 +1,21 @@
+[package]
+name = "stubby_life"
+version = "0.1.0"
+edition.workspace = true
+description = "Plants and animals: the lightning bug, and later the flora music grows"
+license = "MIT"
+publish = false
+
+# A system crate (split-game-into-systems): the audio service, stubby_core and Bevy only.
+# It never names crafting, prefabs or the world; the game's glue joins it to them.
+[dependencies]
+stubby_core = { path = "../stubby_core" }
+bevy_stubby_audio = { path = "../bevy_stubby_audio" }
+stubby_audio = { path = "../stubby_audio" }
+bevy.workspace = true
+bevy.features = ["3d", "ui", "mesh_picking"]
+serde = { version = "~1.0", features = ["derive"] }
+serde_json = "~1.0"
+
+[dev-dependencies]
+gltf = { version = "~1.4", features = ["extras"] }

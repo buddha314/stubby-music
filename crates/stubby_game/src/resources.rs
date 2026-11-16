@@ -61,6 +61,7 @@ impl Plugin for ResourceRecipesPlugin {
                     (mark_collected, update_hud, update_collection_popup)
                         .chain()
                         .after(RecipesSystems),
+                    (opening_bugs_are_sources, harvested_state).after(mark_collected),
                 ),
             );
     }
@@ -86,6 +87,31 @@ fn pickups_interactable(
             commands
                 .entity(entity)
                 .remove::<stubby_core::Interactable>();
+        }
+    }
+}
+
+/// Glue between crafting and life: the built-in opening's bugs are lightning bug sources.
+fn opening_bugs_are_sources(
+    mut commands: Commands,
+    bugs: Query<(Entity, &stubby_life::bug::OpeningBug), Without<ResourceNode>>,
+) {
+    for (entity, bug) in &bugs {
+        commands.entity(entity).insert(lightning_bug_node(bug.0));
+    }
+}
+
+/// Glue between crafting and anything that shows a source: a collected source is
+/// `Harvested` until it returns.
+fn harvested_state(
+    mut commands: Commands,
+    nodes: Query<(Entity, &ResourceNode, Has<stubby_core::Harvested>), Changed<ResourceNode>>,
+) {
+    for (entity, node, marked) in &nodes {
+        if node.collected && !marked {
+            commands.entity(entity).insert(stubby_core::Harvested);
+        } else if !node.collected && marked {
+            commands.entity(entity).remove::<stubby_core::Harvested>();
         }
     }
 }

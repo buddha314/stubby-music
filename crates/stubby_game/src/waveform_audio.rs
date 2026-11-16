@@ -5,36 +5,16 @@ use super::{
     resources::{RecipeCatalog, ResourceCollected},
 };
 use bevy::prelude::*;
-use serde::Deserialize;
+use bevy_stubby_audio::voice::{WaveformSound, voice_commands};
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
+use stubby_life::bug_click;
 use stubby_recipes::Waveform;
 
-#[derive(Clone, Copy, Deserialize)]
-pub(crate) struct WaveformSound {
-    pub freq_hz: f32,
-    pub attack_seconds: f32,
-    pub decay_seconds: f32,
-    pub gain: f32,
-    pub hearing_radius_metres: f32,
-}
 #[derive(Resource)]
 struct CollectionSounds(WaveformSound);
 #[derive(Resource, Default)]
 struct CueVoices {
     active: Vec<([ModuleId; 4], f64)>,
-}
-/// The lightning bug's click: the square wave's pitch and shape, shared by every
-/// voice that plays a square wave from a bug (the bugs, collection cues, the burbler's VCO).
-pub(crate) fn bug_click() -> WaveformSound {
-    #[derive(Deserialize)]
-    struct Preset {
-        click: WaveformSound,
-    }
-    let preset: Preset = serde_json::from_str(include_str!(
-        "../../../assets/creatures/lightning_bug/asset.json"
-    ))
-    .expect("shipped waveform preset is valid");
-    preset.click
 }
 pub struct WaveformAudioPlugin;
 impl Plugin for WaveformAudioPlugin {
@@ -45,55 +25,16 @@ impl Plugin for WaveformAudioPlugin {
             .add_systems(PostUpdate, collection_cues);
     }
 }
-/// One oscillator, envelope and VCA, triggered by an existing gate source.
-/// The same patch is used by bugs and listener-level collection confirmations.
-pub(crate) fn voice_commands(
-    waveform: Waveform,
-    ids: [ModuleId; 3],
-    gate: PortRef,
-    gain: f32,
-    sound: WaveformSound,
-) -> [Command; 7] {
-    let [oscillator, envelope, vca] = ids;
-    let kind = match waveform {
+/// The engine oscillator that plays a waveform item: glue between crafting's waveforms
+/// and the audio engine.
+fn oscillator(waveform: Waveform, sound: WaveformSound) -> ModuleKind {
+    match waveform {
         Waveform::Square => ModuleKind::SquareVco {
             freq_hz: sound.freq_hz,
         },
-    };
-    [
-        Command::AddModule {
-            id: oscillator,
-            kind,
-        },
-        Command::AddModule {
-            id: envelope,
-            kind: ModuleKind::Envelope {
-                attack_s: sound.attack_seconds,
-                decay_s: sound.decay_seconds,
-            },
-        },
-        Command::AddModule {
-            id: vca,
-            kind: ModuleKind::Vca { gain },
-        },
-        Command::Connect {
-            from: gate,
-            to: PortRef::new(envelope, "gate"),
-        },
-        Command::Connect {
-            from: PortRef::new(envelope, "out"),
-            to: PortRef::new(vca, "cv"),
-        },
-        Command::Connect {
-            from: PortRef::new(oscillator, "out"),
-            to: PortRef::new(vca, "in"),
-        },
-        Command::Connect {
-            from: PortRef::new(vca, "out"),
-            to: PortRef::output(),
-        },
-    ]
+    }
 }
+
 fn collected_waveforms(event: &ResourceCollected, catalog: &RecipeCatalog) -> Vec<Waveform> {
     let mut waveforms = Vec::new();
     for stack in &event.yields {
@@ -141,7 +82,7 @@ fn collection_cues(
                 kind: ModuleKind::Constant { value: 1. },
             });
             for command in voice_commands(
-                waveform,
+                oscillator(waveform, preset.0),
                 [ids[1], ids[2], ids[3]],
                 PortRef::new(ids[0], "out"),
                 preset.0.gain,
@@ -239,7 +180,7 @@ mod tests {
             })
             .unwrap();
         for command in voice_commands(
-            Waveform::Square,
+            oscillator(Waveform::Square, bug_click()),
             [ModuleId(2), ModuleId(3), ModuleId(4)],
             PortRef::new(ModuleId(1), "out"),
             sound.gain,

@@ -2,7 +2,6 @@
 use super::{
     audio::Synth,
     prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError},
-    resources::ResourceNode,
 };
 use bevy::{
     animation::graph::{AnimationGraph, AnimationGraphHandle, AnimationNodeIndex},
@@ -301,7 +300,7 @@ fn pose_parts(
         (
             &PlacedAsset,
             &AssetState,
-            Option<&ResourceNode>,
+            Has<stubby_core::Harvested>,
             Option<&AssetClock>,
         ),
         Without<PrefabError>,
@@ -374,7 +373,7 @@ fn pose_parts(
         *transform = node_pose(
             &asset.asset,
             state,
-            resource.is_some_and(|resource| resource.collected),
+            resource,
             part,
             &profiles,
             time.elapsed_secs(),
@@ -499,8 +498,9 @@ fn update_hover(
         (
             Entity,
             &PlacedAsset,
-            Option<&ResourceNode>,
+            Has<stubby_core::Harvested>,
             Option<&AssetClock>,
+            Has<stubby_core::Interactable>,
         ),
         Without<PrefabError>,
     >,
@@ -520,11 +520,10 @@ fn update_hover(
             let forward = camera.forward();
             roots
                 .iter()
-                .filter(|(_, asset, resource, _)| {
-                    !asset.asset.starts_with("desert_")
-                        && !resource.is_some_and(|resource| resource.collected)
+                .filter(|(_, asset, resource, _, _)| {
+                    !asset.asset.starts_with("desert_") && !*resource
                 })
-                .filter_map(|(entity, asset, _, _)| {
+                .filter_map(|(entity, asset, _, _, _)| {
                     let global = transforms.compute_global_transform(entity).ok()?;
                     let mut center = global.translation();
                     if asset.asset != "lightning_bug" {
@@ -561,7 +560,7 @@ fn update_hover(
             });
         }
         if let Some(next) = target
-            && let Ok((_, asset, _, _)) = roots.get(next)
+            && let Ok((_, asset, _, _, _)) = roots.get(next)
         {
             events.write(AssetHoverEvent {
                 entity: next,
@@ -572,12 +571,12 @@ fn update_hover(
         hover.entity = target;
         hover.instance = target
             .and_then(|entity| roots.get(entity).ok())
-            .map(|(_, asset, _, _)| asset.instance.clone())
+            .map(|(_, asset, _, _, _)| asset.instance.clone())
             .unwrap_or_default();
     }
     let selected = target.and_then(|target| roots.get(target).ok());
-    let text = selected.map_or_else(String::new, |(_, asset, resource, clock)| {
-        if resource.is_some() {
+    let text = selected.map_or_else(String::new, |(_, asset, _, clock, pickup)| {
+        if pickup {
             String::new()
         } else if clock.is_some() {
             String::new()
@@ -593,7 +592,7 @@ fn update_hover(
         }
     }
     if keys.just_pressed(stubby_core::INTERACT)
-        && let Some((entity, asset, _, _)) = selected
+        && let Some((entity, asset, _, _, _)) = selected
         && asset.asset != "mudpit_burbler"
     {
         uses.write(AssetUsed {

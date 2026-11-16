@@ -73,7 +73,8 @@ Rejected: cargo already forbids crate cycles; the problem is the web, not loops.
 | `ResourceNode`, `MineNode`, harvest systems of `resources.rs` | `bevy_stubby_recipes` |
 | `terrain.rs`, `sky.rs`, ground and mountains from `lib.rs`, `world_generation/`, `export.rs`, `prefabs.rs` lifecycle, `calendar.rs` | `stubby_world` |
 | player half of `controls.rs`, `hand.rs`, `interaction.rs` | `stubby_player` |
-| lightning bug half of `pulse.rs`, bug voice in `waveform_audio.rs`, flora in `prefab_presentation.rs` | `stubby_life` |
+| lightning bug half of `pulse.rs`, the bug's click preset | `stubby_life` (the shared voice patch goes to `bevy_stubby_audio::voice`) |
+| `prefab_presentation.rs` (generic placed-asset presenter; flora is data in its profiles) | `stubby_world`, with the prefab lifecycle |
 | `streams.rs` | `stubby_streams` |
 | `inventory_screen.rs`, burbler-specific parts of `machine_config.rs` and `prefab_presentation.rs`, collection cues, `WorldSources`, the calendar → `ResourceTime` conversion, `review.rs`, `prefab_review.rs` | `stubby_game` (glue) |
 

@@ -12,8 +12,7 @@ use stubby_audio::{Command, ModuleId, ModuleKind};
 use stubby_core::PrefabBinding;
 
 /// Insert before DesertPlugin when a level provides its own placements.
-#[derive(Resource)]
-pub struct AuthoredLevel;
+pub use stubby_core::AuthoredLevel;
 #[derive(Component, Reflect, Clone, Debug, Default, PartialEq, Eq)]
 #[reflect(Component, Default)]
 pub struct PlacedAsset {
@@ -300,7 +299,14 @@ fn install(world: &mut World, entity: Entity, definition: &PlacedAsset) -> Resul
                     .is_some_and(|node| node.collected),
         };
         world.entity_mut(entity).insert(node);
-        super::pulse::bind_placed_bug(world, entity, logical, engine, voices)?;
+        super::pulse::bind_placed_bug(
+            world,
+            entity,
+            &definition.instance,
+            logical,
+            engine,
+            voices,
+        )?;
     } else if world.resource::<ModuleCatalog>().0.contains_key(asset) {
         let id = allocate(world)?;
         let mut params = ModuleParams(match asset {

@@ -1,10 +1,13 @@
-//! Shared sample-clock pulse bus and the lightning bug's flash-only presentation.
-use super::audio::Synth;
+//! The lightning bug: a resource node in the world that flashes and clicks on its own
+//! seeded random clock. Flash-only presentation, timed by the audio clock's pulse bus.
 use bevy::prelude::*;
+use bevy_stubby_audio::Synth;
 use bevy_stubby_audio::pulse::{PulseBus, PulseBusPlugin, PulseFollower, PulseReceive};
+use bevy_stubby_audio::voice::{WaveformSound, voice_commands};
 use serde::Deserialize;
 use std::time::Instant;
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
+use stubby_core::{AuthoredLevel, GroundHeight, Harvested};
 
 pub const LIGHTNING_BUG_CLOCK: u64 = bevy_stubby_audio::pulse::DEFAULT_CLOCK;
 /// The opening's bugs. They hover no higher than `BUG_MAX_HOVER_M` above the ground so
@@ -16,9 +19,9 @@ const BUG_POSITIONS: [Vec3; 3] = [
 ];
 /// The highest a lightning bug hovers above the ground.
 pub const BUG_MAX_HOVER_M: f32 = 2.2;
-fn bug_position(index: usize) -> Vec3 {
+fn bug_position(index: usize, ground: &GroundHeight) -> Vec3 {
     let mut position = BUG_POSITIONS[index];
-    position.y += super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
+    position.y += ground.at(position.x, position.z) + 0.035;
     position
 }
 
@@ -30,7 +33,7 @@ fn bug_seed(world_seed: u64, index: usize) -> u64 {
 }
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub(super) struct BugEffects;
+pub struct BugEffects;
 
 #[derive(Resource, Clone, Deserialize)]
 struct BugAsset {
@@ -40,7 +43,7 @@ struct BugAsset {
     light_lumens: f32,
     light_range_metres: f32,
     clock: ClockSettings,
-    click: super::waveform_audio::WaveformSound,
+    click: WaveformSound,
     /// Each flash a placed bug appears at a fresh height in this range (metres above
     /// the ground), seeded so the same world repeats: low enough to stay in view up close.
     hover_metres: [f32; 2],
@@ -89,6 +92,11 @@ fn flash_height(seed: u64, sample_time: u64, [low, high]: [f32; 2]) -> f32 {
 #[derive(Component)]
 struct BugEffectOwner(Entity);
 
+/// One of the built-in opening's bugs (`index`), when the level is not authored. The game
+/// makes it a harvestable source.
+#[derive(Component, Clone, Copy, Debug)]
+pub struct OpeningBug(pub usize);
+
 pub struct LightningBugPlugin {
     pub seed: u64,
 }
@@ -98,6 +106,7 @@ impl Plugin for LightningBugPlugin {
             app.add_plugins(PulseBusPlugin);
         }
         app.insert_resource(PulseSeed(self.seed))
+            .init_resource::<GroundHeight>()
             .register_type::<PulseFollower>()
             .add_systems(Startup, initialize)
             .add_systems(PostUpdate, suppress_collected_bugs.in_set(BugEffects))
@@ -119,6 +128,10 @@ impl Plugin for LightningBugPlugin {
 struct PulseSeed(u64);
 
 fn initialize(world: &mut World) {
+    let ground = world
+        .get_resource::<GroundHeight>()
+        .copied()
+        .unwrap_or_default();
     let Ok(asset) = serde_json::from_str::<BugAsset>(include_str!(
         "../../../assets/creatures/lightning_bug/asset.json"
     )) else {
@@ -130,7 +143,7 @@ fn initialize(world: &mut World) {
         return;
     }
     let seed = world.resource::<PulseSeed>().0;
-    if !world.contains_resource::<super::prefabs::AuthoredLevel>()
+    if !world.contains_resource::<AuthoredLevel>()
         && let Some(synth) = world.get_resource::<Synth>()
     {
         for index in 0..BUG_POSITIONS.len() {
@@ -143,8 +156,10 @@ fn initialize(world: &mut World) {
                 },
             });
             let (oscillator, envelope, vca) = voice_ids(index);
-            for command in super::waveform_audio::voice_commands(
-                stubby_recipes::Waveform::Square,
+            for command in voice_commands(
+                ModuleKind::SquareVco {
+                    freq_hz: asset.click.freq_hz,
+                },
                 [oscillator, envelope, vca],
                 PortRef::new(ModuleId(bug_clock(index)), "gate"),
                 0.,
@@ -164,12 +179,12 @@ fn initialize(world: &mut World) {
         mesh: shadow_mesh.clone(),
         texture: shadow_texture.clone(),
     });
-    if world.contains_resource::<super::prefabs::AuthoredLevel>() {
+    if world.contains_resource::<AuthoredLevel>() {
         world.insert_resource(asset);
         return;
     }
     for index in 0..BUG_POSITIONS.len() {
-        let position = bug_position(index);
+        let position = bug_position(index, &ground);
         world.spawn((
             Name::new(format!("Lightning bug {}", index + 1)),
             WorldAssetRoot(scene.clone()),
@@ -178,7 +193,7 @@ fn initialize(world: &mut World) {
             },
             FlashVisual,
             BugInstance(index),
-            super::resources::lightning_bug_node(index),
+            OpeningBug(index),
             Transform::from_translation(position).with_scale(Vec3::ZERO),
             Visibility::Hidden,
         ));
@@ -203,7 +218,7 @@ fn initialize(world: &mut World) {
             bevy::light::NotShadowCaster,
             Transform::from_xyz(
                 position.x,
-                super::terrain::height(Vec2::new(position.x, position.z)) + 0.055,
+                ground.at(position.x, position.z) + 0.055,
                 position.z,
             ),
         ));
@@ -230,11 +245,7 @@ fn initialize(world: &mut World) {
 // Run after collection's Update systems, so no depleted cue survives the frame.
 #[allow(clippy::type_complexity)] // Each effect has a different set of rendering components.
 fn suppress_collected_bugs(
-    nodes: Query<(
-        &BugInstance,
-        &super::resources::ResourceNode,
-        Option<&PlacedBug>,
-    )>,
+    nodes: Query<(&BugInstance, Has<Harvested>, Option<&PlacedBug>)>,
     mut effects: Query<(
         &BugInstance,
         Option<&mut Visibility>,
@@ -244,8 +255,8 @@ fn suppress_collected_bugs(
     mut materials: ResMut<Assets<StandardMaterial>>,
     synth: Option<Res<Synth>>,
 ) {
-    for (index, node, placed) in &nodes {
-        if !node.collected {
+    for (index, harvested, placed) in &nodes {
+        if !harvested {
             continue;
         }
         for (instance, visibility, light, material) in &mut effects {
@@ -453,9 +464,13 @@ fn capture_pulse_preview(
     }
 }
 
-pub(crate) fn bind_placed_bug(
+/// Make a placed prefab entity a lightning bug: its own seeded random clock (from
+/// `instance`), its click voice, and its flash, shadow and light. Called by whatever owns
+/// placed prefabs; [`retire_placed_bug`] undoes it.
+pub fn bind_placed_bug(
     world: &mut World,
     root: Entity,
+    instance: &str,
     logical: u64,
     clock: ModuleId,
     voices: [ModuleId; 3],
@@ -469,15 +484,10 @@ pub(crate) fn bind_placed_bug(
     let rest_scale = world
         .get::<Transform>(root)
         .map_or(Vec3::ONE, |transform| transform.scale);
-    let world_seed = world.resource::<super::WorldSeed>().0;
-    let seed = world
-        .get::<super::resources::ResourceNode>(root)
-        .map(|node| {
-            node.instance.bytes().fold(world_seed, |hash, byte| {
-                (hash ^ u64::from(byte)).wrapping_mul(1099511628211)
-            })
-        })
-        .unwrap_or(world_seed);
+    let world_seed = world.resource::<PulseSeed>().0;
+    let seed = instance.bytes().fold(world_seed, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(1099511628211)
+    });
     if let Some(synth) = world.get_resource::<Synth>() {
         synth.send(Command::AddModule {
             id: clock,
@@ -487,8 +497,10 @@ pub(crate) fn bind_placed_bug(
                 max_interval_s: asset.clock.max_interval_seconds,
             },
         });
-        for command in super::waveform_audio::voice_commands(
-            stubby_recipes::Waveform::Square,
+        for command in voice_commands(
+            ModuleKind::SquareVco {
+                freq_hz: asset.click.freq_hz,
+            },
             voices,
             PortRef::new(clock, "gate"),
             0.,
@@ -544,7 +556,7 @@ pub(crate) fn bind_placed_bug(
     ));
     Ok(())
 }
-pub(crate) fn retire_placed_bug(world: &mut World, root: Entity) {
+pub fn retire_placed_bug(world: &mut World, root: Entity) {
     let helpers: Vec<_> = world
         .query::<(Entity, &BugEffectOwner)>()
         .iter(world)
@@ -599,6 +611,7 @@ fn bugs_broadside(
 fn update_placed_effects(
     mut effects: Query<(&BugEffectOwner, &mut Transform, Has<FlashShadow>)>,
     sources: Query<&GlobalTransform, Without<BugEffectOwner>>,
+    ground: Res<GroundHeight>,
 ) {
     for (owner, mut transform, shadow) in &mut effects {
         let Ok(source) = sources.get(owner.0) else {
@@ -608,7 +621,7 @@ fn update_placed_effects(
         transform.translation = if shadow {
             Vec3::new(
                 position.x,
-                super::terrain::height(Vec2::new(position.x, position.z)) + 0.055,
+                ground.at(position.x, position.z) + 0.055,
                 position.z,
             )
         } else {
@@ -643,10 +656,7 @@ mod tests {
             .world_mut()
             .spawn((
                 BugInstance(0),
-                super::super::resources::ResourceNode {
-                    collected: true,
-                    ..default()
-                },
+                Harvested,
                 FlashVisual,
                 follower(),
                 Transform::default(),
@@ -704,10 +714,7 @@ mod tests {
             *app.world().get::<Visibility>(other).unwrap(),
             Visibility::Visible
         );
-        app.world_mut()
-            .get_mut::<super::super::resources::ResourceNode>(bug)
-            .unwrap()
-            .collected = false;
+        app.world_mut().entity_mut(bug).remove::<Harvested>();
         app.world_mut().resource_mut::<PulseBus>().queue(pulse());
         app.world_mut()
             .resource_mut::<PulseBus>()
@@ -748,8 +755,9 @@ mod tests {
     #[test]
     fn bugs_hover_no_higher_than_they_can_be_seen_up_close() {
         for index in 0..BUG_POSITIONS.len() {
-            let position = bug_position(index);
-            let ground = super::super::terrain::height(Vec2::new(position.x, position.z)) + 0.035;
+            let flat = GroundHeight::default();
+            let position = bug_position(index, &flat);
+            let ground = flat.at(position.x, position.z) + 0.035;
             assert!((1.0..=BUG_MAX_HOVER_M).contains(&(position.y - ground)));
         }
     }

@@ -132,6 +132,7 @@ crates/
   stubby_core/            service: the few contracts systems share (screens, keys, HUD camera, sets,
                           GroundHeight, Interactable)
   stubby_player/          system: movement and look, the hand, what E reaches (Interactable)
+  stubby_life/            system: plants and animals; today the lightning bug (Harvested, GroundHeight)
   stubby_game/            the Bevy app
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
