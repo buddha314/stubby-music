@@ -59,8 +59,19 @@ impl Plugin for DesertPlugin {
             stream_review::StreamReviewPlugin,
             sky_review::SkyReviewPlugin,
         ))
-        .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup))
-        .add_systems(Update, capture_preview);
+        .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));
+        // Dev builds serve Bevy's remote protocol on 127.0.0.1 (CORS open for the rules
+        // designer's page), so tools can read the running game (add-crafting-designer 3.8).
+        #[cfg(debug_assertions)]
+        app.add_plugins((
+            bevy::remote::RemotePlugin::default(),
+            bevy::remote::http::RemoteHttpPlugin::default().with_headers(
+                bevy::remote::http::Headers::new()
+                    .insert("Access-Control-Allow-Origin", "*")
+                    .insert("Access-Control-Allow-Headers", "Content-Type"),
+            ),
+        ));
+        app.add_systems(Update, capture_preview);
     }
 }
 

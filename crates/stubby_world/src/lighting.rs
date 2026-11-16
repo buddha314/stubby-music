@@ -89,7 +89,8 @@ fn mix(a: &Key, b: &Key, t: f32) -> Key {
 
 /// Light quality where the camera stands: 0 bleak, 1 bloomed. The light-quality field
 /// (10 m cells, driven by plant density) will set it; until then the world is bleak.
-#[derive(Resource, Default, Clone, Copy, Debug)]
+#[derive(Resource, Default, Clone, Copy, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct CameraLightQuality(pub f32);
 
 #[cfg(test)]

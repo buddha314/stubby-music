@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rules Designer</title>
+<style>
+  :root {
+    --bg: #f6f4f1; --panel: #ffffff; --ink: #24211e; --muted: #6f6a63; --line: #ddd7cf;
+    --accent: #b5651d; --accent-ink: #ffffff; --bad: #b3261e; --good: #2e7d32; --pick: #f1e3d3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #181614; --panel: #221f1c; --ink: #ece7e1; --muted: #a39b91; --line: #3a3530;
+      --accent: #e0914a; --accent-ink: #1b1714; --bad: #ef7a72; --good: #7fc983; --pick: #3a2e22; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; gap: 8px; align-items: center; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  #status { margin-left: auto; color: var(--muted); }
+  button { font: inherit; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--panel); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button:disabled { opacity: .45; cursor: default; }
+  main { display: grid; grid-template-columns: 180px 240px 1fr 300px; gap: 12px; padding: 12px 16px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+    min-width: 0; }
+  section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+    margin: 0 0 8px; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list li { padding: 4px 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; gap: 6px; }
+  ul.list li:hover { background: var(--pick); }
+  ul.list li.on { background: var(--accent); color: var(--accent-ink); }
+  ul.list li small { color: inherit; opacity: .7; }
+  input[type=search], input[type=text], textarea { width: 100%; font: inherit; padding: 5px 8px;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+  .row-actions { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+  #form { overflow-x: auto; }
+  #form input, #form select, #form textarea { background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; font: inherit; }
+  #form .je-object__container { border: 0; }
+  #form h3, #form h4 { margin: 6px 0; font-size: 14px; }
+  #problems li { cursor: pointer; color: var(--bad); }
+  #problems.clear li { cursor: default; color: var(--good); }
+  .side { display: flex; flex-direction: column; gap: 12px; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+  .muted { color: var(--muted); }
+  .error { color: var(--bad); }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rules Designer</h1>
+  <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+  <button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+  <button id="save" class="primary" title="Save (Ctrl+S)">Save</button>
+  <span id="status">Loading…</span>
+</header>
+<main>
+  <section><h2>Rules</h2><ul id="registries" class="list"></ul></section>
+  <section>
+    <h2>Rows</h2>
+    <input id="search" type="search" placeholder="Search ID or name">
+    <div class="row-actions"><button id="new">New</button><button id="duplicate">Duplicate</button><button id="remove">Remove</button></div>
+    <ul id="rows" class="list"></ul>
+  </section>
+  <section><h2 id="form-title">Row</h2><div id="form" class="muted">Pick a row.</div></section>
+  <div class="side">
+    <section><h2>Problems</h2><ul id="problems" class="list"></ul></section>
+    <section><h2>Used by</h2><ul id="used" class="list"><li class="muted">Pick a row.</li></ul></section>
+    <section>
+      <h2>Live game</h2>
+      <input id="game" type="text" value="http://127.0.0.1:15702" aria-label="Game address">
+      <textarea id="watch" rows="3" aria-label="Resources to watch">stubby_world::air::BasinAir
+stubby_world::lighting::CameraLightQuality
+stubby_world::calendar::Calendar</textarea>
+      <pre id="live" class="muted">Waiting for the game…</pre>
+    </section>
+  </div>
+</main>
+<script src="/jsoneditor.min.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const ui = { registry: null, rowId: null, rows: [], state: null, editor: null, pending: null };
+
+async function api(method, path, body) {
+  const response = await fetch(path, {
+    method, headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (data.registries) showState(data);
+  if (!response.ok) throw new Error(data.error || response.statusText);
+  return data;
+}
+const edit = (change) => api("POST", "/api/edit", change);
+
+function showState(state) {
+  ui.state = state;
+  $("undo").disabled = !state.can_undo;
+  $("redo").disabled = !state.can_redo;
+  $("save").disabled = !state.dirty || state.problems.length > 0;
+  $("status").textContent = state.problems.length
+    ? `${state.problems.length} problem(s)` + (state.dirty ? " · unsaved" : "")
+    : state.dirty ? "Unsaved changes" : "Saved";
+  $("status").className = state.problems.length ? "error" : "";
+  const registries = $("registries");
+  registries.replaceChildren(...state.registries.map((r) => item(
+    r.registry, r.count, r.registry === ui.registry, () => selectRegistry(r.registry))));
+  const problems = $("problems");
+  problems.className = state.problems.length ? "list" : "list clear";
+  problems.replaceChildren(...(state.problems.length ? state.problems.map((p) => {
+    const li = document.createElement("li");
+    li.textContent = `${p.file}${p.id ? " [" + p.id + "]" : ""}${p.field ? " ." + p.field : ""}: ${p.message}`;
+    li.onclick = () => jumpTo(p.file, p.id);
+    return li;
+  }) : [Object.assign(document.createElement("li"), { textContent: "No problems." })]));
+}
+
+function item(label, note, on, click) {
+  const li = document.createElement("li");
+  li.className = on ? "on" : "";
+  const name = document.createElement("span");
+  name.textContent = label;
+  li.append(name);
+  if (note !== undefined && note !== "") {
+    const small = document.createElement("small");
+    small.textContent = note;
+    li.append(small);
+  }
+  li.onclick = click;
+  return li;
+}
+
+async function selectRegistry(registry, rowId) {
+  ui.registry = registry;
+  const data = await api("GET", `/api/rows?registry=${registry}`);
+  ui.rows = data.rows;
+  ui.schema = data.schema;
+  showState(ui.state);
+  showRows();
+  selectRow(rowId && ui.rows.some((r) => r.id === rowId) ? rowId : null);
+}
+
+function showRows() {
+  const needle = $("search").value.trim().toLowerCase();
+  const rows = ui.rows.filter((r) => !needle
+    || String(r.id).toLowerCase().includes(needle)
+    || String(r.name || "").toLowerCase().includes(needle));
+  $("rows").replaceChildren(...rows.map((r) =>
+    item(r.id, r.name || "", r.id === ui.rowId, () => selectRow(r.id))));
+}
+
+function selectRow(id) {
+  ui.rowId = id;
+  history.replaceState(null, "", id ? `#${ui.registry}/${id}` : `#${ui.registry}`);
+  showRows();
+  if (ui.editor) { ui.editor.destroy(); ui.editor = null; }
+  ui.baseline = undefined;
+  const row = ui.rows.find((r) => r.id === id);
+  $("form-title").textContent = row ? `${ui.registry} · ${id}` : "Row";
+  if (!row) {
+    $("form").textContent = "Pick a row.";
+    $("used").replaceChildren(Object.assign(document.createElement("li"), { textContent: "Pick a row.", className: "muted" }));
+    return;
+  }
+  $("form").textContent = "";
+  ui.editor = new JSONEditor($("form"), {
+    schema: ui.schema, startval: row, theme: "html", iconlib: null,
+    disable_properties: true, disable_edit_json: true, show_opt_in: true,
+    no_additional_properties: true, show_errors: "interaction", array_controls_top: true,
+  });
+  // The form fills in defaults as it loads; only what the designer changes after that
+  // is an edit.
+  ui.editor.on("ready", () => { ui.baseline = JSON.stringify(ui.editor.getValue()); });
+  ui.editor.on("change", () => {
+    if (ui.baseline === undefined || JSON.stringify(ui.editor.getValue()) === ui.baseline) return;
+    clearTimeout(ui.pending);
+    ui.pending = setTimeout(applyForm, 400);
+  });
+  showUsedBy(id);
+}
+
+async function applyForm() {
+  if (!ui.editor || !ui.rowId) return;
+  const row = ui.editor.getValue();
+  const value = JSON.stringify(row);
+  if (value === ui.baseline) return;
+  try {
+    await api("POST", "/api/row", { registry: ui.registry, id: ui.rowId, row });
+    ui.baseline = value;
+    const renamed = row.id && row.id !== ui.rowId;
+    if (renamed) ui.rowId = row.id;
+    const data = await api("GET", `/api/rows?registry=${ui.registry}`);
+    ui.rows = data.rows;
+    showRows();
+    $("form-title").textContent = `${ui.registry} · ${ui.rowId}`;
+    if (renamed) showUsedBy(ui.rowId);
+  } catch (error) {
+    $("status").textContent = error.message;
+    $("status").className = "error";
+  }
+}
+
+async function showUsedBy(id) {
+  const uses = await api("GET", `/api/where-used?id=${encodeURIComponent(id)}`);
+  $("used").replaceChildren(...(uses.length ? uses.map((u) =>
+    item(`${u.file} [${u.row}]`, u.field, false, () => jumpTo(u.file, u.row)))
+    : [Object.assign(document.createElement("li"), { textContent: "Nothing uses it.", className: "muted" })]));
+}
+
+function jumpTo(file, id) {
+  const registry = ui.state.registries.find((r) => r.file === file);
+  if (registry) selectRegistry(registry.registry, id);
+}
+
+async function refreshAfter(action) {
+  try { await action(); } catch (error) { alert(error.message); }
+  if (ui.registry) await selectRegistry(ui.registry, ui.rowId);
+}
+
+$("undo").onclick = () => refreshAfter(() => api("POST", "/api/undo"));
+$("redo").onclick = () => refreshAfter(() => api("POST", "/api/redo"));
+$("save").onclick = () => refreshAfter(() => api("POST", "/api/save"));
+$("search").oninput = showRows;
+$("new").onclick = () => {
+  if (!ui.registry) return;
+  const id = prompt(`New ${ui.registry} ID (snake_case):`);
+  if (id) refreshAfter(async () => { await edit({ kind: "add", registry: ui.registry, row: { id } }); ui.rowId = id; });
+};
+$("duplicate").onclick = () => {
+  const row = ui.rows.find((r) => r.id === ui.rowId);
+  const id = row && prompt(`Duplicate ${row.id} as:`, `${row.id}_copy`);
+  if (id) refreshAfter(async () => { await edit({ kind: "add", registry: ui.registry, row: { ...row, id } }); ui.rowId = id; });
+};
+$("remove").onclick = () => {
+  if (!ui.rowId || !confirm(`Remove ${ui.rowId}?`)) return;
+  const id = ui.rowId;
+  refreshAfter(async () => {
+    try {
+      await edit({ kind: "remove", registry: ui.registry, id });
+    } catch (error) {
+      if (!/shipped/.test(error.message)) throw error;
+      const to = prompt(`${id} has shipped. Replace it with which ID? (empty retires it)`);
+      if (to === null) return;
+      await edit({ kind: "remove", registry: ui.registry, id, to: to || null, retire: !to });
+    }
+    ui.rowId = null;
+  });
+};
+document.addEventListener("keydown", (event) => {
+  if (!(event.ctrlKey || event.metaKey)) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (event.key.toLowerCase() === "s") { event.preventDefault(); if (!$("save").disabled) $("save").click(); }
+  else if (!typing && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    (event.shiftKey ? $("redo") : $("undo")).click();
+  }
+});
+
+// Live game values over Bevy's remote protocol (dev builds serve it on 127.0.0.1:15702).
+async function pollGame() {
+  const names = $("watch").value.split("\n").map((s) => s.trim()).filter(Boolean);
+  const lines = [];
+  for (const resource of names) {
+    try {
+      const response = await fetch($("game").value, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "world.get_resources", params: { resource } }),
+      });
+      const data = await response.json();
+      const short = resource.split("::").pop();
+      lines.push(data.error ? `${short}: ${data.error.message}` : `${short}: ${JSON.stringify(data.result.value)}`);
+    } catch {
+      $("live").textContent = "The game is not running (or not a dev build).";
+      $("live").className = "muted";
+      return;
+    }
+  }
+  $("live").textContent = lines.join("\n");
+  $("live").className = "";
+}
+setInterval(pollGame, 1000);
+
+// Files changed on disk (a hand edit, rules-fmt) show up when nothing is unsaved here.
+setInterval(async () => {
+  if (ui.state && ui.state.dirty) return;
+  const before = JSON.stringify(ui.state);
+  await api("GET", "/api/state");
+  if (JSON.stringify(ui.state) !== before && ui.registry && !document.activeElement.closest("#form")) {
+    await selectRegistry(ui.registry, ui.rowId);
+  }
+}, 2000);
+
+// `#registry/row` in the address opens that row (links from notes, problems, reviews).
+api("GET", "/api/state").then(() => {
+  const [registry, row] = decodeURIComponent(location.hash.slice(1)).split("/");
+  const known = ui.state.registries.some((r) => r.registry === registry);
+  selectRegistry(known ? registry : ui.state.registries[0].registry, row);
+});
+</script>
+</body>
+</html>
