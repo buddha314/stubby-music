@@ -64,6 +64,17 @@ work; see [the version and upstream-sync policy](docs/research/jackdaw-version-p
 Items, resources, mines and recipes are JSON rows in `assets/recipes/`, one file per
 kind. There is no `catalog.json` any more; it was split into these files.
 
+**The rules designer** edits them in a browser, with forms, ID pickers, live problems,
+undo and save, and a panel showing values from the running game:
+
+```bash
+cargo run -p stubby_rules_server    # then open http://127.0.0.1:7878/
+```
+
+A dev build of the game picks up a save within a second. Link to a row with
+`http://127.0.0.1:7878/#<file>/<id>`, e.g. `http://127.0.0.1:7878/#air/scrub_oak_air`.
+Details: [assets/recipes/README.md](assets/recipes/README.md#the-rules-designer).
+
 **The crafting system is our own, not a community crate.** `crates/stubby_recipes`
 holds the rules model, inventory, recipe book and crafting, with no Bevy dependency.
 It is used as a Bevy community plugin: the thin `bevy_stubby_recipes` crate, which the
