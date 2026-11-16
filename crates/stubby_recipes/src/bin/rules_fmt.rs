@@ -51,6 +51,7 @@ fn run(dir: &Path, check: bool) -> Result<Vec<String>, String> {
         rules::MIGRATIONS,
         rules::GOALS,
         rules::START,
+        rules::AIR,
     ]
     .iter()
     .map(|f| read(dir, f))
@@ -64,6 +65,7 @@ fn run(dir: &Path, check: bool) -> Result<Vec<String>, String> {
         migrations: &texts[5],
         goals: &texts[6],
         start: &texts[7],
+        air: &texts[8],
     };
     let mut outputs: Vec<(String, String)> = rules::canonical_files(&files)
         .map_err(|e| e.to_string())?

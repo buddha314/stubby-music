@@ -1,0 +1,28 @@
+{
+  "$schema": "schema/air.schema.json",
+  "format": 1,
+  "air": [
+    {
+      "id": "desert_brush_air",
+      "asset": "desert_brush",
+      "radius_m": 8.0,
+      "strength": 0.45,
+      "follows": "light"
+    },
+    {
+      "id": "reed_air",
+      "asset": "reed_clump",
+      "radius_m": 6.0,
+      "strength": 0.35,
+      "follows": "water_or_light",
+      "stops_when_harvested": true
+    },
+    {
+      "id": "scrub_oak_air",
+      "asset": "scrub_oak",
+      "radius_m": 18.0,
+      "strength": 0.9,
+      "follows": "growth"
+    }
+  ]
+}

@@ -16,8 +16,11 @@
 
 **Rejected:** the 10 m cubic cell field (`add-desert-opening` 3.5): cell borders need trilinear smoothing, values need storing and easing per cell, and the grid is not what the player acts on. Volumetric fog volumes per grove: costly, and the global lights need one number anyway.
 
-## Open questions
+## Decisions from the user (2026-11-16)
 
-- Should animals clean the air too, or only foliage? (Foliage only to start.)
-- Should streams of clean water count, or only what they grow?
-- The windstorm: does it ease with the camera's light quality (as `add-desert-opening` plans), or with how much of the basin is clean?
+- **Foliage only.** Animals do not clean the air; clean water counts only through what it grows.
+- **The windstorm follows the basin**: `stubby_world::air::BasinAir` is the basin's mean light quality, integrated over each cleaner's disc (overlaps shared, so groves are not counted twice) and divided by the basin's area (radius 450 m). Until a windstorm exists, its storm (`1 - clean`) thins the sky's dust (`sky::desert_air`), down to a light haze when the basin is clean.
+
+**D6. The data is a rule, not art.** The radii and strengths are gameplay, iterated on with the rules editor, so they live in `assets/recipes/air.json` (a rule type, matched to placed assets by asset ID prefix), not in the flora `asset.json` files the Blender generators rewrite.
+
+**D7. No self-sustaining bloom.** An asset's own cleaning is left out of the light quality written to it, so desert brush (which blooms with light) cannot keep itself bloomed.

@@ -1,4 +1,5 @@
 //! Item quantities, resource yields and atomic recipes. No Bevy or audio dependency.
+pub mod air;
 pub mod goals;
 pub mod rules;
 mod source;

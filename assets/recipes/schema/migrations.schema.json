@@ -64,7 +64,8 @@
         "mines",
         "recipes",
         "buildables",
-        "goals"
+        "goals",
+        "air"
       ]
     }
   }
