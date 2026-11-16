@@ -632,6 +632,8 @@ Promote only while the shared editor is idle and its checkout clean. Follow
 - Use the smallest relevant check that gives useful confidence in the change. A focused build, one regression check, or one brief smoke test is usually enough.
 - Do not run blanket workspace tests, all-target lint sweeps, full upstream fast/integration suites, documentation builds or doctests by default, including for upstream syncs. Broaden only when the user asks or a concrete failure directly requires it.
 - Do not install extra testing infrastructure just to run broad suites. Do not repeat or expand passing checks speculatively.
+- **Test our code, not third-party packages.** Do not test what fundsp, Firewheel, Bevy, avian, Jackdaw or serde already promise (a sine's purity, a sampler playing, a graph fanning out, Bevy's virtual time pausing); test the wiring and the logic we own. If an area of our own code needs a large suite, look for an established crate that does the job before adding more tests (the rack's WAV decoding is `hound`, not a hand-written parser).
+- **Spend build cycles carefully.** Work sequentially in one worktree (switch branches) rather than a fresh worktree per step, which cold-compiles Bevy each time; run `cargo test -p` only for the crates you changed, and `tools/ci_local.sh` once before pushing.
 - Once the relevant check passes, continue the actual work. Prefer iteration speed over exhaustive validation during this prototype.
 - When a graphical check is relevant, retain the existing independent 20-second watchdog.
 - This policy supersedes earlier blanket instructions to run full workspace tests and all-target Clippy before every commit. Upstream release-check lists are not our default prototype workflow.

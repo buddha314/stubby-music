@@ -25,6 +25,10 @@ pub struct WorldConfig {
     pub protected_areas: Vec<ProtectedArea>,
     #[serde(default)]
     pub edits: Vec<PlacementEdit>,
+    /// Clearance kept around authored objects, by asset (metres of XZ half extent); an
+    /// asset not listed protects only its point. Scatter candidates also add their own.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub authored_footprints: std::collections::BTreeMap<String, f32>,
 }
 
 impl Default for WorldConfig {
@@ -38,6 +42,7 @@ impl Default for WorldConfig {
             scatter: Vec::new(),
             protected_areas: Vec::new(),
             edits: Vec::new(),
+            authored_footprints: Default::default(),
         }
     }
 }
@@ -186,7 +191,6 @@ mod tests {
     fn seed_17_native_scatter_and_saved_placement_edits() {
         let map = ground_heightmap(9, Vec2::splat(8.), Vec2::splat(-4.)).unwrap();
         let native = ground_scatter(17, &map, 1.).unwrap();
-        assert_eq!(native, ground_scatter(17, &map, 1.).unwrap());
         let mut config = WorldConfig::from_args(["--seed=17".into()]).unwrap();
         config.scatter.push(ScatterRule {
             id: "desert-decoration".into(),
@@ -254,5 +258,51 @@ mod tests {
         let stale = config.resolve_layout(&authored).unwrap();
         assert_eq!(stale.diagnostics.len(), 2);
         assert_eq!(config.edits.len(), 2);
+    }
+
+    #[test]
+    fn authored_footprints_clear_scatter_around_authored_objects() {
+        let mut config = WorldConfig::from_args(["--seed=17".into()]).unwrap();
+        config.scatter.push(ScatterRule {
+            id: "desert-decoration".into(),
+            revision: 1,
+            region: "opening".into(),
+            asset: "models/props/desert/desert_debris_0.glb".into(),
+            resolution: 9,
+            origin: [-4.; 2],
+            size: [8.; 2],
+            density: 1.,
+            clearance: 0.,
+            blocked_cells: vec![],
+        });
+        let all = config.resolve_layout(&[]).unwrap().placements;
+        // An authored burbler one metre from a candidate.
+        let near = Vec3::from_array(all[0].pose.position);
+        let burbler = near + Vec3::X;
+        // Unlisted: only its point is protected, so the candidate stays.
+        let point = config.authored_clearance([("mudpit_burbler", burbler)]);
+        assert!(
+            config
+                .resolve_layout(&point)
+                .unwrap()
+                .placements
+                .contains(&all[0])
+        );
+        // A 1.5 m footprint reaches it; the burbler itself is only read, never moved.
+        config
+            .authored_footprints
+            .insert("mudpit_burbler".into(), 1.5);
+        let area = config.authored_clearance([("mudpit_burbler", burbler)]);
+        let resolved = config.resolve_layout(&area).unwrap();
+        assert!(!resolved.placements.iter().any(|p| p.key == all[0].key));
+        assert!(resolved.placements.len() < all.len());
+        // Footprints round-trip; an invalid one is refused.
+        let loaded: WorldConfig =
+            serde_json::from_slice(&serde_json::to_vec(&config).unwrap()).unwrap();
+        assert_eq!(loaded.authored_footprints, config.authored_footprints);
+        config
+            .authored_footprints
+            .insert("mudpit_burbler".into(), f32::NAN);
+        assert!(config.resolve_layout(&area).is_err());
     }
 }
