@@ -46,7 +46,11 @@ PYLINK
         exit 0
         ;;
 esac
-python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
+# The shared editor must match the pin before anything uses it. `sync` is exempt: moving
+# the editor to the newest fork revision and re-pinning is its job, so drift is expected.
+if [[ "$command_name" != sync ]]; then
+    python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
+fi
 case "$command_name" in
     check)
         exit 0

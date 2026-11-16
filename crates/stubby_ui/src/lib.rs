@@ -22,6 +22,11 @@ fn text(value: impl Into<String>, size: f32, color: Color) -> impl Bundle {
 /// Shows an [`ItemName`] tooltip while the pointer is over a tagged icon.
 pub struct ItemTooltipPlugin;
 impl Plugin for ItemTooltipPlugin {
+    /// Every screen that shows items adds it (the inventory, the rack, streams); the
+    /// tooltip observers are installed once.
+    fn is_unique(&self) -> bool {
+        false
+    }
     fn build(&self, app: &mut App) {
         if app.world().contains_resource::<TooltipsAdded>() {
             return;

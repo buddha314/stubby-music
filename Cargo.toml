@@ -17,11 +17,11 @@ avian3d = { version = "~0.8.0", default-features = false, features = ["3d", "par
 
 # Jackdaw crates from the buddha314 fork, at the revision compatibility.json records
 # (tools/jackdaw.sh sync rewrites `rev`; tools/jackdaw.sh link builds against ~/src/jackdaw).
-jackdaw_terrain = { git = "https://github.com/buddha314/jackdaw.git", rev = "3c891ed14bebee8dda6dda9ddc18b29a7000296e", default-features = false }
-jackdaw_prefab = { git = "https://github.com/buddha314/jackdaw.git", rev = "3c891ed14bebee8dda6dda9ddc18b29a7000296e" }
-jackdaw_runtime = { git = "https://github.com/buddha314/jackdaw.git", rev = "3c891ed14bebee8dda6dda9ddc18b29a7000296e" }
-jackdaw_scene_types = { git = "https://github.com/buddha314/jackdaw.git", rev = "3c891ed14bebee8dda6dda9ddc18b29a7000296e" }
-jackdaw_bsn = { git = "https://github.com/buddha314/jackdaw.git", rev = "3c891ed14bebee8dda6dda9ddc18b29a7000296e" }
+jackdaw_terrain = { git = "https://github.com/buddha314/jackdaw.git", rev = "82bfd6e18da95667bd7dadbea62e19e2a9330331", default-features = false }
+jackdaw_prefab = { git = "https://github.com/buddha314/jackdaw.git", rev = "82bfd6e18da95667bd7dadbea62e19e2a9330331" }
+jackdaw_runtime = { git = "https://github.com/buddha314/jackdaw.git", rev = "82bfd6e18da95667bd7dadbea62e19e2a9330331" }
+jackdaw_scene_types = { git = "https://github.com/buddha314/jackdaw.git", rev = "82bfd6e18da95667bd7dadbea62e19e2a9330331" }
+jackdaw_bsn = { git = "https://github.com/buddha314/jackdaw.git", rev = "82bfd6e18da95667bd7dadbea62e19e2a9330331" }
 
 [profile.dev]
 debug = 0
