@@ -419,9 +419,10 @@ const SHELL_LIE_DEGREES: f32 = 72.;
 /// The pose of a shell placed at `at`: shown at its profile's world scale, lying on its
 /// side at an angle seeded by its instance, resting on the ground.
 fn shell_pose(instance: &str, at: Vec3, ground: &stubby_core::GroundHeight) -> Transform {
-    let profile: ShellProfile =
-        serde_json::from_str(include_str!("../../../assets/creatures/snail_shell/asset.json"))
-            .expect("snail shell profile");
+    let profile: ShellProfile = serde_json::from_str(include_str!(
+        "../../../assets/creatures/snail_shell/asset.json"
+    ))
+    .expect("snail shell profile");
     let hash = instance.bytes().fold(0xcbf29ce484222325_u64, |hash, byte| {
         (hash ^ u64::from(byte)).wrapping_mul(1099511628211)
     });
@@ -429,7 +430,8 @@ fn shell_pose(instance: &str, at: Vec3, ground: &stubby_core::GroundHeight) -> T
     let size = profile.size_metres.height * profile.world_scale;
     Transform {
         translation: Vec3::new(at.x, ground.at(at.x, at.z) + size * 0.25, at.z),
-        rotation: Quat::from_rotation_y(yaw) * Quat::from_rotation_x(SHELL_LIE_DEGREES.to_radians()),
+        rotation: Quat::from_rotation_y(yaw)
+            * Quat::from_rotation_x(SHELL_LIE_DEGREES.to_radians()),
         scale: Vec3::splat(profile.world_scale),
     }
 }

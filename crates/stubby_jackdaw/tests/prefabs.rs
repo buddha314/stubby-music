@@ -207,7 +207,7 @@ fn model_owned_lod_metadata_resolves_after_asset_moves() {
     let mut count = 0;
     check_model_tree(&assets(), &mut count);
     assert_eq!(
-        count, 17,
+        count, 18,
         "all authored and generated LOD models retain metadata"
     );
 }

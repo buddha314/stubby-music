@@ -1,0 +1,14 @@
+{
+  "id": "disco_ball",
+  "model": "equipment/disco_ball/disco_ball.glb#Scene0",
+  "kind": "held_equipment_light",
+  "size_metres": {
+    "diameter": 0.24
+  },
+  "tiles": 414,
+  "spin": {
+    "node": "DiscoBall_Root",
+    "axis": "Y",
+    "note": "the game spins the root; its beams are spotlights it adds (assets/ui/flashlight.json)"
+  }
+}

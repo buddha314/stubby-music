@@ -4,6 +4,7 @@
 //! `stubby_core::Interactable`; it never names pickups, machines or the world.
 pub mod compass;
 pub mod controls;
+pub mod flashlight;
 pub mod hand;
 pub mod interaction;
 pub mod outline;
