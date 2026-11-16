@@ -16,6 +16,8 @@ on:
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
+      - "tools/*check_layers.py"
+      - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
   pull_request:
     paths:
@@ -29,6 +31,8 @@ on:
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
+      - "tools/*check_layers.py"
+      - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
 
 jobs:
@@ -72,6 +76,10 @@ jobs:
           workspaces: game -> target
       - name: Version-check regression tests
         run: python3 tools/test_jackdaw_versions.py
+      - name: Layer rules
+        run: python3 tools/test_check_layers.py
+      - name: Layer check (split-game-into-systems)
+        run: python3 tools/check_layers.py
       - name: Active Bevy graph
         run: |
           cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$RUNNER_TEMP/bevy-tree.txt"

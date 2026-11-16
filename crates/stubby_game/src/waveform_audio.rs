@@ -1,5 +1,6 @@
-//! Shared synthesis patches for waveform resources and successful collection cues.
-//! All DSP is provided by stubby_audio's existing Firewheel/fundsp modules.
+//! Collection cues, glue between crafting and audio: a successful harvest plays one
+//! confirmation per distinct waveform collected, through the audio service's voice patch
+//! (`bevy_stubby_audio::voice`). All DSP is stubby_audio's existing modules.
 use super::{
     audio::Synth,
     resources::{RecipeCatalog, ResourceCollected},

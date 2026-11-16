@@ -165,6 +165,32 @@ We track requirements with [OpenSpec](https://github.com/Fission-AI/OpenSpec)
 
 ## Architecture rules
 
+### The game is independent systems in layers
+
+Each part of the game is its own crate, and dependencies only point down
+(`split-game-into-systems`; `tools/check_layers.py` enforces it in CI):
+
+| Layer | Crates | May depend on |
+| --- | --- | --- |
+| cores | `stubby_audio`, `stubby_rack`, `stubby_recipes` | other cores; never Bevy |
+| services | `stubby_core`, `stubby_ui`, `bevy_stubby_audio` | cores |
+| systems | `bevy_stubby_rack`, `bevy_stubby_recipes`, `stubby_player`, `stubby_life` | services, shared cores, their own core |
+| game | `stubby_game`, `stubby_jackdaw` | anything |
+
+- **Systems never depend on each other**, nor on another system's core. They talk
+  through contracts in `stubby_core` (`Stock`, `Interactable`, `Harvested`,
+  `GroundHeight`, `PlacedAsset`, `AssetClock`, set labels) and their own messages.
+- **A rule that joins two systems lives in the game** (`stubby_game/src/glue.rs`,
+  `resources.rs`, `waveform_audio.rs`), never inside either system: an item mounting as a
+  module, the bug's pitch as a knob default, a collected source being `Harvested`.
+- **`stubby_core` holds contracts only**: an item goes there if at least two systems need
+  it and it has no behaviour. Shared behaviour is a service (`stubby_ui`,
+  `bevy_stubby_audio`).
+- **A new crate gets a line in `LAYERS`** (`tools/check_layers.py`); an unplaced crate fails.
+- Still in `stubby_game`, waiting to become systems with their owners: the world (prefab
+  lifecycle, presenter, terrain, sky, calendar, world generation; 4.5) and streams (4.6).
+
+
 ### The audio engine is not a Bevy system
 
 Audio runs in `crates/stubby_audio`, which **must not depend on `bevy`**. It owns the
