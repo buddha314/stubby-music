@@ -6,9 +6,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 step() { printf '\n== %s\n' "$*"; }
 step "Version consistency";        python3 tools/check_jackdaw_versions.py
 step "Version-check regression";   python3 tools/test_jackdaw_versions.py
-step "Layer check (cargo-deny, deny.toml)"
+step "cargo-deny: layering, licenses, advisories, sources (deny.toml)"
 command -v cargo-deny >/dev/null || { echo "install it: cargo install cargo-deny --locked --version 0.20.2"; exit 1; }
-cargo deny --log-level error check bans
+cargo deny --log-level error check
 step "Active Bevy graph"
 tree="$(mktemp)"; trap 'rm -f "$tree"' EXIT
 cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$tree"

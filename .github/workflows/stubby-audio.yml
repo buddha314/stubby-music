@@ -79,8 +79,8 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny@0.20.2
-      - name: Layer check (cargo-deny, deny.toml)
-        run: cargo deny --log-level error check bans
+      - name: cargo-deny (layering, licenses, advisories, sources)
+        run: cargo deny --log-level error check
       - name: Active Bevy graph
         run: |
           cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$RUNNER_TEMP/bevy-tree.txt"
