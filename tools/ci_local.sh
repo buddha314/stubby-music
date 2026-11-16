@@ -22,4 +22,11 @@ if [ -n "$deps" ]; then echo "stubby_audio depends on workspace crates:"; echo "
 if cargo tree -p stubby_audio -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
   echo "stubby_audio must not depend on the Bevy engine"; exit 1
 fi
+# Not in GitHub CI (no editor there): the project as Jackdaw sees it. This is what
+# finds the game plugin the editor opens; a compiling build can still fail it.
+if command -v jd >/dev/null; then
+  step "Jackdaw doctor";  jd doctor --project .
+else
+  echo "(jd not found: skipped the Jackdaw doctor check)"
+fi
 printf '\nAll CI checks passed locally.\n'
