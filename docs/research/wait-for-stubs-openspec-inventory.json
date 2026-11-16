@@ -1,0 +1,1039 @@
+{
+  "source_commit": "d14edf0066ae75fdea1a430e415ecd3cec462841",
+  "files": [
+    {
+      "path": "changes/add-acoustic-asset-profiles/design.md",
+      "sha256": "e55a1040842f3c53f66e4f9cfa6dd33a0e11599882cb32763b920efad0b00025",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-acoustic-asset-profiles/proposal.md",
+      "sha256": "d65efab3091fa36d121f78ba79b0b21c8c962cc6b425d3dad445c589fdc0e5b7",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-acoustic-asset-profiles/specs/acoustic-assets/spec.md",
+      "sha256": "bfee9ca682a0eccc922b6b3c39e0436fa464521eac9a518d6fc0be483763a988",
+      "requirements": [
+        "### Requirement: Every world asset has an acoustic profile",
+        "### Requirement: Three kinds of acoustic asset",
+        "### Requirement: Behaviours are labelled separately",
+        "### Requirement: Geometry maps to parameters by formula",
+        "### Requirement: Legible approximations first",
+        "### Requirement: Provenance and licence for every sound asset",
+        "### Requirement: Frequency-response previews",
+        "### Requirement: Experiments use the shared format",
+        "### Requirement: Acoustic objects respect the silent opening"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-acoustic-asset-profiles/tasks.md",
+      "sha256": "1c9ac3d41982e26bab8f87479481893feebf84a045e271b77e48e3cb2fca4825",
+      "requirements": [],
+      "checked": 0,
+      "unchecked": 15
+    },
+    {
+      "path": "changes/add-air-quality-field/design.md",
+      "sha256": "7f0288b12e1255f67c976fc932ca54c1fb9a058e85d806344c466656d47cce4c",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-air-quality-field/proposal.md",
+      "sha256": "1d03d2a106989d384b07336bea60355f19c403e701e212cf1f589c87f3d095b2",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-air-quality-field/specs/air-quality/spec.md",
+      "sha256": "7703cda171aee6f2e0b9e6dd4849b2c328d6b8ccc32623f4af052001db2847fe",
+      "requirements": [
+        "### Requirement: A field of 10 m cells",
+        "### Requirement: Life sets the target",
+        "### Requirement: One camera-local texture for rendering",
+        "### Requirement: The haze clears where the air is clean",
+        "### Requirement: Bleak to bloomed look"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-air-quality-field/tasks.md",
+      "sha256": "ca0641f2f0f857572cc3f98bb6b03b80789f68f4d18234fc0e338d92d32d2be0",
+      "requirements": [],
+      "checked": 0,
+      "unchecked": 12
+    },
+    {
+      "path": "changes/add-builder-hud/design.md",
+      "sha256": "04f2ae1278cf61db864c6325d1b8d0dd2ef75b143aea330009bc9e3e8de3651a",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-builder-hud/proposal.md",
+      "sha256": "5d2771d250daa8cdf809d4913858a69881eda0465596eff370240195674f994d",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-builder-hud/specs/build-menu/spec.md",
+      "sha256": "1b4fa94903d09ef105544f71b7d3915a3ade28125576f49f69e5f15e46cebed4",
+      "requirements": [
+        "### Requirement: Q opens the build menu",
+        "### Requirement: Buildables show their cost on hover",
+        "### Requirement: Choosing a buildable enters build mode"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-builder-hud/specs/builder-hud/spec.md",
+      "sha256": "b1298e0c1e22cf3b597a7d72ebd550f99199c3335b2111b6607514ee2cd54133",
+      "requirements": [
+        "### Requirement: Keys are shown as keycaps",
+        "### Requirement: Key hints in the bottom right",
+        "### Requirement: The interaction prompt is a keycap, a verb and an icon",
+        "### Requirement: Pickups and refusals are icon notices",
+        "### Requirement: One tooltip for every item icon",
+        "### Requirement: The goal bar shows requirements as chips"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-builder-hud/specs/rack-screen/spec.md",
+      "sha256": "b8b7ff828d00e48b1b8be5168127724f928200c590a9529c0fe9aa7f593a88cd",
+      "requirements": [
+        "### Requirement: Right-click unplugs, and a hint says so",
+        "### Requirement: Satisfactory-style window"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-builder-hud/tasks.md",
+      "sha256": "8a1f859a825abc14f50baa1c158d8cbc9fd882c4c17f5a23072a29f1ffce6218",
+      "requirements": [],
+      "checked": 0,
+      "unchecked": 22
+    },
+    {
+      "path": "changes/add-collectible-outline/design.md",
+      "sha256": "8c8decd8fcc850d8eaee3b75617f6c95eef1981357ca562fcd04bab22016d633",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-collectible-outline/proposal.md",
+      "sha256": "f4aff7db4e5192e2cafb29a87dbdf19f03fd103d6be1ca3cef5ef7ffebd89edb",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-collectible-outline/specs/collectible-outline/spec.md",
+      "sha256": "dd2cb2ca590e0c51a589f3be39a69350e9cc0f6a16d62ce62a1c21ec3b715deb",
+      "requirements": [
+        "### Requirement: The targeted pickup is outlined",
+        "### Requirement: The crosshair picks the target",
+        "### Requirement: The outline follows the visible body",
+        "### Requirement: Collected pickups lose the outline",
+        "### Requirement: Uncollectable targets are still outlined",
+        "### Requirement: No outline while the controls are elsewhere",
+        "### Requirement: The outline's look is white and data-driven"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-collectible-outline/tasks.md",
+      "sha256": "615dbb74e08bb8b7e007ba874ff5e22d0652f6e0c73a705e8f502414fd3a40f8",
+      "requirements": [],
+      "checked": 14,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/add-compass-bar/design.md",
+      "sha256": "16e3626bc240b3f289a4d41d57cfe4ef2266c5c68e6fc59334df4602bb6a3c2c",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-compass-bar/proposal.md",
+      "sha256": "84dd3f757a61537870ddf19aad63d70a1848df0be4864e251f5a0154724e6446",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-compass-bar/specs/compass-bar/spec.md",
+      "sha256": "e0ae04bcb3014e668dccda175927f01495eb473128c07a1e142e2accbb720d22",
+      "requirements": [
+        "### Requirement: A compass bar shows the heading",
+        "### Requirement: The bar fits the HUD",
+        "### Requirement: The bar hides behind screens",
+        "### Requirement: The game opens facing east"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-compass-bar/specs/sky-motion/spec.md",
+      "sha256": "e2125004f1aba7ff4484471a1ff8dc6df0e6fee3a95340bbbacea4dbaecfa311",
+      "requirements": [
+        "### Requirement: The moon travels with the stars"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-compass-bar/tasks.md",
+      "sha256": "69aca07ca5ba0e5482a4ee22bc9c1863dd101258a9771055302f846e1a4e2fb7",
+      "requirements": [],
+      "checked": 8,
+      "unchecked": 1
+    },
+    {
+      "path": "changes/add-field-recorder/design.md",
+      "sha256": "c32d849325356cd1310c905e25c715d94c48f34c71d4e0129114a2917429ee16",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-field-recorder/proposal.md",
+      "sha256": "e9873f5ab3bdbb5de5d34c2d3a2c368efcb167e7f5d4e656032530789e8a950c",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-field-recorder/specs/field-recorder/spec.md",
+      "sha256": "5e57517fab8c3c5d5c68c2ffcc29956d5f9589aacd0b8346fc5a6ec9bb09112f",
+      "requirements": [
+        "### Requirement: H brings up the field recorder",
+        "### Requirement: Sounds are collected with the recorder",
+        "### Requirement: The recorder collects authored sounds, never live audio",
+        "### Requirement: The meter favours what the recorder points at",
+        "### Requirement: Held in first person at real size",
+        "### Requirement: The record light shows collection",
+        "### Requirement: The level meter shows what reaches the listener",
+        "### Requirement: Recorder sounds go through the audio engine",
+        "### Requirement: Acoustic profile"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-field-recorder/tasks.md",
+      "sha256": "1e94402c39d7f66937c3f9a37f7e9063c007a1caccb68d3b232b6480d059c728",
+      "requirements": [],
+      "checked": 15,
+      "unchecked": 1
+    },
+    {
+      "path": "changes/add-goals-hub/design.md",
+      "sha256": "f36698b01ebe043f4d3c6183366971f90315d0c790944765c4df614677ebeeca",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-goals-hub/proposal.md",
+      "sha256": "1569d3321bfe7cd1f676c67d0d7d786dd2a6a40f727324511a48a8b81d75a975",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-goals-hub/specs/goals/spec.md",
+      "sha256": "f86d5ef65acd370ce130b498757cea637aa139014868d53a1f5fa4c27c642131",
+      "requirements": [
+        "### Requirement: Goals are major or minor, written as data",
+        "### Requirement: Goals are checked on load",
+        "### Requirement: Active goals",
+        "### Requirement: Minor goals complete when their condition holds",
+        "### Requirement: The goal bar",
+        "### Requirement: Goals never end the game"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-goals-hub/tasks.md",
+      "sha256": "1e51f8ac2a60e4064019349832e0fda2552f12bbb87d0827597e9f2fe7a68fdc",
+      "requirements": [],
+      "checked": 16,
+      "unchecked": 1
+    },
+    {
+      "path": "changes/add-inventory-screen/design.md",
+      "sha256": "fa2cf5683ea5c9d2a90ba1b4f30f481fa77ba33773b9557d7a0acd031bf7844f",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-inventory-screen/proposal.md",
+      "sha256": "db3b270c3254b3ce342d47386e5919e77b3989be4598b4bf69f69dab1ac5ee39",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-inventory-screen/specs/inventory-screen/spec.md",
+      "sha256": "ec9ab3feadcf54ec2e79bec3488f9b2a4e8fcc93d7d39b31a6d57375b0866e40",
+      "requirements": [
+        "### Requirement: Tab opens the inventory screen",
+        "### Requirement: The inventory is sixteen boxes of one hundred",
+        "### Requirement: The inventory screen shows the boxes",
+        "### Requirement: Item counts leave the text HUD",
+        "### Requirement: A new player starts with the starter inventory"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-inventory-screen/tasks.md",
+      "sha256": "d10ad465ff666cd289e9671d579c2118bea592c8e0d137fa159642db90711f0e",
+      "requirements": [],
+      "checked": 11,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/add-module-library/design.md",
+      "sha256": "86397bc0f9040bc524d33e19927ffc7dfebd702cad9c7d8571ce0d905463bc55",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/proposal.md",
+      "sha256": "aeb3139c701cf9930829f2fceeb231a2af70e0864ba27b65177e84a32307d37e",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/specs/effect-modules/spec.md",
+      "sha256": "8f6696896c962faaaeebde457a8a62a8f1ffa9cfd20690d7ad63599f361bd7d0",
+      "requirements": [
+        "### Requirement: Effects catalogue",
+        "### Requirement: Time effects sync to the master clock",
+        "### Requirement: Effects are realtime-safe and stable",
+        "### Requirement: Deterministic effects"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/specs/module-catalogue/spec.md",
+      "sha256": "a977213a53d9d198528bb8edd6b4e83596500095100af66c66e919984f2e58da",
+      "requirements": [
+        "### Requirement: Catalogue coverage",
+        "### Requirement: Oscillators track 1 V/oct",
+        "### Requirement: Filters behave like their circuits",
+        "### Requirement: Low-pass gate couples level and brightness",
+        "### Requirement: Wavefolders add harmonics with fold depth",
+        "### Requirement: Modulation and sequencers keep master time",
+        "### Requirement: Random sources are seeded",
+        "### Requirement: Block latency is declared"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/specs/module-panels/spec.md",
+      "sha256": "b32a99e236383db587e66f3526ef52f19ff0ad0f1b7654c121e9e82bfdab6e82",
+      "requirements": [
+        "### Requirement: Panels are generated from definitions",
+        "### Requirement: Two visual families",
+        "### Requirement: Panels go through the asset pipeline"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/specs/module-sourcing/spec.md",
+      "sha256": "1acb8eb8d20b9d64f868f59a90f420da38365ee1d93574035b669116adeedd2f",
+      "requirements": [
+        "### Requirement: Every module records its provenance",
+        "### Requirement: Only permissive code is linked",
+        "### Requirement: Sample sets pass the same audit",
+        "### Requirement: Foreign sample rates are converted",
+        "### Requirement: Third-party plugins are not hosted"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/specs/prebaked-voices/spec.md",
+      "sha256": "53bc7dd948aafb43d1a8c6827e4fa7dc7bdcb9ffaca417672ec96eb15ac5991b",
+      "requirements": [
+        "### Requirement: Voices are ordinary patches",
+        "### Requirement: Voices are timed by the master clock",
+        "### Requirement: Voices are unlocked as recipes",
+        "### Requirement: Voice renders are reproducible"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-module-library/tasks.md",
+      "sha256": "a257931e41f3f4f1e53ad4588d628e1d89bb4190f40971c2e2bee9e1a93a8ab5",
+      "requirements": [],
+      "checked": 1,
+      "unchecked": 38
+    },
+    {
+      "path": "changes/add-rack-audio-engine/design.md",
+      "sha256": "31a4a8aba079f69d3fcd23f1ccf28df14d9b243df7aa9d754428a0443933d1e2",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/proposal.md",
+      "sha256": "d6482d2285ddfb8f1818d561267c00d5de8e243128db5d5d10bfca3ae50f892b",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/audio-engine/spec.md",
+      "sha256": "b6a878d588472abf66594eaba720cbef211bc5daa3b268c256c7719ad95fb884",
+      "requirements": [
+        "### Requirement: Engine core is independent of the game engine",
+        "### Requirement: Rendered by the game engine's audio thread",
+        "### Requirement: Lock-free message boundary",
+        "### Requirement: Realtime safety on the audio thread",
+        "### Requirement: Silent until sound is discovered",
+        "### Requirement: Sound effects share the engine"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/master-clock/spec.md",
+      "sha256": "a545dc92d0884a1d8f45e4cde2b695a807f0b662c8681a7fae3348274f1bb94e",
+      "requirements": [
+        "### Requirement: One time base for all game audio",
+        "### Requirement: Musical transport",
+        "### Requirement: Sample-accurate scheduling",
+        "### Requirement: Tempo clocks are whole multiples of the master",
+        "### Requirement: The game reads audio time without locks",
+        "### Requirement: Music-driven gameplay follows clock events",
+        "### Requirement: Deterministic timing offline",
+        "### Requirement: Robust to device events",
+        "### Requirement: Pause keeps time and mutes the music",
+        "### Requirement: Separate from simulation time"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/modular-rack/spec.md",
+      "sha256": "225d8c9184e74045dd0450cc8b5a8fb240a77848b28f81c8a870d0a844fd01f2",
+      "requirements": [
+        "### Requirement: Per-sample processing with one-sample cables",
+        "### Requirement: Feedback patches are valid",
+        "### Requirement: VCV voltage standards",
+        "### Requirement: Polyphony-ready cables",
+        "### Requirement: Deterministic rendering",
+        "### Requirement: Rendered inside the game's audio mix",
+        "### Requirement: Realtime safety and budget"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/rack-control/spec.md",
+      "sha256": "5580d315edd1c0299ff74c400e542fdd444fe48377a185b44de9737704aad9fe",
+      "requirements": [
+        "### Requirement: Smoothed parameters",
+        "### Requirement: Lights, meters and scopes",
+        "### Requirement: Cable edits",
+        "### Requirement: Patches are data"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/spatial-emission/spec.md",
+      "sha256": "59935450bfda93f304ef355fa118d9698a870861a3840f4387330dcd9f5b4ade",
+      "requirements": [
+        "### Requirement: Emitters",
+        "### Requirement: Listener follows the camera",
+        "### Requirement: Spatialization tiers with a voice budget",
+        "### Requirement: Distance cues and hearing radius",
+        "### Requirement: No pitch shift from motion",
+        "### Requirement: Occlusion",
+        "### Requirement: Speaker fallback",
+        "### Requirement: Spatial budget"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/specs/synth-modules/spec.md",
+      "sha256": "7e720ffc581fed2ebee6d90fdbcb7b9401cca75ebd9ca8b22eb9466273b91b48",
+      "requirements": [
+        "### Requirement: Module and port model",
+        "### Requirement: Module definitions are data",
+        "### Requirement: Modules are built from existing DSP",
+        "### Requirement: Square VCO module",
+        "### Requirement: Sine VCO module",
+        "### Requirement: Clock module",
+        "### Requirement: Envelope module",
+        "### Requirement: VCA module",
+        "### Requirement: Constant module"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-rack-audio-engine/tasks.md",
+      "sha256": "845b44847c56bea59ad882d4a81153ac16106c55caf1bc5fe176aeba8d1101b6",
+      "requirements": [],
+      "checked": 41,
+      "unchecked": 17
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/design.md",
+      "sha256": "5339e2fcd7d0e399dec2ca652169796e734d6e61e4dc5c35bffa9a07f8448ab4",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/proposal.md",
+      "sha256": "66497980f26c4a846741823314a2be70b361caecf3266bbfc34aef0cc5697c42",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/specs/mudpit-burbler/spec.md",
+      "sha256": "1710c12171be8310b36eb9d16a16f1ca39165592350b210a24b5e597ccd7a1f5",
+      "requirements": [
+        "### Requirement: Three-place configuration",
+        "### Requirement: Gate drives the volume directly"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/specs/rack-screen/spec.md",
+      "sha256": "33148b388d64f274d6ded8f1befb31d833316f40b762f2cd48372753d9e8ae28",
+      "requirements": [
+        "### Requirement: Buttons"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/specs/snail-shell/spec.md",
+      "sha256": "bbd5dd7b9f7811fadf9f8b4e4020a2938346d8d2a1fe0922eb0a0577bdaff570",
+      "requirements": [
+        "### Requirement: Snail shells lie near the reeds",
+        "### Requirement: Snail shell acoustic profile"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/specs/step-sequencer/spec.md",
+      "sha256": "f121b37524563efa227af01c246df3b72526fb1144864dabc0652a59549133a7",
+      "requirements": [
+        "### Requirement: A shell mounts as a four-step sequencer",
+        "### Requirement: Stepping on the clock",
+        "### Requirement: Gate and CV outputs",
+        "### Requirement: One light per step shows its state and the playhead"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-snail-shell-sequencer/tasks.md",
+      "sha256": "95e98961905024e538d014e1967251b330dee7ef0d66b13941c5a0a71f6abdb4",
+      "requirements": [],
+      "checked": 18,
+      "unchecked": 1
+    },
+    {
+      "path": "changes/add-stream-building/design.md",
+      "sha256": "648e5e17d2cbf22eed062a8147363f11f09359c828abeb53aa1ac98638b9cdb7",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/proposal.md",
+      "sha256": "cecd6cb7a80bd60dd08f0085d11aeb41651c069c903a61961e015e7af3ebcb93",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/specs/buildable-costs/spec.md",
+      "sha256": "eaeab1b2aa31c34474c0a3f66b994684d9d703a3302e234fa31a14307ce7ecda",
+      "requirements": [
+        "### Requirement: Buildables have item costs in the rules",
+        "### Requirement: Buildable rules are validated on load",
+        "### Requirement: Building spends all or nothing",
+        "### Requirement: Dismantling refunds the cost"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/specs/plant-growth/spec.md",
+      "sha256": "29660c6d04edb1d032bd4f3c903a9634bcc3394c8ac156f004d7194ca11d28c4",
+      "requirements": [
+        "### Requirement: Growing assets have bloom levels",
+        "### Requirement: Flowing streams water plants"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/specs/stream-building/spec.md",
+      "sha256": "dd4cfbde1922955057628ffebdefe75ffc0dcd4858f3fdc197167a2954e6a691",
+      "requirements": [
+        "### Requirement: Stream build mode",
+        "### Requirement: Ports and halos",
+        "### Requirement: Anchoring and planning",
+        "### Requirement: Bend limit",
+        "### Requirement: Stream hologram",
+        "### Requirement: Cost shown, not told",
+        "### Requirement: Laying and chaining",
+        "### Requirement: Dismantling streams"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/specs/stream-flow/spec.md",
+      "sha256": "2c94ce5ff1792b5e7f6bf50afe89779d8cc1fffd34a1ea60b736be1b852be30f",
+      "requirements": [
+        "### Requirement: A stream flows only from a sounding source",
+        "### Requirement: Notes are clock ticks",
+        "### Requirement: Bar lines mark measures",
+        "### Requirement: The staff is a travelling wave",
+        "### Requirement: Clarity stages",
+        "### Requirement: The voice is heard along the stream",
+        "### Requirement: Stream acoustic profile"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-stream-building/tasks.md",
+      "sha256": "8624a859b24b7a04af1a7b180aafe77db04326b8478279693561bda720a442d1",
+      "requirements": [],
+      "checked": 29,
+      "unchecked": 5
+    },
+    {
+      "path": "changes/add-time-speed-controls/design.md",
+      "sha256": "1fc094c1aa1d77c3ecfa029332582546a40aa49ced0005bf2138fdc152381980",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-time-speed-controls/proposal.md",
+      "sha256": "1bd33a0ab73fc2ca82575ddc3950062e41fa36f65c50d61a9ee36368d7077bd5",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-time-speed-controls/specs/time-speed/spec.md",
+      "sha256": "27437ed95e18045f6f0e17dd49932141434dd1ab438d7c8aa0830330a2d16202",
+      "requirements": [
+        "### Requirement: Simulation speed steps",
+        "### Requirement: Only simulation time changes speed",
+        "### Requirement: A slow frame cannot skip time",
+        "### Requirement: The time readout"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-time-speed-controls/tasks.md",
+      "sha256": "ccbdf0f90371b20b3aa13992a29762c10f5a1c0fa23ea474db85a64f375ff96d",
+      "requirements": [],
+      "checked": 11,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/add-tree-inlets-and-pulse/design.md",
+      "sha256": "01d7d65cd63774375b4e66ec9b4f804d26cb7ad70436f06c9b9d8e8f74c79419",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-tree-inlets-and-pulse/proposal.md",
+      "sha256": "b3bbe341c2f70acda2719f2c297243622d67175c89705d22f69ff58bf159048a",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-tree-inlets-and-pulse/specs/tree-inlets/spec.md",
+      "sha256": "78480b2924166ed0c757456f248b1f5bd7a227688c866c982940415b0941e1d2",
+      "requirements": [
+        "### Requirement: Trees have root inlets",
+        "### Requirement: Streams snap to an inlet and connect",
+        "### Requirement: Trees with inlets are watered by connection"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-tree-inlets-and-pulse/specs/tree-pulse/spec.md",
+      "sha256": "96efbbebdd97b713aba8c437bc5ba7d6690855f5da6232e55ef07b0713327479",
+      "requirements": [
+        "### Requirement: A watered tree pulses on its source's beat",
+        "### Requirement: The trunk knocks on the beat",
+        "### Requirement: Scrub oak acoustic profile"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-tree-inlets-and-pulse/tasks.md",
+      "sha256": "5b6ec7c9c6091885f5cadba2f6133b824d89b1b0fe298c782f95c452a8bb7fc1",
+      "requirements": [],
+      "checked": 0,
+      "unchecked": 16
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/design.md",
+      "sha256": "86292ff8423f9a37bd849c4804f83031748195e5d6a13741e8b8740f5bb0679f",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/proposal.md",
+      "sha256": "03cfc5ea2b714278b06574175a839e20d52d04c02214d312d556e0078640e52e",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/specs/dust-storm/spec.md",
+      "sha256": "b2a1d8649b5c6d4b8596d15e69cfdcb352336a3916aedfeca05c9d332bef8307",
+      "requirements": [
+        "### Requirement: Seeded gusting storm",
+        "### Requirement: Storm fog and blowing sand follow intensity",
+        "### Requirement: The game opens in polluted air that clears where life returns",
+        "### Requirement: The storm is silent until voiced"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/specs/weather-clock/spec.md",
+      "sha256": "7ecb73c83d8e967122a51331c7b5f0b06c0619fc3a2061f2a8ffa4dec9b52e78",
+      "requirements": [
+        "### Requirement: Weather events land on the master clock grid",
+        "### Requirement: Rain rate sets patter density, not timing",
+        "### Requirement: Lightning and thunder both land on the grid",
+        "### Requirement: Event visuals follow their events",
+        "### Requirement: Continuous weather is parameters, not timing",
+        "### Requirement: Stand-in clock until the engine exists",
+        "### Requirement: Weather accepts requests from play"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/specs/wind/spec.md",
+      "sha256": "2359e664ceeeb6d7c06af71dab8941adf690eb9f501988d9515fad0137b802a1",
+      "requirements": [
+        "### Requirement: One wind source",
+        "### Requirement: Reeds sway with the wind",
+        "### Requirement: Wind reaches the engine as data"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/add-weather-and-dust-storm/tasks.md",
+      "sha256": "0c20c6aacc22313574706ecd76e8e889ffedb8092273de8cbbca0ab24e6e2339",
+      "requirements": [],
+      "checked": 0,
+      "unchecked": 17
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-burbler-rack-screen/design.md",
+      "sha256": "346195d78f4c31c32498c2d334679fac310c27a9c20efbf630ed8f24482a37e8",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-burbler-rack-screen/proposal.md",
+      "sha256": "d9ef6bfddf90c102173783c878aeb97693c2cf124ede54926400d78b97b48787",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-burbler-rack-screen/specs/mudpit-burbler/spec.md",
+      "sha256": "2dda2a6b9fa584e0d734aa0e43913977ee56c04820bfebc702ebc393ad5acb6e",
+      "requirements": [
+        "### Requirement: Seeded tempo as a master multiple",
+        "### Requirement: Three-place configuration",
+        "### Requirement: BPM knob and display",
+        "### Requirement: Gate drives the volume directly",
+        "### Requirement: Normalled outlet",
+        "### Requirement: The beat is visible before sound exists",
+        "### Requirement: A stand-in voice until the engine plays"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-burbler-rack-screen/specs/rack-screen/spec.md",
+      "sha256": "4976e068eb8637f4f56209a6619647b356e11e7df03d73006e2ef2ba002218f2",
+      "requirements": [
+        "### Requirement: Every machine is configured on the common rack",
+        "### Requirement: Opening and closing",
+        "### Requirement: Satisfactory-style window",
+        "### Requirement: The rack is drawn from the 3D assets",
+        "### Requirement: Slots and labelled outlines",
+        "### Requirement: Mounting from the inventory",
+        "### Requirement: The cable comb holds the rack's spare cables",
+        "### Requirement: Patching with cables",
+        "### Requirement: Elastic cables",
+        "### Requirement: Patch guidance without text",
+        "### Requirement: Knobs",
+        "### Requirement: The rack produces an engine-independent patch",
+        "### Requirement: Snap sound has provenance",
+        "### Requirement: Right-click unplugs, and a hint says so"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-burbler-rack-screen/tasks.md",
+      "sha256": "6da064c5505cae7f41253f0bae9dd748b5b3bd6b3b377951e1239645f5b0d87e",
+      "requirements": [],
+      "checked": 29,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-scrub-oak/design.md",
+      "sha256": "e676a6cd9b67f43120dd91c9024f2a2e55d36ccdabe175eea127a074ffeba562",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-scrub-oak/proposal.md",
+      "sha256": "f540d0a59e01c18bd00b6216ac7b35dc3c2237e147c80eba358ef756f89e39ef",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-scrub-oak/specs/scrub-oak/spec.md",
+      "sha256": "4be9d228228c14f830eab29a284e0a1c5382a6a059279a26c201e02dcfad356f",
+      "requirements": [
+        "### Requirement: A seeded tree per instance",
+        "### Requirement: Growth is displayed from the profile",
+        "### Requirement: Near and far detail",
+        "### Requirement: Solid trunk",
+        "### Requirement: Oaks in the opening"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-scrub-oak/tasks.md",
+      "sha256": "ac39a552585fda8e05769a6ddb8c1943687d69e9c494e5d0a616b9f1cf5e5ecd",
+      "requirements": [],
+      "checked": 8,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-sky-motion-and-mountains/design.md",
+      "sha256": "8c2a3a006c84cbec2ba274f524a77507be709f6b4858e5d76d90123098527900",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-sky-motion-and-mountains/proposal.md",
+      "sha256": "3661739ca1fc5f345cb0c9bbdb090d708e50755ed83a3c9a2a8a0670c093c0e2",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-sky-motion-and-mountains/specs/distant-mountains/spec.md",
+      "sha256": "aea2947a8c7e525f793c3932c01baf15e264036fda1b895313086517f1143a96",
+      "requirements": [
+        "### Requirement: Seeded mountain rings enclose the basin",
+        "### Requirement: The rings echo one waveform",
+        "### Requirement: Outer ground",
+        "### Requirement: Acoustic profile of the rings"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-sky-motion-and-mountains/specs/sky-motion/spec.md",
+      "sha256": "6c3c6fd0fd5325471bc62bc31e67e8860657c2365448b3faa3562f8083710b90",
+      "requirements": [
+        "### Requirement: The moon travels with the stars",
+        "### Requirement: The sun, stars and clouds move with simulation time"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-add-sky-motion-and-mountains/tasks.md",
+      "sha256": "c26114b796011ad31d492b42a7cffee053dc45c9cdce2ce15f2ebdc849f47a19",
+      "requirements": [],
+      "checked": 9,
+      "unchecked": 0
+    },
+    {
+      "path": "changes/archive/2026-11-13-migrate-off-stubby-music/design.md",
+      "sha256": "4c5af53daef506b7068a770685e4c4ba7f0839ea784d9a35008d667e687854e2",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-migrate-off-stubby-music/proposal.md",
+      "sha256": "f89ff8c49ffabcf1dbc2f3ff791c642836e69848067dbe97103e0a70544a7f76",
+      "requirements": [],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-migrate-off-stubby-music/specs/asset-pipeline/spec.md",
+      "sha256": "f28aff12ac6e385ed6f552f0135e45f973576fbd82a4e7dad9b0c3554db07f95",
+      "requirements": [
+        "### Requirement: One folder per asset with a master scene",
+        "### Requirement: Profiles name models by project path",
+        "### Requirement: The generators live here and write into the layout",
+        "### Requirement: No sync from stubby-music"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "changes/archive/2026-11-13-migrate-off-stubby-music/tasks.md",
+      "sha256": "99cf31d9927c5ffaa95794aa4509cd23d5d78e74fdeedf4a00c210909055ac2a",
+      "requirements": [],
+      "checked": 10,
+      "unchecked": 0
+    },
+    {
+      "path": "specs/asset-pipeline/spec.md",
+      "sha256": "51529aad856146f9f3e7a73553681f22510250dea6d2de091bed14d0f6f0febb",
+      "requirements": [
+        "### Requirement: One folder per asset with a master scene",
+        "### Requirement: Profiles name models by project path",
+        "### Requirement: The generators live here and write into the layout",
+        "### Requirement: No sync from stubby-music"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "specs/distant-mountains/spec.md",
+      "sha256": "cfcb51c157bd4a205e61e7edc8ffbc4c8a7fa104c6526b3a59d0be910eccb423",
+      "requirements": [
+        "### Requirement: Seeded mountain rings enclose the basin",
+        "### Requirement: The rings echo one waveform",
+        "### Requirement: Outer ground",
+        "### Requirement: Acoustic profile of the rings"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "specs/mudpit-burbler/spec.md",
+      "sha256": "986c2e0b0591dfe780c6a6b354da0be4fe089a0468ccde3252bc7502591717f4",
+      "requirements": [
+        "### Requirement: Seeded tempo as a master multiple",
+        "### Requirement: Three-place configuration",
+        "### Requirement: BPM knob and display",
+        "### Requirement: Gate drives the volume directly",
+        "### Requirement: Normalled outlet",
+        "### Requirement: The beat is visible before sound exists",
+        "### Requirement: A stand-in voice until the engine plays"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "specs/rack-screen/spec.md",
+      "sha256": "ecc38c43f4691b11467072a1c0e3f6f418eb1306e137d6c52a860fcb8e15f5c8",
+      "requirements": [
+        "### Requirement: Every machine is configured on the common rack",
+        "### Requirement: Opening and closing",
+        "### Requirement: Satisfactory-style window",
+        "### Requirement: The rack is drawn from the 3D assets",
+        "### Requirement: Slots and labelled outlines",
+        "### Requirement: Mounting from the inventory",
+        "### Requirement: The cable comb holds the rack's spare cables",
+        "### Requirement: Patching with cables",
+        "### Requirement: Elastic cables",
+        "### Requirement: Patch guidance without text",
+        "### Requirement: Knobs",
+        "### Requirement: The rack produces an engine-independent patch",
+        "### Requirement: Snap sound has provenance",
+        "### Requirement: Right-click unplugs, and a hint says so"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "specs/scrub-oak/spec.md",
+      "sha256": "eefe28661a510fa628d7eae154e3c7f130db17a5306163e1206620abd0c05489",
+      "requirements": [
+        "### Requirement: A seeded tree per instance",
+        "### Requirement: Growth is displayed from the profile",
+        "### Requirement: Near and far detail",
+        "### Requirement: Solid trunk",
+        "### Requirement: Oaks in the opening"
+      ],
+      "checked": null,
+      "unchecked": null
+    },
+    {
+      "path": "specs/sky-motion/spec.md",
+      "sha256": "f15d73f566de6a9074066ca4c931a70908ce2d86e0b379716e7d9b363ff1d37c",
+      "requirements": [
+        "### Requirement: The moon travels with the stars",
+        "### Requirement: The sun, stars and clouds move with simulation time"
+      ],
+      "checked": null,
+      "unchecked": null
+    }
+  ]
+}

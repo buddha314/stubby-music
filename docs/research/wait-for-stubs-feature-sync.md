@@ -1,0 +1,70 @@
+# wait-for-stubs → stubby-music feature parity audit
+
+Audit date: 2026-11-15. Requested outcome: keep the owned Godot and Bevy games in feature sync; this PR contains documentation and proposals only.
+
+Source checkout: `/home/buddha/src/wait-for-stubs`, HEAD `d14edf0066ae75fdea1a430e415ecd3cec462841`. Destination baseline: `d643d04` (origin/main). **Source working-tree caveat:** `add-builder-hud/` and `docs/research/builder-ui.md` are untracked; snail-shell `.blend`, `.glb` and two previews have local modifications. Their contents are part of this local audit, not guaranteed by the source HEAD. The inventory hashes pin the uncommitted OpenSpec text as well. Before implementation, obtain a committed source revision for these assets and the HUD design; do not overwrite or commit another session's work.
+
+This is a local-checkout audit, not a claim that either checkout matches the latest remote or that source runtime tests were rerun. The companion [inventory](wait-for-stubs-openspec-inventory.json) records every source proposal, design, task file and delta/current specification, hashes, requirement headings and reported task counts. Checked tasks do not prove present runtime correctness.
+
+## Decisions
+
+Port engine-independent behavior, authored content and asset repairs. Keep Bevy, Jackdaw, Firewheel/fundsp, the Bevy-free recipes core and existing asset layout. Do not import Godot scenes/addons, its C++ audio host, or its ±5 V/10 V signal conventions into the ±1 audio/1 V-per-octave engine. Do not replace random bug clocks with a compulsory shared clock.
+
+The sibling's archived `migrate-off-stubby-music` and `openspec/config.yaml` call this repository a frozen archive and prohibit sync. The user's current instruction supersedes that policy for this work. This PR leaves the sibling read-only; a subsequent sibling documentation change should retire that stale policy. Feature sync means reviewed semantic parity, not a destructive directory mirror. Source-only Godot import files, `.tscn`, `.gdignore` and per-asset scene layout remain engine-specific.
+
+**Crafting finding:** both `assets/recipes/recipes.json` files contain an empty recipe array. `buildables.json`, `mines.json` and `start.json` match byte-for-byte. There are no ahead-of-Bevy production crafting recipes to copy. Actual rule deltas are `snail_shell` in items/resources and format-2 hierarchical goals, with new held-item and tree-growth conditions. Mounting a shell is an item-to-module interaction, not an invented crafting recipe. Preserve existing learned square-wave discoveries independently of inventory.
+
+**Sky/HDRI finding:** Godot uses procedural Sky3D, driven each frame by `Calendar.solar_hour()`, not an ahead-of-Bevy HDRI file sequence. Bevy `crates/stubby_game/src/calendar.rs` already modulates both generated and baked environment-map intensity with daylight after its first bake. The gap is moon/stars/cloud motion, opening-time configuration, solar-time readout and evaluating whether the static sky's colours/reflections need timed blends or rebakes. Do not undo the existing once-baked performance fix without measurements.
+
+## Complete change review
+
+Paths below are relative to the source's `openspec/changes/`. Counts are checked/unchecked task entries at audit time. “Implemented” means source task/code evidence; it does not certify fresh playtesting.
+
+| Source change | Tasks | Assessment and Bevy disposition |
+| --- | --- | --- |
+| `add-acoustic-asset-profiles` | 0/15 | Design ahead, not shipped. Separate emission/transmission/reflection/absorption/resonance, physical formulas, confidence labels, sound provenance and response previews. Track in `plan-cross-engine-design-parity`; do not claim profiles exist for every asset. |
+| `add-air-quality-field` | 0/12 | Design refinement of Bevy's existing light-quality field: sparse 10 m cells, living registration and camera-local 3D texture. Reconcile with `add-desert-opening` and `add-clearing-air-stage`; require performance spike before selecting the renderer. |
+| `add-builder-hud` | 0/22 | Design ahead: keycaps, notices, shared tooltips, item/cost chips, Q category build menu. Changes Q's current direct stream-build contract; requires explicit revision and rule-type work. No Controller Icons addon port. |
+| `add-collectible-outline` | 14/0 | Implemented new behavior: single white 2 px target outline, view-axis preference within 20°, nearest fallback, visible bug silhouette between flashes. Port in `sync-targeting-and-compass`; retain avian3d candidate reach rather than copying a distance query. |
+| `add-compass-bar` | 8/1 | Implemented heading/cardinals and eastward spawn; remaining manual FPS inspection. Its delta supersedes archived moon NNW 330° with ENE 60°, altitude 20°. Port compass and use latest moon target. |
+| `add-field-recorder` | 15/1 | Ahead in sound-only harvest gating, starts held, record-light envelope and world/music meter excluding UI. Directional per-emitter weighting remains unchecked. Extend Bevy's existing hand/recorder, do not duplicate it. |
+| `add-goals-hub` | 16/1 | Ahead in major/minor hierarchy, ordered steps, persistent completion and item_held/tree_grown. Manual screenshot check remains. Builder HUD proposal would later replace persistent prose with chips; not yet implemented. Port schema before rows. |
+| `add-inventory-screen` | 11/0 | Mostly parity: Tab, 16×100, atomic capacity and starter inventory already exist in Bevy. Shared tooltip/pickup-chip redesign is only proposed by builder HUD. No second inventory system. |
+| `add-module-library` | 1/38 | Broad catalogue/effects/panels/sourcing/prebaked-voice design, largely unbuilt. Track as design backlog; no wholesale DSP rewrite or speculative production recipes. Prebaked voices must remain visible ordinary patches. |
+| `add-rack-audio-engine` | 41/17 | Partial implementation in sibling stubby-rack: sample scheduler/master transport, one-sample feedback cables, native hosting and stems. Module resources, spatial budget/occlusion, smoothing, scopes and parity fixtures remain open. Existing Bevy engine already provides substantial overlap. Separate engine-host differences from candidate master transport, feedback/polyphony and scheduling enhancements; decide through native proposals before changing audio contracts. |
+| `add-snail-shell-sequencer` | 18/1 | Ahead: new shell asset/resource and optional four-step sequencer, buttons/CV knobs, reset, heard playhead and routing through optional modules. Remaining acoustic-profile schema integration. Port with native DSP and visible routing; original burbler still works without shell. |
+| `add-stream-building` | 29/5 | Core laying/ports/reed costs/staff/clock notes overlap Bevy. Ahead: F dismantle/splits/refunds and data-driven clarity-limited oak growth with watering events. Source flow tests use heard samples; visual clarity, reed growth levels, stream acoustic profiles and water processor remain open. Existing localized-voice work overlaps source's nearest-stream emitter. |
+| `add-time-speed-controls` | 11/0 | Speed list and calendar cycle already match. Ahead: 0.1 s hitch cap, solar HH:MM and screen gating; explicit real-time player/UI independence needs parity tests because Bevy uses virtual time. |
+| `add-tree-inlets-and-pulse` | 0/16 | Unbuilt successor to proximity watering: explicit root inlets, connection ownership, beat-driven tree pulse/knock. Do not describe as existing source content; reconcile later with tree production and digging. |
+| `add-weather-and-dust-storm` | 0/17 | Design ahead: shared wind, seeded gusts/local fog, rain/lightning on master grid, silent storm until voiced. Bevy already has opening atmosphere requirements; defer implementation until clock/quality spikes, keep opening silent. |
+| `archive/2026-11-13-add-burbler-rack-screen` | 29/0 | Mostly parity with current Bevy rack: 3D panels, mounting, comb, elastic cables, ghost guidance, knobs, normalled outlet. Right-click unplug behavior merits comparison during rack work. Archived placeholder voice/tick is superseded by engine integration; never port a pre-rendered stand-in over native audio. |
+| `archive/2026-11-13-add-scrub-oak` | 8/0 | Seeded variants, growth display, LODs, colliders and placed oaks overlap current assets/prefabs. Ahead: repaired zero-scale child exports and verified full-bloom parts; capture in asset-contract change, then growth change. Production loop remains separate. |
+| `archive/2026-11-13-add-sky-motion-and-mountains` | 9/0 | Ahead: moon/star/cloud motion and ridge rings as correlated waveform echoes. Bevy already has mountain silhouettes/outer ground and sun calendar. Archived NNW moon placement is superseded by compass delta; acoustic echoes are specified, not implemented profiles/audio. |
+| `archive/2026-11-13-migrate-off-stubby-music` | 10/0 | Godot asset ownership/layout migration is complete, not a Bevy gameplay gap. Review substantive generator changes and source assets, map paths back to Bevy layout; reject the no-sync/archive policy under current instruction. |
+
+The six accepted source capabilities (`asset-pipeline`, `distant-mountains`, `mudpit-burbler`, `rack-screen`, `scrub-oak`, `sky-motion`) were also reviewed against the archived deltas and active superseding changes. Archive status does not automatically outrank a newer active delta.
+
+## Asset and data evidence
+
+Compared all 20 top-level Blender Python scripts: **four identical, fourteen changed, two new**. The identical scripts are `create_clock_lamp.py`, `create_vco.py`, `render_hud_mock.py` and `render_style_sheet.py`. The new generators are `create_snail_shell.py` and `create_snail_sequencer.py`. Changes to `module_kit.py` and generator output paths largely serve Godot layout, so changed hash is not proof of visual improvement. Inspect substantive diffs before cherry-picking. `export_gltf.py` and `docs/upstream/zero-scale-exports.md` document a genuine engine-independent defect: children under scale-zero parents lose transforms. Upstream exports state parts at full scale with `start_scale: 0`, restores hidden state on import, and has regenerated affected models. Bevy needs an equivalent initialization adapter before copying those models.
+
+Affected families include oak foliage/catkins, reed stubble, desert-prop blooms, burbler outlet halo and stream port halos. Recorder, HUD rack/modules, plugs and stream generator changes also require node/profile contract comparison. Preserve source `.blend` files, deterministic exports, collider shapes and model-owned LODs; previews stay in `previews/`. Do not copy Godot's asset-folder path rewrites into Jackdaw profiles. Outside art must meet this public repository's CC0 requirement; permissive code licences alone do not establish art eligibility.
+
+Goal rows: `build_a_camp` owns, in order, `catch_a_spark`, `build_a_heartbeat`, `cut_reeds` (12), `water_the_tree`, `stop_the_wind` (budding). Major description mentions a future fire, but there is no fire recipe or implemented final fire step; do not invent one. Existing goal IDs remain stable. Source goals format 2 is a **Rule** change here, not a JSON-only Data PR. Keep strict aggregate diagnostics instead of copying Godot's rejected-row omission semantics.
+
+## New OpenSpec work and ordering
+
+1. **P0** [`sync-blender-asset-contracts`](../../openspec/changes/sync-blender-asset-contracts/proposal.md): export repair, mapped native layout, regenerated assets and hidden-state contract.
+2. **P1** [`sync-snail-shell-sequencer`](../../openspec/changes/sync-snail-shell-sequencer/proposal.md): shell yield, optional rack place, native four-step module and routing completion.
+3. **P1** [`sync-stream-growth-and-dismantling`](../../openspec/changes/sync-stream-growth-and-dismantling/proposal.md): F/refunds/connectivity and water-quality growth. Extends existing stream/tree work rather than claiming ownership of it.
+4. **P1** [`sync-major-minor-milestones`](../../openspec/changes/sync-major-minor-milestones/proposal.md): goal schema, migration, conditions, opening rows and progress presentation. Schema first; tree-growth event hookup follows growth.
+5. **P1** [`sync-recorder-feedback`](../../openspec/changes/sync-recorder-feedback/proposal.md): gating, held state, capture light and world/music meter. Directional weighting remains deferred.
+6. **P1** [`sync-targeting-and-compass`](../../openspec/changes/sync-targeting-and-compass/proposal.md): physics-query target ranking, one outline and heading HUD.
+7. **P1** [`sync-calendar-and-night-sky`](../../openspec/changes/sync-calendar-and-night-sky/proposal.md): explicit parity preset, moving sky, reflected-light review and time controls. Current sunrise default stays until the explicit parity preset is selected; this resolves the supplied sunrise instruction versus source midnight without silently changing the opening.
+8. **P2** [`plan-cross-engine-design-parity`](../../openspec/changes/plan-cross-engine-design-parity/proposal.md): a planning contract, not implementation permission for all unbuilt systems. Create scoped acoustic/weather/module/UI/root-inlet changes when selected and coordinate existing quality-field work.
+
+Implementation tasks are unclaimed. This report is the completed documentation task; it does not mark gameplay tasks complete. Subsequent parity reviews should pin both commits, compare rule rows and logical asset IDs, check task/code evidence and record intentional engine differences. Neither repository is automatically authoritative for future design changes.
+
+## Validation and limits
+
+Validate each new change with `openspec validate --strict <change>`, check Markdown links and `git diff --check`. No game code/assets changed, so this audit does not rebuild Bevy, run source runtime tests or launch graphics. Future graphics checks require a built stubby_jackdaw and the independent 20-second `tools/jackdaw_timed_test.py` watchdog. Screenshots and upstream checked tasks are historical evidence, not fresh validation.
