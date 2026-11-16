@@ -55,7 +55,7 @@ spreads outward from where the music is, not uniformly across the map.
 | Axis | Scope | Range | Drives |
 | ---- | ----- | ----- | ------ |
 | Time of day | global | dawn → day → dusk → night → dawn | sun, ambient, sky, fog, exposure |
-| **Light quality** | local, per 10 m cubic cell | 0 bleak … 1 bloomed | blends the bleak and bloomed keys |
+| **Light quality** | local: how clean the air is, from foliage cleaning a radius around itself (`clean-air-by-foliage`) | 0 bleak … 1 bloomed | blends the bleak and bloomed keys |
 
 Light quality follows game conditions, mostly the density of plants and animals the player's music has grown. The global lights use
 the value sampled at the camera. Per-cell values tint what you look *at*: ground and
