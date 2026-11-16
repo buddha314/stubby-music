@@ -400,10 +400,13 @@ Several agents work in this repo at once. To avoid stepping on each other:
   during 20-second 165Hz Play. Separate 10ms on-screen timing remains open.
   Use the independent 20-second diagnostic watchdog for graphical tests.
   **Claude, by the user's direct request (2026-11-01..06):** crate work on the rack and
-  burbler UX, performance (sky environment map baked once, ground chunked for culling,
+  burbler UX, performance (sky environment map refiltered only as the sun and moon move, ground chunked for culling,
   two shadow cascades; `docs/research/performance-profiling.md`), stream laying
   (`streams.rs`, the `buildables` rule type, `add-stream-building`), bar lines on streams
   and placed machine voices (`add-localized-machine-voices`).
+  **Claude (2026-11-16):** the moving sky, `sync-calendar-and-night-sky`: Bevy's atmosphere
+  with desert dust, the moon and seeded stars (`stubby_world/src/sky.rs`, `calendar.rs`);
+  `tools/jackdaw_timed_test.py --sky` reviews it.
   Update this line when you claim work.
 - **The game opens at sunrise**, and since the sky's light dims with the day (#89) the
   first ~2 minutes are dark. Reviews set the calendar to midday for screenshots; if the
