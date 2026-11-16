@@ -42,6 +42,13 @@ impl Plugin for RecipesPlugin {
             },
         };
         if let Some(catalog) = catalog {
+            // Names for every system that shows items (the rack, the inventory screen).
+            app.insert_resource(stubby_core::ItemNames(
+                catalog
+                    .item_definitions()
+                    .map(|item| (item.id.clone(), item.name.clone()))
+                    .collect(),
+            ));
             app.insert_resource(RecipeCatalog(catalog));
         }
         // A new player starts with the shipped starter inventory (`start.json`).
@@ -268,5 +275,35 @@ impl MineNode {
             mine: self.mine.clone(),
             instance: self.instance.clone(),
         }
+    }
+}
+
+/// The player's inventory is the stock other systems (the rack) take from and give to.
+impl stubby_core::Stock for PlayerInventory {
+    fn quantity(&self, item: &str) -> u32 {
+        self.items.quantity(item)
+    }
+    fn boxes(&self) -> Vec<(String, u32)> {
+        self.items
+            .boxes()
+            .map(|(item, count)| (item.to_owned(), count))
+            .collect()
+    }
+    fn box_count(&self) -> usize {
+        stubby_recipes::INVENTORY_BOXES as usize
+    }
+    fn take(&mut self, item: &str, count: u32) -> bool {
+        self.items.take(item, count).is_ok()
+    }
+    fn give(&mut self, item: &str, count: u32) -> bool {
+        self.items
+            .grant(&[stubby_recipes::Stack {
+                item: item.to_owned(),
+                quantity: count,
+            }])
+            .is_ok()
+    }
+    fn say(&mut self, message: String) {
+        self.feedback = message;
     }
 }

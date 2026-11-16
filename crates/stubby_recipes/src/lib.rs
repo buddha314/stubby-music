@@ -266,6 +266,10 @@ fn aggregate(stacks: &[Stack]) -> Result<BTreeMap<String, u32>, RecipeError> {
     Ok(totals)
 }
 impl Catalog {
+    /// Every item, by ID.
+    pub fn item_definitions(&self) -> impl Iterator<Item = &ItemDefinition> {
+        self.items.values()
+    }
     pub fn from_json(json: &str) -> Result<Self, RecipeError> {
         let definition =
             serde_json::from_str(json).map_err(|e| RecipeError::InvalidCatalog(format!("{e}")))?;

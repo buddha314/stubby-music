@@ -12,18 +12,18 @@ pub mod export;
 // The player system (stubby_player), under its old module names.
 pub use stubby_player::{controls, hand, interaction};
 mod inventory_screen;
-pub mod machine_config;
+// The rack system (bevy_stubby_rack), under its old module names.
+pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
+mod glue;
 pub mod prefab_presentation;
 mod prefab_review;
 pub mod prefabs;
 // The lightning bug (stubby_life), under its old module name.
 pub use stubby_life::bug as pulse;
-pub mod rack;
 pub mod resources;
 mod review;
 mod sky;
 mod streams;
-pub mod synth_modules;
 mod terrain;
 mod waveform_audio;
 pub mod world_generation;
@@ -48,7 +48,8 @@ impl Plugin for DesertPlugin {
             resources::ResourceRecipesPlugin,
             inventory_screen::InventoryScreenPlugin,
             hand::HandPlugin,
-            rack::RackPlugin,
+            rack::RackPlugin::<resources::PlayerInventory>::default(),
+            glue::GluePlugin,
             interaction::InteractionPlugin,
             prefabs::PlacedPrefabsPlugin,
             calendar::CalendarPlugin,

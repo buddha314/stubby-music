@@ -46,7 +46,12 @@ impl Plugin for PlayerControlsPlugin {
             .init_resource::<ScreenMode>()
             .add_systems(
                 Update,
-                (toggle_screens, capture_cursor, move_player).chain(),
+                (
+                    toggle_screens.in_set(stubby_core::ScreenInput),
+                    capture_cursor.in_set(stubby_core::CursorCapture),
+                    move_player,
+                )
+                    .chain(),
             );
     }
 }

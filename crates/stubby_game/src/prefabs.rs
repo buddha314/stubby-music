@@ -13,13 +13,7 @@ use stubby_core::PrefabBinding;
 
 /// Insert before DesertPlugin when a level provides its own placements.
 pub use stubby_core::AuthoredLevel;
-#[derive(Component, Reflect, Clone, Debug, Default, PartialEq, Eq)]
-#[reflect(Component, Default)]
-pub struct PlacedAsset {
-    pub asset: String,
-    pub model: String,
-    pub instance: String,
-}
+pub use stubby_core::{AssetClock, PlacedAsset, PrefabError};
 #[derive(Component, Reflect, Clone, Debug, Default)]
 #[reflect(Component, Default)]
 pub struct AssetState {
@@ -28,14 +22,6 @@ pub struct AssetState {
     pub light_quality: f32,
     pub stream_connected: bool,
     pub port_highlight: bool,
-}
-#[derive(Component, Clone, Debug)]
-pub struct PrefabError(pub String);
-#[derive(Component, Clone, Copy)]
-pub struct AssetClock {
-    pub engine: ModuleId,
-    pub clock: u64,
-    pub bpm: f32,
 }
 #[derive(Clone)]
 struct Binding {

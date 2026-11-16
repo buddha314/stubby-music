@@ -10,9 +10,9 @@
 //!
 //! `--module-demo` places a clock and a square VCO in front of spawn.
 
-use super::audio::Synth;
 use bevy::gltf::GltfMaterialName;
 use bevy::prelude::*;
+use bevy_stubby_audio::Synth;
 use bevy_stubby_audio::pulse::{PulseBus, PulseBusPlugin, PulseReceive};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -157,11 +157,11 @@ struct ShowcaseAudio {
 }
 
 #[derive(SystemSet, Debug, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct ModuleEngine;
+pub struct ModuleEngine;
 /// A second view of an existing module, such as a machine's HUD; owns no audio node.
 #[derive(Component)]
-pub(crate) struct ModuleView;
-pub(crate) fn unbind_module(world: &mut World, entity: Entity) {
+pub struct ModuleView;
+pub fn unbind_module(world: &mut World, entity: Entity) {
     if let Some(light) = world
         .get::<ModuleParts>(entity)
         .and_then(|parts| parts.point_light)
@@ -311,7 +311,7 @@ fn audition_showcase(
 /// knob values or the definition's defaults. `None` for modules without a definition
 /// or an engine part yet (saw and triangle VCOs).
 fn engine_kind(profile: &ModuleProfile, params: &ModuleParams) -> Option<ModuleKind> {
-    let module = super::rack::RACK_MODULES.get(&profile.id)?;
+    let module = crate::rack::RACK_MODULES.get(&profile.id)?;
     let [part] = module.parts.as_slice() else {
         return None;
     };
@@ -634,7 +634,7 @@ fn apply_visuals(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio::{AudioOutput, SynthAudioPlugin};
+    use bevy_stubby_audio::{AudioOutput, SynthAudioPlugin};
     use std::time::Duration;
 
     #[test]

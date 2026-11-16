@@ -105,3 +105,75 @@ pub struct AuthoredLevel;
 /// to stubble) reads it.
 #[derive(Component, Clone, Copy, Debug, Default)]
 pub struct Harvested;
+
+/// A placed prefab's identity: which asset it is, its model, and its unique instance ID.
+/// The prefab lifecycle sets it; every system that acts on placed things reads it.
+#[derive(Component, Reflect, Clone, Debug, Default, PartialEq, Eq)]
+#[reflect(Component, Default)]
+pub struct PlacedAsset {
+    pub asset: String,
+    pub model: String,
+    pub instance: String,
+}
+
+/// A placed prefab that could not be bound, and why. It is hidden and inert.
+#[derive(Component, Clone, Debug)]
+pub struct PrefabError(pub String);
+
+/// A placed machine's own engine clock and its tempo, which everything in time with the
+/// machine follows (its rack, its bubbles, its stream's bar lines).
+#[derive(Component, Clone, Copy)]
+pub struct AssetClock {
+    pub engine: stubby_audio::ModuleId,
+    pub clock: u64,
+    pub bpm: f32,
+}
+
+/// The items the player holds, as systems other than crafting see them: counts, the
+/// inventory's boxes, taking and giving back, and a one-line message to the player.
+/// The crafting system implements it for its inventory.
+pub trait Stock: Resource<Mutability = bevy::ecs::component::Mutable> {
+    fn quantity(&self, item: &str) -> u32;
+    /// The filled boxes in order: item and count.
+    fn boxes(&self) -> Vec<(String, u32)>;
+    /// How many boxes the inventory has.
+    fn box_count(&self) -> usize;
+    /// Take `count` of `item`; `false` (and nothing taken) when there are not enough.
+    fn take(&mut self, item: &str, count: u32) -> bool;
+    /// Give back `count` of `item`; `false` (and nothing given) when it does not fit.
+    fn give(&mut self, item: &str, count: u32) -> bool;
+    /// Tell the player something, in one line.
+    fn say(&mut self, message: String);
+}
+
+/// Item IDs to the names players see.
+#[derive(Resource, Default, Clone)]
+pub struct ItemNames(pub std::collections::HashMap<String, String>);
+impl ItemNames {
+    pub fn name(&self, item: &str) -> String {
+        self.0
+            .get(item)
+            .cloned()
+            .unwrap_or_else(|| item.replace('_', " "))
+    }
+}
+
+/// Screens open and close (Tab, Escape) in this set.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ScreenInput;
+
+/// The cursor is captured or released for mouse look in this set.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CursorCapture;
+
+/// What E reaches is decided in this set.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct InteractionTargeting;
+
+/// The player used a placed asset (E on it). Its presentation may react; its owner acts.
+#[derive(Message, Clone, Debug)]
+pub struct AssetUsed {
+    pub entity: Entity,
+    pub instance: String,
+    pub asset: String,
+}

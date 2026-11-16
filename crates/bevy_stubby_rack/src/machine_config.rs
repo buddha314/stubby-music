@@ -1,9 +1,5 @@
 //! Proximity interaction and the shared, model-backed machine rack HUD.
-use super::{
-    prefab_presentation::AssetUsed,
-    prefabs::{AssetClock, PlacedAsset, PrefabError},
-    synth_modules::{ModuleLights, ModuleParams, ModuleView, SynthModule},
-};
+use crate::synth_modules::{ModuleLights, ModuleParams, ModuleView, SynthModule};
 use bevy::{
     app::{HierarchyPropagatePlugin, Propagate},
     camera::{ScalingMode, Viewport, visibility::RenderLayers},
@@ -16,9 +12,10 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::collections::HashMap;
+use stubby_core::{AssetClock, AssetUsed, PlacedAsset, PrefabError};
 use stubby_core::{HudCamera, MachineInteractionSet, PrefabBinding, Screen, ScreenMode};
 
-pub(crate) const HUD_LAYER: usize = 31;
+pub const HUD_LAYER: usize = 31;
 const HUD_Y: f32 = -1000.;
 const HP: f32 = 0.0508;
 
@@ -72,7 +69,7 @@ pub struct RackPlace {
     pub accepts: Vec<Accept>,
 }
 #[derive(Resource)]
-pub(crate) struct Profiles(pub HashMap<String, RackConfiguration>);
+pub struct Profiles(pub HashMap<String, RackConfiguration>);
 impl Default for Profiles {
     fn default() -> Self {
         #[derive(Deserialize)]
@@ -105,13 +102,13 @@ struct Header;
 struct HudPart;
 /// The panel's guidance line (filled by `rack`).
 #[derive(Component)]
-pub(crate) struct RackHint;
+pub struct RackHint;
 /// Where `rack` lists the relevant items (the window's left column).
 #[derive(Component)]
-pub(crate) struct RackActions;
+pub struct RackActions;
 /// Where `rack` lays out the player's inventory boxes (the window's right column).
 #[derive(Component)]
-pub(crate) struct RackInventory;
+pub struct RackInventory;
 
 /// The configuration window, Satisfactory's craft-bench layout, in fractions of the
 /// screen: a framed window with a title bar; the relevant items on the left, the rack in
@@ -133,30 +130,30 @@ struct HudScene {
 }
 /// A jack's mesh on the rack screen, pickable for patching.
 #[derive(Component, Clone)]
-pub(crate) struct JackHit(pub JackRef);
+pub struct JackHit(pub JackRef);
 /// A knob's mesh on the rack screen: the place's module and the param it turns.
 #[derive(Component, Clone)]
-pub(crate) struct KnobHit {
+pub struct KnobHit {
     pub place: String,
     pub param: String,
 }
 /// A module shown on the rack screen, in its place; its knobs follow the rack's values.
 #[derive(Component, Clone)]
-pub(crate) struct RackModuleView {
+pub struct RackModuleView {
     pub place: String,
 }
 /// A jack's halo mesh (its patch pod).
 #[derive(Component, Clone)]
-pub(crate) struct PodMesh(pub JackRef);
+pub struct PodMesh(pub JackRef);
 /// A jack's cable socket (`Port_<port>`) on the rack screen.
 #[derive(Component, Clone)]
-pub(crate) struct PortNode(pub JackRef);
+pub struct PortNode(pub JackRef);
 /// A node of the rack frame's cable comb (`Comb_<n>`, `Comb_<n>_PlugA/B`).
 #[derive(Component, Clone)]
-pub(crate) struct CombNode(pub String);
+pub struct CombNode(pub String);
 /// An empty place's slot outline mesh on the rack screen: a drop target for modules.
 #[derive(Component, Clone)]
-pub(crate) struct SlotHit(pub String);
+pub struct SlotHit(pub String);
 enum SceneKind {
     Frame,
     Module,
@@ -172,50 +169,6 @@ struct View {
     scene: Option<Entity>,
 }
 
-/// A machine's interaction point (its profile's `Interact` node), pointing at the machine.
-#[derive(Component)]
-pub struct InteractPoint {
-    pub machine: Entity,
-}
-
-/// Glue between machines and the player: each placed machine's `Interact` node (named in
-/// its profile) is something E can reach while the machine works.
-fn interact_points(
-    mut commands: Commands,
-    profiles: Res<Profiles>,
-    names: Query<(Entity, &Name), Added<Name>>,
-    parents: Query<&ChildOf>,
-    machines: Query<&PlacedAsset>,
-    points: Query<(Entity, &InteractPoint, Has<stubby_core::Interactable>)>,
-    broken: Query<(), With<PrefabError>>,
-) {
-    for (entity, name) in &names {
-        let Some(machine) = parents.iter_ancestors(entity).find(|a| {
-            machines.get(*a).is_ok_and(|m| {
-                profiles
-                    .0
-                    .get(&m.asset)
-                    .is_some_and(|c| c.interact.node == name.as_str())
-            })
-        }) else {
-            continue;
-        };
-        commands.entity(entity).insert(InteractPoint { machine });
-    }
-    for (entity, point, marked) in &points {
-        let working = !broken.contains(point.machine);
-        if working && !marked {
-            commands
-                .entity(entity)
-                .insert(stubby_core::Interactable::Machine(point.machine));
-        } else if !working && marked {
-            commands
-                .entity(entity)
-                .remove::<stubby_core::Interactable>();
-        }
-    }
-}
-
 pub struct MachineConfigurationPlugin;
 impl Plugin for MachineConfigurationPlugin {
     fn build(&self, app: &mut App) {
@@ -228,12 +181,6 @@ impl Plugin for MachineConfigurationPlugin {
         }
         app.add_plugins(HierarchyPropagatePlugin::<RenderLayers>::new(PostUpdate))
             .init_resource::<Profiles>()
-            .add_systems(
-                Update,
-                interact_points
-                    .after(PrefabBinding)
-                    .before(super::interaction::InteractionTargeting),
-            )
             .init_resource::<MachineInteraction>()
             .init_resource::<ScreenMode>()
             .init_resource::<stubby_core::InteractTarget>()
@@ -244,9 +191,9 @@ impl Plugin for MachineConfigurationPlugin {
                 interact
                     .in_set(MachineInteractionSet)
                     .after(PrefabBinding)
-                    .after(super::interaction::InteractionTargeting)
-                    .after(super::controls::toggle_screens)
-                    .before(super::controls::capture_cursor),
+                    .after(stubby_core::InteractionTargeting)
+                    .after(stubby_core::ScreenInput)
+                    .before(stubby_core::CursorCapture),
             )
             .add_systems(
                 Update,
@@ -541,7 +488,7 @@ fn sync_view(
     machines: Query<(
         &PlacedAsset,
         Option<&AssetClock>,
-        Option<&super::rack::RackState>,
+        Option<&crate::rack::RackState>,
     )>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<HudCamera>>,
@@ -816,7 +763,7 @@ mod tests {
             .add_message::<MachineConfigurationOpened>()
             .add_systems(
                 Update,
-                (super::super::controls::toggle_screens, interact).chain(),
+                (stubby_player::controls::toggle_screens, interact).chain(),
             );
         let machine = app
             .world_mut()
