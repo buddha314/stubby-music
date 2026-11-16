@@ -107,9 +107,10 @@ Escape or focus loss releases the cursor, and left click recaptures it.
 - **Bleak and hazy at first, magically colourful where life returns.** The desert
   opens bleak: hazy, desaturated, brown-grey. Music played to plants and animals
   grows them, and where life grows the world blooms into solarpunk by day and
-  lunarpunk by night. The blend is local, not global: **light quality**, a field of
-  10 m cells whose value follows game conditions (mostly the density of plants and
-  animals). Time of day is global. Lighting for every
+  lunarpunk by night. The blend is local, not global: **light quality**, how clean the
+  air is. **Foliage cleaning the air is a key mechanic**: each plant or tree cleans the
+  air within a radius, more as it grows and blooms (`clean-air-by-foliage`; this replaced
+  the old 10 m cell field). Time of day is global. Lighting for every
   combination is art-authored in `assets/lighting/lighting_keys.json`; see
   `docs/art/style-guide.md`. Never hard-cut between looks.
 - **Three lighting stages (decided 2026-11-06):** bleak haze, then `clearing`, where the air clears

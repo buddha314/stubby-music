@@ -27,32 +27,30 @@ night wraps to dawn.
 - **THEN** sun colour, illuminance, elevation, ambient, fog and exposure change continuously, matching each key exactly at its time
 
 ### Requirement: Light quality field
-The world SHALL hold a light quality value in [0, 1] for each 10 m cubic cell,
-0 meaning bleak and 1 meaning bloomed, defaulting to 0. Each cell's target SHALL be
-set from local game conditions, chiefly the density of plants and animals (which the
-player grows by playing music to them), and its value SHALL ease
-toward the target over several seconds. Cells SHALL be stored sparsely, keyed by
-integer cell coordinates, so an untouched desert costs nothing.
+The world SHALL provide a light quality value in [0, 1] at any point, 0 meaning bleak
+and 1 meaning bloomed, defaulting to 0. It SHALL come from local game conditions,
+chiefly the foliage the player grows by playing music, which cleans the air around it;
+`clean-air-by-foliage` defines how (a radius around each cleaning asset, superseding
+the earlier 10 m cell field). It SHALL change gradually, over several seconds.
 
 #### Scenario: Plants raise light quality locally
-- **WHEN** plants grow densely within a cell
-- **THEN** that cell's light quality eases upward over at least 3 seconds, and a cell 50 m away is unchanged
+- **WHEN** plants grow densely in one place
+- **THEN** light quality there eases upward over at least 3 seconds, and 50 m away it is unchanged
 
 #### Scenario: Conditions can lower it
-- **WHEN** the plants in a cell die or are removed
-- **THEN** its light quality eases back toward bleak
+- **WHEN** those plants die or are removed
+- **THEN** light quality there eases back toward bleak
 
 ### Requirement: Bleak to bloomed look
 Lighting SHALL blend between the bleak and bloomed keys by the light quality sampled
-at the camera, smoothly across cell borders. At 0 the scene SHALL be hazy and
+at the camera, smoothly as the camera moves. At 0 the scene SHALL be hazy and
 desaturated; at 1 it SHALL be solarpunk by day (clear, saturated, lush) and lunarpunk
 by night (violet sky, luminous accent flora). Values that vary across the view, such
-as ground tint and flora emission, SHALL use the light quality of the cell they are
-in, so a bloomed area reads distinctly from the bleak plain around it.
+as ground tint and flora emission, SHALL use the light quality where they are, so a bloomed area reads distinctly from the bleak plain around it.
 
 #### Scenario: Walking into a grove
-- **WHEN** the player walks from bleak desert into a cell at light quality 1 at night
-- **THEN** the lighting eases from the bleak night key to the bloomed (lunarpunk) night key without a visible step at the cell border
+- **WHEN** the player walks from bleak desert into a place at light quality 1 at night
+- **THEN** the lighting eases from the bleak night key to the bloomed (lunarpunk) night key without a visible step
 
 #### Scenario: Seeing a grove from outside
 - **WHEN** the camera stands in bleak desert looking at a bloomed area
