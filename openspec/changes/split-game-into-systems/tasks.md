@@ -25,7 +25,7 @@
 ## 5. Glue and enforcement
 
 - [x] 5.1 `stubby_game` holds only plugin assembly, the translations between systems, the burbler composition, the inventory screen and review drivers. After 4.6 it is exactly that (2,876 lines, from 12,572): `lib.rs`/`main.rs` assembly; glue in `glue.rs` (binders incl. the burbler, knob defaults, segment cost, interact points, world sources), `resources.rs`, `waveform_audio.rs`; `inventory_screen.rs`; review drivers `review.rs`, `prefab_review.rs`, `stream_review.rs`
-- [x] 5.2 `tools/check_layers.py` over `cargo metadata`, failing with both crate names (and on an unplaced crate, and on Bevy in a core); its rules are tested by `tools/test_check_layers.py`; both run in CI and `tools/ci_local.sh`
+- [x] 5.2 Layer check in CI and `tools/ci_local.sh`: `cargo deny check bans` over `deny.toml` (each crate's `wrappers`), plus a `cargo tree` check that no core reaches Bevy. (First a hand-written `tools/check_layers.py` with its own tests; replaced by cargo-deny at the user's direction, 2026-11-15.)
 - [ ] 5.3 After each step: `cargo build -p stubby_game -p stubby_jackdaw` and the `prefabs` test; after the last, one bounded smoke test under `tools/jackdaw_timed_test.py`
 
 ## 6. Docs

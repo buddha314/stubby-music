@@ -6,8 +6,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 step() { printf '\n== %s\n' "$*"; }
 step "Version consistency";        python3 tools/check_jackdaw_versions.py
 step "Version-check regression";   python3 tools/test_jackdaw_versions.py
-step "Layer rules";                python3 tools/test_check_layers.py
-step "Layer check";                python3 tools/check_layers.py
+step "Layer check (cargo-deny, deny.toml)"
+command -v cargo-deny >/dev/null || { echo "install it: cargo install cargo-deny --locked --version 0.20.2"; exit 1; }
+cargo deny --log-level error check bans
 step "Active Bevy graph"
 tree="$(mktemp)"; trap 'rm -f "$tree"' EXIT
 cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$tree"
@@ -19,9 +20,12 @@ step "stubby_audio stands alone"
 deps=$(cargo tree -p stubby_audio -e normal,build --prefix none --format '{p}' --locked \
   | grep -F "$PWD" | grep -v '^stubby_audio ' || true)
 if [ -n "$deps" ]; then echo "stubby_audio depends on workspace crates:"; echo "$deps"; exit 1; fi
-if cargo tree -p stubby_audio -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
-  echo "stubby_audio must not depend on the Bevy engine"; exit 1
-fi
+step "Cores never reach the Bevy engine"
+for core in stubby_audio stubby_rack stubby_recipes; do
+  if cargo tree -p "$core" -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
+    echo "$core must not depend on the Bevy engine"; exit 1
+  fi
+done
 # Not in GitHub CI (no editor there): the project as Jackdaw sees it. This is what
 # finds the game plugin the editor opens; a compiling build can still fail it.
 if command -v jd >/dev/null; then

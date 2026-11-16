@@ -70,8 +70,9 @@ reflected path SHALL rewrite the saved prefabs in the same change.
 - **THEN** it names `bevy_stubby_audio::…::PulseFollower` and `cargo test -p stubby_jackdaw --test prefabs` passes
 
 ### Requirement: The layering is checked
-`tools/check_layers.py` SHALL read `cargo metadata`, assign each workspace crate its
-layer, and fail on any dependency that breaks the rules above, naming both crates.
+`cargo deny check bans` SHALL enforce the layering from `deny.toml`, where each crate's
+`wrappers` name the only crates allowed to depend on it, and fail naming the banned crate;
+a `cargo tree` check SHALL fail when a core depends on the Bevy engine.
 
 #### Scenario: Clean workspace
 - **WHEN** the check runs on a workspace that follows the rules

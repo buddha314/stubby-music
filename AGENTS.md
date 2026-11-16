@@ -170,7 +170,8 @@ We track requirements with [OpenSpec](https://github.com/Fission-AI/OpenSpec)
 ### The game is independent systems in layers
 
 Each part of the game is its own crate, and dependencies only point down
-(`split-game-into-systems`; `tools/check_layers.py` enforces it in CI):
+(`split-game-into-systems`; `cargo deny check bans` enforces it from `deny.toml`, in CI and
+`tools/ci_local.sh`):
 
 | Layer | Crates | May depend on |
 | --- | --- | --- |
@@ -188,7 +189,8 @@ Each part of the game is its own crate, and dependencies only point down
 - **`stubby_core` holds contracts only**: an item goes there if at least two systems need
   it and it has no behaviour. Shared behaviour is a service (`stubby_ui`,
   `bevy_stubby_audio`).
-- **A new crate gets a line in `LAYERS`** (`tools/check_layers.py`); an unplaced crate fails.
+- **A new crate gets a line in `deny.toml`** (its `wrappers`: who may depend on it). Cores
+  never reaching Bevy is a `cargo tree` check in the same scripts.
 - **Placed prefabs come alive through binders.** `stubby_world`'s lifecycle names no
   asset kind; whoever owns a kind registers an `AssetBinder` (the game's glue does for
   the bug, modules, mines, reeds). A new placeable kind adds a binder, not a branch.

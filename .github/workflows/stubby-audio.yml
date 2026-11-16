@@ -16,7 +16,7 @@ on:
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
-      - "tools/*check_layers.py"
+      - "deny.toml"
       - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
   pull_request:
@@ -31,7 +31,7 @@ on:
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
       - "tools/*jackdaw_versions.py"
-      - "tools/*check_layers.py"
+      - "deny.toml"
       - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
 
@@ -76,10 +76,11 @@ jobs:
           workspaces: game -> target
       - name: Version-check regression tests
         run: python3 tools/test_jackdaw_versions.py
-      - name: Layer rules
-        run: python3 tools/test_check_layers.py
-      - name: Layer check (split-game-into-systems)
-        run: python3 tools/check_layers.py
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20.2
+      - name: Layer check (cargo-deny, deny.toml)
+        run: cargo deny --log-level error check bans
       - name: Active Bevy graph
         run: |
           cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$RUNNER_TEMP/bevy-tree.txt"
@@ -95,6 +96,8 @@ jobs:
           deps=$(cargo tree -p stubby_audio -e normal,build --prefix none --format '{p}' --locked \
             | grep -F "$GITHUB_WORKSPACE" | grep -v '^stubby_audio ' || true)
           if [ -n "$deps" ]; then echo "stubby_audio depends on workspace crates:"; echo "$deps"; exit 1; fi
-          if cargo tree -p stubby_audio -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
-            echo "stubby_audio must not depend on the Bevy engine"; exit 1
-          fi
+          for core in stubby_audio stubby_rack stubby_recipes; do
+            if cargo tree -p "$core" -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
+              echo "$core must not depend on the Bevy engine"; exit 1
+            fi
+          done
