@@ -13,14 +13,16 @@ pub struct WaveformSound {
     pub gain: f32,
     pub hearing_radius_metres: f32,
 }
-/// One oscillator, envelope and VCA, triggered by an existing gate source.
-/// The same patch is used by bugs and listener-level collection confirmations.
+/// One oscillator, envelope and VCA, triggered by an existing gate source, sent `to` an
+/// output: `PortRef::output()` for a sound in the world (a bug's click),
+/// `PortRef::ui_output()` for an interface sound (a collection confirmation).
 pub fn voice_commands(
     oscillator_kind: ModuleKind,
     ids: [ModuleId; 3],
     gate: PortRef,
     gain: f32,
     sound: WaveformSound,
+    to: PortRef,
 ) -> [Command; 7] {
     let [oscillator, envelope, vca] = ids;
     [
@@ -53,7 +55,7 @@ pub fn voice_commands(
         },
         Command::Connect {
             from: PortRef::new(vca, "out"),
-            to: PortRef::output(),
+            to,
         },
     ]
 }

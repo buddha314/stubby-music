@@ -22,8 +22,28 @@ impl Plugin for WaveformAudioPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CollectionSounds(bug_click()))
             .init_resource::<CueVoices>()
+            .add_message::<stubby_player::recorder::RecorderCaptured>()
             .init_resource::<super::module_ids::ModuleIds>()
-            .add_systems(PostUpdate, collection_cues);
+            .add_systems(PostUpdate, (collection_cues, light_the_recorder));
+    }
+}
+
+/// A sound harvest lights the field recorder's record light (sync-recorder-feedback);
+/// a harvest of materials only does not.
+fn light_the_recorder(
+    mut events: MessageReader<ResourceCollected>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut captured: MessageWriter<stubby_player::recorder::RecorderCaptured>,
+) {
+    let Some(catalog) = catalog else {
+        events.clear();
+        return;
+    };
+    if events
+        .read()
+        .any(|event| !collected_waveforms(event, &catalog).is_empty())
+    {
+        captured.write(stubby_player::recorder::RecorderCaptured);
     }
 }
 /// The engine oscillator that plays a waveform item: glue between crafting's waveforms
@@ -88,6 +108,8 @@ fn collection_cues(
                 PortRef::new(ids[0], "out"),
                 preset.0.gain,
                 preset.0,
+                // A confirmation is an interface sound: the recorder's meter must not hear it.
+                PortRef::ui_output(),
             ) {
                 synth.send(command);
             }
@@ -186,6 +208,7 @@ mod tests {
             PortRef::new(ModuleId(1), "out"),
             sound.gain,
             sound,
+            PortRef::ui_output(),
         ) {
             engine.send(command).unwrap();
         }

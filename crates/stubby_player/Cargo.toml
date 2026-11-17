@@ -9,6 +9,8 @@ publish = false
 # A system crate (split-game-into-systems): Bevy, physics and stubby_core only.
 [dependencies]
 stubby_core = { path = "../stubby_core" }
+# The world bus level the field recorder's meter shows (sync-recorder-feedback).
+bevy_stubby_audio = { path = "../bevy_stubby_audio" }
 bevy.workspace = true
 bevy.features = ["3d", "ui", "mesh_picking"]
 avian3d.workspace = true

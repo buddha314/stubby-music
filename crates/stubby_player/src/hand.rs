@@ -50,18 +50,25 @@ pub fn flashlight_pose() -> Transform {
         .with_rotation(Quat::from_rotation_y(0.12) * Quat::from_rotation_x(0.06))
 }
 
-/// The item in the hand, if any. The hand starts empty.
-#[derive(Resource, Default)]
+/// The item in the hand, if any. The game opens with the field recorder in hand
+/// (sync-recorder-feedback): collecting sounds needs it.
+#[derive(Resource)]
 pub struct Hand(pub Option<HandItem>);
+impl Default for Hand {
+    fn default() -> Self {
+        Self(Some(HandItem::FieldRecorder))
+    }
+}
 
 /// One per item, spawned on the player camera and shown only while held.
 #[derive(Component)]
-struct Held(HandItem);
+pub(crate) struct Held(pub(crate) HandItem);
 
 pub struct HandPlugin;
 impl Plugin for HandPlugin {
     fn build(&self, app: &mut App) {
         crate::flashlight::add(app);
+        crate::recorder::add(app);
         app.init_resource::<Hand>()
             .add_systems(Update, (attach, choose, show, fur_casts_no_shadow).chain());
     }

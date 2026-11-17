@@ -596,3 +596,51 @@ fn a_clocked_sequencer_steps_and_gates_its_lit_steps() {
         [false, true, false, true]
     );
 }
+
+// ------------------------------------------------------------ the world bus
+
+/// The field recorder's meter (sync-recorder-feedback) hears what is placed in the world
+/// and the music, never one-shot UI sounds such as the patch snap.
+#[test]
+fn the_world_meter_hears_the_world_but_not_ui_sounds() {
+    let mut rig = Rig::new();
+    let meter = rig.engine.world_meter();
+    rig.flush();
+    rig.render(BLOCK * 4);
+    assert_eq!(meter.peak_db(), f32::NEG_INFINITY, "a silent opening");
+
+    let snap = stubby_audio::SampleId(1);
+    rig.engine
+        .load_sample(snap, SR, vec![vec![0.5; SR as usize]; 2]);
+    rig.send(Command::PlaySample {
+        sample: snap,
+        gain: 1.0,
+    });
+    rig.flush();
+    rig.render(BLOCK * 8);
+    assert!(peak(&rig.left[BLOCK * 4..]) > 0.1, "the UI sound plays");
+    assert_eq!(
+        meter.peak_db(),
+        f32::NEG_INFINITY,
+        "but not on the world bus"
+    );
+
+    // A synthesized confirmation patched to the UI output: heard, not metered.
+    let cue = rig.add(2, ModuleKind::SineVco { freq_hz: 880.0 });
+    rig.connect(out(cue), PortRef::ui_output());
+    rig.flush();
+    let from = rig.left.len();
+    rig.render(SR as usize / 10);
+    assert!(peak(&rig.left[from..]) > 0.1, "the cue plays");
+    assert_eq!(
+        meter.peak_db(),
+        f32::NEG_INFINITY,
+        "the cue is not on the world bus"
+    );
+
+    let vco = rig.add(1, ModuleKind::SineVco { freq_hz: 220.0 });
+    rig.connect(out(vco), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize / 10);
+    assert!(meter.peak_db() > -12., "{}", meter.peak_db());
+}

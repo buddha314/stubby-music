@@ -6892,6 +6892,7 @@ dependencies = [
  "avian3d",
  "bevy",
  "bevy_mod_outline",
+ "bevy_stubby_audio",
  "serde",
  "serde_json",
  "stubby_core",
