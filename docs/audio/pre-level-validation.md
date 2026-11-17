@@ -43,3 +43,33 @@ validation; do not ship duplicate meshes into gameplay levels just for acoustics
 
 Do not mark the acoustic-level listening requirement complete based on a synthetic
 fixture. Keep fixture results and authored-level results as separate evidence.
+
+## Current evidence (2026-11-17)
+
+- The AudioNimbus live-emitter Firewheel path rendered 32 blocks at both 44.1 and
+  48 kHz under `assert_no_alloc`; all samples were finite and no callback allocations
+  were recorded. In this optimized offline harness, per-block timing was:
+
+  | Sample rate | p50 | p95 | max |
+  | --- | ---: | ---: | ---: |
+  | 44.1 kHz | 7.84 µs | 9.15 µs | 25.38 µs |
+  | 48 kHz | 7.89 µs | 8.95 µs | 29.26 µs |
+
+  The first non-silent output was block 1 at each rate, confirming one 256-frame
+  block of latency (5.80 ms at 44.1 kHz; 5.33 ms at 48 kHz). This is a one-emitter
+  offline measurement, not a live-device restart check or the 16-HRTF/32-pan budget
+  benchmark.
+- A two-triangle static wall with zero transmission reduced measured stereo RMS from
+  0.25694 to 0. The first-order implementation gap was missing
+  `TransmissionParameters` in the direct-simulation input; AudioNimbus otherwise
+  returned zero transmission for the wall material. Transmission rays are now enabled.
+- A generated 8 m closed box produced finite, non-zero AudioNimbus parametric reverb
+  output for an impulse followed by silence. This verifies the native simulation and
+  effect API only; it does not yet route asynchronous reflection results through the
+  game audio graph.
+
+The remaining 4.1c checks are live-device restart/sample-rate changes and realistic
+CPU measurements. The 4.10 target needs the HRTF/pan pools from tasks 4.3 and 4.4.
+The 4.8 integration needs a realtime-safe ownership handoff for AudioNimbus's
+reflection parameters, which retain native source/impulse-response handles, plus a
+listener environmental bus. Do not move or destroy those handles on the callback.

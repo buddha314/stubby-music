@@ -84,6 +84,141 @@ fn out(id: ModuleId) -> PortRef {
     PortRef::new(id, "out")
 }
 
+#[cfg(feature = "audionimbus")]
+#[test]
+fn audionimbus_live_emitter_path_is_allocation_free_at_supported_rates() {
+    for sample_rate in [44_100, 48_000] {
+        let (mut engine, mut renderer) = Engine::offline(EngineConfig {
+            sample_rate,
+            max_block_frames: BLOCK as u32,
+        })
+        .unwrap();
+        let oscillator = ModuleId(90_001);
+        engine
+            .send(Command::AddModule {
+                id: oscillator,
+                kind: ModuleKind::SquareVco { freq_hz: 220.0 },
+            })
+            .unwrap();
+        engine
+            .send(Command::Connect {
+                from: out(oscillator),
+                to: PortRef::output(),
+            })
+            .unwrap();
+        engine
+            .send(Command::SetEmitter {
+                output: out(oscillator),
+                offset: [1.0, 0.0, 2.0],
+                position_world: [1.0, 0.0, 2.0],
+                volume: 1.0,
+            })
+            .unwrap();
+        engine.flush().unwrap();
+
+        let mut output = vec![0.0; BLOCK * 2];
+        let mut block_times = Vec::with_capacity(32);
+        let mut first_active_block = None;
+        for block in 0..32 {
+            let before = violation_count();
+            let started = std::time::Instant::now();
+            assert_no_alloc(|| renderer.render(&mut output));
+            block_times.push(started.elapsed());
+            assert_eq!(violation_count(), before, "AudioNimbus callback allocated");
+            assert!(output.iter().all(|sample| sample.is_finite()));
+            if first_active_block.is_none() && output.iter().any(|sample| sample.abs() > 1e-5) {
+                first_active_block = Some(block);
+            }
+        }
+        assert_eq!(
+            first_active_block,
+            Some(1),
+            "expected one 256-frame block of latency"
+        );
+        block_times.sort_unstable();
+        eprintln!(
+            "AudioNimbus 1-emitter offline at {sample_rate} Hz: first active block={first_active_block:?}, p50={:?}, p95={:?}, max={:?}",
+            block_times[16], block_times[30], block_times[31],
+        );
+    }
+}
+
+#[cfg(feature = "audionimbus")]
+#[test]
+fn audionimbus_static_wall_transmission_attenuates_live_emitter() {
+    fn measure(through_wall: bool) -> f32 {
+        let (mut engine, mut renderer) = Engine::offline(EngineConfig {
+            sample_rate: SR,
+            max_block_frames: BLOCK as u32,
+        })
+        .unwrap();
+        if through_wall {
+            engine.set_acoustic_geometry(stubby_audio::AcousticSceneGeometry {
+                vertices: vec![
+                    [-10.0, -10.0, 1.0],
+                    [10.0, -10.0, 1.0],
+                    [10.0, 10.0, 1.0],
+                    [-10.0, 10.0, 1.0],
+                ],
+                triangles: vec![[0, 1, 2], [0, 2, 3]],
+                material_indices: vec![0, 0],
+                materials: vec![stubby_audio::AcousticMaterial {
+                    absorption: [0.8; 3],
+                    scattering: 0.1,
+                    transmission: [0.0; 3],
+                }],
+            });
+        }
+        let oscillator = ModuleId(90_002);
+        engine
+            .send(Command::AddModule {
+                id: oscillator,
+                kind: ModuleKind::SquareVco { freq_hz: 220.0 },
+            })
+            .unwrap();
+        engine
+            .send(Command::Connect {
+                from: out(oscillator),
+                to: PortRef::output(),
+            })
+            .unwrap();
+        engine
+            .send(Command::SetEmitter {
+                output: out(oscillator),
+                offset: [0.0, 0.0, 3.0],
+                position_world: [0.0, 0.0, 3.0],
+                volume: 1.0,
+            })
+            .unwrap();
+        engine.flush().unwrap();
+
+        let mut output = vec![0.0; BLOCK * 2];
+        let mut energy = 0.0;
+        let mut samples = 0usize;
+        for block in 0..24 {
+            engine.flush().unwrap();
+            let before = violation_count();
+            assert_no_alloc(|| renderer.render(&mut output));
+            assert_eq!(violation_count(), before, "AudioNimbus callback allocated");
+            if block >= 16 {
+                energy += output.iter().map(|sample| sample * sample).sum::<f32>();
+                samples += output.len();
+            }
+            std::thread::sleep(std::time::Duration::from_millis(55));
+        }
+        (energy / samples as f32).sqrt()
+    }
+
+    let clear_rms = measure(false);
+    let blocked_rms = measure(true);
+    eprintln!("AudioNimbus synthetic wall RMS: clear={clear_rms}, blocked={blocked_rms}");
+    assert!(clear_rms > 0.001, "clear path was silent: {clear_rms}");
+    assert!(
+        blocked_rms < clear_rms * 0.8,
+        "wall did not attenuate enough: clear={clear_rms}, blocked={blocked_rms}"
+    );
+}
+
 fn freq_by_zero_crossings(x: &[f32]) -> f64 {
     let mut crossings = Vec::new();
     for i in 1..x.len() {

@@ -14,7 +14,7 @@ use audionimbus::{
     DirectEffectParams, DirectEffectSettings, DirectSimulationParameters, DirectSimulationSettings,
     Direction, Directivity, DistanceAttenuationModel, Equalizer, Hrtf, HrtfInterpolation,
     HrtfSettings, Material, Occlusion, OcclusionAlgorithm, Point, SimulationFlags,
-    StaticMeshSettings, SteamAudioError, Transmission, Triangle,
+    StaticMeshSettings, SteamAudioError, Transmission, TransmissionParameters, Triangle,
 };
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
@@ -249,10 +249,7 @@ fn run_direct_simulation_worker(
         audionimbus::dynamic::RayTracerSettings::Default,
     )
     .map_err(|error| format!("create scene: {error}"))?;
-    simulator
-        .try_set_scene(&scene)
-        .map_err(|error| format!("set scene: {error}"))?;
-    simulator.commit();
+    scene.commit();
     ready
         .send(Ok(()))
         .map_err(|error| format!("publish worker readiness: {error}"))?;
@@ -330,6 +327,9 @@ fn run_direct_simulation_worker(
                 }
             }
             scene.commit();
+            simulator
+                .try_set_scene(&scene)
+                .map_err(|error| format!("set scene: {error}"))?;
             simulator.commit();
             scene_revision = snapshot.geometry_revision;
         }
@@ -381,7 +381,13 @@ fn run_direct_simulation_worker(
                                 weight: 0.0,
                                 power: 1.0,
                             })
-                            .with_occlusion(Occlusion::new(OcclusionAlgorithm::Raycast)),
+                            .with_occlusion(
+                                Occlusion::new(OcclusionAlgorithm::Raycast).with_transmission(
+                                    TransmissionParameters {
+                                        num_transmission_rays: 16,
+                                    },
+                                ),
+                            ),
                     ),
                     ..Default::default()
                 },
@@ -753,4 +759,178 @@ pub enum SpatialProcessError {
     Buffer(#[from] audionimbus::audio_buffer::AudioBufferError),
     #[error(transparent)]
     Effect(#[from] audionimbus::effect::EffectError),
+}
+
+#[cfg(test)]
+mod simulation_tests {
+    use super::*;
+
+    #[test]
+    fn direct_simulation_reports_transmission_through_static_wall() {
+        let mut simulation = AudioNimbusDirectSimulation::new(48_000, 256).unwrap();
+        simulation.set_geometry(AcousticSceneGeometry {
+            vertices: vec![
+                [-10.0, -10.0, 1.0],
+                [10.0, -10.0, 1.0],
+                [10.0, 10.0, 1.0],
+                [-10.0, 10.0, 1.0],
+            ],
+            triangles: vec![[0, 1, 2], [0, 2, 3]],
+            material_indices: vec![0, 0],
+            materials: vec![AcousticMaterial {
+                absorption: [0.8; 3],
+                scattering: 0.1,
+                transmission: [0.0; 3],
+            }],
+        });
+        let params = Arc::new(DirectEffectParamsShared::default());
+        simulation.publish(
+            vec![DirectEmitterInput {
+                output: PortRef::new(crate::ModuleId(42), "out"),
+                position: [0.0, 0.0, 3.0],
+                params: params.clone(),
+            }],
+            ListenerPose::default(),
+        );
+
+        for _ in 0..100 {
+            if params.flags.load(Ordering::Acquire) & (1 << 3) != 0 {
+                let flags = params.flags.load(Ordering::Acquire);
+                let transmission = params.values[6..9]
+                    .iter()
+                    .map(|value| f32::from_bits(value.load(Ordering::Relaxed)))
+                    .collect::<Vec<_>>();
+                assert!(
+                    flags & (1 << 4) != 0,
+                    "wall did not produce transmission output"
+                );
+                assert!(transmission.iter().all(|&value| value < 0.1));
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        panic!("simulation did not publish occlusion within two seconds");
+    }
+
+    #[test]
+    fn parametric_reverb_renders_a_tail_in_a_synthetic_room() {
+        use audionimbus::ReflectionsSharedInputs;
+        use audionimbus::dynamic::{
+            ReflectionAlgorithm, ReflectionEffect, SimulationSettings, Simulator, Source,
+        };
+
+        let context = Context::default();
+        let audio_settings = AudioSettings {
+            sampling_rate: 48_000,
+            frame_size: 256,
+        };
+        let settings = SimulationSettings::new(&audio_settings).with_reflections(
+            audionimbus::ParametricSettings {
+                max_num_rays: 256,
+                num_diffuse_samples: 32,
+                max_duration: 1.0,
+                max_num_sources: 1,
+                num_threads: 1,
+                max_order: 1,
+            },
+        );
+        let mut simulator = Simulator::try_new(&context, &settings).unwrap();
+        let mut scene = audionimbus::dynamic::Scene::try_new(
+            &context,
+            audionimbus::dynamic::RayTracerSettings::Default,
+        )
+        .unwrap();
+        let mesh = audionimbus::dynamic::StaticMesh::try_new(
+            &scene,
+            &StaticMeshSettings {
+                vertices: &[
+                    [-4.0, -4.0, -4.0],
+                    [4.0, -4.0, -4.0],
+                    [4.0, 4.0, -4.0],
+                    [-4.0, 4.0, -4.0],
+                    [-4.0, -4.0, 4.0],
+                    [4.0, -4.0, 4.0],
+                    [4.0, 4.0, 4.0],
+                    [-4.0, 4.0, 4.0],
+                ]
+                .map(|point| Point::new(point[0], point[1], point[2])),
+                triangles: &[
+                    Triangle::new(0, 2, 1),
+                    Triangle::new(0, 3, 2),
+                    Triangle::new(4, 5, 6),
+                    Triangle::new(4, 6, 7),
+                    Triangle::new(0, 1, 5),
+                    Triangle::new(0, 5, 4),
+                    Triangle::new(3, 7, 6),
+                    Triangle::new(3, 6, 2),
+                    Triangle::new(0, 4, 7),
+                    Triangle::new(0, 7, 3),
+                    Triangle::new(1, 2, 6),
+                    Triangle::new(1, 6, 5),
+                ],
+                materials: &[Material::CONCRETE],
+                material_indices: &[0; 12],
+            },
+        )
+        .unwrap();
+        scene.try_add_static_mesh(mesh).unwrap();
+        scene.commit();
+        simulator.try_set_scene(&scene).unwrap();
+        let source = Source::try_new(&simulator, SimulationFlags::REFLECTIONS).unwrap();
+        simulator.try_add_source(&source).unwrap();
+        simulator.commit();
+        source
+            .set_inputs(&audionimbus::dynamic::SimulationInputs {
+                source: CoordinateSystem {
+                    origin: Point::new(1.0, 0.0, 0.0),
+                    ..Default::default()
+                },
+                parameters: audionimbus::dynamic::SimulationParameters {
+                    reflections: Some(audionimbus::ParametricParameters::default().into()),
+                    ..Default::default()
+                },
+            })
+            .unwrap();
+        simulator
+            .set_shared_inputs(
+                SimulationFlags::REFLECTIONS,
+                &audionimbus::dynamic::SimulationSharedInputs::new(CoordinateSystem::default())
+                    .with_reflections(ReflectionsSharedInputs {
+                        num_rays: 256,
+                        num_bounces: 4,
+                        duration: 1.0,
+                        order: 1,
+                        irradiance_min_distance: 1.0,
+                    }),
+            )
+            .unwrap();
+        simulator.run_reflections().unwrap();
+        let params = source.get_reflections_outputs().unwrap();
+        let effect_settings = audionimbus::ReflectionEffectSettings {
+            impulse_response_size: audio_settings.sampling_rate,
+            num_channels: 4,
+        };
+        let mut effect = ReflectionEffect::try_new(
+            &context,
+            &audio_settings,
+            &effect_settings,
+            ReflectionAlgorithm::Parametric,
+        )
+        .unwrap();
+        let mut input = vec![0.0; audio_settings.frame_size as usize];
+        let mut output = vec![0.0; 4 * audio_settings.frame_size as usize];
+        input[0] = 1.0;
+        let mut energy = 0.0;
+        for _ in 0..16 {
+            let input_buffer = AudioBufferRef::try_from(input.as_slice()).unwrap();
+            let mut output_buffer = AudioBufferMut::try_new(&mut output, 4).unwrap();
+            effect
+                .apply(&params, &input_buffer, &mut output_buffer)
+                .unwrap();
+            assert!(output.iter().all(|sample| sample.is_finite()));
+            energy += output.iter().map(|sample| sample * sample).sum::<f32>();
+            input.fill(0.0);
+        }
+        assert!(energy > 0.0, "synthetic room produced no reverb tail");
+    }
 }
