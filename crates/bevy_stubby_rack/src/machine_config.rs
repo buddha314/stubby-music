@@ -45,6 +45,11 @@ pub struct RackCable {
     pub from: JackRef,
     pub to: JackRef,
     pub hint: String,
+    /// A patch the voice does not need (the sequencer's CV to the VCO's V/OCT, for a
+    /// melody): the comb offers it, with its ghost, only while both its places hold a
+    /// module, and the voice sounds without it.
+    #[serde(default)]
+    pub optional: bool,
 }
 #[derive(Clone, Deserialize)]
 pub struct Accept {

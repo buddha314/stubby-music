@@ -490,7 +490,9 @@ equivalent of an iron ore node, so the player does not pick it up.
   BPM knob sets the BPM, starting at the burbler's seeded tempo), a **VCO** slot (a
   square wave from a lightning bug makes a Square VCO), and a **volume** module (a VCA
   opened by TRIG while the gate is high; no envelope, so the voice stays square). The player **patches the voice with cables**: clock GATE →
-  volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. Patch cables
+  volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. With a snail
+  shell mounted, a third, **optional** ochre comb cable suggests sequencer CV → VCO V/OCT for
+  a melody (ghosted only while both places are filled; the voice sounds without it). Patch cables
   are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). Every rack has a small
   **cable comb** holding the machine's spare cables (the burbler: two), and each jack's
   halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's

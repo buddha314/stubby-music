@@ -117,6 +117,22 @@ CABLES = [
         },
         "step": 2,
         "hint": "take the red cable  ·  patch OUT to IN"
+    },
+    {
+        # A melody, not the heartbeat: offered (and ghosted) only once a snail shell is
+        # mounted, and the voice sounds without it (sync-snail-shell-sequencer 5.1).
+        "color": "ochre",
+        "from": {
+            "place": "seq",
+            "port": "cv"
+        },
+        "to": {
+            "place": "vco",
+            "port": "voct"
+        },
+        "step": 3,
+        "optional": True,
+        "hint": "take the ochre cable  ·  patch CV to V/OCT for a melody"
     }
 ]
 
