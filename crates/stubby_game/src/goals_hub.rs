@@ -1,7 +1,12 @@
-//! The goals hub, upper right, as Satisfactory's milestone tracker
-//! (add-inventory-and-goals-hud 2.5, goals-hub spec): the active long-term and
-//! short-term goals, each item they need as `paid + held / required` with a progress
-//! bar, and the pinned recipes' totals (the To-Do List).
+//! The goals hub, upper right (add-inventory-and-goals-hud 2.5, goals-hub spec).
+//!
+//! Laid out as Satisfactory's HUD, in our colours: the goal tracker is a translucent
+//! band per goal (Satisfactory's `Objective:` phase above its `Milestone:`), a centred
+//! `Label: Name` header over a thin rule; under it, each item the goal needs as a
+//! To-Do List row: name and `paid + held / required` over a thin bar, the item's tile at
+//! the right end, turned into a tick when the item is covered. The pinned recipes are
+//! the To-Do List below it: a header strip, each recipe with its count, a rule, and the
+//! same item rows for their totals.
 //!
 //! The hub reads `Goals` and `PlayerInventory` from the crafting plugin and names items
 //! from `ItemNames`; it never changes either. It is rebuilt only when what it shows
@@ -12,14 +17,17 @@ use stubby_recipes::{GoalProgress, Horizon, Inventory, ItemProgress, ProgressSta
 
 use super::recipes_plugin::{Goals, PlayerInventory};
 
-const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.82);
-const EDGE: Color = Color::srgb(0.42, 0.29, 0.13);
+/// Satisfactory's tracker is a see-through band, not a framed window.
+const BAND: Color = Color::srgba(0.035, 0.033, 0.03, 0.55);
+const STRIP: Color = Color::srgba(0.035, 0.033, 0.03, 0.85);
+const TILE: Color = Color::srgba(0.09, 0.085, 0.075, 0.9);
 const INK: Color = Color::srgb(0.95, 0.94, 0.89);
-const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
-const TRACK: Color = Color::srgba(1., 1., 1., 0.08);
-/// The signal amber (style guide), the one colour for progress.
+const MUTED: Color = Color::srgb(0.7, 0.68, 0.63);
+const TRACK: Color = Color::srgba(1., 1., 1., 0.14);
+/// The signal amber (style guide), the one accent: labels, rules and progress.
 const AMBER: Color = Color::srgb(1., 0.7, 0.31);
-const ICON: f32 = 28.;
+const WIDTH: f32 = 320.;
+const TILE_SIZE: f32 = 34.;
 
 pub struct GoalsHubPlugin;
 impl Plugin for GoalsHubPlugin {
@@ -36,6 +44,9 @@ struct HubRoot;
 #[derive(Debug, Default, PartialEq)]
 struct HubView {
     goals: Vec<GoalView>,
+    /// Pinned recipes by name, with their counts.
+    pinned: Vec<(String, u32)>,
+    /// The pins' ingredient totals.
     pins: Vec<ItemRow>,
 }
 
@@ -89,6 +100,19 @@ fn hub_view(
             }
         })
         .collect();
+    let pinned = progress
+        .pins()
+        .iter()
+        .map(|(recipe, count)| {
+            let name = rules
+                .definition
+                .recipes
+                .iter()
+                .find(|candidate| candidate.id == recipe)
+                .map_or_else(|| recipe.to_owned(), |recipe| recipe.name.clone());
+            (name, count)
+        })
+        .collect();
     let pins = progress
         .pins()
         .totals(rules)
@@ -101,18 +125,50 @@ fn hub_view(
             )
         })
         .collect();
-    HubView { goals, pins }
+    HubView {
+        goals,
+        pinned,
+        pins,
+    }
+}
+
+fn font(size: f32) -> TextFont {
+    TextFont {
+        font_size: bevy::text::FontSize::Px(size),
+        ..default()
+    }
 }
 
 fn text(value: impl Into<String>, size: f32, color: Color) -> impl Bundle {
     (
         Text::new(value),
-        TextFont {
-            font_size: bevy::text::FontSize::Px(size),
+        font(size),
+        TextColor(color),
+        Pickable::IGNORE,
+    )
+}
+
+fn column(gap: f32) -> impl Bundle {
+    (
+        Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: px(gap),
             ..default()
         },
-        TextColor(color),
+        Pickable::IGNORE,
     )
+}
+
+/// A thin full-width rule under a header.
+fn rule(parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands, color: Color) {
+    parent.spawn((
+        Node {
+            height: px(1),
+            ..default()
+        },
+        BackgroundColor(color),
+        Pickable::IGNORE,
+    ));
 }
 
 fn spawn(mut commands: Commands) {
@@ -123,16 +179,12 @@ fn spawn(mut commands: Commands) {
             // Under the calendar line.
             right: px(20),
             top: px(52),
-            width: px(300),
+            width: px(WIDTH),
             flex_direction: FlexDirection::Column,
-            row_gap: px(12),
-            padding: UiRect::all(px(12)),
-            border: UiRect::all(px(1)),
+            row_gap: px(16),
             display: Display::None,
             ..default()
         },
-        BackgroundColor(PANEL),
-        BorderColor::all(EDGE),
         Pickable::IGNORE,
     ));
 }
@@ -185,51 +237,116 @@ fn fill(
         .despawn_related::<Children>()
         .with_children(|hub| {
             for goal in &view.goals {
-                hub.spawn((
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        row_gap: px(4),
-                        ..default()
-                    },
-                    Pickable::IGNORE,
-                ))
-                .with_children(|section| {
-                    let label = match goal.horizon {
-                        Horizon::Long => "LONG-TERM GOAL",
-                        Horizon::Short => "GOAL",
-                    };
-                    section.spawn((text(label, 11., AMBER), Pickable::IGNORE));
-                    section.spawn((text(goal.name.clone(), 17., INK), Pickable::IGNORE));
-                    if !goal.description.is_empty() {
-                        section
-                            .spawn((text(goal.description.clone(), 13., MUTED), Pickable::IGNORE));
-                    }
-                    for row in &goal.items {
-                        item_row(section, server, row);
-                    }
-                });
+                goal_band(hub, server, goal);
             }
             if !view.pins.is_empty() {
-                hub.spawn((
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        row_gap: px(4),
-                        ..default()
-                    },
-                    Pickable::IGNORE,
-                ))
-                .with_children(|section| {
-                    section.spawn((text("TO-DO", 11., AMBER), Pickable::IGNORE));
-                    for row in &view.pins {
-                        item_row(section, server, row);
-                    }
-                });
+                to_do_list(hub, server, &view);
             }
         });
     *shown = Some(view);
 }
 
-/// One item: its icon, its name and `paid + held / required`, and the bar.
+/// One goal: `Label: Name` centred over a rule, then its item rows. A chore (a goal met
+/// by a condition) has no items, so its one line of description says what to do.
+fn goal_band(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    server: Option<&AssetServer>,
+    goal: &GoalView,
+) {
+    let label = match goal.horizon {
+        Horizon::Long => "Long-term goal: ",
+        Horizon::Short => "Goal: ",
+    };
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: px(6),
+                padding: UiRect::axes(px(10), px(8)),
+                ..default()
+            },
+            BackgroundColor(BAND),
+            Pickable::IGNORE,
+        ))
+        .with_children(|band| {
+            band.spawn((
+                Text::new(label),
+                font(14.),
+                TextColor(AMBER),
+                TextLayout::justify(Justify::Center),
+                Node {
+                    align_self: AlignSelf::Center,
+                    ..default()
+                },
+                Pickable::IGNORE,
+            ))
+            .with_child((TextSpan::new(goal.name.clone()), font(15.), TextColor(INK)));
+            rule(band, AMBER.with_alpha(0.8));
+            if goal.items.is_empty() && !goal.description.is_empty() {
+                band.spawn((
+                    text(goal.description.clone(), 13., MUTED),
+                    TextLayout::justify(Justify::Center),
+                ));
+            }
+            for row in &goal.items {
+                item_row(band, server, row);
+            }
+        });
+}
+
+/// The pins, as Satisfactory's To-Do List: a header strip, each pinned recipe and its
+/// count, a rule, then the totals as item rows.
+fn to_do_list(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    server: Option<&AssetServer>,
+    view: &HubView,
+) {
+    parent
+        .spawn((column(0.), BackgroundColor(BAND)))
+        .with_children(|list| {
+            list.spawn((
+                Node {
+                    justify_content: JustifyContent::Center,
+                    padding: UiRect::vertical(px(5)),
+                    ..default()
+                },
+                BackgroundColor(STRIP),
+                Pickable::IGNORE,
+            ))
+            .with_child(text("TO-DO LIST", 13., INK));
+            list.spawn((
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: px(6),
+                    padding: UiRect::axes(px(10), px(8)),
+                    ..default()
+                },
+                Pickable::IGNORE,
+            ))
+            .with_children(|body| {
+                for (name, count) in &view.pinned {
+                    body.spawn((
+                        Node {
+                            justify_content: JustifyContent::SpaceBetween,
+                            ..default()
+                        },
+                        Pickable::IGNORE,
+                    ))
+                    .with_children(|line| {
+                        line.spawn(text(name.clone(), 15., INK));
+                        line.spawn(text(count.to_string(), 15., INK));
+                    });
+                }
+                rule(body, INK.with_alpha(0.6));
+                for row in &view.pins {
+                    item_row(body, server, row);
+                }
+            });
+        });
+}
+
+/// One item, as a To-Do List row: name and counts over a thin bar, the item's tile at
+/// the right end, a tick tile once paid plus held covers it.
 fn item_row(
     parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
     server: Option<&AssetServer>,
@@ -252,29 +369,16 @@ fn item_row(
             Node {
                 column_gap: px(8),
                 align_items: AlignItems::Center,
-                margin: UiRect::top(px(2)),
                 ..default()
             },
             Pickable::IGNORE,
         ))
         .with_children(|line| {
-            let mut icon = line.spawn((
-                Node {
-                    width: px(ICON),
-                    height: px(ICON),
-                    flex_shrink: 0.,
-                    ..default()
-                },
-                Pickable::IGNORE,
-            ));
-            if let Some(server) = server {
-                icon.insert(stubby_ui::item_icon(server, &row.item));
-            }
             line.spawn((
                 Node {
                     flex_direction: FlexDirection::Column,
                     flex_grow: 1.,
-                    row_gap: px(3),
+                    row_gap: px(4),
                     ..default()
                 },
                 Pickable::IGNORE,
@@ -288,84 +392,90 @@ fn item_row(
                     Pickable::IGNORE,
                 ))
                 .with_children(|label| {
-                    label.spawn((text(row.name.clone(), 14., INK), Pickable::IGNORE));
-                    label.spawn((text(counts, 14., INK), Pickable::IGNORE));
+                    label.spawn(text(row.name.clone(), 14., INK));
+                    label.spawn(text(counts, 14., INK));
                 });
                 body.spawn((
                     Node {
-                        column_gap: px(6),
-                        align_items: AlignItems::Center,
+                        height: px(4),
                         ..default()
                     },
+                    BackgroundColor(TRACK),
                     Pickable::IGNORE,
                 ))
-                .with_children(|bar| {
-                    bar.spawn((
+                .with_children(|track| {
+                    // Under half reads as a paler amber, as Satisfactory's white-then-orange.
+                    let alpha = match state {
+                        ProgressState::Empty => 0.,
+                        ProgressState::Low => 0.45,
+                        ProgressState::High | ProgressState::Full => 1.,
+                    };
+                    track.spawn((
                         Node {
-                            flex_grow: 1.,
-                            height: px(5),
+                            width: percent(filled * 100.),
+                            height: percent(100),
                             ..default()
                         },
-                        BackgroundColor(TRACK),
+                        BackgroundColor(AMBER.with_alpha(alpha)),
                         Pickable::IGNORE,
-                    ))
-                    .with_children(|track| {
-                        // Low reads as a dimmer amber, so a bar under half looks unready.
-                        let alpha = match state {
-                            ProgressState::Empty => 0.,
-                            ProgressState::Low => 0.5,
-                            ProgressState::High | ProgressState::Full => 1.,
-                        };
-                        track.spawn((
-                            Node {
-                                width: percent(filled * 100.),
-                                height: percent(100),
-                                ..default()
-                            },
-                            BackgroundColor(AMBER.with_alpha(alpha)),
-                            Pickable::IGNORE,
-                        ));
-                    });
-                    tick(bar, state == ProgressState::Full);
+                    ));
                 });
             });
+            item_tile(line, server, &row.item, state == ProgressState::Full);
         });
 }
 
-/// The tick beside a full bar: two strokes, drawn rather than a glyph, so no font needs
-/// one. Its space is kept when hidden so the bars stay aligned.
-fn tick(parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands, shown: bool) {
-    let color = if shown { AMBER } else { Color::NONE };
-    parent
-        .spawn((
-            Node {
-                width: px(12),
-                height: px(10),
-                flex_shrink: 0.,
-                ..default()
-            },
-            Pickable::IGNORE,
-        ))
-        .with_children(|tick| {
-            for (left, top, width, angle) in [(0., 5., 5., 45.), (3., 3., 9., -50.)] {
+/// The item's tile at a row's right end; a tick on amber once the item is covered.
+fn item_tile(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    server: Option<&AssetServer>,
+    item: &str,
+    done: bool,
+) {
+    let mut tile = parent.spawn((
+        Node {
+            width: px(TILE_SIZE),
+            height: px(TILE_SIZE),
+            flex_shrink: 0.,
+            padding: UiRect::all(px(3)),
+            ..default()
+        },
+        BackgroundColor(if done { AMBER } else { TILE }),
+        Pickable::IGNORE,
+    ));
+    if done {
+        // Two strokes, drawn rather than a glyph, so no font needs one.
+        tile.with_children(|tick| {
+            for (left, top, width, angle) in [(7., 18., 10., 45.), (12., 14., 18., -50.)] {
                 tick.spawn((
                     Node {
                         position_type: PositionType::Absolute,
                         left: px(left),
                         top: px(top),
                         width: px(width),
-                        height: px(2),
+                        height: px(3),
                         ..default()
                     },
                     UiTransform {
                         rotation: Rot2::degrees(angle),
                         ..default()
                     },
-                    BackgroundColor(color),
+                    BackgroundColor(INK),
                     Pickable::IGNORE,
                 ));
             }
         });
+    } else if let Some(server) = server {
+        tile.with_child((
+            Node {
+                width: percent(100),
+                height: percent(100),
+                ..default()
+            },
+            stubby_ui::item_icon(server, item),
+            Pickable::IGNORE,
+        ));
+    }
 }
 
 #[cfg(test)]

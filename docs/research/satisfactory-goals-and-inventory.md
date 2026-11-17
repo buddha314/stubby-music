@@ -38,6 +38,26 @@ progress bar: grey with none, white below half, orange above half, solid orange 
 tick when the full amount is held. Crafting or building one subtracts one from the
 list; when everything is done the list closes.
 
+**Layout, from screenshots (2026-11-17).** What we copy is the arrangement, not
+Satisfactory's colours or materials. The milestone tracker in the top right
+([HUD 2.png](https://satisfactory.fandom.com/wiki/File:HUD_2.png)) has no framed
+window. Each goal is a see-through band: a centred header, `Objective: Complete Phase 1`
+(the long-term phase) above `Milestone: Jump Pads` (the short-term goal), with the
+label in the accent colour, the name in white, and a thin accent rule under it. Under
+that the cost appears as item tiles. The tracker shows no description text. The
+[To-Do List](https://satisfactory.fandom.com/wiki/File:To-Do_List_UI.png) is its own
+block further down the right side: a `TO-DO LIST` header strip, then each added recipe
+with its count, then a rule. Each ingredient row has its name on the left and
+`have / need` on the right, a thin bar under them, and the item's tile at the right end.
+The tile becomes a tick tile once enough is held. Machine and bench screens
+([Craft Bench UI.png](https://satisfactory.fandom.com/wiki/File:Craft_Bench_UI.png),
+[Terminal UI.png](https://satisfactory.fandom.com/wiki/File:Terminal_UI.png)) are framed
+windows with a title bar: lists on the left and the selected thing's panel on the
+right; the rack screen already follows this (`machine_config::layout`). Our hub keeps
+both blocks. Each goal item uses a To-Do row rather than a bare tile, because the spec
+shows `paid + held / required` with a bar. A chore has no items, so it keeps its one-line
+description under the rule.
+
 **The inventory** opens on Tab (unlocked once the Codex is first opened): a grid of
 slots (18 at start, up to 78 with upgrades), hand and equipment slots, a trash slot,
 sort, shift-click to move a stack, right-click to split, and right-click to open the
