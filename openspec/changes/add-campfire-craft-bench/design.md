@@ -25,17 +25,19 @@ beyond crafting (respawn, rest at night: later); the recipes themselves (designe
 ## Decisions
 
 ### D1. One asset, two roles
-The camp is one placed buildable with a state: `unlit` → `lit`. Unlit, E opens its rack.
-Lit, E opens the crafting screen, and the rack stays reachable from a tab or second key
-in that screen so the music can still be changed. A lit fire stays lit (latched, as goals
-are) unless open question 3 decides otherwise.
+The camp is one placed buildable with a state: `unlit` → `lit` → back to `unlit`. Unlit,
+E opens its rack. Lit, E opens the crafting screen, and the rack stays reachable from a
+tab or second key in that screen so the music can still be changed. **The fire burns
+only while its clock runs** (user, 2026-11-17): when the clock stops, it dies down to
+embers and must be lit again. The `fire_lit` goal condition still latches.
 
 ### D2. The rack is data, like the burbler's
 The camp's profile has a `configure` block (`add-rack-configurations`):
 - a `voice` place accepting `square_wave` (becomes `square_vco`, the spark's voice);
 - a `seq` place accepting `snail_shell` (becomes `snail_sequencer`);
 - a `volume` module, normalled to the fire (the "outlet" is the pit);
-- a clock (question 1);
+- no clock module of its own: its clock is a running burbler or a flowing stream within
+  `clock_reach_m` of the camp (D7);
 - two or three comb cables suggesting clock → sequencer CLOCK, sequencer GATE → volume
   TRIG, VCO OUT → volume IN.
 
@@ -80,6 +82,17 @@ Claude builds it in Blender (`tools/blender/create_campfire.py`, headless, styli
 The scale stays readable in Satisfactory's industrial way, in Inside's muted palette:
 the fire is the first warm light in the bleak desert. LOD0–2 nodes go in the one glb.
 
+### D7. The clock comes from nearby water (user, 2026-11-17)
+The camp has no clock of its own. It takes the beat of the nearest **running burbler or
+flowing stream** within `clock_reach_m` of it, 5 m to start. The reach is profile data,
+to be tuned and never hard-coded. Through a stream it is the beat of the burbler that
+feeds it. That beat drives the camp's sequencer CLOCK. No beat in reach means no strikes
+and no fire, and a burning fire dies when its beat stops (D1).
+
+### D8. Costs and air (user, 2026-11-17)
+The camp costs **25 reeds** (`buildables.json`). A lit fire does **not** change air or
+light quality: only foliage cleans the air.
+
 ## Risks / Trade-offs
 
 - [Players don't know what a backbeat is] → the comb's ghost cables and the stones show
@@ -91,14 +104,9 @@ the fire is the first warm light in the bleak desert. LOD0–2 nodes go in the o
 
 ## Open Questions
 
-1. **Clock source.** Options: (a) a built-in clock in the camp's rack; (b) a `clock`
-   item mounted in a place (the item exists); (c) the beat carried by a stream from a
-   burbler, so the camp must be watered with music (streams as patch cables). Draft:
-   (c) is the most in theme but needs stream-to-machine inputs; (b) works first.
-2. **Reed cost** of the camp, and whether the lighting consumes the square wave and
-   shell (mounted, so they stay in the rack and can be taken back) or not.
-3. **Does the fire need the music to keep burning?** Latched (craft any time) or
-   burning only while the rack plays (stop the music and it dies down to embers).
-4. **Light quality:** does a lit fire clean or warm the air around the camp, the way
-   foliage does (`clean-air-by-foliage`)?
-5. **First recipes** at the bench (patch cables from bird nests is the one already named).
+Answered by the user on 2026-11-17: the clock source (D7), the reed cost (D8), whether
+the fire keeps burning (D1) and the air (D8). Still open:
+
+1. **First recipes** at the bench (patch cables from bird nests is the one already named).
+2. Whether the square wave and shell stay mounted in the rack (and can be taken back),
+   as on the burbler. Draft: yes.

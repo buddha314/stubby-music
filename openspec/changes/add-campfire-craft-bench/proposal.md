@@ -17,15 +17,15 @@ stones"). Every machine is an instrument, and the camp is the first one whose mu
 
 ## What Changes
 
-- **The camp is a buildable.** Built with Q from reeds (the kindling and the lean-to's
+- **The camp is a buildable.** Built with Q from 25 reeds (the kindling and the lean-to's
   thatch), as a stream segment is (`buildables.json`). It is placed unlit: a stone ring
   with laid reeds and the lean-to behind. Once shelter exists, placement is valid only in
   a budding oak's lee (`sync-major-minor-milestones` "Stop the wind",
   `add-weather-and-dust-storm`).
 - **It has a rack, like every machine.** E at the unlit camp opens its rack (the shared
   `bevy_stubby_rack`), with a place for a voice (a `square_wave` mounts as the spark's
-  Square VCO) and a place for a sequencer (a `snail_shell`). It has a clock source (open
-  question 1), and its output is normalled to the fire. Nothing is hidden. The rack plays
+  Square VCO) and a place for a sequencer (a `snail_shell`). Its clock is a running burbler or
+  flowing stream within a tuned reach (5 m to start), and its output is normalled to the fire. Nothing is hidden. The rack plays
   only what it shows.
 - **Lighting it.** The fire catches when a full bar strikes on beats 2 and 4: the
   sequencer's gate fires the spark voice on those steps, timed by the audio clock. Each
@@ -38,9 +38,10 @@ stones"). Every machine is an instrument, and the camp is the first one whose mu
   the selected recipe's inputs as `have / need` tiles and its output; a craft button
   (hold to repeat); pin to the To-Do List. It crafts through `CraftRequest`. The
   recipes are designer rows in `recipes.json`.
+- **The fire burns only while its clock runs**: when the beat stops it dies to embers
+  and must be lit again.
 - **The fire is a sound and a light.** It crackles from the audio engine (an acoustic
-  profile, `add-rack-and-spatial-audio`), and its warm light lifts the light quality
-  around it (open question 4).
+  profile, `add-rack-and-spatial-audio`). It does not change air or light quality.
 - **Art (Claude):** the camp's Blender scene. A fire pit in a ring of four stones, reed
   kindling, and a lean-to of poles and reed thatch open toward the fire. States: unlit,
   sparking (per strike), burning (emissive flame, flicker driven by the beat). It ships
