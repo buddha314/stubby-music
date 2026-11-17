@@ -35,8 +35,30 @@ impl Plugin for GluePlugin {
                     .before(stubby_core::InteractionTargeting),
                 attach_air_cleaners.after(stubby_core::PrefabBinding),
                 hide_collected_finds.after(stubby_core::PrefabBinding),
+                report_configured_machines.before(bevy_stubby_recipes::RecipesSystems),
             ),
         );
+    }
+}
+
+/// A rack completed is the `machine_configured` goal condition for that machine's mine
+/// ("Build a heartbeat"): the rack and the goals meet here. Unpatching later sends
+/// nothing, so a completed chore stays complete.
+fn report_configured_machines(
+    mut configured: MessageReader<bevy_stubby_rack::rack::MachineConfigured>,
+    mines: Query<&MineNode>,
+    mut goals: MessageWriter<bevy_stubby_recipes::GoalRequest>,
+) {
+    for event in configured.read() {
+        if let Ok(mine) = mines.get(event.machine) {
+            goals.write(bevy_stubby_recipes::GoalRequest(
+                stubby_recipes::GoalEvent::ConditionMet(
+                    stubby_recipes::Condition::MachineConfigured {
+                        machine: mine.mine.clone(),
+                    },
+                ),
+            ));
+        }
     }
 }
 
