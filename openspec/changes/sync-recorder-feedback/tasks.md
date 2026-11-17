@@ -1,6 +1,6 @@
-## Implementation (unclaimed)
+## Implementation (claimed: claude, 2026-11-17)
 
-- [ ] 1.1 Compare existing add-field-recorder implementation and profile before extending it; keep authored capture and never record live microphone input.
-- [ ] 2.1 Add sound-yield gating, initial hand state and successful-harvest light envelope.
-- [ ] 3.1 Expose realtime-safe world/music metering through stubby_audio; implement bar presentation without callback allocations.
-- [ ] 4.1 Test refused/failed collection silence, ordinary pickup success, light decay and bus separation; leave directional emitter weighting explicitly deferred as upstream.
+- [x] 1.1 Compare existing add-field-recorder implementation and profile before extending it; keep authored capture and never record live microphone input. (Extended `stubby_player::hand` and the existing model: `Light_rec`, `Level_0..7` and both screen materials are the asset's own; no capture pipeline.)
+- [x] 2.1 Add sound-yield gating, initial hand state and successful-harvest light envelope. (`Hand` opens with the recorder; `collect_nearby` refuses a resource yielding a `waveform` item without it, silently, naming H; `RecorderCaptured` from the game's glue on a sound harvest; 0.05 s attack, 0.4 s decay, rest to peak strengths from the profile.)
+- [x] 3.1 Expose realtime-safe world/music metering through stubby_audio; implement bar presentation without callback allocations. (Firewheel's `PeakMeterNode` is the engine's world bus; module outputs and emitters reach the speakers through it, one-shot samples and `PortRef::ui_output()` (collection confirmations) skip it. `WorldMeter`/`AudioThread::world_peak_db` read its atomics; `bevy_stubby_audio::WorldLevel`; bars at -48 + 6n dBFS, 24 dB/s fall.)
+- [x] 4.1 Test refused/failed collection silence, ordinary pickup success, light decay and bus separation; leave directional emitter weighting explicitly deferred as upstream. (Directional weighting by the `Capture` X/Y pattern stays deferred: it needs per-emitter meters.)

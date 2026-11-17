@@ -44,6 +44,8 @@ impl Plugin for ResourceRecipesPlugin {
             app.add_plugins(RecipesPlugin::default());
         }
         app.init_resource::<stubby_core::InteractTarget>()
+            // What is in the hand gates collecting sounds (the hand plugin owns it).
+            .init_resource::<stubby_player::hand::Hand>()
             .init_resource::<RecipeBookView>()
             .add_systems(Startup, setup)
             .configure_sets(Update, RecipesSystems.after(stubby_core::PrefabBinding))
@@ -209,6 +211,7 @@ fn collect_nearby(
     mut requests: MessageWriter<HarvestRequest>,
     calendar: Option<Res<super::calendar::Calendar>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
+    hand: Res<stubby_player::hand::Hand>,
 ) {
     if screens.as_ref().is_some_and(|s| s.open.is_some())
         || target.machine().is_some()
@@ -225,6 +228,22 @@ fn collect_nearby(
         player.feedback = "Move within 3 m of an available resource to collect.".into();
         return;
     };
+    // Sounds are collected with the field recorder (sync-recorder-feedback); materials
+    // such as reeds need nothing in hand. A refusal is silent and takes nothing.
+    let sound = catalog.as_ref().is_some_and(|catalog| {
+        catalog.0.resource(&node.resource).is_some_and(|resource| {
+            resource.yields.iter().any(|stack| {
+                catalog
+                    .0
+                    .item(&stack.item)
+                    .is_some_and(|item| item.waveform.is_some())
+            })
+        })
+    });
+    if sound && hand.0 != Some(stubby_player::hand::HandItem::FieldRecorder) {
+        player.feedback = "Hold up the field recorder (H) to collect sounds.".into();
+        return;
+    }
     requests.write(HarvestRequest {
         source: node.source_object(),
         now: calendar
@@ -418,6 +437,7 @@ mod tests {
         app.add_plugins(RecipesPlugin::default())
             .init_resource::<ButtonInput<KeyCode>>()
             .init_resource::<InteractTarget>()
+            .init_resource::<stubby_player::hand::Hand>()
             .add_systems(
                 Update,
                 (
@@ -494,6 +514,56 @@ mod tests {
         let mine = app.world().get::<MineNode>(tree).unwrap().source_object();
         assert_eq!(mine.kind(), stubby_recipes::SourceKind::InfiniteMine);
         assert_eq!(mine.instance_id(), "scrub_oak-7");
+    }
+
+    #[test]
+    fn sounds_need_the_recorder_in_hand_and_reeds_do_not() {
+        let mut app = collection_app();
+        app.world_mut()
+            .resource_mut::<stubby_player::hand::Hand>()
+            .0 = None;
+        let bug = app.world_mut().spawn(lightning_bug_node(0)).id();
+        let reeds = app
+            .world_mut()
+            .spawn(ResourceNode {
+                resource: "reed_clump".into(),
+                instance: "reed_clump-0".into(),
+                collected: false,
+            })
+            .id();
+        let held = |app: &App, item: &str| {
+            app.world()
+                .resource::<PlayerInventory>()
+                .items
+                .quantity(item)
+        };
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::KeyE);
+        *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(bug);
+        app.update();
+        assert_eq!(held(&app, "square_wave"), 0, "no recorder: nothing taken");
+        assert!(
+            app.world()
+                .resource::<PlayerInventory>()
+                .feedback
+                .contains("(H)"),
+            "the refusal names the recorder's key"
+        );
+        assert!(!app.world().get::<ResourceNode>(bug).unwrap().collected);
+        *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(reeds);
+        app.update();
+        assert!(held(&app, "reed") > 0, "reeds need nothing in hand");
+        app.world_mut()
+            .resource_mut::<stubby_player::hand::Hand>()
+            .0 = Some(stubby_player::hand::HandItem::FieldRecorder);
+        *app.world_mut().resource_mut::<InteractTarget>() = InteractTarget::Pickup(bug);
+        app.update();
+        assert_eq!(
+            held(&app, "square_wave"),
+            2,
+            "with the recorder, the bug is caught"
+        );
     }
 
     #[test]

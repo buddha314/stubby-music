@@ -6,7 +6,7 @@
 //! stalled game frame never delays the engine's own housekeeping, and the game never
 //! touches Firewheel types.
 
-use crate::engine::{Engine, EngineConfig, OUTPUT_CHANNELS, OfflineRenderer};
+use crate::engine::{Engine, EngineConfig, OUTPUT_CHANNELS, OfflineRenderer, WorldMeter};
 use crate::protocol::{Command, EngineError, Event};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
@@ -60,6 +60,7 @@ pub struct AudioThread {
     notices: Mutex<mpsc::Receiver<Notice>>,
     clock: Arc<Mutex<Option<ClockSnapshot>>>,
     stats: Arc<Stats>,
+    world: WorldMeter,
     join: Option<JoinHandle<()>>,
 }
 
@@ -92,7 +93,7 @@ impl AudioThread {
             .name("stubby-audio-control".into())
             .spawn(move || match make() {
                 Ok((engine, renderer)) => {
-                    let _ = ready_tx.send(Ok(()));
+                    let _ = ready_tx.send(Ok(engine.world_meter()));
                     run(
                         engine,
                         renderer,
@@ -109,11 +110,12 @@ impl AudioThread {
             .map_err(|e| EngineError::Device(e.to_string()))?;
 
         match ready_rx.recv() {
-            Ok(Ok(())) => Ok(Self {
+            Ok(Ok(world)) => Ok(Self {
                 requests,
                 notices: Mutex::new(notices),
                 clock,
                 stats,
+                world,
                 join: Some(join),
             }),
             Ok(Err(e)) => {
@@ -182,6 +184,12 @@ impl AudioThread {
             -s.at.duration_since(at).as_secs_f64()
         };
         Some(s.samples as f64 + since * s.sample_rate as f64)
+    }
+
+    /// The world bus's level in dBFS: everything placed in the world and the music,
+    /// never one-shot UI sounds. `f32::NEG_INFINITY` in silence.
+    pub fn world_peak_db(&self) -> f32 {
+        self.world.peak_db()
     }
 
     /// Frames the offline renderer has produced (always 0 with a real device).

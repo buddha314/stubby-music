@@ -75,6 +75,8 @@ pub struct Engine {
     cables: HashMap<PortRef, PortRef>,
     /// Outputs cabled to the master output.
     to_master: HashSet<PortRef>,
+    /// Outputs cabled straight to the speakers (`PortRef::ui_output`).
+    to_ui: HashSet<PortRef>,
     /// Master outputs placed in the world, each through its own spatial node.
     emitters: HashMap<PortRef, (NodeID, SpatialBasicNode)>,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
@@ -86,6 +88,23 @@ pub struct Engine {
     /// Loaded one-shot samples, one buffer per channel, at the engine's sample rate.
     samples: HashMap<SampleId, Vec<Vec<f32>>>,
     stream: Option<firewheel::cpal::CpalStream>,
+    /// The world bus: every module output and emitter is heard through it, then the
+    /// speakers. One-shot UI samples skip it, so its meter hears only the world.
+    world: NodeID,
+    world_meter: WorldMeter,
+}
+
+/// The world bus's level, readable from any thread (lock-free atomics). The field
+/// recorder's meter reads it (sync-recorder-feedback); UI sounds never reach it.
+#[derive(Clone)]
+pub struct WorldMeter(firewheel::nodes::peak_meter::PeakMeterState<2>);
+impl WorldMeter {
+    /// The loudest channel's peak over the latest audio block, in dBFS
+    /// (`f32::NEG_INFINITY` for silence).
+    pub fn peak_db(&self) -> f32 {
+        let [left, right] = self.0.peak_gain_db(-120.);
+        left.max(right)
+    }
 }
 
 fn firewheel_config() -> FirewheelConfig {
@@ -99,12 +118,31 @@ fn firewheel_config() -> FirewheelConfig {
 }
 
 impl Engine {
-    fn new() -> Self {
-        Self {
-            cx: FirewheelContext::new(firewheel_config()),
+    fn new() -> Result<Self, EngineError> {
+        let graph = |e: String| EngineError::Graph(format!("world bus: {e}"));
+        let mut cx = FirewheelContext::new(firewheel_config());
+        let world = cx
+            .add_node(
+                firewheel::nodes::peak_meter::PeakMeterNode::<2> { enabled: true },
+                None,
+            )
+            .map_err(|e| graph(e.to_string()))?;
+        let out = cx.graph_out_node_id();
+        cx.connect(world, out, &[(0, 0), (1, 1)], false)
+            .map_err(|e| graph(e.to_string()))?;
+        let world_meter = WorldMeter(
+            cx.node_state::<firewheel::nodes::peak_meter::PeakMeterState<2>>(world)
+                .ok_or_else(|| graph("no meter state".into()))?
+                .clone(),
+        );
+        Ok(Self {
+            world,
+            world_meter,
+            cx,
             modules: HashMap::new(),
             cables: HashMap::new(),
             to_master: HashSet::new(),
+            to_ui: HashSet::new(),
             emitters: HashMap::new(),
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
@@ -112,12 +150,17 @@ impl Engine {
             retiring: Vec::new(),
             samples: HashMap::new(),
             stream: None,
-        }
+        })
+    }
+
+    /// The world bus's meter.
+    pub fn world_meter(&self) -> WorldMeter {
+        self.world_meter.clone()
     }
 
     /// Start the engine on the default output device.
     pub fn start() -> Result<Self, EngineError> {
-        let mut engine = Self::new();
+        let mut engine = Self::new()?;
         let stream = firewheel::cpal::CpalStream::new(&mut engine.cx, Default::default())
             .map_err(|e| EngineError::Device(e.to_string()))?;
         engine.stream = Some(stream);
@@ -131,7 +174,7 @@ impl Engine {
             NonZeroU32::new(config.sample_rate).ok_or(EngineError::Config("sample_rate is 0"))?;
         let max_block = NonZeroU32::new(config.max_block_frames)
             .ok_or(EngineError::Config("max_block_frames is 0"))?;
-        let mut engine = Self::new();
+        let mut engine = Self::new()?;
         let processor = engine
             .cx
             .activate(ActivateInfo {
@@ -517,6 +560,7 @@ impl Engine {
         self.cables
             .retain(|to, from| to.module != id && from.module != id);
         self.to_master.retain(|from| from.module != id);
+        self.to_ui.retain(|from| from.module != id);
         self.pending_params.retain(|(m, _), _| *m != id);
         self.event_rings.retain(|(m, _)| *m != id);
         Ok(())
@@ -558,7 +602,7 @@ impl Engine {
             .cx
             .add_node(params, None)
             .map_err(|e| EngineError::Graph(e.to_string()))?;
-        let out = self.cx.graph_out_node_id();
+        let out = self.world;
         self.cx
             .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
         self.cx
@@ -606,13 +650,22 @@ impl Engine {
             if self.to_master.contains(&from) {
                 return Ok(());
             }
-            let out = self.cx.graph_out_node_id();
+            let out = self.world;
             // Mono to both speakers. Feeding both channels identically also keeps
             // clear of Firewheel 0.14's silent-channel bug (stubby-music#4).
             self.cx
                 .connect(src, out, &[(src_port, 0), (src_port, 1)], false)
                 .map_err(map_edge_error)?;
             self.to_master.insert(from);
+            return Ok(());
+        }
+        if to == PortRef::ui_output() {
+            if self.to_ui.insert(from) {
+                let out = self.cx.graph_out_node_id();
+                self.cx
+                    .connect(src, out, &[(src_port, 0), (src_port, 1)], false)
+                    .map_err(map_edge_error)?;
+            }
             return Ok(());
         }
         if to.module == ModuleId::OUTPUT {
@@ -638,6 +691,15 @@ impl Engine {
             if let Some((node, _)) = self.emitters.remove(&from) {
                 let _ = self.cx.remove_node(node);
                 return Ok(());
+            }
+            let out = self.world;
+            self.cx
+                .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
+            return Ok(());
+        }
+        if to == PortRef::ui_output() {
+            if !self.to_ui.remove(&from) {
+                return Err(EngineError::NotConnected { from, to });
             }
             let out = self.cx.graph_out_node_id();
             self.cx

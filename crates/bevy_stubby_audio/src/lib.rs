@@ -93,6 +93,29 @@ impl MasterClock {
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MasterClockRead;
 
+/// How loud the world is right now: the engine's world bus (everything placed in the
+/// world, and the music; never UI sounds), in dBFS over its latest block. Read in
+/// `PreUpdate`. The field recorder's meter shows it (sync-recorder-feedback).
+#[derive(Resource, Debug, Clone, Copy, PartialEq)]
+pub struct WorldLevel {
+    pub peak_db: f32,
+}
+impl Default for WorldLevel {
+    fn default() -> Self {
+        Self {
+            peak_db: f32::NEG_INFINITY,
+        }
+    }
+}
+
+fn read_world_level(synth: Res<Synth>, mut level: ResMut<WorldLevel>) {
+    let peak_db = synth
+        .thread
+        .as_ref()
+        .map_or(f32::NEG_INFINITY, |thread| thread.world_peak_db());
+    level.set_if_neq(WorldLevel { peak_db });
+}
+
 fn read_master_clock(synth: Res<Synth>, mut clock: ResMut<MasterClock>) {
     clock.beats = synth.thread.as_ref().and_then(|thread| {
         let rate = thread.sample_rate()? as f64;
@@ -138,11 +161,13 @@ impl Plugin for SynthAudioPlugin {
         .add_message::<ClockTick>()
         .add_message::<StepTick>()
         .init_resource::<MasterClock>()
+        .init_resource::<WorldLevel>()
         .add_systems(
             PreUpdate,
             (
                 receive_from_engine,
                 read_master_clock.in_set(MasterClockRead),
+                read_world_level,
             ),
         )
         .add_systems(Update, toggle_demo)

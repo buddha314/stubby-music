@@ -8,3 +8,4 @@ pub mod flashlight;
 pub mod hand;
 pub mod interaction;
 pub mod outline;
+pub mod recorder;

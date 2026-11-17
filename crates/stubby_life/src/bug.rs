@@ -164,6 +164,7 @@ fn initialize(world: &mut World) {
                 PortRef::new(ModuleId(bug_clock(index)), "gate"),
                 0.,
                 asset.click,
+                PortRef::output(),
             ) {
                 synth.send(command);
             }
@@ -505,6 +506,7 @@ pub fn bind_placed_bug(
             PortRef::new(clock, "gate"),
             0.,
             asset.click,
+            PortRef::output(),
         ) {
             synth.send(command);
         }

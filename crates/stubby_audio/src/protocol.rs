@@ -71,9 +71,15 @@ impl PortRef {
         Self { module, port }
     }
 
-    /// The master output's input.
+    /// The master output's input: the world bus, then the speakers.
     pub const fn output() -> Self {
         Self::new(ModuleId::OUTPUT, "in")
+    }
+
+    /// The speakers directly, skipping the world bus: for interface sounds (a collection
+    /// confirmation), which the field recorder's meter must not hear.
+    pub const fn ui_output() -> Self {
+        Self::new(ModuleId::OUTPUT, "ui")
     }
 }
 
