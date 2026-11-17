@@ -107,7 +107,9 @@ HRTF, material transmission, reflections/reverb, Ambisonics, and supported probe
 features where they meet the game's needs. Keep Firewheel as device/graph/clock host and
 bridge simulation outputs to its audio processors without blocking the callback. Build
 and package the SDK from a pinned source revision with optional closed components
-disabled; never make Cargo fetch an opaque SDK binary during a normal build.
+disabled, using the explicit `tools/build_steam_audio_sdk.sh` updater. Its input and
+artifact hashes skip unchanged builds, and Cargo never invokes it, so ordinary builds
+do not rebuild the native SDK.
 
 The Linux x86_64 native link, default HRTF initialization, direct effect, and geometry
 occlusion have been verified in an isolated AudioNimbus 0.17.0 / Steam Audio 4.8.1

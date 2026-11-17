@@ -47,8 +47,21 @@ STEAMAUDIO_LIB_DIR=/path/to/steam-audio/lib/linux-x64 cargo build -p stubby_audi
 ```
 
 The native Steam Audio 4.8.1 library must be built or provisioned separately and
-available to the runtime loader. Use a source-built minimal configuration with IPP
-disabled; do not enable AudioNimbus `auto-install` in reproducible or offline builds.
+available to the runtime loader. To build the pinned source revision on Linux x86_64,
+run the explicit updater:
+
+```sh
+STEAMAUDIO_LIB_DIR="$(tools/build_steam_audio_sdk.sh)" \
+  cargo build -p stubby_audio --features audionimbus
+```
+
+The helper stores the SDK beneath `target/native/steam-audio/`, skips the build when
+the pinned source, dependency manifest, build script, toolchain, configuration and
+artifact hash are unchanged, and rebuilds when any of those inputs change. Use
+`tools/build_steam_audio_sdk.sh --force` to rebuild explicitly. It is not called from
+Cargo, so ordinary builds do not pay this build cost. The source build uses Steam
+Audio's minimal configuration with IPP disabled; do not enable AudioNimbus
+`auto-install` in reproducible or offline builds.
 `cargo check` validates Rust code but does not link the native library. Windows and
 macOS packaging, the repository's repeatable SDK build, and routing the Firewheel node
 through the live engine's emitter registry are still in progress. The node adapter

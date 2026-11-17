@@ -1,0 +1,10 @@
+{
+  "version": "4.8.1",
+  "repository": "https://github.com/ValveSoftware/steam-audio.git",
+  "commit": "0da18255cca520771f363ee01f100572b39a308e",
+  "dependency_manifest_sha256": "4ec0cdcf4a84f7d986f3e6db8d2f12f5958bd431c10e341609d0b0751a156493",
+  "platform": "linux",
+  "architecture": "x64",
+  "configuration": "release",
+  "minimal": true
+}

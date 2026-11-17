@@ -66,7 +66,7 @@ Machine voices already pan through `Command::SetEmitter` on Firewheel's basic sp
 a hearing radius (`add-localized-machine-voices`). This section replaces that with HRTF, voice
 budgets and occlusion; bug clicks still have a distance-only fade.
 
-- [ ] 4.0 Provision Steam Audio 4.8.1 from pinned source with the minimal IPP-free configuration; make clean offline Linux x86_64 linking/runtime loading reproducible and record the exact component licenses/artifact hashes (claimed: Codex). An isolated source build and native probe work, but there is not yet a repo build/package path.
+- [ ] 4.0 Provision Steam Audio 4.8.1 from pinned source with the minimal IPP-free configuration; make clean offline Linux x86_64 linking/runtime loading reproducible and record the exact component licenses/artifact hashes (claimed: Codex). The explicit `tools/build_steam_audio_sdk.sh` cache skips unchanged builds and never runs during ordinary Cargo builds.
 - [x] 4.1a Add the optional `stubby_audio` AudioNimbus feature and reusable binaural processor using caller-owned buffers; feature compilation and a Linux x86_64 native directional-render probe pass. Callback allocation and CPU cost remain unverified.
 - [x] 4.1b Add a Firewheel mono-to-binaural AudioNode with shared HRTF/context, preallocated per-processor buffers, and a fixed-block adapter for variable Firewheel callbacks. The adapter adds one configured AudioNimbus block of latency.
 - [ ] 4.1c Route live `Engine` emitters through AudioNimbus nodes; validate sample-rate/device restart handling, callback allocation, block latency, and CPU cost. Remove the vendored IRCAM HRTF implementation unless a measured gap requires it (claimed: Codex)
