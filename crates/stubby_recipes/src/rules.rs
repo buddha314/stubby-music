@@ -519,6 +519,9 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
                 ));
             }
         }
+        if let Some(growth) = &mine.growth {
+            errors.extend(growth.validate(MINES, &mine.id));
+        }
     }
     for recipe in &definition.recipes {
         stacks(&mut errors, RECIPES, &recipe.id, "inputs", &recipe.inputs);

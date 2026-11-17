@@ -186,7 +186,7 @@
       ]
     },
     "GrowthLevel": {
-      "description": "A growing plant's bloom levels, lowest first (the growth stages of\n`assets/flora/scrub_oak/asset.json`). A tree at a level is at every level below it.",
+      "description": "A growing plant's bloom levels, lowest first (the growth stages of\n`assets/flora/scrub_oak/asset.json`). A plant at a level is at every level below it.",
       "type": "string",
       "enum": [
         "budding",

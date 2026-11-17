@@ -1,12 +1,14 @@
 //! Item quantities, resource yields and atomic recipes. No Bevy or audio dependency.
 pub mod air;
 pub mod goals;
+pub mod growth;
 pub mod rules;
 mod source;
 pub use goals::{
     Condition, GoalDefinition, GoalError, GoalEvent, GoalOutcome, GoalProgress, GrowthLevel,
     ItemProgress, Pins, ProgressState, Scale, apply as apply_goal_event,
 };
+pub use growth::{GrowthDefinition, GrowthStage};
 pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog, shipped_rules};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
 

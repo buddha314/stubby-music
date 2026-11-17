@@ -32,18 +32,7 @@ pub enum Scale {
     Minor,
 }
 
-/// A growing plant's bloom levels, lowest first (the growth stages of
-/// `assets/flora/scrub_oak/asset.json`). A tree at a level is at every level below it.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, JsonSchema,
-)]
-#[serde(rename_all = "snake_case")]
-pub enum GrowthLevel {
-    Budding,
-    Leafing,
-    Leafed,
-    FullBloom,
-}
+pub use crate::growth::GrowthLevel;
 
 /// Game states a step can wait for.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, JsonSchema)]
@@ -238,6 +227,20 @@ pub fn validate_goals(
                 if !mines.contains(mine.as_str()) =>
             {
                 errors.push(err(&goal.id, "condition", format!("unknown mine {mine}")));
+            }
+            Some(Condition::TreeGrown { mine, level })
+                if !definition.mines.iter().any(|m| {
+                    &m.id == mine
+                        && m.growth
+                            .as_ref()
+                            .is_some_and(|g| g.levels.iter().any(|s| s.level == *level))
+                }) =>
+            {
+                errors.push(err(
+                    &goal.id,
+                    "condition",
+                    format!("{mine} has no growth level {level:?} (mines.json `growth`)"),
+                ));
             }
             Some(Condition::ItemHeld { item, quantity })
                 if *quantity == 0 || !items.contains(item.as_str()) =>
