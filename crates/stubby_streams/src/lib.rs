@@ -149,6 +149,47 @@ pub struct LaidStream {
     pub source: Option<Entity>,
     /// How far along the whole chain from the burbler this stream starts.
     pub start: f32,
+    /// How clean its water is: 0 is a burbler's raw mud, 1 is clear. Filters raise it
+    /// later (add-fluid-quality-and-viscosity).
+    pub clarity: f32,
+}
+impl LaidStream {
+    /// A straight muddy stream from `from` to `to`, with no meshes: for tests and
+    /// scripted reviews of what streams do, not for laying.
+    pub fn straight(source: Option<Entity>, from: Vec3, to: Vec3) -> Self {
+        let port = Port {
+            at: from,
+            dir: (to - from).normalize_or(Vec3::X),
+            owner: PortOwner::Burbler(Entity::PLACEHOLDER),
+        };
+        let path = Path::new(&port, to);
+        let (end_at, end_dir) = path.at(path.length());
+        Self {
+            end: Port {
+                at: end_at,
+                dir: end_dir,
+                owner: PortOwner::Burbler(Entity::PLACEHOLDER),
+            },
+            end_used: false,
+            end_halo: vec![],
+            span: path.length(),
+            path,
+            source,
+            start: 0.,
+            clarity: 0.,
+        }
+    }
+
+    /// The horizontal distance from `at` to the nearest point of this stream.
+    pub fn horizontal_distance(&self, at: Vec3) -> f32 {
+        let steps = (self.path.length() / 0.25).ceil().max(1.) as u32;
+        (0..=steps)
+            .map(|k| {
+                let (point, _) = self.path.at(self.path.length() * k as f32 / steps as f32);
+                Vec2::new(point.x - at.x, point.z - at.z).length()
+            })
+            .fold(f32::MAX, f32::min)
+    }
 }
 
 // ---------- Templates: the glTFs' meshes, baked into root space ----------
@@ -706,6 +747,7 @@ fn lay<S: Stock>(
         span,
         source,
         start,
+        clarity: 0.,
     });
     match anchor.owner {
         PortOwner::Burbler(entity) => {

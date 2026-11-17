@@ -14,7 +14,29 @@
       "productivity_factors": [
         "water_quality",
         "light_quality"
-      ]
+      ],
+      "growth": {
+        "levels": [
+          {
+            "level": "budding",
+            "growth": 0.3,
+            "min_clarity": 0.0
+          },
+          {
+            "level": "leafed",
+            "growth": 0.7,
+            "min_clarity": 0.5
+          },
+          {
+            "level": "full_bloom",
+            "growth": 1.0,
+            "min_clarity": 1.0
+          }
+        ],
+        "water_reach_m": 3.0,
+        "rise_per_minute": 0.3,
+        "ease_per_minute": 0.05
+      }
     }
   ]
 }

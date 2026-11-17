@@ -575,7 +575,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   (`add-localized-machine-voices`). Still to do: the staff's flow and notes on laid
   streams (2.7), bubbles (2.6), dismantle (F), saving laid streams, collision checks.
   `tools/jackdaw_timed_test.py --streams` runs the script (`--stream-review=<dir>`)
-  under the watchdog.
+  under the watchdog. **Streams water trees** (`stubby_game::watering`, 2026-11-17): a
+  flowing stream within `water_reach_m` (3 m) of a scrub oak waters it, and growth rises
+  toward the cap its water's clarity allows (`mines.json` `growth`: mud reaches budding,
+  silty leafed, clear full bloom) and eases back without water, in simulation time.
 - Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the
   burbler, the HUD rack's modules and, later, streams and reeds; game logic (Codex)
   builds the interaction, the HUD, the patch, streams and production.

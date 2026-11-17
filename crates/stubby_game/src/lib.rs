@@ -29,6 +29,7 @@ mod review;
 pub use stubby_streams as streams;
 mod sky_review;
 mod stream_review;
+mod watering;
 mod waveform_audio;
 
 use bevy::{camera::Exposure, prelude::*};
@@ -60,6 +61,7 @@ impl Plugin for DesertPlugin {
             stream_review::StreamReviewPlugin,
             sky_review::SkyReviewPlugin,
             goals_hub::GoalsHubPlugin,
+            watering::WateringPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));
         // Dev builds serve Bevy's remote protocol on 127.0.0.1 (CORS open for the rules

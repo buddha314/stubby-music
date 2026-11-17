@@ -15,7 +15,7 @@ pub enum ProductivityFactor {
     WaterQuality,
     LightQuality,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct MineDefinition {
     pub id: String,
@@ -25,6 +25,9 @@ pub struct MineDefinition {
     pub produces_resource: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub productivity_factors: Vec<ProductivityFactor>,
+    /// How it grows with water, for a mine that is a plant (a scrub oak).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub growth: Option<crate::growth::GrowthDefinition>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
