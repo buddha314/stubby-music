@@ -10,6 +10,7 @@ readme = "README.md"
 publish = false
 
 [dependencies]
+arc-swap = { version = "1.8.2", optional = true }
 audioadapter-buffers = "5"
 audionimbus = { version = "=0.17.0", default-features = false, features = ["dynamic", "linking-dynamic", "wiring"], optional = true }
 firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing", "sampler_node", "spatial_basic_node", "peak_meter_node"] }
@@ -18,7 +19,7 @@ rtrb = "0.4.1"
 thiserror = "2"
 
 [features]
-audionimbus = ["dep:audionimbus"]
+audionimbus = ["dep:arc-swap", "dep:audionimbus"]
 
 [dev-dependencies]
 assert_no_alloc = { version = "1.1.2", default-features = false, features = ["warn_debug", "warn_release"] }

@@ -13,7 +13,11 @@ use crate::modules::{
 };
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 use crate::random_clock::RandomClockNode;
+#[cfg(feature = "audionimbus")]
+use arc_swap::ArcSwap;
 use audioadapter_buffers::direct::InterleavedSlice;
+#[cfg(feature = "audionimbus")]
+use audionimbus::DirectEffectParams;
 use firewheel::nodes::spatial_basic::SpatialBasicNode;
 use firewheel::{
     ActivateInfo, FirewheelConfig, FirewheelContext,
@@ -639,7 +643,10 @@ impl Engine {
         let (src, src_port) = self.output_port(output)?;
         #[cfg(feature = "audionimbus")]
         let (node, params) = if let Some(spatial) = &self.audionimbus_spatial {
-            let params = AudioNimbusBinauralNode::new(spatial.clone());
+            let params = AudioNimbusBinauralNode::new(
+                spatial.clone(),
+                Arc::new(ArcSwap::from_pointee(DirectEffectParams::default())),
+            );
             params.set_direction(offset);
             params.set_volume(gain);
             let node = self

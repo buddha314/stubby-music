@@ -3,10 +3,11 @@
 //! Create effects on the control thread, then reuse them with caller-owned buffers in
 //! the audio processor. Simulation and scene updates belong on worker/control threads.
 
+use arc_swap::ArcSwap;
 use audionimbus::{
     AudioBufferMut, AudioBufferRef, AudioSettings, BinauralEffect, BinauralEffectParams,
-    BinauralEffectSettings, Context, Direction, Hrtf, HrtfInterpolation, HrtfSettings,
-    SteamAudioError,
+    BinauralEffectSettings, Context, DirectEffect, DirectEffectParams, DirectEffectSettings,
+    Direction, Hrtf, HrtfInterpolation, HrtfSettings, SteamAudioError,
 };
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
@@ -38,11 +39,15 @@ pub struct AudioNimbusBinauralNode {
     spatial: Arc<AudioNimbusSpatialContext>,
     direction: Arc<[AtomicU32; 3]>,
     volume: Arc<AtomicU32>,
+    direct_params: Arc<ArcSwap<DirectEffectParams>>,
 }
 
 impl AudioNimbusBinauralNode {
     /// Creates a mono-to-stereo node using shared AudioNimbus state.
-    pub fn new(spatial: Arc<AudioNimbusSpatialContext>) -> Self {
+    pub fn new(
+        spatial: Arc<AudioNimbusSpatialContext>,
+        direct_params: Arc<ArcSwap<DirectEffectParams>>,
+    ) -> Self {
         Self {
             spatial,
             direction: Arc::new([
@@ -51,6 +56,7 @@ impl AudioNimbusBinauralNode {
                 AtomicU32::new(1.0_f32.to_bits()),
             ]),
             volume: Arc::new(AtomicU32::new(1.0_f32.to_bits())),
+            direct_params,
         }
     }
 
@@ -102,7 +108,9 @@ impl AudioNode for AudioNimbusBinauralNode {
         }
         let block_size = self.spatial.audio_settings.frame_size as usize;
         Ok(AudioNimbusBinauralProcessor {
-            spatializer: self.spatial.create_binaural_spatializer()?,
+            spatializer: self
+                .spatial
+                .create_binaural_spatializer_with_params(self.direct_params.clone())?,
             direction: self.direction.clone(),
             volume: self.volume.clone(),
             block_size,
@@ -209,12 +217,26 @@ impl AudioNimbusSpatialContext {
 
     /// Creates a per-voice binaural effect sharing this context and HRTF.
     pub fn create_binaural_spatializer(&self) -> Result<BinauralSpatializer, SteamAudioError> {
+        self.create_binaural_spatializer_with_params(Arc::new(ArcSwap::from_pointee(
+            DirectEffectParams::default(),
+        )))
+    }
+
+    fn create_binaural_spatializer_with_params(
+        &self,
+        direct_params: Arc<ArcSwap<DirectEffectParams>>,
+    ) -> Result<BinauralSpatializer, SteamAudioError> {
         let effect = BinauralEffect::try_new(
             &self.context,
             &self.audio_settings,
             &BinauralEffectSettings {
                 hrtf: self.hrtf.clone(),
             },
+        )?;
+        let direct_effect = DirectEffect::try_new(
+            &self.context,
+            &self.audio_settings,
+            &DirectEffectSettings { num_channels: 1 },
         )?;
         let params = BinauralEffectParams {
             direction: Direction::new(0.0, 0.0, 1.0),
@@ -223,11 +245,13 @@ impl AudioNimbusSpatialContext {
             hrtf: self.hrtf.clone(),
             peak_delays: None,
         };
-
         Ok(BinauralSpatializer {
             _context: self.context.clone(),
             hrtf: self.hrtf.clone(),
             effect,
+            direct_effect,
+            direct_params,
+            direct_buffer: vec![0.0; self.audio_settings.frame_size as usize],
             params,
             frame_size: self.audio_settings.frame_size as usize,
         })
@@ -244,6 +268,9 @@ pub struct BinauralSpatializer {
     _context: Context,
     hrtf: Hrtf,
     effect: BinauralEffect,
+    direct_effect: DirectEffect,
+    direct_params: Arc<ArcSwap<DirectEffectParams>>,
+    direct_buffer: Vec<f32>,
     params: BinauralEffectParams,
     frame_size: usize,
 }
@@ -276,7 +303,13 @@ impl BinauralSpatializer {
             });
         }
 
-        let input_buffer = AudioBufferRef::try_from(input)?;
+        self.direct_buffer.copy_from_slice(input);
+        {
+            let mut buffer = AudioBufferMut::try_from(&mut self.direct_buffer[..])?;
+            self.direct_effect
+                .apply_in_place(&self.direct_params.load(), &mut buffer)?;
+        }
+        let input_buffer = AudioBufferRef::try_from(&self.direct_buffer[..])?;
         let mut output_buffer = AudioBufferMut::try_from_channels([left, right])?;
         self.effect
             .apply(&self.params, &input_buffer, &mut output_buffer)?;
