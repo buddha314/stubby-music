@@ -3,15 +3,18 @@
 //! Create effects on the control thread, then reuse them with caller-owned buffers in
 //! the audio processor. Simulation and scene updates belong on worker/control threads.
 
-use crate::PortRef;
+use crate::{
+    PortRef,
+    protocol::{AcousticMaterial, AcousticSceneGeometry, ListenerPose},
+};
 use arc_swap::ArcSwap;
 use audionimbus::{
     AirAbsorptionModel, AudioBufferMut, AudioBufferRef, AudioSettings, BinauralEffect,
     BinauralEffectParams, BinauralEffectSettings, Context, CoordinateSystem, DirectEffect,
     DirectEffectParams, DirectEffectSettings, DirectSimulationParameters, DirectSimulationSettings,
     Direction, Directivity, DistanceAttenuationModel, Equalizer, Hrtf, HrtfInterpolation,
-    HrtfSettings, Occlusion, OcclusionAlgorithm, Point, SimulationFlags, SteamAudioError,
-    Transmission,
+    HrtfSettings, Material, Occlusion, OcclusionAlgorithm, Point, SimulationFlags,
+    StaticMeshSettings, SteamAudioError, Transmission, Triangle,
 };
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
@@ -124,15 +127,29 @@ impl DirectEffectParamsShared {
 }
 
 pub struct AudioNimbusDirectSimulation {
-    latest: Arc<ArcSwap<Vec<DirectEmitterInput>>>,
+    latest: Arc<ArcSwap<DirectSimulationSnapshot>>,
     wake: SyncSender<bool>,
     thread: Option<std::thread::JoinHandle<()>>,
     last_wake: Option<Instant>,
+    geometry: Arc<AcousticSceneGeometry>,
+    geometry_revision: u64,
+}
+
+struct DirectSimulationSnapshot {
+    listener: ListenerPose,
+    emitters: Vec<DirectEmitterInput>,
+    geometry: Arc<AcousticSceneGeometry>,
+    geometry_revision: u64,
 }
 
 impl AudioNimbusDirectSimulation {
     pub fn new(sample_rate: u32, frame_size: u32) -> Result<Self, String> {
-        let latest = Arc::new(ArcSwap::from_pointee(Vec::new()));
+        let latest = Arc::new(ArcSwap::from_pointee(DirectSimulationSnapshot {
+            listener: ListenerPose::default(),
+            emitters: Vec::new(),
+            geometry: Arc::new(AcousticSceneGeometry::default()),
+            geometry_revision: 0,
+        }));
         let worker_latest = latest.clone();
         let (wake, receiver) = mpsc::sync_channel(1);
         let (ready_tx, ready_rx) = mpsc::sync_channel(1);
@@ -160,11 +177,31 @@ impl AudioNimbusDirectSimulation {
             wake,
             thread: Some(thread),
             last_wake: None,
+            geometry: Arc::new(AcousticSceneGeometry::default()),
+            geometry_revision: 0,
         })
     }
 
-    pub fn publish(&mut self, inputs: Vec<DirectEmitterInput>) {
-        self.latest.store(Arc::new(inputs));
+    pub fn set_geometry(&mut self, geometry: AcousticSceneGeometry) {
+        self.geometry = Arc::new(geometry);
+        self.geometry_revision = self.geometry_revision.wrapping_add(1);
+        let latest = self.latest.load();
+        self.latest.store(Arc::new(DirectSimulationSnapshot {
+            listener: latest.listener,
+            emitters: latest.emitters.clone(),
+            geometry: self.geometry.clone(),
+            geometry_revision: self.geometry_revision,
+        }));
+        let _ = self.wake.try_send(true);
+    }
+
+    pub fn publish(&mut self, inputs: Vec<DirectEmitterInput>, listener: ListenerPose) {
+        self.latest.store(Arc::new(DirectSimulationSnapshot {
+            listener,
+            emitters: inputs,
+            geometry: self.geometry.clone(),
+            geometry_revision: self.geometry_revision,
+        }));
         if self
             .last_wake
             .is_some_and(|last| last.elapsed() < Duration::from_millis(50))
@@ -189,7 +226,7 @@ impl Drop for AudioNimbusDirectSimulation {
 }
 
 fn run_direct_simulation_worker(
-    latest: Arc<ArcSwap<Vec<DirectEmitterInput>>>,
+    latest: Arc<ArcSwap<DirectSimulationSnapshot>>,
     wake: mpsc::Receiver<bool>,
     sample_rate: u32,
     frame_size: u32,
@@ -207,7 +244,7 @@ fn run_direct_simulation_worker(
     );
     let mut simulator = audionimbus::dynamic::Simulator::try_new(&context, &settings)
         .map_err(|error| format!("create simulator: {error}"))?;
-    let scene = audionimbus::dynamic::Scene::try_new(
+    let mut scene = audionimbus::dynamic::Scene::try_new(
         &context,
         audionimbus::dynamic::RayTracerSettings::Default,
     )
@@ -221,10 +258,86 @@ fn run_direct_simulation_worker(
         .map_err(|error| format!("publish worker readiness: {error}"))?;
 
     let mut sources = std::collections::HashMap::new();
+    let mut scene_revision = u64::MAX;
+    let mut static_mesh = None;
     while let Ok(true) = wake.recv() {
         let snapshot = latest.load();
-        let current: std::collections::HashSet<_> =
-            snapshot.iter().map(|emitter| emitter.output).collect();
+        if scene_revision != snapshot.geometry_revision {
+            if let Some(handle) = static_mesh.take() {
+                scene.remove_static_mesh(handle);
+            }
+            if !snapshot.geometry.triangles.is_empty() {
+                let vertices: Vec<_> = snapshot
+                    .geometry
+                    .vertices
+                    .iter()
+                    .map(|point| Point::new(point[0], point[1], point[2]))
+                    .collect();
+                let mut triangles = Vec::new();
+                let mut material_indices = Vec::new();
+                for (index, indices) in snapshot.geometry.triangles.iter().enumerate() {
+                    if indices.iter().any(|&vertex| {
+                        vertex as usize >= vertices.len() || vertex > i32::MAX as u32
+                    }) {
+                        continue;
+                    }
+                    triangles.push(Triangle::new(
+                        indices[0] as i32,
+                        indices[1] as i32,
+                        indices[2] as i32,
+                    ));
+                    material_indices.push(
+                        snapshot
+                            .geometry
+                            .material_indices
+                            .get(index)
+                            .copied()
+                            .filter(|&material| material < snapshot.geometry.materials.len())
+                            .unwrap_or(0),
+                    );
+                }
+                if !triangles.is_empty() {
+                    let materials: Vec<_> = if snapshot.geometry.materials.is_empty() {
+                        vec![Material::GENERIC]
+                    } else {
+                        snapshot
+                            .geometry
+                            .materials
+                            .iter()
+                            .copied()
+                            .map(|material: AcousticMaterial| Material {
+                                absorption: material.absorption,
+                                scattering: material.scattering,
+                                transmission: material.transmission,
+                            })
+                            .collect()
+                    };
+                    let mesh = audionimbus::dynamic::StaticMesh::try_new(
+                        &scene,
+                        &StaticMeshSettings {
+                            vertices: &vertices,
+                            triangles: &triangles,
+                            material_indices: &material_indices,
+                            materials: &materials,
+                        },
+                    )
+                    .map_err(|error| format!("create acoustic mesh: {error}"))?;
+                    static_mesh = Some(
+                        scene
+                            .try_add_static_mesh(mesh)
+                            .map_err(|error| format!("add acoustic mesh: {error}"))?,
+                    );
+                }
+            }
+            scene.commit();
+            simulator.commit();
+            scene_revision = snapshot.geometry_revision;
+        }
+        let current: std::collections::HashSet<_> = snapshot
+            .emitters
+            .iter()
+            .map(|emitter| emitter.output)
+            .collect();
         sources.retain(|output, source| {
             if current.contains(output) {
                 true
@@ -233,7 +346,7 @@ fn run_direct_simulation_worker(
                 false
             }
         });
-        for emitter in snapshot.iter() {
+        for emitter in &snapshot.emitters {
             if !sources.contains_key(&emitter.output) {
                 let source =
                     audionimbus::dynamic::Source::try_new(&simulator, SimulationFlags::DIRECT)
@@ -246,7 +359,7 @@ fn run_direct_simulation_worker(
         }
         simulator.commit();
 
-        for emitter in snapshot.iter() {
+        for emitter in &snapshot.emitters {
             let Some(source) = sources.get(&emitter.output) else {
                 continue;
             };
@@ -280,13 +393,22 @@ fn run_direct_simulation_worker(
         simulator
             .set_shared_inputs(
                 SimulationFlags::DIRECT,
-                &audionimbus::dynamic::SimulationSharedInputs::new(CoordinateSystem::default()),
+                &audionimbus::dynamic::SimulationSharedInputs::new(CoordinateSystem {
+                    origin: Point::new(
+                        snapshot.listener.position[0],
+                        snapshot.listener.position[1],
+                        snapshot.listener.position[2],
+                    ),
+                    right: snapshot.listener.right.into(),
+                    up: snapshot.listener.up.into(),
+                    ahead: snapshot.listener.ahead.into(),
+                }),
             )
             .map_err(|error| format!("set listener inputs: {error}"))?;
         simulator
             .run_direct()
             .map_err(|error| format!("run direct simulation: {error}"))?;
-        for emitter in snapshot.iter() {
+        for emitter in &snapshot.emitters {
             if let Some(source) = sources.get(&emitter.output) {
                 if let Ok(params) = source.get_direct_outputs() {
                     emitter.params.store(&params);

@@ -14,7 +14,10 @@ use crate::modules::{
     ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
     VcoConfig, VcoNode, Waveform,
 };
-use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
+use crate::protocol::{
+    AcousticSceneGeometry, Command, EngineError, Event, ListenerPose, ModuleId, ModuleKind,
+    PortRef, SampleId,
+};
 use crate::random_clock::RandomClockNode;
 use audioadapter_buffers::direct::InterleavedSlice;
 use firewheel::nodes::spatial_basic::SpatialBasicNode;
@@ -97,6 +100,7 @@ pub struct Engine {
     to_ui: HashSet<PortRef>,
     /// Master outputs placed in the world, each through its own spatial node.
     emitters: HashMap<PortRef, Emitter>,
+    listener_pose: ListenerPose,
     #[cfg(feature = "audionimbus")]
     audionimbus_spatial: Option<Arc<AudioNimbusSpatialContext>>,
     #[cfg(feature = "audionimbus")]
@@ -166,6 +170,7 @@ impl Engine {
             to_master: HashSet::new(),
             to_ui: HashSet::new(),
             emitters: HashMap::new(),
+            listener_pose: ListenerPose::default(),
             #[cfg(feature = "audionimbus")]
             audionimbus_spatial: None,
             #[cfg(feature = "audionimbus")]
@@ -193,6 +198,17 @@ impl Engine {
         #[cfg(feature = "audionimbus")]
         engine.initialize_audionimbus()?;
         Ok(engine)
+    }
+
+    /// Replace the acoustic geometry snapshot used by AudioNimbus. The scene is
+    /// rebuilt on its simulation worker, never on the realtime callback.
+    pub fn set_acoustic_geometry(&mut self, geometry: AcousticSceneGeometry) {
+        #[cfg(feature = "audionimbus")]
+        if let Some(simulation) = &mut self.audionimbus_simulation {
+            simulation.set_geometry(geometry);
+        }
+        #[cfg(not(feature = "audionimbus"))]
+        let _ = geometry;
     }
 
     /// An engine with no audio device, plus the renderer that plays the audio
@@ -249,8 +265,13 @@ impl Engine {
             Command::SetEmitter {
                 output,
                 offset,
+                position_world,
                 volume,
-            } => self.set_emitter(output, offset, volume),
+            } => self.set_emitter(output, offset, position_world, volume),
+            Command::SetListener { pose } => {
+                self.listener_pose = pose;
+                Ok(())
+            }
             Command::Connect { from, to } => self.connect(from, to),
             Command::Disconnect { from, to } => self.disconnect(from, to),
             Command::SetParam {
@@ -295,7 +316,7 @@ impl Engine {
                     EmitterParams::Basic(_) => None,
                 })
                 .collect();
-            simulation.publish(inputs);
+            simulation.publish(inputs, self.listener_pose);
         }
         for ((id, param), value) in std::mem::take(&mut self.pending_params) {
             let Some(module) = self.modules.get_mut(&id) else {
@@ -634,8 +655,11 @@ impl Engine {
         &mut self,
         output: PortRef,
         offset: [f32; 3],
+        position_world: [f32; 3],
         volume: f32,
     ) -> Result<(), EngineError> {
+        #[cfg(not(feature = "audionimbus"))]
+        let _ = position_world;
         if !self.to_master.contains(&output) {
             return Ok(());
         }
@@ -655,7 +679,7 @@ impl Engine {
                 }
                 #[cfg(feature = "audionimbus")]
                 EmitterParams::AudioNimbus(node) => {
-                    node.set_position(offset);
+                    node.set_position(position_world);
                     node.set_direction(offset);
                     node.set_volume(gain);
                 }
@@ -671,7 +695,7 @@ impl Engine {
                 Arc::new(DirectEffectParamsShared::default()),
             );
             params.set_direction(offset);
-            params.set_position(offset);
+            params.set_position(position_world);
             params.set_volume(gain);
             let node = self
                 .cx

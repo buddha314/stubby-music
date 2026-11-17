@@ -49,6 +49,28 @@ impl ScreenMode {
 #[derive(Component)]
 pub struct HudCamera;
 
+/// Marks static render geometry included in AudioNimbus's acoustic scene.
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct AcousticOccluder {
+    pub absorption: [f32; 3],
+    pub scattering: f32,
+    pub transmission: [f32; 3],
+}
+
+impl AcousticOccluder {
+    pub const GENERIC: Self = Self {
+        absorption: [0.10, 0.20, 0.30],
+        scattering: 0.05,
+        transmission: [0.100, 0.050, 0.030],
+    };
+
+    pub const ROCK: Self = Self {
+        absorption: [0.13, 0.20, 0.24],
+        scattering: 0.05,
+        transmission: [0.015, 0.002, 0.001],
+    };
+}
+
 /// The one thing E would act on now.
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum InteractTarget {
