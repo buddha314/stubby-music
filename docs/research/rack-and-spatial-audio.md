@@ -199,6 +199,17 @@ unambiguous.
 
 ## Spike results
 
+**Pinned native build check (2026-11-17):** `tools/build_steam_audio_sdk.sh` built
+Steam Audio 4.8.1 from commit `0da18255cca520771f363ee01f100572b39a308e` with the
+minimal configuration. The resulting Linux x86_64 `libphonon.so` SHA-256 is
+`2ca5362cbba1b0e35b6a1c9d4f8a4ffcddb6c78e57adb2d204a1e72fd539da67`. `ldd` showed
+only standard Linux runtime libraries; an exported-symbol scan found no IPP symbols.
+The helper's second invocation skipped the build. A Cargo feature build and a live
+AudioNimbus binaural render probe both succeeded. The SDK clone's generic
+`THIRDPARTY.md` includes an Intel IPP notice even though IPP was excluded; release
+packaging still needs a generated, configuration-specific notice audit before task
+4.0 is complete.
+
 Measured in `spikes/spike_rack`; the numbers and decisions are in
 `openspec/changes/add-rack-and-spatial-audio/design.md`. In short: the per-sample rack
 costs about 8.8 ns per module-sample (200 modules = 8.5% of a 256-frame block). HRTF

@@ -16,6 +16,43 @@ impl ModuleId {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct SampleId(pub u32);
 
+/// Listener pose in world coordinates. The axes are unit vectors in the game world.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ListenerPose {
+    pub position: [f32; 3],
+    pub right: [f32; 3],
+    pub up: [f32; 3],
+    pub ahead: [f32; 3],
+}
+
+/// Acoustic properties of one surface material for AudioNimbus/Steam Audio.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AcousticMaterial {
+    pub absorption: [f32; 3],
+    pub scattering: f32,
+    pub transmission: [f32; 3],
+}
+
+/// Triangle geometry in world coordinates. Material indices address `materials`.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct AcousticSceneGeometry {
+    pub vertices: Vec<[f32; 3]>,
+    pub triangles: Vec<[u32; 3]>,
+    pub material_indices: Vec<usize>,
+    pub materials: Vec<AcousticMaterial>,
+}
+
+impl Default for ListenerPose {
+    fn default() -> Self {
+        Self {
+            position: [0.0; 3],
+            right: [1.0, 0.0, 0.0],
+            up: [0.0, 1.0, 0.0],
+            ahead: [0.0, 0.0, 1.0],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ModuleKind {
     /// Sine oscillator. Input `"voct"`, output `"out"`, parameter `"freq"` (Hz).
@@ -108,14 +145,18 @@ pub enum Command {
         param: &'static str,
         value: f32,
     },
-    /// Place an output already cabled to the master output in the world: `offset` is
-    /// where the sound is relative to the listener, in metres (+x right; other axes
-    /// only add distance), and `volume` scales it (0..1). Sent every frame as things
-    /// move; the change is smoothed. An output no longer cabled is ignored, since a
-    /// rack can rebuild its voice in the same frame.
+    /// Update the listener pose used by AudioNimbus propagation simulation.
+    SetListener {
+        pose: ListenerPose,
+    },
+    /// Place an output already cabled to the master output in the world. `offset` is
+    /// listener-local for binaural rendering; `position_world` feeds acoustic scene
+    /// simulation. `volume` scales it (0..1). An output no longer cabled is ignored,
+    /// since a rack can rebuild its voice in the same frame.
     SetEmitter {
         output: PortRef,
         offset: [f32; 3],
+        position_world: [f32; 3],
         volume: f32,
     },
     /// Play a loaded sample once, straight to the speakers at `gain`: a sound effect

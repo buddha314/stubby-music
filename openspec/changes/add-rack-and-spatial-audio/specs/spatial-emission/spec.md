@@ -1,5 +1,22 @@
 ## ADDED Requirements
 
+### Requirement: Default spatial audio backend
+The standalone game and Jackdaw game entry point SHALL enable AudioNimbus spatial audio
+by default on supported Linux x86_64 builds. Their documented launch workflows SHALL
+locate or build the pinned native SDK and expose it to the runtime loader without
+building the SDK as part of ordinary Cargo builds. SDK rebuilds SHALL occur only when
+pinned source or build inputs change.
+
+#### Scenario: Launch with the default backend
+- **WHEN** a player launches the game through its documented launcher with no audio
+  feature override
+- **THEN** AudioNimbus binaural rendering and direct propagation are enabled and the
+  pinned native library loads successfully
+
+#### Scenario: Reuse the native SDK cache
+- **WHEN** the documented launcher runs and the pinned SDK build inputs are unchanged
+- **THEN** it reuses the cached native library without rebuilding the SDK
+
 ### Requirement: Emitters
 A module MAY declare one output as its emission. That output SHALL be heard from the
 module's world position. A module with no emission SHALL still run, because its
@@ -49,14 +66,40 @@ Within the radius, gain SHALL fall smoothly to zero at its edge.
 - **WHEN** the listener crosses into the hearing radius
 - **THEN** the emitter fades in from silence, muffled, and grows louder and brighter as the listener approaches
 
-### Requirement: Occlusion
-The game SHALL supply an occlusion factor in [0, 1] per audible emitter, from a ray
-cast between listener and emitter. Occlusion SHALL lower the emitter's low-pass
-cutoff and gain, smoothed over about 100 ms.
+### Requirement: Geometry-based sound propagation
+Spatial emitters SHALL use AudioNimbus/Steam Audio scene simulation for direct
+propagation, including distance attenuation, air absorption, geometry occlusion, and
+material transmission when supported by the configured source. Reflection and
+listener-centric reverb outputs SHALL be available to the audio graph as asynchronous
+wet signals. Scene simulation and geometry updates MUST NOT run or block on the audio
+callback; the callback SHALL consume the latest available outputs.
 
-#### Scenario: Behind cover
-- **WHEN** a structure blocks the line between listener and emitter
-- **THEN** the emitter becomes duller and quieter within about 100 ms, and recovers when the line clears
+#### Scenario: Material transmission through cover
+- **WHEN** a source is behind an acoustic wall whose material permits partial transmission
+- **THEN** the direct signal is attenuated and frequency-shaped according to the simulated occlusion and transmission, then recovers when the path clears
+
+#### Scenario: Cave reflections
+- **WHEN** an emitter and listener are inside an enclosed acoustic scene
+- **THEN** direct sound and asynchronous reflections/reverb are mixed through the spatial audio graph, and the reflection tail remains audible after the source stops
+
+#### Scenario: Simulation does not block playback
+- **WHEN** the audio callback renders while geometry or reflection simulation is running
+- **THEN** it uses the latest published simulation output without waiting, allocating sample buffers, or mutating the scene
+
+### Requirement: Environmental audio features remain extensible
+The spatial audio graph SHALL support multichannel environmental processing, including
+Ambisonic encoding/rotation/decoding and baked reflection or pathing probe data, where
+those AudioNimbus/Steam Audio capabilities meet the project's platform and performance
+requirements. An unsupported or unsuitable feature SHALL have a recorded concrete
+compatibility reason before a game-owned replacement is introduced.
+
+#### Scenario: Baked environmental data
+- **WHEN** a scene has compatible baked reflection or pathing probe data
+- **THEN** the runtime loads the data and applies it to the matching acoustic scene and sources
+
+#### Scenario: Surround or binaural listener output
+- **WHEN** the output configuration selects stereo headphones or a multichannel environment bus
+- **THEN** the audio graph applies the corresponding binaural or Ambisonic decode path without changing the source simulation results
 
 ### Requirement: Speaker fallback
 The player SHALL be able to switch HRTF off, for speakers. Every spatialized emitter

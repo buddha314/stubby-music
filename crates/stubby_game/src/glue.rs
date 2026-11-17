@@ -1,5 +1,6 @@
 //! Glue between systems (split-game-into-systems): the rules that join two systems live
 //! here, never inside either.
+use bevy::mesh::{Indices, PrimitiveTopology, VertexAttributeValues};
 use bevy::prelude::*;
 use bevy_stubby_audio::{
     Synth,
@@ -37,6 +38,10 @@ impl Plugin for GluePlugin {
                 hide_collected_finds.after(stubby_core::PrefabBinding),
                 report_configured_machines.before(bevy_stubby_recipes::RecipesSystems),
             ),
+        )
+        .add_systems(
+            PostUpdate,
+            publish_acoustic_scene.after(TransformSystems::Propagate),
         );
     }
 }
@@ -60,6 +65,72 @@ fn report_configured_machines(
             ));
         }
     }
+}
+
+/// Send marked static meshes as a single world-space acoustic scene snapshot.
+fn publish_acoustic_scene(
+    synth: Option<Res<Synth>>,
+    meshes: Res<Assets<Mesh>>,
+    changed_occluders: Query<
+        (),
+        (
+            Or<(
+                Added<stubby_core::AcousticOccluder>,
+                Changed<stubby_core::AcousticOccluder>,
+                Changed<Mesh3d>,
+                Changed<GlobalTransform>,
+            )>,
+            With<stubby_core::AcousticOccluder>,
+        ),
+    >,
+    occluders: Query<(&stubby_core::AcousticOccluder, &Mesh3d, &GlobalTransform)>,
+    mut removed: RemovedComponents<stubby_core::AcousticOccluder>,
+    mut initialized: Local<bool>,
+) {
+    let removed_any = removed.read().count() > 0;
+    if *initialized && changed_occluders.is_empty() && !removed_any {
+        return;
+    }
+    *initialized = true;
+    let Some(synth) = synth else { return };
+    let mut geometry = stubby_audio::AcousticSceneGeometry::default();
+    for (material, handle, transform) in &occluders {
+        let Some(mesh) = meshes.get(&handle.0) else {
+            continue;
+        };
+        if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
+            continue;
+        }
+        let Some(VertexAttributeValues::Float32x3(positions)) =
+            mesh.attribute(Mesh::ATTRIBUTE_POSITION)
+        else {
+            continue;
+        };
+        let base = geometry.vertices.len() as u32;
+        geometry.vertices.extend(positions.iter().map(|position| {
+            transform
+                .transform_point(Vec3::from_array(*position))
+                .to_array()
+        }));
+        let indices: Vec<u32> = match mesh.indices() {
+            Some(Indices::U16(indices)) => indices.iter().map(|&index| u32::from(index)).collect(),
+            Some(Indices::U32(indices)) => indices.clone(),
+            None => (0..positions.len() as u32).collect(),
+        };
+        let material_index = geometry.materials.len();
+        geometry.materials.push(stubby_audio::AcousticMaterial {
+            absorption: material.absorption,
+            scattering: material.scattering,
+            transmission: material.transmission,
+        });
+        for triangle in indices.chunks_exact(3) {
+            geometry
+                .triangles
+                .push([base + triangle[0], base + triangle[1], base + triangle[2]]);
+            geometry.material_indices.push(material_index);
+        }
+    }
+    synth.set_acoustic_geometry(geometry);
 }
 
 /// Placed foliage named by an `air` rule cleans the air (clean-air-by-foliage): the rules

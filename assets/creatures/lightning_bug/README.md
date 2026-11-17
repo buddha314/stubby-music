@@ -37,7 +37,7 @@ audio device cannot open, bugs remain hidden and a diagnostic explains why.
 Run the scene and optionally capture both real pulse states:
 
 ```sh
-cargo run -p stubby_game -- --seed=42 --pulse-preview=/tmp/lightning-bug
+tools/run_game.sh --seed=42 --pulse-preview=/tmp/lightning-bug
 ```
 
 The Jackdaw adapter shares the root assets folder and source files with the game.

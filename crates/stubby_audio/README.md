@@ -38,6 +38,51 @@ cargo run --release -p stubby_audio --example play      # listen on the default 
 On Linux, building needs the ALSA headers (`alsa-lib-devel` on Fedora,
 `libasound2-dev` on Debian/Ubuntu).
 
+### AudioNimbus spatial effects (in progress)
+
+The `audionimbus` Cargo feature enables the AudioNimbus/Steam Audio adapter. The
+engine crate keeps it optional; `stubby_game` and `stubby_jackdaw` enable spatial audio
+by default:
+
+```sh
+STEAMAUDIO_LIB_DIR=/path/to/steam-audio/lib/linux-x64 cargo build -p stubby_audio --features audionimbus
+```
+
+The native Steam Audio 4.8.1 library must be built or provisioned separately and
+available to the runtime loader. The standard game launch handles this setup:
+
+```sh
+tools/run_game.sh --seed=42
+```
+
+The helper stores the SDK beneath `target/native/steam-audio/`, skips the build when
+the pinned source, dependency manifest, build script, toolchain, configuration and
+artifact hash are unchanged, and rebuilds when any of those inputs change. Use
+`tools/build_steam_audio_sdk.sh --force` to rebuild explicitly. It is not called from
+Cargo, so ordinary builds do not pay this build cost. Direct Cargo builds using game
+defaults need `STEAMAUDIO_LIB_DIR` set to the returned library directory. The source
+build uses Steam Audio's minimal configuration
+with IPP disabled; do not enable AudioNimbus `auto-install` in reproducible or offline
+builds.
+`cargo check` validates Rust code but does not link the native library. Windows and
+macOS packaging, device-restart handling, spatial voice budgeting, and environmental
+scene simulation remain in progress. The node adapter buffers fixed AudioNimbus blocks
+and adds one block of latency. Pass `--no-default-features` to a game package for a
+temporary build without AudioNimbus.
+
+To launch the Jackdaw development game with the spatial audio demo:
+
+```sh
+steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
+STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
+LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+cargo run -p stubby_jackdaw --features dev -- --audio-demo
+```
+
+The demo places its square tone left and clock blip right of the listener. Use
+headphones to hear the HRTF cues. The Jackdaw package enables AudioNimbus by default;
+`--features dev` adds development linking without changing the audio backend.
+
 Rules for code that runs on the audio thread (no allocation, no locks, no panics) are
 in the repo's `AGENTS.md`. The crate denies `unwrap`, `expect` and `panic!`.
 

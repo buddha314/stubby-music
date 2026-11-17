@@ -26,7 +26,7 @@ use bevy::{
 use bevy_stubby_audio::{ClockTick, Synth};
 use std::marker::PhantomData;
 use std::time::Instant;
-use stubby_audio::Command;
+use stubby_audio::{Command, ListenerPose};
 use stubby_core::ScreenMode;
 use stubby_core::{
     AssetClock, AssetPart, AssetState, HudCamera, LookCapture, MachineVoice, PlacedAsset, Stock,
@@ -1032,6 +1032,14 @@ fn place_voices(
         return;
     };
     let (_, ears, listener) = camera.to_scale_rotation_translation();
+    synth.send(Command::SetListener {
+        pose: ListenerPose {
+            position: listener.to_array(),
+            right: camera.right().to_array(),
+            up: camera.up().to_array(),
+            ahead: camera.forward().to_array(),
+        },
+    });
     for (machine, voice, transform) in &machines {
         let Some(output) = voice.output else {
             continue;
@@ -1044,6 +1052,7 @@ fn place_voices(
         synth.send(Command::SetEmitter {
             output,
             offset: (ears.inverse() * (source - listener)).to_array(),
+            position_world: source.to_array(),
             volume: hearing_gain(source.distance(listener), voice.hearing_radius_metres),
         });
     }

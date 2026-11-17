@@ -32,6 +32,7 @@ impl Plugin for DesertWorldPlugin {
             calendar::CalendarPlugin,
             prefabs::PlacedPrefabsPlugin,
         ))
+        .register_type::<stubby_core::AcousticOccluder>()
         .insert_resource(WorldSeed(self.seed))
         // The desert's terrain is the ground the player and creatures stand on.
         .insert_resource(stubby_core::GroundHeight(terrain::height))
@@ -146,7 +147,11 @@ fn setup_world(
         ..default()
     });
     for mesh in terrain::ground_chunks(seed.0, 60, 12) {
-        commands.spawn((Mesh3d(meshes.add(mesh)), MeshMaterial3d(floor.clone())));
+        commands.spawn((
+            Mesh3d(meshes.add(mesh)),
+            MeshMaterial3d(floor.clone()),
+            stubby_core::AcousticOccluder::GENERIC,
+        ));
     }
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(1600., 1600.))),
@@ -155,6 +160,7 @@ fn setup_world(
             perceptual_roughness: 1.,
             ..default()
         })),
+        stubby_core::AcousticOccluder::GENERIC,
         Transform::from_xyz(0., -0.15, 0.),
     ));
     // Mountain rings: one seeded skyline, echoed outward (sky.json `ridges`).

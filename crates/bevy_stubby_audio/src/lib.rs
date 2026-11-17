@@ -51,6 +51,13 @@ impl Synth {
         }
     }
 
+    /// Replace static geometry used for acoustic occlusion and transmission.
+    pub fn set_acoustic_geometry(&self, geometry: stubby_audio::AcousticSceneGeometry) {
+        if let Some(thread) = &self.thread {
+            thread.set_acoustic_geometry(geometry);
+        }
+    }
+
     pub fn is_running(&self) -> bool {
         self.thread.is_some()
     }
@@ -278,6 +285,12 @@ fn set_demo(synth: &mut Synth, on: bool) {
                 from: PortRef::new(DEMO_SQUARE_VCA, "out"),
                 to: PortRef::output(),
             },
+            Command::SetEmitter {
+                output: PortRef::new(DEMO_SQUARE_VCA, "out"),
+                offset: [-2.0, 0.0, -4.0],
+                position_world: [-2.0, 0.0, -4.0],
+                volume: 0.65,
+            },
             Command::AddModule {
                 id: DEMO_CLOCK,
                 kind: ModuleKind::Clock { bpm: 90.0 },
@@ -303,6 +316,12 @@ fn set_demo(synth: &mut Synth, on: bool) {
             Command::Connect {
                 from: PortRef::new(DEMO_BLIP_VCA, "out"),
                 to: PortRef::output(),
+            },
+            Command::SetEmitter {
+                output: PortRef::new(DEMO_BLIP_VCA, "out"),
+                offset: [2.0, 0.0, -4.0],
+                position_world: [2.0, 0.0, -4.0],
+                volume: 0.65,
             },
         ]
     } else {

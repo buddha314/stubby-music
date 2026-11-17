@@ -7,7 +7,7 @@
 //! touches Firewheel types.
 
 use crate::engine::{Engine, EngineConfig, OUTPUT_CHANNELS, OfflineRenderer, WorldMeter};
-use crate::protocol::{Command, EngineError, Event};
+use crate::protocol::{AcousticSceneGeometry, Command, EngineError, Event};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex};
@@ -34,6 +34,7 @@ pub enum Notice {
 enum Request {
     Command(Command),
     LoadSample(crate::protocol::SampleId, u32, Vec<Vec<f32>>),
+    AcousticGeometry(AcousticSceneGeometry),
     Commit,
     Shutdown,
 }
@@ -147,6 +148,12 @@ impl AudioThread {
         let _ = self.requests.send(Request::Command(command));
     }
 
+    /// Replace the acoustic scene geometry snapshot. The simulation worker commits
+    /// it away from the realtime audio callback.
+    pub fn set_acoustic_geometry(&self, geometry: AcousticSceneGeometry) {
+        let _ = self.requests.send(Request::AcousticGeometry(geometry));
+    }
+
     /// Apply everything sent since the last commit, as one batch. Call once per frame.
     pub fn commit(&self) {
         let _ = self.requests.send(Request::Commit);
@@ -238,6 +245,7 @@ fn run(
             match request {
                 Request::Command(command) => staged.push(command),
                 Request::LoadSample(id, rate, channels) => engine.load_sample(id, rate, channels),
+                Request::AcousticGeometry(geometry) => engine.set_acoustic_geometry(geometry),
                 Request::Commit => {
                     for command in staged.drain(..) {
                         if let Err(error) = engine.send(command) {

@@ -583,6 +583,7 @@ pub fn spawn_ridges(
         commands.spawn((
             frame,
             Mesh3d(meshes.add(surface.mesh())),
+            stubby_core::AcousticOccluder::ROCK,
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: Color::srgb(r, g, b),
                 perceptual_roughness: 1.,
