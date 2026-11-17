@@ -2,17 +2,19 @@
 
 A modular synthesis factory game. The first scene is a silent, seeded desert mudflat.
 
-Run the visual scene:
+Launch the visual scene with AudioNimbus enabled by default. The first launch builds
+the pinned Steam Audio SDK; later launches only check whether its inputs changed:
 
 ```sh
-cargo run -p stubby_game -- --seed=42
+tools/run_game.sh --seed=42
 ```
 
 WASD walks, the mouse looks freely, Space jumps, C crouches,
 and hold Left Shift to sprint. H brings up the field recorder, Tab opens the inventory. Escape releases the cursor; click to resume.
 The player starts standing on the terrain at eye height. Use another seed to
 regenerate the mud plates, fine crack texture, and mountain silhouettes.
-For faster development linking use `--features dev`; omit it in release builds.
+For faster development linking, set `STUBBY_DEV_LINKING=1` before the launcher; omit
+that setting for release builds.
 
 The floor uses clipped Voronoi polygons with raised rims, recessed sidewalls,
 subtle height variation, and a generated repeating fine-crack/grain albedo and normal textures on a
@@ -23,8 +25,10 @@ dusty horizon and slate zenith; the cubemap also supplies filtered environment l
 This is the initial art-study scene: a fixed terrain area roughly 216 m wide,
 grounded first-person movement, haze and distant mountains. Streaming, sandstorm particles,
 mood transitions and discovery objects are tracked in the opening proposal and are not
-implemented yet. AudioNimbus spatial audio is available as an opt-in development build;
-the default command above does not enable it.
+implemented yet. AudioNimbus binaural spatial rendering and direct propagation are enabled
+in the default game features. The first SDK build is separate from Cargo and may take a
+while; later launch commands only verify the cached SDK unless a pinned input changes.
+Use `--no-default-features` for a temporary build without AudioNimbus.
 
 To save a preview after shader warmup, append
 `--screenshot=/tmp/stubby-desert-preview.png` to the game arguments.
@@ -37,17 +41,18 @@ audio thread drives the lightning bugs’ clocks and short click patches. The op
 is silent until a bug is nearby. A patched burbler's voice pans from the nearest point
 of the burbler or its streams and fades out at its hearing radius. For a test patch, add `--audio-demo` or press F8.
 
-The default game run uses Firewheel's basic spatial panner. To try the optional
-AudioNimbus/Steam Audio HRTF and direct-propagation path, run the Jackdaw game with
-the `spatial-audio` feature and the locally built native SDK:
+The default game run uses AudioNimbus/Steam Audio HRTF and direct propagation. To run
+that same path in the Jackdaw game with the sustained audio demo tone:
 
 ```sh
-STEAMAUDIO_LIB_DIR="$(tools/build_steam_audio_sdk.sh)" \
-  cargo run -p stubby_jackdaw --features dev,spatial-audio -- --audio-demo
+steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
+STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
+LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+  cargo run -p stubby_jackdaw --features dev -- --audio-demo
 ```
 
 The SDK helper uses its local cache and rebuilds only when its pinned inputs change;
-ordinary builds do not invoke it. `--audio-demo` intentionally sustains a 110 Hz
+ordinary Cargo builds do not invoke it. `--audio-demo` intentionally sustains a 110 Hz
 square-wave tone alongside clock blips, so the low hum is expected. The direct path
 supports distance, air absorption, geometry occlusion and material transmission.
 Reflections/reverb, authored cave or building validation, live device-restart handling,

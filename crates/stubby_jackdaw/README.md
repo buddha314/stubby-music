@@ -17,6 +17,10 @@ tools/jackdaw.sh build     # build the game and extract component schema
 tools/jackdaw.sh open      # open the shared editor on assets/scene.bsn
 ```
 
+The game enables AudioNimbus by default. `prepare`, `build`, `run`, and `open`
+check/build the pinned Steam Audio SDK and set its runtime library path; unchanged
+SDK inputs use the cache, so this does not rebuild the native SDK on every game build.
+
 The shared editor executable is
 `/home/buddha/src/jackdaw/target/debug/jackdaw`. **Jackdaw selects our versions**:
 `compatibility.json` records its source commit, upstream base, Bevy version and
@@ -138,7 +142,7 @@ into the VCO's envelope/VCA, so the lamp and audible low square bursts share
 one source of timing. The normal Desert opening configuration remains silent
 until discovery. Leave F8's independent demo off during this check.
 
-Standalone equivalent: `cargo run -p stubby_game -- --seed=42 --module-demo`.
+Standalone equivalent: `tools/run_game.sh --seed=42 --module-demo`.
 At the default 120 BPM, listen for two bursts per second and watch the clock lamp.
 Stop Play to stop its audio; play again to verify it starts cleanly. Audio uses the
 game child's default output device, not an editor audio bridge. This check does

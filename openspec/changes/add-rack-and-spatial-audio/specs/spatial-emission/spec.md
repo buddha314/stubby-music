@@ -1,5 +1,22 @@
 ## ADDED Requirements
 
+### Requirement: Default spatial audio backend
+The standalone game and Jackdaw game entry point SHALL enable AudioNimbus spatial audio
+by default on supported Linux x86_64 builds. Their documented launch workflows SHALL
+locate or build the pinned native SDK and expose it to the runtime loader without
+building the SDK as part of ordinary Cargo builds. SDK rebuilds SHALL occur only when
+pinned source or build inputs change.
+
+#### Scenario: Launch with the default backend
+- **WHEN** a player launches the game through its documented launcher with no audio
+  feature override
+- **THEN** AudioNimbus binaural rendering and direct propagation are enabled and the
+  pinned native library loads successfully
+
+#### Scenario: Reuse the native SDK cache
+- **WHEN** the documented launcher runs and the pinned SDK build inputs are unchanged
+- **THEN** it reuses the cached native library without rebuilding the SDK
+
 ### Requirement: Emitters
 A module MAY declare one output as its emission. That output SHALL be heard from the
 module's world position. A module with no emission SHALL still run, because its

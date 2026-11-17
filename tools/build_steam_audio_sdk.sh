@@ -67,7 +67,8 @@ chmod +x "$cache_root/cmake-compat/cmake"
 
 (cd "$source_dir/core/build" && \
   for dependency in flatbuffers zlib mysofa pffft; do \
-    python3 get_dependencies.py --platform linux --architecture x64 --dependency "$dependency"; \
+    PATH="$cache_root/cmake-compat:$PATH" python3 get_dependencies.py \
+      --platform linux --architecture x64 --dependency "$dependency"; \
   done && \
   PATH="$cache_root/cmake-compat:$PATH" python3 build.py \
     --platform linux --architecture x64 --configuration release \

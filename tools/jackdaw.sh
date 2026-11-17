@@ -8,6 +8,12 @@ cli_path="${source_dir}/target/debug/jd"
 project_dir="${repo_dir}"
 cd "$repo_dir"
 command_name="${1:-open}"
+prepare_audio_environment() {
+    local steam_audio_lib
+    steam_audio_lib="$("${repo_dir}/tools/build_steam_audio_sdk.sh")"
+    export STEAMAUDIO_LIB_DIR="$steam_audio_lib"
+    export LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+}
 # The game takes Jackdaw from the fork at the pinned revision (Cargo.toml). `link` builds it
 # against the shared checkout instead, through an untracked .cargo/config.toml [patch];
 # `unlink` returns to the pin. Neither edits a tracked file except Cargo.lock.
@@ -56,6 +62,7 @@ case "$command_name" in
         exit 0
         ;;
     prepare)
+        prepare_audio_environment
         # A shared binary update must not replace an editor the user is running.
         python3 - "$source_dir" <<'PYIDLE'
 import os, pathlib, sys
@@ -97,10 +104,12 @@ PYRECEIPT
         "$0" prepare
         ;;
     build|doctor|run)
+        prepare_audio_environment
         python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --binaries
         exec "$cli_path" "$command_name" --project "$project_dir"
         ;;
     open)
+        prepare_audio_environment
         python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --binaries
         if [[ ! -f "${project_dir}/assets/generated/mudflat.glb" ]]; then
             "$0" prepare

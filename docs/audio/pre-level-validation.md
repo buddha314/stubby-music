@@ -46,6 +46,26 @@ fixture. Keep fixture results and authored-level results as separate evidence.
 
 ## Current evidence (2026-11-17)
 
+- The SDK rebuild was exercised from source at pinned Steam Audio commit
+  `0da18255cca520771f363ee01f100572b39a308e`. FlatBuffers, zlib, libmysofa, PFFFT,
+  and `libphonon.so` all built with the repository's IPP-free configuration; the
+  resulting library SHA-256 is `e8c65b15e926330cdef346b02c259fd3cc432551deef57d8e44a5f17d01f59fb`.
+  Modern CMake rejected the pinned PFFFT CMake minimum until the compatibility wrapper
+  was applied to dependency builds as well as the main Steam Audio build. The corrected
+  helper now reports the cached artifact current on a second invocation.
+- Feature-enabled `cargo test -p stubby_audio --features audionimbus` passed all 42
+  unit and integration tests with the rebuilt library on `LD_LIBRARY_PATH`. The game
+  also builds with `cargo build -p stubby_jackdaw --features dev`, exercising the
+  default spatial-audio feature selection.
+- `stubby_game` and `stubby_jackdaw` now enable `spatial-audio` by default. The normal
+  `tools/run_game.sh` launcher resolves the native SDK path and runtime loader path;
+  its SDK helper performs a quick cache check and rebuilds only after pinned inputs
+  change. The engine crate retains an explicit feature opt-out for low-level work.
+- The default-feature standalone game passed the independent 20-second watchdog run
+  (`default-audionimbus-check`): it ran for 20.016 s, opened CPAL at 48 kHz, and the
+  watchdog restored DP-6 to 3840x2160 at 60 Hz. No AudioNimbus or native-loader errors
+  appeared. The screenshot was reviewed; the only runtime asset error was the existing
+  missing generated `assets/generated/mudflat.glb` preview mesh.
 - The AudioNimbus live-emitter Firewheel path rendered 32 blocks at both 44.1 and
   48 kHz under `assert_no_alloc`; all samples were finite and no callback allocations
   were recorded. In this optimized offline harness, per-block timing was:
