@@ -26,8 +26,10 @@ voice budget, none of which Bevy 0.20 or Firewheel provide out of the box. Resea
   audible emitters, cheap panning to the next tier, and the rest go silent, with
   distance cues, a per-emitter hearing radius, raycast occlusion, and a speaker
   fallback.
-- The HRTF node is vendored from `firewheel-ircam-hrtf` and ported to Firewheel 0.14,
-  because the published crate targets Firewheel 0.12.
+- AudioNimbus over Steam Audio is the chosen spatial/environmental audio engine,
+  subject to resolving SDK packaging and integration snags as they arise. Use its
+  standalone API behind `stubby_audio`, with a pinned IPP-free source-built native SDK;
+  keep Firewheel for the audio device, graph, and clock.
 
 ## Capabilities
 
@@ -51,8 +53,11 @@ voice budget, none of which Bevy 0.20 or Firewheel provide out of the box. Resea
 - `crates/stubby_audio`: new `rack` module (the engine and module trait), a
   `RackNode` Firewheel host, a `spatial` module (emitters, tiers, occlusion inputs),
   and rewritten `signal` constants. Existing modules are ported to the rack trait.
-- Dependencies: `hrtf` 0.8.1 (Fyrox's HRTF DSP); Firewheel feature `glam-32`; a
-  vendored HRTF node with its MIT/Apache notice.
+- Dependencies: AudioNimbus (MIT/Apache wrapper) plus a pinned Steam Audio 4.8.1
+  native SDK build and its audited permissive dependencies; do not enable build-time
+  opaque binary downloads. The Firewheel `glam-32` feature and vendored HRTF node are
+  no longer the selected spatialization path unless an AudioNimbus compatibility gap
+  is demonstrated.
 - Bevy side (later): the listener transform and per-emitter occlusion rays are
   supplied by the game each frame.
 - Risk to track: Bevy 0.20 uses glam 0.33 while Firewheel 0.14 and the HRTF node use

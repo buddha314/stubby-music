@@ -10,6 +10,8 @@
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 pub mod clock;
+#[cfg(feature = "audionimbus")]
+pub mod audionimbus_spatial;
 mod engine;
 mod modules;
 mod protocol;

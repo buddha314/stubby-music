@@ -99,20 +99,40 @@ Use 2 × 128 at a 256-frame block (generally, an FFT size of twice the block len
 split into 128-frame slices). **Never use `slice_count = 1`:** it panics inside
 `rustfft` (insufficient scratch buffer in `hrtf` 0.8.1).
 
-**D6 — The HRTF node is vendored and ported.** `firewheel-ircam-hrtf` 0.5.0 (latest)
-depends on Firewheel 0.12. Its node compiled unchanged against Firewheel 0.14 once
-Firewheel's `glam-32` feature was enabled, so the port is trivial. Vendor it
-(MIT/Apache, notice kept), trimmed to the subjects we ship, and offer the listener
-profile as a setting. Drop the vendored copy once upstream catches up.
+**D6 — Use AudioNimbus over Steam Audio as the spatial/environmental audio engine.**
+The user selected AudioNimbus as the default path, continuing until a concrete blocker
+is found. Use the Bevy-free AudioNimbus API behind `stubby_audio`; do not fork its Bevy
+adapter unless an identified ECS feature is needed. Steam Audio owns direct propagation,
+HRTF, material transmission, reflections/reverb, Ambisonics, and supported probe/pathing
+features where they meet the game's needs. Keep Firewheel as device/graph/clock host and
+bridge simulation outputs to its audio processors without blocking the callback. Build
+and package the SDK from a pinned source revision with optional closed components
+disabled; never make Cargo fetch an opaque SDK binary during a normal build.
 
-**D7 — Distance cues and occlusion run in the emitter's own chain.** The HRTF node
-already has distance attenuation and a `muffle_cutoff_hz` low-pass. Hearing radius,
-air absorption and occlusion all drive those two parameters: gain is
-`distance_gain × radius_fade × (1 − 0.6·occlusion)`, and the cutoff is the minimum of
-the distance cutoff and the occlusion cutoff, smoothed over about 100 ms. The panning
-tier gets the same treatment through a one-pole low-pass. Occlusion rays are cast by
-the game (Bevy mesh ray casting) only for voiced emitters, at most `hrtf_voices +
-pan_voices` rays per frame.
+The Linux x86_64 native link, default HRTF initialization, direct effect, and geometry
+occlusion have been verified in an isolated AudioNimbus 0.17.0 / Steam Audio 4.8.1
+probe. The AudioNimbus core demo documents a Firewheel-backed audio graph and async
+direct/reflection/reverb output consumption. This is a direction decision, not proof of
+all effects or target platforms. Replace D6's former vendored IRCAM HRTF node only after
+AudioNimbus's binaural effect is hosted in Firewheel and the SDK artifact path is
+reproducible. Do not retain parallel custom HRTF DSP without a measured gap.
+
+The initial Firewheel node adapter buffers arbitrary callback lengths into fixed-size
+AudioNimbus blocks. It adds one configured block of latency (about 5.33 ms at 256
+frames/48 kHz); include this in source localization and interaction listening checks.
+The Firewheel node compiles and a standalone processor renders finite directional
+stereo on Linux, but live `Engine` routing, callback allocation guards, runtime device
+rate changes, and CPU cost are still open.
+
+**D7 — Let AudioNimbus/Steam Audio calculate environmental propagation.** Source and
+listener transforms plus acoustic scene geometry/materials are supplied outside the
+audio callback. Direct outputs (including distance, air absorption, directivity,
+occlusion and transmission when configured) and indirect outputs (reflections/reverb,
+and later pathing where useful) are transferred into Firewheel processors. Game hearing
+radius and emitter budgeting remain game policy. Do not also apply a duplicate custom
+occlusion ray and hand-tuned low-pass when the native simulation supplies the same
+result; retain narrow adapters only for unsupported policy or authoring needs. Keep
+speaker panning fallback and smoothing where needed for stable controls.
 
 **D8 — Control data flows back without locks.** Lights and meters are `f32` atomics
 (stored as bits), smoothed in the rack and read by the game at frame rate. Scopes are
@@ -149,10 +169,14 @@ Archive `add-audio-engine` first, then turn these notes into MODIFIED deltas her
 - [glam split: Bevy 0.20 uses glam 0.33, Firewheel 0.14 and the HRTF node use 0.32
   (Firewheel #144)] → only `stubby_audio` touches glam 0.32 types; the Bevy side
   passes plain `[f32; 3]` positions.
-- [Vendored HRTF code drifts from upstream] → keep the diff minimal and documented;
-  re-check upstream at each Firewheel bump.
-- [`hrtf` 0.8.1 panics with `slice_count = 1`] → never configure it; assert in
-  config validation.
+- [Native Steam Audio SDK complicates FOSS packaging] → pin the source tag and
+  permissive dependency revisions, build the minimal IPP-free SDK in controlled CI,
+  audit each platform artifact and notice set, and test runtime loader behavior.
+- [Simulation results can be stale while geometry or emitters move] → publish snapshots
+  asynchronously with timestamps; never block or wait in the Firewheel callback.
+- [AudioNimbus API or native SDK update breaks the pinned version pairing] → pin
+  AudioNimbus and Steam Audio together; update only with an isolated native-link and
+  effect-render probe.
 
 ## Migration Plan
 
@@ -167,15 +191,11 @@ Rollback: the Firewheel-node core is in git history on `audio-engine-core`.
 
 ## Open Questions
 
-- **Host: Firewheel node or our own `cpal` host?** (task 0.1) Once the rack exists,
-  Firewheel's dynamic graph is no longer needed. What remains (rack → spatial voices
-  → buses → device) is a fixed pipeline. Our own host on `cpal` would remove bug #145,
-  make the engine `Send`, put `assert_no_alloc` on the live callback, and end the glam
-  split. It costs device-loss recovery and running at the device's rate, roughly 1–2k
-  lines. HRTF would then come straight from the `hrtf` crate, not the Firewheel node.
-  Staged path: a `Host` trait, an offline host first (the 18 engine tests become
-  parity tests), then the live `cpal` host, then drop Firewheel. Recommended, not yet
-  decided.
+- **Resolved host decision (0.1): retain Firewheel as the device, graph, and clock host.**
+  AudioNimbus supplies spatial/environmental simulation and effects within the existing
+  engine boundary. Its asynchronous simulation output is handed to Firewheel processors;
+  no simulation, waits, or scene mutation may run on the callback. Revisit a native
+  `cpal` host only if a measured Firewheel limitation blocks this architecture.
 
 - Which emitter does a module expose by default (its main output, or an explicit
   "speaker" module)? Leaning towards: VCOs, VCAs and mixers emit by default; utilities

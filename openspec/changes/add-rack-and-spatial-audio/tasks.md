@@ -33,7 +33,7 @@ that module to the rack in 2.6, along with the others.
 
 ## 0. Decisions
 
-- [ ] 0.1 Host the rack in a Firewheel node (D2) or in our own `cpal` host; record the choice in design.md and update D2 and task 2.4
+- [x] 0.1 Retain Firewheel as host; spatial/environmental simulation from AudioNimbus is transferred asynchronously to Firewheel audio processors; revisit a custom `cpal` host only if measured constraints require it
 
 ## 1. Spike (done)
 
@@ -66,17 +66,22 @@ Machine voices already pan through `Command::SetEmitter` on Firewheel's basic sp
 a hearing radius (`add-localized-machine-voices`). This section replaces that with HRTF, voice
 budgets and occlusion; bug clicks still have a distance-only fade.
 
-- [ ] 4.1 Vendor the HRTF node (Irc1040 plus profile selection) with its license notice; FFT 2×128; reject `slice_count = 1`
+- [ ] 4.0 Provision Steam Audio 4.8.1 from pinned source with the minimal IPP-free configuration; make clean offline Linux x86_64 linking/runtime loading reproducible and record the exact component licenses/artifact hashes (claimed: Codex). An isolated source build and native probe work, but there is not yet a repo build/package path.
+- [x] 4.1a Add the optional `stubby_audio` AudioNimbus feature and reusable binaural processor using caller-owned buffers; feature compilation and a Linux x86_64 native directional-render probe pass. Callback allocation and CPU cost remain unverified.
+- [x] 4.1b Add a Firewheel mono-to-binaural AudioNode with shared HRTF/context, preallocated per-processor buffers, and a fixed-block adapter for variable Firewheel callbacks. The adapter adds one configured AudioNimbus block of latency.
+- [ ] 4.1c Route live `Engine` emitters through AudioNimbus nodes; validate sample-rate/device restart handling, callback allocation, block latency, and CPU cost. Remove the vendored IRCAM HRTF implementation unless a measured gap requires it (claimed: Codex)
 - [ ] 4.2 Emitter registry: module output, world position, hearing radius
 - [ ] 4.3 Preallocated HRTF and pan voice pools; routing stems to voices
 - [ ] 4.4 Audibility ranking with hysteresis; 20 ms crossfade on tier change
-- [ ] 4.5 Distance gain, radius fade-out, air-absorption low-pass
-- [ ] 4.6 Occlusion factor input → cutoff and gain, smoothed 100 ms
+- [ ] 4.5 Use AudioNimbus direct simulation/effects for distance gain, air absorption and directivity; retain game hearing-radius fade and only add smoothing needed to prevent audible discontinuities
+- [ ] 4.6 Feed geometry/material-based occlusion and transmission simulation to the direct effect; use game raycasts only as an interim fallback or for a demonstrated missing feature
 - [ ] 4.7 Listener transform input; speaker fallback (HRTF off)
-- [ ] 4.8 Spatial budget benchmark: 16 HRTF + 32 pan, moving, < 0.8 ms mean
+- [ ] 4.8 Add reflection/reverb processing and listener-centric environmental buses; run simulation asynchronously and transfer latest results without callback waits
+- [ ] 4.9 Assess Ambisonic processing, baked reflection probes, and pathing; implement the features useful to this game and document concrete exclusions
+- [ ] 4.10 Spatial budget benchmark: 16 HRTF + 32 pan, moving, < 0.8 ms mean; separately record reflection worker CPU/memory and staleness
 
 ## 5. Validation
 
-- [ ] 5.1 Run both benchmarks on `breq` (laptop) and record results here
+- [ ] 5.1 Run rack and spatial benchmarks on `breq` (laptop) and record results here
 - [ ] 5.2 Listening test: find a hidden Square VCO by ear with headphones, then on speakers
 - [ ] 5.3 Reconcile with `add-audio-engine` before archiving either (design.md)

@@ -38,6 +38,23 @@ cargo run --release -p stubby_audio --example play      # listen on the default 
 On Linux, building needs the ALSA headers (`alsa-lib-devel` on Fedora,
 `libasound2-dev` on Debian/Ubuntu).
 
+### AudioNimbus spatial effects (in progress)
+
+The optional `audionimbus` Cargo feature enables the AudioNimbus/Steam Audio adapter:
+
+```sh
+STEAMAUDIO_LIB_DIR=/path/to/steam-audio/lib/linux-x64 cargo build -p stubby_audio --features audionimbus
+```
+
+The native Steam Audio 4.8.1 library must be built or provisioned separately and
+available to the runtime loader. Use a source-built minimal configuration with IPP
+disabled; do not enable AudioNimbus `auto-install` in reproducible or offline builds.
+`cargo check` validates Rust code but does not link the native library. Windows and
+macOS packaging, the repository's repeatable SDK build, and routing the Firewheel node
+through the live engine's emitter registry are still in progress. The node adapter
+buffers fixed AudioNimbus blocks and adds one block of latency. The feature is optional
+and disabled by default until those gates are complete.
+
 Rules for code that runs on the audio thread (no allocation, no locks, no panics) are
 in the repo's `AGENTS.md`. The crate denies `unwrap`, `expect` and `panic!`.
 
