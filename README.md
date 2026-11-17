@@ -22,8 +22,9 @@ dusty horizon and slate zenith; the cubemap also supplies filtered environment l
 
 This is the initial art-study scene: a fixed terrain area roughly 216 m wide,
 grounded first-person movement, haze and distant mountains. Streaming, sandstorm particles,
-mood transitions, discovery objects and spatial audio are tracked in the opening proposal
-and are not implemented yet.
+mood transitions and discovery objects are tracked in the opening proposal and are not
+implemented yet. AudioNimbus spatial audio is available as an opt-in development build;
+the default command above does not enable it.
 
 To save a preview after shader warmup, append
 `--screenshot=/tmp/stubby-desert-preview.png` to the game arguments.
@@ -35,6 +36,24 @@ The audio engine is `crates/stubby_audio`; it has no Bevy dependency. One shared
 audio thread drives the lightning bugs’ clocks and short click patches. The opening
 is silent until a bug is nearby. A patched burbler's voice pans from the nearest point
 of the burbler or its streams and fades out at its hearing radius. For a test patch, add `--audio-demo` or press F8.
+
+The default game run uses Firewheel's basic spatial panner. To try the optional
+AudioNimbus/Steam Audio HRTF and direct-propagation path, run the Jackdaw game with
+the `spatial-audio` feature and the locally built native SDK:
+
+```sh
+STEAMAUDIO_LIB_DIR="$(tools/build_steam_audio_sdk.sh)" \
+  cargo run -p stubby_jackdaw --features dev,spatial-audio -- --audio-demo
+```
+
+The SDK helper uses its local cache and rebuilds only when its pinned inputs change;
+ordinary builds do not invoke it. `--audio-demo` intentionally sustains a 110 Hz
+square-wave tone alongside clock blips, so the low hum is expected. The direct path
+supports distance, air absorption, geometry occlusion and material transmission.
+Reflections/reverb, authored cave or building validation, live device-restart handling,
+and multi-emitter budgets remain in progress. Details and evidence:
+[`docs/audio/pre-level-validation.md`](docs/audio/pre-level-validation.md).
+
 To hear the engine alone on the default output device:
 
 ```sh
