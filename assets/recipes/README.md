@@ -12,7 +12,7 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 | `mines.json` | Infinite sources and the resource they produce: `scrub_oak`, `mudpit_burbler` |
 | `recipes.json` | Inputs → outputs. Empty: no production recipe is designed yet |
 | `buildables.json` | What the player builds in the world and its item cost per one built: `stream_segment` (6 `reed`) |
-| `goals.json` | What the hub tells the player to do next. Chores are met by a `condition` (e.g. `machine_configured`), other goals by `requires` (items delivered). Kept in the order the hub offers them |
+| `goals.json` | What the hub tells the player to do next (format 2). A `major` goal is a set of `minor` steps (`part_of` it), done in file order; it completes with its last step and has no cost of its own. A step is met by a `condition` (`machine_configured`, `tree_watered`, `tree_grown` with a bloom `level`, `item_held` with a `quantity`) or by `requires` (items delivered). Majors open in file order, or after their `after` |
 | `start.json` | The starter inventory a new player gets: 10 patch cables |
 | `air.json` | Foliage that cleans the air: which placed assets, how far (`radius_m`), how strongly (`strength`), and what their cleaning follows (`growth`, `water_or_light`, `light`) |
 | `migrations.json` | Every renamed or removed ID, so saves survive the change |

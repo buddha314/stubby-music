@@ -226,12 +226,17 @@ impl Rules {
             (START, start.format),
             (AIR, air.format),
         ] {
-            if format != FORMAT {
+            let reads = if file == GOALS {
+                crate::goals::GOALS_FORMAT
+            } else {
+                FORMAT
+            };
+            if format != reads {
                 errors.push(RulesError::new(
                     file,
                     "",
                     "format",
-                    format!("format {format}, but this build reads format {FORMAT}"),
+                    format!("format {format}, but this build reads format {reads}"),
                 ));
             }
         }

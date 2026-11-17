@@ -1,21 +1,26 @@
 //! The goals hub, upper right (add-inventory-and-goals-hud 2.5, goals-hub spec).
 //!
-//! Laid out as Satisfactory's HUD, in our colours: the goal tracker is a translucent
-//! band per goal (Satisfactory's `Objective:` phase above its `Milestone:`), a centred
-//! `Label: Name` header over a thin rule; under it, each item the goal needs as a
-//! To-Do List row: name and `paid + held / required` over a thin bar, the item's tile at
-//! the right end, turned into a tick when the item is covered. The pinned recipes are
-//! the To-Do List below it: a header strip, each recipe with its count, a rule, and the
-//! same item rows for their totals.
+//! Laid out as Satisfactory's HUD, in our colours: the goal tracker is two translucent
+//! bands, Satisfactory's `Objective:` phase above its `Milestone:`. Ours are the active
+//! major goal, with its steps done as a bar (`2 / 5`), above its active step
+//! (sync-major-minor-milestones). Each band is a centred `Label: Name` header over a
+//! thin rule. Under the step, each item it needs is a To-Do List row: name and
+//! `paid + held / required` over a thin bar, the item's tile at the right end, turned
+//! into a tick when the item is covered; a step met by a condition shows its one line
+//! of description instead. A completed goal shows `Complete: <name>` for a few seconds.
+//! The pinned recipes are the To-Do List below: a header strip, each recipe with its
+//! count, a rule, and the same item rows for their totals.
 //!
 //! The hub reads `Goals` and `PlayerInventory` from the crafting plugin and names items
 //! from `ItemNames`; it never changes either. It is rebuilt only when what it shows
 //! changes, never every frame, and hidden while a screen is open.
 use bevy::prelude::*;
 use stubby_core::{ItemNames, ScreenMode};
-use stubby_recipes::{GoalProgress, Horizon, Inventory, ItemProgress, ProgressState, Rules};
+use stubby_recipes::{
+    Condition, GoalOutcome, GoalProgress, Inventory, ItemProgress, ProgressState, Rules,
+};
 
-use super::recipes_plugin::{Goals, PlayerInventory};
+use super::recipes_plugin::{GoalReported, Goals, PlayerInventory};
 
 /// Satisfactory's tracker is a see-through band, not a framed window.
 const BAND: Color = Color::srgba(0.035, 0.033, 0.03, 0.55);
@@ -27,6 +32,8 @@ const TRACK: Color = Color::srgba(1., 1., 1., 0.14);
 /// The signal amber (style guide), the one accent: labels, rules and progress.
 const AMBER: Color = Color::srgb(1., 0.7, 0.31);
 const WIDTH: f32 = 320.;
+/// How long `Complete: <name>` stays up (the Godot goal bar's 4 s).
+const NOTICE_SECONDS: f32 = 4.;
 const TILE_SIZE: f32 = 34.;
 
 pub struct GoalsHubPlugin;
@@ -43,6 +50,9 @@ struct HubRoot;
 /// What the hub shows. The hub is rebuilt when this changes.
 #[derive(Debug, Default, PartialEq)]
 struct HubView {
+    /// `Complete: <name>` while it shows.
+    notice: Option<String>,
+    /// The active major goal, then its active step.
     goals: Vec<GoalView>,
     /// Pinned recipes by name, with their counts.
     pinned: Vec<(String, u32)>,
@@ -52,10 +62,13 @@ struct HubView {
 
 #[derive(Debug, PartialEq)]
 struct GoalView {
-    horizon: Horizon,
+    label: &'static str,
     name: String,
+    /// Shown when there are no item rows: a step met by a world condition.
     description: String,
-    /// Empty for a goal met by a condition (a chore).
+    /// A major goal's steps: (complete, total).
+    steps: Option<(u32, u32)>,
+    /// What a step needs: delivered items, or items to hold.
     items: Vec<ItemRow>,
 }
 
@@ -77,29 +90,44 @@ fn hub_view(
         name: names.name(item),
         progress,
     };
-    let goals = [Horizon::Long, Horizon::Short]
-        .into_iter()
-        .filter_map(|horizon| progress.active_goal(rules, horizon))
-        .map(|goal| {
+    let mut goals = Vec::new();
+    if let Some(major) = progress.active_major(rules) {
+        let steps: Vec<_> = progress.steps(rules, major).collect();
+        let done = steps
+            .iter()
+            .filter(|step| progress.is_complete(&step.id))
+            .count();
+        goals.push(GoalView {
+            label: "Goal: ",
+            name: major.name.clone(),
+            description: String::new(),
+            steps: Some((done as u32, steps.len() as u32)),
+            items: vec![],
+        });
+        if let Some(step) = progress.active_step(rules, major) {
             let mut items: Vec<&str> = Vec::new();
-            for stack in &goal.requires {
+            for stack in &step.requires {
                 if !items.contains(&stack.item.as_str()) {
                     items.push(&stack.item);
                 }
             }
-            GoalView {
-                horizon: goal.horizon,
-                name: goal.name.clone(),
-                description: goal.description.clone(),
+            if let Some(Condition::ItemHeld { item, .. }) = &step.condition {
+                items.push(item);
+            }
+            goals.push(GoalView {
+                label: "Step: ",
+                name: step.name.clone(),
+                description: step.description.clone(),
+                steps: None,
                 items: items
                     .into_iter()
                     .filter_map(|item| {
-                        Some(row(item, progress.item_progress(goal, item, inventory)?))
+                        Some(row(item, progress.item_progress(step, item, inventory)?))
                     })
                     .collect(),
-            }
-        })
-        .collect();
+            });
+        }
+    }
     let pinned = progress
         .pins()
         .iter()
@@ -126,6 +154,7 @@ fn hub_view(
         })
         .collect();
     HubView {
+        notice: None,
         goals,
         pinned,
         pins,
@@ -200,25 +229,62 @@ fn show(screens: Option<Res<ScreenMode>>, mut roots: Query<&mut Visibility, With
     }
 }
 
+#[allow(clippy::too_many_arguments)] // The hub's sources, its notice clock and its root.
 fn fill(
     mut commands: Commands,
     goals: Option<Res<Goals>>,
     player: Option<Res<PlayerInventory>>,
     names: Option<Res<ItemNames>>,
     server: Option<Res<AssetServer>>,
+    time: Option<Res<Time<Real>>>,
+    mut reported: MessageReader<GoalReported>,
+    mut notice: Local<Option<(String, f32)>>,
     mut shown: Local<Option<HubView>>,
     mut roots: Query<(Entity, &mut Node), With<HubRoot>>,
 ) {
     let (Some(goals), Some(player)) = (goals, player) else {
+        reported.clear();
         return;
     };
+    // The last completion of a batch: a major goal's replaces its last step's.
+    let mut notice_changed = false;
+    if let Some(id) = reported
+        .read()
+        .filter_map(|report| match &report.0 {
+            GoalOutcome::GoalCompleted(id) => Some(id),
+            _ => None,
+        })
+        .last()
+    {
+        let name = goals
+            .rules
+            .goals
+            .iter()
+            .find(|goal| &goal.id == id)
+            .map_or_else(|| id.clone(), |goal| goal.name.clone());
+        *notice = Some((name, NOTICE_SECONDS));
+        notice_changed = true;
+    }
+    if let Some((_, left)) = notice.as_mut() {
+        *left -= time.as_ref().map_or(0., |time| time.delta_secs());
+        if *left <= 0. {
+            *notice = None;
+            notice_changed = true;
+        }
+    }
     let names_changed = names.as_ref().is_some_and(|names| names.is_changed());
-    if shown.is_some() && !goals.is_changed() && !player.is_changed() && !names_changed {
+    if shown.is_some()
+        && !goals.is_changed()
+        && !player.is_changed()
+        && !names_changed
+        && !notice_changed
+    {
         return;
     }
     let empty = ItemNames::default();
     let names = names.as_deref().unwrap_or(&empty);
-    let view = hub_view(&goals.rules, &goals.progress, &player.items, names);
+    let mut view = hub_view(&goals.rules, &goals.progress, &player.items, names);
+    view.notice = notice.as_ref().map(|(name, _)| name.clone());
     if shown.as_ref() == Some(&view) {
         return;
     }
@@ -226,7 +292,7 @@ fn fill(
         return;
     };
     // After the last authored goal and with nothing pinned the hub goes away; play goes on.
-    node.display = if view.goals.is_empty() && view.pins.is_empty() {
+    node.display = if view.goals.is_empty() && view.pins.is_empty() && view.notice.is_none() {
         Display::None
     } else {
         Display::Flex
@@ -236,6 +302,24 @@ fn fill(
         .entity(root)
         .despawn_related::<Children>()
         .with_children(|hub| {
+            if let Some(name) = &view.notice {
+                hub.spawn((
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        padding: UiRect::vertical(px(6)),
+                        ..default()
+                    },
+                    BackgroundColor(STRIP),
+                    Pickable::IGNORE,
+                ))
+                .with_children(|strip| {
+                    strip.spawn(text("Complete: ", 14., AMBER)).with_child((
+                        TextSpan::new(name.clone()),
+                        font(15.),
+                        TextColor(INK),
+                    ));
+                });
+            }
             for goal in &view.goals {
                 goal_band(hub, server, goal);
             }
@@ -246,17 +330,14 @@ fn fill(
     *shown = Some(view);
 }
 
-/// One goal: `Label: Name` centred over a rule, then its item rows. A chore (a goal met
-/// by a condition) has no items, so its one line of description says what to do.
+/// One goal: `Label: Name` centred over a rule; then a major goal's steps bar, or a
+/// step's item rows. A step with no items shows its one line of description.
 fn goal_band(
     parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
     server: Option<&AssetServer>,
     goal: &GoalView,
 ) {
-    let label = match goal.horizon {
-        Horizon::Long => "Long-term goal: ",
-        Horizon::Short => "Goal: ",
-    };
+    let label = goal.label;
     parent
         .spawn((
             Node {
@@ -282,7 +363,10 @@ fn goal_band(
             ))
             .with_child((TextSpan::new(goal.name.clone()), font(15.), TextColor(INK)));
             rule(band, AMBER.with_alpha(0.8));
-            if goal.items.is_empty() && !goal.description.is_empty() {
+            if let Some((done, total)) = goal.steps {
+                steps_bar(band, done, total);
+            }
+            if goal.steps.is_none() && goal.items.is_empty() && !goal.description.is_empty() {
                 band.spawn((
                     text(goal.description.clone(), 13., MUTED),
                     TextLayout::justify(Justify::Center),
@@ -292,6 +376,40 @@ fn goal_band(
                 item_row(band, server, row);
             }
         });
+}
+
+/// A major goal's steps done, as a row: `Steps` and `done / total` over a bar.
+fn steps_bar(parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands, done: u32, total: u32) {
+    parent.spawn(column(4.)).with_children(|body| {
+        body.spawn((
+            Node {
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            Pickable::IGNORE,
+        ))
+        .with_children(|label| {
+            label.spawn(text("Steps", 14., MUTED));
+            label.spawn(text(format!("{done} / {total}"), 14., INK));
+        });
+        body.spawn((
+            Node {
+                height: px(4),
+                ..default()
+            },
+            BackgroundColor(TRACK),
+            Pickable::IGNORE,
+        ))
+        .with_child((
+            Node {
+                width: percent(done as f32 / total.max(1) as f32 * 100.),
+                height: percent(100),
+                ..default()
+            },
+            BackgroundColor(AMBER),
+            Pickable::IGNORE,
+        ));
+    });
 }
 
 /// The pins, as Satisfactory's To-Do List: a header strip, each pinned recipe and its
@@ -481,51 +599,90 @@ fn item_tile(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use stubby_recipes::{GoalDefinition, Stack};
+    use stubby_recipes::{GoalDefinition, GoalEvent, RecipeBook, Scale, Stack};
 
+    /// A fixture, never the shipped goal list: "Camp" is "Beat" (the burbler sounds),
+    /// then "Reeds" (hold 4 reeds).
     fn rules() -> Rules {
+        let camp = GoalDefinition {
+            id: "camp".into(),
+            name: "Camp".into(),
+            description: String::new(),
+            scale: Scale::Major,
+            part_of: None,
+            requires: vec![],
+            condition: None,
+            after: vec![],
+            unlocks: vec![],
+        };
+        let step = |id: &str, condition| GoalDefinition {
+            id: id.into(),
+            name: id.into(),
+            description: format!("{id} description"),
+            scale: Scale::Minor,
+            part_of: Some("camp".into()),
+            condition: Some(condition),
+            ..camp.clone()
+        };
         let mut rules = stubby_recipes::shipped_rules().unwrap();
-        rules.goals.insert(
-            0,
-            GoalDefinition {
-                id: "hand_in".into(),
-                name: "Hand in".into(),
-                description: String::new(),
-                horizon: Horizon::Long,
-                requires: vec![Stack {
-                    item: "square_wave".into(),
+        rules.goals = vec![
+            camp.clone(),
+            step(
+                "Beat",
+                Condition::MachineConfigured {
+                    machine: "mudpit_burbler".into(),
+                },
+            ),
+            step(
+                "Reeds",
+                Condition::ItemHeld {
+                    item: "reed".into(),
                     quantity: 4,
-                }],
-                condition: None,
-                after: vec![],
-                unlocks: vec![],
-            },
-        );
+                },
+            ),
+        ];
         rules
     }
 
+    fn view(progress: &GoalProgress, inventory: &Inventory) -> HubView {
+        hub_view(&rules(), progress, inventory, &ItemNames::default())
+    }
+
     #[test]
-    fn the_hub_shows_the_active_goals_and_their_progress() {
+    fn the_hub_shows_the_major_goal_its_steps_and_the_active_step() {
         let rules = rules();
+        let mut progress = GoalProgress::default();
         let mut inventory = Inventory::default();
+        let first = view(&progress, &inventory);
+        assert_eq!(first.goals[0].name, "Camp");
+        assert_eq!(first.goals[0].steps, Some((0, 2)));
+        assert_eq!(first.goals[1].name, "Beat");
+        assert!(
+            first.goals[1].items.is_empty(),
+            "a condition step shows its description"
+        );
+
+        stubby_recipes::apply_goal_event(
+            &rules,
+            &mut progress,
+            &mut inventory,
+            &mut RecipeBook::default(),
+            GoalEvent::ConditionMet(Condition::MachineConfigured {
+                machine: "mudpit_burbler".into(),
+            }),
+        )
+        .unwrap();
         inventory
             .grant(&[Stack {
-                item: "square_wave".into(),
+                item: "reed".into(),
                 quantity: 1,
             }])
             .unwrap();
-        let view = hub_view(
-            &rules,
-            &GoalProgress::default(),
-            &inventory,
-            &ItemNames::default(),
-        );
-        let names: Vec<_> = view.goals.iter().map(|g| g.name.as_str()).collect();
-        // Long first; "Water the tree" is not open yet, so it is not shown.
-        assert_eq!(names, ["Hand in", "Build a heartbeat"]);
-        let row = &view.goals[0].items[0];
-        assert_eq!((row.progress.held, row.progress.required), (1, 4));
-        assert_eq!(row.progress.state, ProgressState::Low);
-        assert!(view.goals[1].items.is_empty());
+        let second = view(&progress, &inventory);
+        assert_eq!(second.goals[0].steps, Some((1, 2)));
+        assert_eq!(second.goals[1].name, "Reeds");
+        let reeds = &second.goals[1].items[0];
+        assert_eq!((reeds.progress.held, reeds.progress.required), (1, 4));
+        assert_eq!(reeds.progress.state, ProgressState::Low);
     }
 }

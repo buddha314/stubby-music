@@ -4,8 +4,8 @@ pub mod goals;
 pub mod rules;
 mod source;
 pub use goals::{
-    Condition, GoalDefinition, GoalError, GoalEvent, GoalOutcome, GoalProgress, Horizon,
-    ItemProgress, Pins, ProgressState, apply as apply_goal_event,
+    Condition, GoalDefinition, GoalError, GoalEvent, GoalOutcome, GoalProgress, GrowthLevel,
+    ItemProgress, Pins, ProgressState, Scale, apply as apply_goal_event,
 };
 pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog, shipped_rules};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};

@@ -1,29 +1,70 @@
 {
   "$schema": "schema/goals.schema.json",
-  "format": 1,
+  "format": 2,
   "goals": [
+    {
+      "id": "build_a_camp",
+      "name": "Build a camp",
+      "description": "The wind takes everything. Grow a windbreak, then light a fire in its shelter.",
+      "scale": "major"
+    },
+    {
+      "id": "catch_a_spark",
+      "name": "Catch a spark",
+      "description": "Hold the field recorder up to a lightning bug and collect its square wave.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
+      "condition": {
+        "kind": "item_held",
+        "item": "square_wave",
+        "quantity": 1
+      }
+    },
     {
       "id": "build_a_heartbeat",
       "name": "Build a heartbeat",
-      "description": "Configure the mudpit burbler: patch both cables so it sounds on every beat.",
-      "horizon": "short",
+      "description": "Patch both cables so the burbler sounds on every beat.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
       "condition": {
         "kind": "machine_configured",
         "machine": "mudpit_burbler"
       }
     },
     {
+      "id": "cut_reeds",
+      "name": "Cut reeds",
+      "description": "Gather twelve reeds for a stream.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
+      "condition": {
+        "kind": "item_held",
+        "item": "reed",
+        "quantity": 12
+      }
+    },
+    {
       "id": "water_the_tree",
       "name": "Water the tree",
       "description": "Lead the burbler's stream to a scrub oak.",
-      "horizon": "short",
+      "scale": "minor",
+      "part_of": "build_a_camp",
       "condition": {
         "kind": "tree_watered",
         "mine": "scrub_oak"
-      },
-      "after": [
-        "build_a_heartbeat"
-      ]
+      }
+    },
+    {
+      "id": "stop_the_wind",
+      "name": "Stop the wind",
+      "description": "Keep the water flowing until the oak buds and breaks the wind.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
+      "condition": {
+        "kind": "tree_grown",
+        "mine": "scrub_oak",
+        "level": "budding"
+      }
     }
   ]
 }

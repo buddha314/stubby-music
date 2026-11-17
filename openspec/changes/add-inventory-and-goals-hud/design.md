@@ -22,6 +22,14 @@ the To-Do List totals pinned recipes with progress bars; Tab opens the inventory
 ## Decisions
 
 ### D1. Goals are item lists, in two horizons
+**Superseded (2026-11-17, `sync-major-minor-milestones`):** the two independent
+horizons became the Godot game's hierarchy. `goals.json` format 2 has `scale:
+major|minor` and `part_of`; a major goal is its ordered minor steps and completes with
+the last one; conditions are state (`ConditionMet` / `ConditionCleared`, `item_held`
+read from the inventory) and every open step is checked again on each change. The hub
+shows the active major goal with its steps done, above its active step. The text below
+is the original decision.
+
 A goal is `{ id, name, horizon: long|short, requires: [Stack], after: [goal id],
 unlocks: [item id] }`. `requires` uses the catalog's `Stack`, so a goal is always
 "make these". The hub shows one **active long-term goal** and one **active
@@ -89,8 +97,9 @@ Goal logic is one Bevy-free function, `apply(&Rules, &mut GoalProgress, &mut Inv
 &mut RecipeBook, GoalEvent) -> Result<Vec<GoalOutcome>, GoalError>`: no clock, RNG or
 I/O. Inventory, goal progress and recipe-book changes are staged and committed
 together, so a failed delivery changes none of them. Events are `Deliver(goal)`,
-`ConditionMet(condition)`, `Crafted(recipe)`, `Choose(horizon, optional_goal)`, and
-`Pin(recipe, count)` (zero removes the pin). Outcomes are `Paid{goal, item, n}`,
+`ConditionMet(condition)`, `ConditionCleared(condition)`, `Refresh` (the inventory
+changed), `Crafted(recipe)`, `Choose(optional_major)`, and `Pin(recipe, count)` (zero
+removes the pin). Outcomes are `Paid{goal, item, n}`,
 `GoalCompleted(goal)` (emitted exactly once), `Opened(goal)`, `Discovered(item)`,
 `PinDone(recipe)`, and `NeedItems{goal, items}` when a delivery has nothing to accept.
 Duplicate events are harmless: completion is latched and paid amounts only rise.
