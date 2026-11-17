@@ -6,18 +6,17 @@
 //! published by [`Engine::flush`]. Events come back over one `rtrb` ring per clock.
 
 #[cfg(feature = "audionimbus")]
-use crate::audionimbus_spatial::{AudioNimbusBinauralNode, AudioNimbusSpatialContext};
+use crate::audionimbus_spatial::{
+    AudioNimbusBinauralNode, AudioNimbusDirectSimulation, AudioNimbusSpatialContext,
+    DirectEffectParamsShared, DirectEmitterInput,
+};
 use crate::modules::{
     ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
     VcoConfig, VcoNode, Waveform,
 };
 use crate::protocol::{Command, EngineError, Event, ModuleId, ModuleKind, PortRef, SampleId};
 use crate::random_clock::RandomClockNode;
-#[cfg(feature = "audionimbus")]
-use arc_swap::ArcSwap;
 use audioadapter_buffers::direct::InterleavedSlice;
-#[cfg(feature = "audionimbus")]
-use audionimbus::DirectEffectParams;
 use firewheel::nodes::spatial_basic::SpatialBasicNode;
 use firewheel::{
     ActivateInfo, FirewheelConfig, FirewheelContext,
@@ -100,6 +99,8 @@ pub struct Engine {
     emitters: HashMap<PortRef, Emitter>,
     #[cfg(feature = "audionimbus")]
     audionimbus_spatial: Option<Arc<AudioNimbusSpatialContext>>,
+    #[cfg(feature = "audionimbus")]
+    audionimbus_simulation: Option<AudioNimbusDirectSimulation>,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
@@ -167,6 +168,8 @@ impl Engine {
             emitters: HashMap::new(),
             #[cfg(feature = "audionimbus")]
             audionimbus_spatial: None,
+            #[cfg(feature = "audionimbus")]
+            audionimbus_simulation: None,
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
@@ -229,7 +232,10 @@ impl Engine {
             .ok_or(EngineError::Config("audio stream is not active"))?;
         let spatial = AudioNimbusSpatialContext::new(stream.sample_rate.get(), 256)
             .map_err(|error| EngineError::Device(format!("AudioNimbus initialization: {error}")))?;
+        let simulation = AudioNimbusDirectSimulation::new(stream.sample_rate.get(), 256)
+            .map_err(|error| EngineError::Device(format!("AudioNimbus simulation: {error}")))?;
         self.audionimbus_spatial = Some(Arc::new(spatial));
+        self.audionimbus_simulation = Some(simulation);
         Ok(())
     }
 
@@ -275,6 +281,22 @@ impl Engine {
     ///
     /// On [`EngineError::QueueFull`] the edits stay queued; call again next frame.
     pub fn flush(&mut self) -> Result<(), EngineError> {
+        #[cfg(feature = "audionimbus")]
+        if let Some(simulation) = &mut self.audionimbus_simulation {
+            let inputs = self
+                .emitters
+                .iter()
+                .filter_map(|(&output, emitter)| match &emitter.params {
+                    EmitterParams::AudioNimbus(node) => Some(DirectEmitterInput {
+                        output,
+                        position: node.position(),
+                        params: node.direct_params(),
+                    }),
+                    EmitterParams::Basic(_) => None,
+                })
+                .collect();
+            simulation.publish(inputs);
+        }
         for ((id, param), value) in std::mem::take(&mut self.pending_params) {
             let Some(module) = self.modules.get_mut(&id) else {
                 continue;
@@ -633,6 +655,7 @@ impl Engine {
                 }
                 #[cfg(feature = "audionimbus")]
                 EmitterParams::AudioNimbus(node) => {
+                    node.set_position(offset);
                     node.set_direction(offset);
                     node.set_volume(gain);
                 }
@@ -645,9 +668,10 @@ impl Engine {
         let (node, params) = if let Some(spatial) = &self.audionimbus_spatial {
             let params = AudioNimbusBinauralNode::new(
                 spatial.clone(),
-                Arc::new(ArcSwap::from_pointee(DirectEffectParams::default())),
+                Arc::new(DirectEffectParamsShared::default()),
             );
             params.set_direction(offset);
+            params.set_position(offset);
             params.set_volume(gain);
             let node = self
                 .cx
