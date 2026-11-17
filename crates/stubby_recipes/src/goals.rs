@@ -244,14 +244,11 @@ impl GoalProgress {
         if required == 0 {
             return None;
         }
-        let paid = self.paid(&goal.id, item);
-        let held = inventory.quantity(item);
-        Some(ItemProgress {
-            paid,
-            held,
+        Some(ItemProgress::new(
+            self.paid(&goal.id, item),
+            inventory.quantity(item),
             required,
-            state: progress_state(paid, held, required),
-        })
+        ))
     }
 }
 
@@ -316,6 +313,18 @@ pub struct ItemProgress {
     pub held: u32,
     pub required: u32,
     pub state: ProgressState,
+}
+
+impl ItemProgress {
+    /// Progress toward `required` of an item (a pin's total has nothing paid).
+    pub fn new(paid: u32, held: u32, required: u32) -> Self {
+        Self {
+            paid,
+            held,
+            required,
+            state: progress_state(paid, held, required),
+        }
+    }
 }
 
 fn progress_state(paid: u32, held: u32, required: u32) -> ProgressState {

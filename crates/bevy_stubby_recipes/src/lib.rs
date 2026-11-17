@@ -19,7 +19,8 @@
 //! by the workspace's shared Jackdaw pin; the core never depends on Bevy.
 use bevy::prelude::*;
 use stubby_recipes::{
-    Catalog, HarvestLedger, Inventory, RecipeBook, RecipeError, ResourceTime, SourceObject, Stack,
+    Catalog, GoalEvent, GoalOutcome, GoalProgress, HarvestLedger, Inventory, RecipeBook,
+    RecipeError, ResourceTime, Rules, SourceObject, Stack,
 };
 
 /// Adds the rules catalog, the player's inventory, the request and result messages, and
@@ -51,9 +52,15 @@ impl Plugin for RecipesPlugin {
             ));
             app.insert_resource(RecipeCatalog(catalog));
         }
-        // Foliage that cleans the air (`air.json`, clean-air-by-foliage).
+        // Foliage that cleans the air (`air.json`, clean-air-by-foliage), and the goals.
         if let Ok(rules) = stubby_recipes::shipped_rules() {
-            app.insert_resource(AirRules(rules.air));
+            app.insert_resource(AirRules(rules.air.clone()));
+            if self.catalog.is_none() {
+                app.insert_resource(Goals {
+                    rules,
+                    progress: GoalProgress::default(),
+                });
+            }
         }
         // A new player starts with the shipped starter inventory (`start.json`).
         if self.catalog.is_none() && !app.world().contains_resource::<PlayerInventory>() {
@@ -82,9 +89,11 @@ impl Plugin for RecipesPlugin {
             .add_message::<CraftRequest>()
             .add_message::<CraftCompleted>()
             .add_message::<InventoryFull>()
+            .add_message::<GoalRequest>()
+            .add_message::<GoalReported>()
             .add_systems(
                 Update,
-                (apply_harvests, apply_crafts)
+                (apply_harvests, apply_crafts, apply_goals)
                     .chain()
                     .in_set(RecipesSystems),
             );
@@ -137,6 +146,7 @@ mod reload {
         mut seen: Local<Option<SystemTime>>,
         mut commands: Commands,
         mut reloaded: MessageWriter<RulesReloaded>,
+        goals: Option<ResMut<Goals>>,
     ) {
         let Some(time) = time else { return };
         let dir = dir.map_or_else(default_dir, |dir| dir.0.clone());
@@ -176,7 +186,11 @@ mod reload {
                 .collect(),
         ));
         commands.insert_resource(RecipeCatalog(catalog));
-        commands.insert_resource(AirRules(rules.air));
+        commands.insert_resource(AirRules(rules.air.clone()));
+        // Progress is kept; the goals it refers to are the edited ones.
+        if let Some(mut goals) = goals {
+            goals.rules = rules;
+        }
         reloaded.write(RulesReloaded);
         info!("Rules reloaded from {}", dir.display());
     }
@@ -195,6 +209,24 @@ pub struct PlayerInventory {
     pub book: RecipeBook,
     pub feedback: String,
 }
+
+/// The goals (`goals.json`, with the rules they refer to) and the player's progress on
+/// them. Change it only through [`GoalRequest`], so every change is one atomic event.
+#[derive(Resource)]
+pub struct Goals {
+    pub rules: Rules,
+    pub progress: GoalProgress,
+}
+
+/// Apply a goal event (deliver, a condition met, choose, pin) to the player's progress.
+/// `Crafted` is sent for you on every [`CraftCompleted`].
+#[derive(Message, Clone)]
+pub struct GoalRequest(pub GoalEvent);
+
+/// What a goal event did: an item paid, a goal completed or opened, an unlock, a pin
+/// done, or what a delivery still needs.
+#[derive(Message, Clone)]
+pub struct GoalReported(pub GoalOutcome);
 
 /// Ask to harvest a finite source (a world pickup), at the given game time.
 #[derive(Message, Clone)]
@@ -310,6 +342,35 @@ fn apply_crafts(
     }
 }
 
+fn apply_goals(
+    mut requests: MessageReader<GoalRequest>,
+    mut crafted: MessageReader<CraftCompleted>,
+    goals: Option<ResMut<Goals>>,
+    mut player: ResMut<PlayerInventory>,
+    mut reported: MessageWriter<GoalReported>,
+) {
+    let Some(mut goals) = goals else {
+        requests.clear();
+        crafted.clear();
+        return;
+    };
+    let events: Vec<_> = crafted
+        .read()
+        .map(|craft| GoalEvent::Crafted(craft.recipe.clone()))
+        .chain(requests.read().map(|request| request.0.clone()))
+        .collect();
+    let Goals { rules, progress } = &mut *goals;
+    let PlayerInventory { items, book, .. } = &mut *player;
+    for event in events {
+        match stubby_recipes::apply_goal_event(rules, progress, items, book, event) {
+            Ok(outcomes) => {
+                reported.write_batch(outcomes.into_iter().map(GoalReported));
+            }
+            Err(error) => warn!("Goal event refused: {error}"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -336,6 +397,34 @@ mod tests {
             .drain()
             .collect();
         assert_eq!(collected.len(), 1);
+    }
+
+    #[test]
+    fn a_met_condition_completes_its_chore_once() {
+        let mut app = App::new();
+        app.add_plugins(RecipesPlugin::default());
+        let configured = GoalRequest(GoalEvent::ConditionMet(
+            stubby_recipes::Condition::MachineConfigured {
+                machine: "mudpit_burbler".into(),
+            },
+        ));
+        app.world_mut().write_message(configured.clone());
+        app.update();
+        app.world_mut().write_message(configured);
+        app.update();
+        assert!(
+            app.world()
+                .resource::<Goals>()
+                .progress
+                .is_complete("build_a_heartbeat")
+        );
+        let completed = app
+            .world_mut()
+            .resource_mut::<Messages<GoalReported>>()
+            .drain()
+            .filter(|r| matches!(&r.0, GoalOutcome::GoalCompleted(_)))
+            .count();
+        assert_eq!(completed, 1);
     }
 }
 

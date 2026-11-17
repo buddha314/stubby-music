@@ -14,6 +14,7 @@ mod inventory_screen;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
 pub mod glue;
+mod goals_hub;
 mod prefab_review;
 /// The prefab lifecycle (stubby_world), plus the game's crafting view of placed sources.
 pub mod prefabs {
@@ -58,6 +59,7 @@ impl Plugin for DesertPlugin {
             streams::StreamBuildPlugin::<resources::PlayerInventory>::default(),
             stream_review::StreamReviewPlugin,
             sky_review::SkyReviewPlugin,
+            goals_hub::GoalsHubPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));
         // Dev builds serve Bevy's remote protocol on 127.0.0.1 (CORS open for the rules

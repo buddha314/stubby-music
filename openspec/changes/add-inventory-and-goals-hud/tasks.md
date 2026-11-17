@@ -23,8 +23,8 @@ lands first, so `goals.json` follows its conventions (format, IDs, strict loadin
 - [x] 2.2 One screen mode for overlays (`controls::ScreenMode`; the rack screen joins it when it lands) (design D7), shared with the rack screen (`add-desert-opening` 4.2c, `add-mudpit-burbler` 2.3): cursor free, movement/look off, Escape closes, one screen at a time
 - [x] 2.3 Tab inventory screen (`inventory_screen.rs`; built ahead of the 3.1 mock, at the user's request) (`controls::INVENTORY = KeyCode::Tab`) in Bevy UI with `bevy_ui_widgets` (scroll area), listing items from `PlayerInventory` + `RecipeCatalog`; follow the 3.x mock
 - [x] 2.4 Remove item counts from `update_hud`; keep prompts and feedback
-- [ ] 2.5 Goals hub, upper right: active long-term and short-term goals and pin totals, as `ItemProgress` rows; update on `ResourceCollected`, `CraftCompleted` and delivery, not every frame
-- [ ] 2.5a Report `machine_configured` when a machine's last `configure.cables` patch is made (with `add-mudpit-burbler` 2.5), and `tree_watered` once `add-digging` delivers water to a tree
+- [x] 2.5 Goals hub, upper right (`goals_hub.rs`, under the calendar): active long-term and short-term goals and pin totals, as `ItemProgress` rows; rebuilt only when what it shows changes (the inventory, goal progress or item names), never every frame, and hidden while a screen is open. The plugin owns `Goals` (rules + `GoalProgress`, kept across rules reloads) and applies `GoalRequest` events; `CraftCompleted` feeds `Crafted`
+- [ ] 2.5a Report `machine_configured` when a machine's last `configure.cables` patch is made (done: `glue::report_configured_machines`, from `MachineConfigured` and the machine's `MineNode`), and `tree_watered` once `add-digging` delivers water to a tree (open)
 - [ ] 2.6 `DeliverGoal` message → `GoalProgress::deliver`, with feedback; the trigger waits on 0.1
 - [ ] 2.7 Recipe book (O) as a screen in the same mode: pin/unpin with a count, choose the active goal per horizon
 - [ ] 2.8 Bevy tests for the Tab and screen-mode scenarios in `specs/inventory-screen/spec.md`
