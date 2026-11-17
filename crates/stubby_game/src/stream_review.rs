@@ -44,8 +44,9 @@ mod review {
         mut cameras: Query<&mut Transform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
         outlets: Query<(&AssetPart, &GlobalTransform)>,
         mut inventory: Option<ResMut<bevy_stubby_recipes::PlayerInventory>>,
-        streams: Query<&LaidStream>,
+        streams: Query<(Entity, &LaidStream)>,
         bars: Query<&BarLine>,
+        mut dismantles: MessageWriter<stubby_streams::Dismantle>,
         mut racks: Query<&mut MachineVoice>,
         mut calendar: ResMut<stubby_world::calendar::Calendar>,
     ) {
@@ -57,7 +58,7 @@ mod review {
         dir.y = 0.;
         let dir = dir.normalize_or(Vec3::X);
         let side = dir.cross(Vec3::Y);
-        let times = [4., 5., 5.5, 7., 7.5, 8.5, 9.5, 11., 12., 13.];
+        let times = [4., 5., 5.5, 7., 7.5, 8.5, 9.5, 11., 12., 13., 14., 15.5];
         let t = time.elapsed_secs();
         let Some(&due) = times.get(review.step) else {
             return;
@@ -110,7 +111,7 @@ mod review {
             }
             // Plan on from the new end: 6 reeds left, too few.
             5 => {
-                if let Some(end) = streams.iter().next().map(|s| s.end) {
+                if let Some(end) = streams.iter().next().map(|(_, s)| s.end) {
                     look(
                         &mut camera,
                         end.at - end.dir * 3. + Vec3::Y * 2.2,
@@ -135,6 +136,21 @@ mod review {
                 look(&mut camera, at - dir * 2.5 + Vec3::Y * 2.2, at + dir * 4.);
                 shoot(&mut commands, &review, "5-mouth.png");
             }
+            // F on the first segment: refunded, the rest cut off and quiet, the mouth free.
+            10 => {
+                if let Some((stream, laid)) = streams.iter().find(|(_, s)| s.first == 0) {
+                    dismantles.write(stubby_streams::Dismantle {
+                        stream,
+                        segment: laid.first,
+                    });
+                }
+                look(
+                    &mut camera,
+                    at + dir * 3. - side * 7. + Vec3::Y * 1.7,
+                    at + dir * 4. + side * 2.,
+                );
+            }
+            11 => shoot(&mut commands, &review, "6-dismantled.png"),
             _ => {}
         }
         log(
@@ -150,6 +166,7 @@ mod review {
                     "valid": p.valid, "affordable": p.affordable,
                 })),
                 "streams": streams.iter().count(),
+                "flowing": streams.iter().filter(|(_, s)| s.source.is_some()).count(),
                 "bars": bars.iter().count(),
                 "reeds": inventory.as_ref().map(|i| i.items.quantity("reed")),
             }),

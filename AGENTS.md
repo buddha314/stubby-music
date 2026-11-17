@@ -572,8 +572,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   under the reticle; cost from `buildables.json`. Bar lines ride a sounding burbler's
   streams, from the audio clock. Its voice is heard from the nearest point of the
   burbler or its streams, within `hearing_radius_metres`
-  (`add-localized-machine-voices`). Still to do: the staff's flow and notes on laid
-  streams (2.7), bubbles (2.6), dismantle (F), saving laid streams, collision checks.
+  (`add-localized-machine-voices`). **F dismantles** the aimed segment
+  (`stubby_streams::dismantle`, 2026-11-17): refunds its reeds all or nothing and splits
+  the stream; the part cut off downstream, and anything laid on from it, lies quiet.
+  Still to do: the staff's flow and notes on laid streams (2.7), bubbles (2.6), saving
+  laid streams, collision checks.
   `tools/jackdaw_timed_test.py --streams` runs the script (`--stream-review=<dir>`)
   under the watchdog. **Streams water trees** (`stubby_game::watering`, 2026-11-17): a
   flowing stream within `water_reach_m` (3 m) of a scrub oak waters it, and growth rises

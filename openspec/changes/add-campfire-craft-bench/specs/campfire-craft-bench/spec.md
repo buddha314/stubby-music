@@ -2,8 +2,8 @@
 
 ### Requirement: The camp is a buildable placed unlit
 The camp (a campfire in a ring of four stones with a lean-to open toward it) SHALL be a
-buildable laid with Q from reeds, at the cost its `buildables.json` row sets. It SHALL
-be placed unlit.
+buildable laid with Q from reeds, at the cost its `buildables.json` row sets (25 reeds).
+It SHALL be placed unlit. A lit fire SHALL NOT change air or light quality.
 
 #### Scenario: Building a camp
 - **WHEN** the player places a camp holding at least its reed cost
@@ -43,6 +43,23 @@ the strike's heard instant.
 #### Scenario: Sparks are on the beat
 - **WHEN** a strike is heard
 - **THEN** its sparks appear at that step's stone at the strike's heard instant, not at the frame it was scheduled
+
+### Requirement: The camp's beat comes from nearby water
+The camp SHALL take its clock from the nearest running burbler or flowing stream within
+the reach its profile sets (`clock_reach_m`, 5 m to start), and the reach SHALL be data,
+not code. The fire SHALL burn only while that clock runs.
+
+#### Scenario: No water in reach
+- **WHEN** no running burbler or flowing stream is within the camp's reach
+- **THEN** its sequencer gets no clock, nothing strikes and the fire cannot catch
+
+#### Scenario: The beat stops
+- **WHEN** a burning camp's burbler stops sounding
+- **THEN** the fire dies down to embers, and the `fire_lit` goal stays complete
+
+#### Scenario: Tuning the reach
+- **WHEN** a designer changes `clock_reach_m` in the camp's profile
+- **THEN** the camp takes its beat from water within the new reach, with no code change
 
 ### Requirement: The lit camp is the craft bench
 E at a lit camp SHALL open the crafting screen, laid out as Satisfactory's Craft Bench:

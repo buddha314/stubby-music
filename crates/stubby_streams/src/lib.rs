@@ -6,6 +6,9 @@
 //! it is valid and affordable, and its end becomes the new anchor. Right click drops the
 //! anchor; Escape or Q leaves build mode.
 //!
+//! Outside build mode, F dismantles the aimed segment, refunds it and splits the stream
+//! (`dismantle`).
+//!
 //! Segment and hologram meshes are taken once from their glTFs, baked into the asset's
 //! root space, and bent along the plan per segment (design D4).
 //!
@@ -28,6 +31,9 @@ use stubby_core::ScreenMode;
 use stubby_core::{
     AssetClock, AssetPart, AssetState, HudCamera, LookCapture, MachineVoice, PlacedAsset, Stock,
 };
+
+mod dismantle;
+pub use dismantle::{Dismantle, pick_segment};
 
 const SEGMENT_LENGTH: f32 = 4.0;
 /// How far from a port the aim may be to pick it.
@@ -93,9 +99,13 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                     .chain()
                     .before(stubby_core::CursorCapture),
             )
+            .add_message::<Dismantle>()
             .add_systems(
                 Update,
                 (
+                    dismantle::dismantle_input,
+                    dismantle::apply_dismantles::<S>,
+                    resolve_sources,
                     emit_bars.run_if(resource_exists::<Messages<ClockTick>>),
                     ride_bars,
                     place_voices,
@@ -136,16 +146,24 @@ pub struct Plan {
     pub valid: bool,
 }
 
-/// A laid stream; its far end is a port until another stream is laid from it.
+/// A laid stream: segments `first..=last` of its plan's path. Its far end is a port
+/// until another stream is laid from it. Dismantling a segment splits it into the parts
+/// either side of the gap (`dismantle`), all on the same path.
 #[derive(Component)]
 pub struct LaidStream {
     pub end: Port,
     pub end_used: bool,
     pub end_halo: Vec<Entity>,
     pub path: Path,
-    /// The length of one bent segment: `path.length() / segments`.
+    /// The length of one bent segment: the plan's length over its segment count.
     pub span: f32,
-    /// The burbler whose water this is, through any chain of streams.
+    /// The first and last of the plan's segments this stream still has.
+    pub first: u32,
+    pub last: u32,
+    /// The port it was laid from: a burbler's mouth or another stream's end. `None` for
+    /// a part cut off downstream of a dismantled segment.
+    pub upstream: Option<PortOwner>,
+    /// The burbler whose water this is, walking `upstream` (kept by `resolve_sources`).
     pub source: Option<Entity>,
     /// How far along the whole chain from the burbler this stream starts.
     pub start: f32,
@@ -157,6 +175,11 @@ impl LaidStream {
     /// A straight muddy stream from `from` to `to`, with no meshes: for tests and
     /// scripted reviews of what streams do, not for laying.
     pub fn straight(source: Option<Entity>, from: Vec3, to: Vec3) -> Self {
+        Self::straight_segments(source, from, to, 1)
+    }
+
+    /// The same, in `segments` equal segments.
+    pub fn straight_segments(source: Option<Entity>, from: Vec3, to: Vec3, segments: u32) -> Self {
         let port = Port {
             at: from,
             dir: (to - from).normalize_or(Vec3::X),
@@ -172,22 +195,39 @@ impl LaidStream {
             },
             end_used: false,
             end_halo: vec![],
-            span: path.length(),
+            span: path.length() / segments.max(1) as f32,
             path,
+            first: 0,
+            last: segments.max(1) - 1,
+            upstream: source.map(PortOwner::Burbler),
             source,
             start: 0.,
             clarity: 0.,
         }
     }
 
+    /// Where this stream starts and ends along its path (arc length).
+    pub fn start_s(&self) -> f32 {
+        self.first as f32 * self.span
+    }
+    pub fn end_s(&self) -> f32 {
+        (self.last + 1) as f32 * self.span
+    }
+    pub fn length(&self) -> f32 {
+        self.end_s() - self.start_s()
+    }
+
+    /// Points along this stream's own part of the path, about `step` metres apart.
+    fn samples(&self, step: f32) -> impl Iterator<Item = Vec3> + '_ {
+        let (from, length) = (self.start_s(), self.length());
+        let steps = (length / step).ceil().max(1.) as u32;
+        (0..=steps).map(move |k| self.path.at(from + length * k as f32 / steps as f32).0)
+    }
+
     /// The horizontal distance from `at` to the nearest point of this stream.
     pub fn horizontal_distance(&self, at: Vec3) -> f32 {
-        let steps = (self.path.length() / 0.25).ceil().max(1.) as u32;
-        (0..=steps)
-            .map(|k| {
-                let (point, _) = self.path.at(self.path.length() * k as f32 / steps as f32);
-                Vec2::new(point.x - at.x, point.z - at.z).length()
-            })
+        self.samples(0.25)
+            .map(|point| Vec2::new(point.x - at.x, point.z - at.z).length())
             .fold(f32::MAX, f32::min)
     }
 }
@@ -685,14 +725,70 @@ fn lay<S: Stock>(
         inventory.take(item, count * plan.segments);
     }
     let span = plan.path.length() / plan.segments as f32;
-    let (source, start) = match anchor.owner {
-        PortOwner::Burbler(entity) => (Some(entity), 0.),
-        PortOwner::Stream(entity) => streams.get(entity).map_or((None, 0.), |upstream| {
-            (upstream.source, upstream.start + upstream.path.length())
-        }),
+    let start = match anchor.owner {
+        PortOwner::Burbler(_) => 0.,
+        PortOwner::Stream(entity) => streams
+            .get(entity)
+            .map_or(0., |upstream| upstream.start + upstream.length()),
     };
-    let (end_at, end_dir) = plan.path.at(plan.path.length());
-    let mut end_halo = Vec::new();
+    let (_, end) = spawn_stream(
+        &mut commands,
+        &templates,
+        &mut meshes,
+        StreamPart {
+            path: plan.path.clone(),
+            span,
+            first: 0,
+            last: plan.segments - 1,
+            upstream: Some(anchor.owner),
+            start,
+            end_used: false,
+        },
+    );
+    match anchor.owner {
+        PortOwner::Burbler(entity) => {
+            if let Ok((_, _, mut state)) = burblers.get_mut(entity) {
+                state.stream_connected = true;
+            }
+        }
+        PortOwner::Stream(entity) => {
+            if let Ok(mut laid) = streams.get_mut(entity) {
+                laid.end_used = true;
+            }
+        }
+    }
+    // Keep extending from the new end, like dragging on from a conveyor's end.
+    build.anchor = Some(end);
+}
+
+/// A stream to spawn: segments `first..=last` of `path`.
+struct StreamPart {
+    path: Path,
+    span: f32,
+    first: u32,
+    last: u32,
+    upstream: Option<PortOwner>,
+    start: f32,
+    end_used: bool,
+}
+
+/// Spawn a laid stream with its bent segment meshes (the end halo only on its last
+/// segment). Its source is filled in by `resolve_sources`. Returns it and its end port.
+fn spawn_stream(
+    commands: &mut Commands,
+    templates: &Templates,
+    meshes: &mut Assets<Mesh>,
+    part: StreamPart,
+) -> (Entity, Port) {
+    let StreamPart {
+        path,
+        span,
+        first,
+        last,
+        upstream,
+        start,
+        end_used,
+    } = part;
     let stream = commands
         .spawn((
             Name::new("Mud stream"),
@@ -700,22 +796,15 @@ fn lay<S: Stock>(
             Visibility::default(),
         ))
         .id();
-    for k in 0..plan.segments {
-        let last = k + 1 == plan.segments;
+    let mut end_halo = Vec::new();
+    for k in first..=last {
         for piece in &templates.segment {
-            if piece.role == Role::HaloOut && !last {
+            let halo = piece.role == Role::HaloOut;
+            if halo && k != last {
                 continue;
             }
             let mut mesh = piece.mesh.clone();
-            bend(
-                &piece.mesh,
-                &mut mesh,
-                &plan.path,
-                k as f32 * span,
-                span,
-                0.,
-            );
-            let halo = piece.role == Role::HaloOut;
+            bend(&piece.mesh, &mut mesh, &path, k as f32 * span, span, 0.);
             let entity = commands
                 .spawn((
                     Mesh3d(meshes.add(mesh)),
@@ -734,6 +823,7 @@ fn lay<S: Stock>(
             }
         }
     }
+    let (end_at, end_dir) = path.at((last + 1) as f32 * span);
     let end = Port {
         at: end_at,
         dir: end_dir,
@@ -741,28 +831,45 @@ fn lay<S: Stock>(
     };
     commands.entity(stream).insert(LaidStream {
         end,
-        end_used: false,
+        end_used,
         end_halo,
-        path: plan.path.clone(),
+        path,
         span,
-        source,
+        first,
+        last,
+        upstream,
+        source: None,
         start,
         clarity: 0.,
     });
-    match anchor.owner {
-        PortOwner::Burbler(entity) => {
-            if let Ok((_, _, mut state)) = burblers.get_mut(entity) {
-                state.stream_connected = true;
+    (stream, end)
+}
+
+/// Each stream's source is the burbler its `upstream` chain reaches, if any: a part cut
+/// off by a dismantle, and everything laid on from it, lies quiet.
+fn resolve_sources(mut streams: Query<(Entity, &mut LaidStream)>) {
+    let upstream: HashMap<Entity, Option<PortOwner>> = streams
+        .iter()
+        .map(|(entity, stream)| (entity, stream.upstream))
+        .collect();
+    for (_, mut stream) in &mut streams {
+        let mut at = stream.upstream;
+        let mut source = None;
+        // Bounded: a chain longer than every stream there is would be a loop.
+        for _ in 0..=upstream.len() {
+            match at {
+                Some(PortOwner::Burbler(burbler)) => {
+                    source = Some(burbler);
+                    break;
+                }
+                Some(PortOwner::Stream(entity)) => at = upstream.get(&entity).copied().flatten(),
+                None => break,
             }
         }
-        PortOwner::Stream(entity) => {
-            if let Ok(mut laid) = streams.get_mut(entity) {
-                laid.end_used = true;
-            }
+        if stream.source != source {
+            stream.source = source;
         }
     }
-    // Keep extending from the new end, like dragging on from a conveyor's end.
-    build.anchor = Some(end);
 }
 
 // ---------- What a laid stream carries: bar lines and the voice ----------
@@ -886,11 +993,11 @@ fn ride_bars(
         let elapsed = now.duration_since(bar.at).as_secs_f32();
         let distance = bar_distance(elapsed, bar.lead_seconds, staff.flow_speed);
         let on = streams.iter().find(|s| {
-            s.source == Some(bar.machine)
-                && (s.start..s.start + s.path.length()).contains(&distance)
+            s.source == Some(bar.machine) && (s.start..s.start + s.length()).contains(&distance)
         });
         if let Some(stream) = on {
-            *transform = bar_pose(&stream.path, stream.span, distance - stream.start, &staff);
+            let along = stream.start_s() + distance - stream.start;
+            *transform = bar_pose(&stream.path, stream.span, along, &staff);
             *visibility = Visibility::Visible;
         } else {
             commands.entity(entity).despawn();
@@ -899,15 +1006,11 @@ fn ride_bars(
 }
 
 /// Where a voice is heard from: the machine, or the nearest point of its streams.
-fn nearest_source(listener: Vec3, machine: Vec3, streams: &[&Path]) -> Vec3 {
+fn nearest_source(listener: Vec3, machine: Vec3, streams: &[&LaidStream]) -> Vec3 {
     let mut best = machine;
-    for path in streams {
-        let steps = (path.length() / 0.5).ceil().max(1.) as u32;
-        for k in 0..=steps {
-            let (point, _) = path.at(path.length() * k as f32 / steps as f32);
-            if point.distance_squared(listener) < best.distance_squared(listener) {
-                best = point;
-            }
+    for point in streams.iter().flat_map(|stream| stream.samples(0.5)) {
+        if point.distance_squared(listener) < best.distance_squared(listener) {
+            best = point;
         }
     }
     best
@@ -933,12 +1036,11 @@ fn place_voices(
         let Some(output) = voice.output else {
             continue;
         };
-        let paths: Vec<&Path> = streams
+        let fed: Vec<&LaidStream> = streams
             .iter()
             .filter(|s| s.source == Some(machine))
-            .map(|s| &s.path)
             .collect();
-        let source = nearest_source(listener, transform.translation(), &paths);
+        let source = nearest_source(listener, transform.translation(), &fed);
         synth.send(Command::SetEmitter {
             output,
             offset: (ears.inverse() * (source - listener)).to_array(),
@@ -1221,14 +1323,15 @@ mod tests {
 
     #[test]
     fn the_voice_comes_from_the_nearest_point_of_machine_or_stream() {
-        let path = Path::new(&port(), port().at + Vec3::X * 20.);
+        let stream = LaidStream::straight(None, port().at, port().at + Vec3::X * 20.);
+        let path = &stream;
         let machine = port().at - Vec3::X * 2.;
         // Standing by the far end of the stream: heard from there, not the machine.
         let far = port().at + Vec3::new(20., 0., 3.);
-        assert!(nearest_source(far, machine, &[&path]).distance(port().at + Vec3::X * 20.) < 0.6);
+        assert!(nearest_source(far, machine, &[path]).distance(port().at + Vec3::X * 20.) < 0.6);
         // Standing behind the machine: heard from the machine.
         let behind = machine - Vec3::X * 5.;
-        assert_eq!(nearest_source(behind, machine, &[&path]), machine);
+        assert_eq!(nearest_source(behind, machine, &[path]), machine);
         assert_eq!(nearest_source(far, machine, &[]), machine);
     }
 

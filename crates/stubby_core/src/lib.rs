@@ -15,6 +15,8 @@ pub mod keys {
     pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
     pub const INVENTORY: KeyCode = KeyCode::Tab;
     pub const RECORDER: KeyCode = KeyCode::KeyH;
+    /// Dismantle what is aimed at (a stream segment).
+    pub const DISMANTLE: KeyCode = KeyCode::KeyF;
     /// The forensic flashlight (add-forensic-flashlight).
     pub const FLASHLIGHT: KeyCode = KeyCode::KeyB;
     pub const JUMP: KeyCode = KeyCode::Space;
