@@ -3,7 +3,10 @@ pub mod air;
 pub mod goals;
 pub mod rules;
 mod source;
-pub use goals::{Condition, GoalDefinition, Horizon};
+pub use goals::{
+    Condition, GoalDefinition, GoalError, GoalEvent, GoalOutcome, GoalProgress, Horizon,
+    ItemProgress, Pins, ProgressState, apply as apply_goal_event,
+};
 pub use rules::{Rules, RulesError, RulesErrors, shipped_catalog, shipped_rules};
 pub use source::{MineDefinition, ProductivityFactor, SourceKind, SourceObject};
 
@@ -186,6 +189,15 @@ impl Inventory {
         } else {
             self.quantities.insert(item.into(), available - quantity);
         }
+        Ok(())
+    }
+    /// Consume aggregated stacks atomically. Recipes and goal delivery share this path.
+    pub fn take_stacks(&mut self, stacks: &[Stack]) -> Result<(), RecipeError> {
+        let mut staged = self.clone();
+        for (item, quantity) in aggregate(stacks)? {
+            staged.take(&item, quantity)?;
+        }
+        *self = staged;
         Ok(())
     }
     fn add(&mut self, item: &str, quantity: u32) -> Result<(), RecipeError> {
@@ -556,21 +568,7 @@ impl Catalog {
             .get(recipe)
             .ok_or_else(|| RecipeError::UnknownRecipe(recipe.into()))?;
         let mut staged = inventory.clone();
-        for (item, needed) in aggregate(&recipe.inputs)? {
-            let available = staged.quantity(&item);
-            if available < needed {
-                return Err(RecipeError::MissingIngredient {
-                    item,
-                    needed,
-                    available,
-                });
-            }
-            if available == needed {
-                staged.quantities.remove(&item);
-            } else {
-                staged.quantities.insert(item, available - needed);
-            }
-        }
+        staged.take_stacks(&recipe.inputs)?;
         for (item, quantity) in aggregate(&recipe.outputs)? {
             staged.add(&item, quantity)?;
         }

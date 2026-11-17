@@ -85,15 +85,18 @@ developer-only. Optional later: `bevy_nested_tooltips` for item tooltips;
 `pyri_tooltip` once it supports Bevy 0.20.
 
 ### D9. A pure reducer over a snapshot
-Goal logic is one Bevy-free function, `apply(&Rules, &mut GoalProgress, &GoalEvent) ->
-Vec<GoalOutcome>`: no clock, RNG or I/O. Events are `Deliver(goal)`,
-`Crafted(recipe)`, `Choose(horizon, goal)`, `Pin(recipe, count)`. Outcomes are
-`Paid{goal, item, n}`, `GoalCompleted(goal)` (emitted exactly once), `Opened(goal)`,
-`Discovered(item)`, `PinDone(recipe)`. Duplicate events are harmless: completion is
-latched and paid amounts only rise. Progress is a snapshot, not an event log; no
-shipped game surveyed event-sources quest progress, and tests become tables of events
-and expected outcomes. The game's Bevy systems only translate messages into events
-and outcomes into feedback and HUD updates.
+Goal logic is one Bevy-free function, `apply(&Rules, &mut GoalProgress, &mut Inventory,
+&mut RecipeBook, GoalEvent) -> Result<Vec<GoalOutcome>, GoalError>`: no clock, RNG or
+I/O. Inventory, goal progress and recipe-book changes are staged and committed
+together, so a failed delivery changes none of them. Events are `Deliver(goal)`,
+`ConditionMet(condition)`, `Crafted(recipe)`, `Choose(horizon, optional_goal)`, and
+`Pin(recipe, count)` (zero removes the pin). Outcomes are `Paid{goal, item, n}`,
+`GoalCompleted(goal)` (emitted exactly once), `Opened(goal)`, `Discovered(item)`,
+`PinDone(recipe)`, and `NeedItems{goal, items}` when a delivery has nothing to accept.
+Duplicate events are harmless: completion is latched and paid amounts only rise.
+Progress is a snapshot, not an event log; no shipped game surveyed event-sources quest
+progress, and tests become tables of events and expected outcomes. The game's Bevy
+systems only translate messages into events and outcomes into feedback and HUD updates.
 
 Future goal kinds get an explicit **accounting mode** each, in a rule PR
 (`add-rules-data-conventions` D1): delivered-and-consumed (this change), a
