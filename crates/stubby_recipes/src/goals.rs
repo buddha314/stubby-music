@@ -1,9 +1,17 @@
-//! Goal definitions: what the hub tells the player to do next (add-inventory-and-goals-hud).
+//! Goals: what the hub tells the player to do next (add-inventory-and-goals-hud,
+//! sync-major-minor-milestones).
 //!
-//! A goal is met either by items delivered to it (`requires`) or by a condition in the
-//! world (`condition`): the first short-term goals, the chores, are conditions. The
-//! conditions are a closed list owned by this schema; adding one is a rule PR. The
-//! Bevy-free reducer below owns paid amounts, completion, active goals and recipe pins.
+//! Goals are **major** goals made of ordered **minor** steps (Satisfactory's phases and
+//! milestones; the Godot game's goal bar). A major goal has no cost of its own: it
+//! completes when its last step does. A step is met either by items delivered to it
+//! (`requires`) or by a condition (`condition`). Conditions are a closed list owned by
+//! this schema; adding one is a rule PR.
+//!
+//! Conditions are state, not events: the game reports when a world condition starts and
+//! stops holding, `item_held` is read from the inventory, and every open step is checked
+//! again whenever anything changes. So a condition already true when its step opens
+//! completes it at once, and completion latches. The Bevy-free reducer [`apply`] owns
+//! paid amounts, completion, the chosen major goal and recipe pins.
 use crate::rules::{RulesError, valid_id};
 use crate::{CatalogDefinition, Inventory, RecipeBook, Rules, Stack};
 use schemars::JsonSchema;
@@ -11,17 +19,33 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const GOALS: &str = "goals.json";
+/// `goals.json`'s format. 2 replaced `horizon` with `scale` and `part_of`.
+pub const GOALS_FORMAT: u32 = 2;
 
+/// A goal's level: a major goal is a set of minor steps.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
-pub enum Horizon {
-    Long,
-    Short,
+pub enum Scale {
+    Major,
+    Minor,
 }
 
-/// Game states a goal can wait for. The game reports each when it starts to hold.
+/// A growing plant's bloom levels, lowest first (the growth stages of
+/// `assets/flora/scrub_oak/asset.json`). A tree at a level is at every level below it.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum GrowthLevel {
+    Budding,
+    Leafing,
+    Leafed,
+    FullBloom,
+}
+
+/// Game states a step can wait for.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Condition {
@@ -30,10 +54,22 @@ pub enum Condition {
         #[schemars(extend("x-stubby-ref" = "mines"))]
         machine: String,
     },
-    /// A stream delivers water to a placed tree of this mine (needs add-digging).
+    /// A flowing stream waters a placed tree of this mine.
     TreeWatered {
         #[schemars(extend("x-stubby-ref" = "mines"))]
         mine: String,
+    },
+    /// A placed tree of this mine is at this bloom level or above.
+    TreeGrown {
+        #[schemars(extend("x-stubby-ref" = "mines"))]
+        mine: String,
+        level: GrowthLevel,
+    },
+    /// The player holds at least this many of an item.
+    ItemHeld {
+        #[schemars(extend("x-stubby-ref" = "items"))]
+        item: String,
+        quantity: u32,
     },
 }
 
@@ -44,8 +80,12 @@ pub struct GoalDefinition {
     pub name: String,
     /// One line the hub shows under the name.
     pub description: String,
-    pub horizon: Horizon,
-    /// Items delivered to meet it. Exactly one of `requires` and `condition`.
+    pub scale: Scale,
+    /// The major goal a minor step belongs to. Steps run in file order.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(extend("x-stubby-ref" = "goals"))]
+    pub part_of: Option<String>,
+    /// Items delivered to meet a step. A step has exactly one of `requires` and `condition`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<Stack>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -76,6 +116,7 @@ pub fn validate_goals(
     let items: BTreeSet<&str> = definition.items.iter().map(|i| i.id.as_str()).collect();
     let mines: BTreeSet<&str> = definition.mines.iter().map(|m| m.id.as_str()).collect();
     let ids: BTreeSet<&str> = goals.iter().map(|g| g.id.as_str()).collect();
+    let scales: BTreeMap<&str, Scale> = goals.iter().map(|g| (g.id.as_str(), g.scale)).collect();
     let mut seen = BTreeSet::new();
     for goal in goals {
         if !valid_id(&goal.id) {
@@ -92,18 +133,75 @@ pub fn validate_goals(
                 "ID already used; IDs are unique across all rules files".into(),
             ));
         }
-        match (goal.requires.is_empty(), &goal.condition) {
-            (true, None) => errors.push(err(
-                &goal.id,
-                "requires",
-                "needs `requires` or `condition`".into(),
-            )),
-            (false, Some(_)) => errors.push(err(
-                &goal.id,
-                "condition",
-                "has both `requires` and `condition`; use one".into(),
-            )),
-            _ => {}
+        match goal.scale {
+            Scale::Major => {
+                if goal.part_of.is_some() {
+                    errors.push(err(
+                        &goal.id,
+                        "part_of",
+                        "a major goal is not part of another goal".into(),
+                    ));
+                }
+                if goal.condition.is_some() {
+                    errors.push(err(
+                        &goal.id,
+                        "condition",
+                        "a major goal completes with its steps; put the condition on a step".into(),
+                    ));
+                }
+                if !goal.requires.is_empty() {
+                    errors.push(err(
+                        &goal.id,
+                        "requires",
+                        "a major goal completes with its steps; put the cost on a step".into(),
+                    ));
+                }
+                if !goals
+                    .iter()
+                    .any(|step| step.part_of.as_deref() == Some(goal.id.as_str()))
+                {
+                    errors.push(err(
+                        &goal.id,
+                        "scale",
+                        "a major goal needs at least one minor step (`part_of` it)".into(),
+                    ));
+                }
+            }
+            Scale::Minor => {
+                match goal.part_of.as_deref() {
+                    None => errors.push(err(
+                        &goal.id,
+                        "part_of",
+                        "a minor step needs `part_of`: the major goal it belongs to".into(),
+                    )),
+                    Some(major) => match scales.get(major) {
+                        None => errors.push(err(
+                            &goal.id,
+                            "part_of",
+                            format!("unknown major goal {major}"),
+                        )),
+                        Some(Scale::Minor) => errors.push(err(
+                            &goal.id,
+                            "part_of",
+                            format!("{major} is a minor step, not a major goal"),
+                        )),
+                        Some(Scale::Major) => {}
+                    },
+                }
+                match (goal.requires.is_empty(), &goal.condition) {
+                    (true, None) => errors.push(err(
+                        &goal.id,
+                        "requires",
+                        "needs `requires` or `condition`".into(),
+                    )),
+                    (false, Some(_)) => errors.push(err(
+                        &goal.id,
+                        "condition",
+                        "has both `requires` and `condition`; use one".into(),
+                    )),
+                    _ => {}
+                }
+            }
         }
         let mut totals = BTreeMap::<&str, u32>::new();
         for stack in &goal.requires {
@@ -136,8 +234,19 @@ pub fn validate_goals(
                     format!("unknown machine {machine}"),
                 ));
             }
-            Some(Condition::TreeWatered { mine }) if !mines.contains(mine.as_str()) => {
+            Some(Condition::TreeWatered { mine } | Condition::TreeGrown { mine, .. })
+                if !mines.contains(mine.as_str()) =>
+            {
                 errors.push(err(&goal.id, "condition", format!("unknown mine {mine}")));
+            }
+            Some(Condition::ItemHeld { item, quantity })
+                if *quantity == 0 || !items.contains(item.as_str()) =>
+            {
+                errors.push(err(
+                    &goal.id,
+                    "condition",
+                    format!("{quantity} x {item} is not a known item and positive quantity"),
+                ));
             }
             _ => {}
         }
@@ -179,14 +288,15 @@ pub fn validate_goals(
     errors
 }
 
+/// The player's progress: completed goals, items paid into steps, the chosen major goal,
+/// the world conditions holding now, and pins. A snapshot, not an event log.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GoalProgress {
     completed: BTreeSet<String>,
     paid: BTreeMap<String, BTreeMap<String, u32>>,
-    active_long: Option<String>,
-    active_short: Option<String>,
-    met_conditions: BTreeSet<Condition>,
+    chosen: Option<String>,
+    holding: BTreeSet<Condition>,
     pins: Pins,
 }
 
@@ -211,31 +321,84 @@ impl GoalProgress {
         &self.pins
     }
 
-    pub fn active_goal<'a>(
-        &self,
-        rules: &'a Rules,
-        horizon: Horizon,
-    ) -> Option<&'a GoalDefinition> {
-        let chosen = match horizon {
-            Horizon::Long => self.active_long.as_deref(),
-            Horizon::Short => self.active_short.as_deref(),
-        };
-        let open = |goal: &&GoalDefinition| {
-            goal.horizon == horizon
-                && !self.completed.contains(&goal.id)
-                && goal.after.iter().all(|id| self.completed.contains(id))
-        };
-        chosen
+    /// Whether a goal is open: not complete, its `after` complete; a major goal also
+    /// waits for the major goals before it in file order unless its `after` says
+    /// otherwise; a step waits for its major goal to open and the steps before it.
+    pub fn is_open(&self, rules: &Rules, goal: &GoalDefinition) -> bool {
+        if self.completed.contains(&goal.id) || !goal.after.iter().all(|id| self.is_complete(id)) {
+            return false;
+        }
+        let earlier = rules.goals.iter().take_while(|other| other.id != goal.id);
+        match (goal.scale, &goal.part_of) {
+            (Scale::Major, _) => {
+                !goal.after.is_empty()
+                    || earlier
+                        .filter(|other| other.scale == Scale::Major)
+                        .all(|other| self.is_complete(&other.id))
+            }
+            (Scale::Minor, Some(major)) => {
+                rules
+                    .goals
+                    .iter()
+                    .find(|other| &other.id == major)
+                    .is_some_and(|major| self.is_open(rules, major))
+                    && earlier
+                        .filter(|other| other.part_of.as_ref() == Some(major))
+                        .all(|other| self.is_complete(&other.id))
+            }
+            (Scale::Minor, None) => false,
+        }
+    }
+
+    /// The major goal the hub shows: the player's choice while it is open, else the
+    /// first open one. `None` after the last authored goal; play goes on.
+    pub fn active_major<'a>(&self, rules: &'a Rules) -> Option<&'a GoalDefinition> {
+        let open = |goal: &&GoalDefinition| goal.scale == Scale::Major && self.is_open(rules, goal);
+        self.chosen
+            .as_deref()
             .and_then(|id| rules.goals.iter().find(|goal| goal.id == id).filter(open))
             .or_else(|| rules.goals.iter().find(open))
     }
 
+    /// The major goal's steps in order.
+    pub fn steps<'a>(
+        &self,
+        rules: &'a Rules,
+        major: &GoalDefinition,
+    ) -> impl Iterator<Item = &'a GoalDefinition> {
+        let id = major.id.clone();
+        rules
+            .goals
+            .iter()
+            .filter(move |goal| goal.part_of.as_ref() == Some(&id))
+    }
+
+    /// The step of a major goal the player works on now: its first open step.
+    pub fn active_step<'a>(
+        &self,
+        rules: &'a Rules,
+        major: &GoalDefinition,
+    ) -> Option<&'a GoalDefinition> {
+        self.steps(rules, major)
+            .find(|step| self.is_open(rules, step))
+    }
+
+    /// Progress toward one item of a step: paid into its `requires`, or, for an
+    /// `item_held` step, simply held.
     pub fn item_progress(
         &self,
         goal: &GoalDefinition,
         item: &str,
         inventory: &Inventory,
     ) -> Option<ItemProgress> {
+        if let Some(Condition::ItemHeld {
+            item: wanted,
+            quantity,
+        }) = &goal.condition
+        {
+            return (wanted == item)
+                .then(|| ItemProgress::new(0, inventory.quantity(item), *quantity));
+        }
         let required = goal
             .requires
             .iter()
@@ -249,6 +412,16 @@ impl GoalProgress {
             inventory.quantity(item),
             required,
         ))
+    }
+
+    fn holds(&self, condition: &Condition, inventory: &Inventory) -> bool {
+        match condition {
+            Condition::ItemHeld { item, quantity } => inventory.quantity(item) >= *quantity,
+            Condition::TreeGrown { mine, level } => self.holding.iter().any(|held| {
+                matches!(held, Condition::TreeGrown { mine: m, level: l } if m == mine && l >= level)
+            }),
+            other => self.holding.contains(other),
+        }
     }
 }
 
@@ -342,13 +515,17 @@ fn progress_state(paid: u32, held: u32, required: u32) -> ProgressState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GoalEvent {
+    /// Hand in what the player holds toward a step's `requires`.
     Deliver(String),
+    /// A world condition started to hold (a machine sounds, a tree is watered or grew).
     ConditionMet(Condition),
+    /// A world condition stopped holding. Steps it completed stay complete.
+    ConditionCleared(Condition),
+    /// Something outside goals changed (the inventory): check the open steps again.
+    Refresh,
     Crafted(String),
-    Choose {
-        horizon: Horizon,
-        goal: Option<String>,
-    },
+    /// Choose which open major goal the hub shows; `None` goes back to file order.
+    Choose(Option<String>),
     Pin {
         recipe: String,
         count: u32,
@@ -378,8 +555,8 @@ pub enum GoalError {
     UnknownGoal(String),
     #[error("goal is not open: {0}")]
     GoalNotOpen(String),
-    #[error("goal is met by a condition and does not accept item delivery: {0}")]
-    ConditionGoal(String),
+    #[error("goal does not accept item delivery: {0}")]
+    NotDeliverable(String),
     #[error("unknown recipe: {0}")]
     UnknownRecipe(String),
     #[error("quantity overflow for {0}")]
@@ -413,6 +590,15 @@ pub fn apply(
     Ok(outcomes)
 }
 
+fn open_set(rules: &Rules, progress: &GoalProgress) -> BTreeSet<String> {
+    rules
+        .goals
+        .iter()
+        .filter(|goal| progress.is_open(rules, goal))
+        .map(|goal| goal.id.clone())
+        .collect()
+}
+
 fn apply_staged(
     rules: &Rules,
     progress: &mut GoalProgress,
@@ -420,102 +606,17 @@ fn apply_staged(
     recipe_book: &mut RecipeBook,
     event: GoalEvent,
 ) -> Result<Vec<GoalOutcome>, GoalError> {
-    let open_before: BTreeSet<_> = rules
-        .goals
-        .iter()
-        .filter(|goal| {
-            !progress.completed.contains(&goal.id)
-                && goal.after.iter().all(|id| progress.completed.contains(id))
-        })
-        .map(|goal| goal.id.clone())
-        .collect();
+    let open_before = open_set(rules, progress);
     let mut outcomes = Vec::new();
     match event {
-        GoalEvent::Deliver(id) => {
-            let goal = rules
-                .goals
-                .iter()
-                .find(|goal| goal.id == id)
-                .ok_or_else(|| GoalError::UnknownGoal(id.clone()))?;
-            if goal.condition.is_some() {
-                return Err(GoalError::ConditionGoal(id));
-            }
-            if progress.completed.contains(&id)
-                || !goal
-                    .after
-                    .iter()
-                    .all(|need| progress.completed.contains(need))
-            {
-                return Ok(outcomes);
-            }
-            let mut required = BTreeMap::<String, u32>::new();
-            for stack in &goal.requires {
-                let total = required.entry(stack.item.clone()).or_default();
-                *total = total
-                    .checked_add(stack.quantity)
-                    .ok_or_else(|| GoalError::QuantityOverflow(stack.item.clone()))?;
-            }
-            let delivered: Vec<_> = required
-                .iter()
-                .filter_map(|(item, quantity)| {
-                    let paid = progress.paid(&id, item);
-                    let remaining = quantity.saturating_sub(paid);
-                    let available = inventory.quantity(item);
-                    let accepted = remaining.min(available);
-                    (accepted > 0).then(|| Stack {
-                        item: item.clone(),
-                        quantity: accepted,
-                    })
-                })
-                .collect();
-            if delivered.is_empty() {
-                let items = required
-                    .iter()
-                    .filter_map(|(item, quantity)| {
-                        let remaining = quantity.saturating_sub(progress.paid(&id, item));
-                        (remaining > 0).then(|| Stack {
-                            item: item.clone(),
-                            quantity: remaining,
-                        })
-                    })
-                    .collect();
-                outcomes.push(GoalOutcome::NeedItems { goal: id, items });
-            } else {
-                inventory.take_stacks(&delivered)?;
-                let paid = progress.paid.entry(id.clone()).or_default();
-                for stack in delivered {
-                    let amount = paid.entry(stack.item.clone()).or_default();
-                    *amount = amount
-                        .checked_add(stack.quantity)
-                        .ok_or_else(|| GoalError::QuantityOverflow(stack.item.clone()))?;
-                    outcomes.push(GoalOutcome::Paid {
-                        goal: id.clone(),
-                        item: stack.item,
-                        quantity: stack.quantity,
-                    });
-                }
-                if required
-                    .iter()
-                    .all(|(item, quantity)| progress.paid(&id, item) >= *quantity)
-                {
-                    complete_goal(goal, progress, recipe_book, &mut outcomes);
-                }
-            }
-        }
+        GoalEvent::Deliver(id) => deliver(rules, progress, inventory, &id, &mut outcomes)?,
         GoalEvent::ConditionMet(condition) => {
-            progress.met_conditions.insert(condition.clone());
-            for goal in &rules.goals {
-                if !progress.completed.contains(&goal.id)
-                    && goal
-                        .after
-                        .iter()
-                        .all(|need| progress.completed.contains(need))
-                    && goal.condition.as_ref() == Some(&condition)
-                {
-                    complete_goal(goal, progress, recipe_book, &mut outcomes);
-                }
-            }
+            progress.holding.insert(condition);
         }
+        GoalEvent::ConditionCleared(condition) => {
+            progress.holding.remove(&condition);
+        }
+        GoalEvent::Refresh => {}
         GoalEvent::Crafted(recipe) => {
             if let Some(count) = progress.pins.0.get_mut(&recipe) {
                 *count = count.saturating_sub(1);
@@ -525,27 +626,18 @@ fn apply_staged(
                 }
             }
         }
-        GoalEvent::Choose { horizon, goal } => {
+        GoalEvent::Choose(goal) => {
             if let Some(id) = &goal {
                 let candidate = rules
                     .goals
                     .iter()
                     .find(|candidate| candidate.id == *id)
                     .ok_or_else(|| GoalError::UnknownGoal(id.clone()))?;
-                if candidate.horizon != horizon
-                    || progress.completed.contains(id)
-                    || !candidate
-                        .after
-                        .iter()
-                        .all(|need| progress.completed.contains(need))
-                {
+                if candidate.scale != Scale::Major || !progress.is_open(rules, candidate) {
                     return Err(GoalError::GoalNotOpen(id.clone()));
                 }
             }
-            match horizon {
-                Horizon::Long => progress.active_long = goal,
-                Horizon::Short => progress.active_short = goal,
-            }
+            progress.chosen = goal;
         }
         GoalEvent::Pin { recipe, count } => {
             if !rules
@@ -563,33 +655,138 @@ fn apply_staged(
             }
         }
     }
-    for goal in &rules.goals {
-        let is_open = !progress.completed.contains(&goal.id)
-            && goal.after.iter().all(|id| progress.completed.contains(id));
-        if is_open && !open_before.contains(&goal.id) {
-            outcomes.push(GoalOutcome::Opened(goal.id.clone()));
-            if let Some(condition) = &goal.condition
-                && progress.met_conditions.contains(condition)
-            {
-                complete_goal(goal, progress, recipe_book, &mut outcomes);
-            }
-        }
-    }
+    settle(
+        rules,
+        progress,
+        inventory,
+        recipe_book,
+        open_before,
+        &mut outcomes,
+    );
     Ok(outcomes)
 }
 
-fn complete_goal(
-    goal: &GoalDefinition,
+fn deliver(
+    rules: &Rules,
     progress: &mut GoalProgress,
+    inventory: &mut Inventory,
+    id: &str,
+    outcomes: &mut Vec<GoalOutcome>,
+) -> Result<(), GoalError> {
+    let goal = rules
+        .goals
+        .iter()
+        .find(|goal| goal.id == id)
+        .ok_or_else(|| GoalError::UnknownGoal(id.into()))?;
+    if goal.requires.is_empty() {
+        return Err(GoalError::NotDeliverable(id.into()));
+    }
+    if !progress.is_open(rules, goal) {
+        return Ok(());
+    }
+    let mut required = BTreeMap::<String, u32>::new();
+    for stack in &goal.requires {
+        let total = required.entry(stack.item.clone()).or_default();
+        *total = total
+            .checked_add(stack.quantity)
+            .ok_or_else(|| GoalError::QuantityOverflow(stack.item.clone()))?;
+    }
+    let remaining = |progress: &GoalProgress| -> Vec<Stack> {
+        required
+            .iter()
+            .filter_map(|(item, quantity)| {
+                let left = quantity.saturating_sub(progress.paid(id, item));
+                (left > 0).then(|| Stack {
+                    item: item.clone(),
+                    quantity: left,
+                })
+            })
+            .collect()
+    };
+    let delivered: Vec<_> = remaining(progress)
+        .into_iter()
+        .filter_map(|stack| {
+            let accepted = stack.quantity.min(inventory.quantity(&stack.item));
+            (accepted > 0).then_some(Stack {
+                item: stack.item,
+                quantity: accepted,
+            })
+        })
+        .collect();
+    if delivered.is_empty() {
+        outcomes.push(GoalOutcome::NeedItems {
+            goal: id.into(),
+            items: remaining(progress),
+        });
+        return Ok(());
+    }
+    inventory.take_stacks(&delivered)?;
+    let paid = progress.paid.entry(id.into()).or_default();
+    for stack in delivered {
+        let amount = paid.entry(stack.item.clone()).or_default();
+        *amount = amount
+            .checked_add(stack.quantity)
+            .ok_or_else(|| GoalError::QuantityOverflow(stack.item.clone()))?;
+        outcomes.push(GoalOutcome::Paid {
+            goal: id.into(),
+            item: stack.item,
+            quantity: stack.quantity,
+        });
+    }
+    Ok(())
+}
+
+/// Complete every open step that is met and every major goal whose steps are all
+/// complete, until nothing changes; then report the goals that opened.
+fn settle(
+    rules: &Rules,
+    progress: &mut GoalProgress,
+    inventory: &Inventory,
     recipe_book: &mut RecipeBook,
+    open_before: BTreeSet<String>,
     outcomes: &mut Vec<GoalOutcome>,
 ) {
-    if progress.completed.insert(goal.id.clone()) {
+    loop {
+        let met = rules.goals.iter().find(|goal| {
+            progress.is_open(rules, goal)
+                && match goal.scale {
+                    Scale::Minor => match &goal.condition {
+                        Some(condition) => progress.holds(condition, inventory),
+                        None => goal.requires.iter().all(|stack| {
+                            let total: u32 = goal
+                                .requires
+                                .iter()
+                                .filter(|other| other.item == stack.item)
+                                .map(|other| other.quantity)
+                                .sum();
+                            progress.paid(&goal.id, &stack.item) >= total
+                        }),
+                    },
+                    Scale::Major => progress
+                        .steps(rules, goal)
+                        .all(|step| progress.is_complete(&step.id)),
+                }
+        });
+        let Some(goal) = met else { break };
+        progress.completed.insert(goal.id.clone());
         outcomes.push(GoalOutcome::GoalCompleted(goal.id.clone()));
         for item in &goal.unlocks {
             recipe_book.discover(item);
             outcomes.push(GoalOutcome::Discovered(item.clone()));
         }
+    }
+    // Newly open goals, in file order.
+    for goal in &rules.goals {
+        if !open_before.contains(&goal.id) && progress.is_open(rules, goal) {
+            outcomes.push(GoalOutcome::Opened(goal.id.clone()));
+        }
+    }
+    if progress
+        .chosen
+        .as_ref()
+        .is_some_and(|id| progress.is_complete(id))
+    {
+        progress.chosen = None;
     }
 }
 
@@ -605,47 +802,92 @@ mod tests {
         }
     }
 
-    fn goal(id: &str, requires: Vec<Stack>, after: &[&str], unlocks: &[&str]) -> GoalDefinition {
+    fn major(id: &str) -> GoalDefinition {
         GoalDefinition {
             id: id.into(),
             name: id.into(),
             description: String::new(),
-            horizon: Horizon::Short,
-            requires,
+            scale: Scale::Major,
+            part_of: None,
+            requires: vec![],
             condition: None,
-            after: after.iter().map(|id| id.to_string()).collect(),
-            unlocks: unlocks.iter().map(|id| id.to_string()).collect(),
+            after: vec![],
+            unlocks: vec![],
         }
     }
 
-    /// Shipped rules plus an item goal (4 square waves, 6 reeds) that opens "next",
-    /// and a recipe needing 6 reeds for pins.
+    fn step(id: &str, major: &str) -> GoalDefinition {
+        GoalDefinition {
+            scale: Scale::Minor,
+            part_of: Some(major.into()),
+            ..self::major(id)
+        }
+    }
+
+    fn when(id: &str, major: &str, condition: Condition) -> GoalDefinition {
+        GoalDefinition {
+            condition: Some(condition),
+            ..step(id, major)
+        }
+    }
+
+    fn configured() -> Condition {
+        Condition::MachineConfigured {
+            machine: "mudpit_burbler".into(),
+        }
+    }
+
+    fn watered() -> Condition {
+        Condition::TreeWatered {
+            mine: "scrub_oak".into(),
+        }
+    }
+
+    fn grown(level: GrowthLevel) -> Condition {
+        Condition::TreeGrown {
+            mine: "scrub_oak".into(),
+            level,
+        }
+    }
+
+    /// The shipped catalog with fixture goals: tests never depend on the shipped goal
+    /// list, which designers rewrite while playing.
+    ///
+    /// `camp`: heartbeat (configured) → reeds (hold 12) → deliver (4 square waves,
+    /// 6 reeds, unlocks clock) → bud (oak budding). `later`: `finale` (oak watered).
     fn rules() -> Rules {
         let mut rules = Rules::load(&crate::rules::shipped_files()).unwrap();
-        rules.goals.push(goal(
-            "deliver",
-            vec![stack("square_wave", 4), stack("reed", 6)],
-            &[],
-            &["clock"],
-        ));
-        rules
-            .goals
-            .push(goal("next", vec![stack("reed", 1)], &["deliver"], &[]));
+        rules.goals = vec![
+            major("camp"),
+            when("heartbeat", "camp", configured()),
+            when(
+                "reeds",
+                "camp",
+                Condition::ItemHeld {
+                    item: "reed".into(),
+                    quantity: 12,
+                },
+            ),
+            GoalDefinition {
+                requires: vec![stack("square_wave", 4), stack("reed", 6)],
+                unlocks: vec!["clock".into()],
+                ..step("deliver", "camp")
+            },
+            when("bud", "camp", grown(GrowthLevel::Budding)),
+            major("later"),
+            when("finale", "later", watered()),
+        ];
         rules.definition.recipes.push(RecipeDefinition {
             id: "stream_kit".into(),
             name: "Stream kit".into(),
             inputs: vec![stack("reed", 6)],
             outputs: vec![stack("patch_cable", 1)],
         });
+        assert_eq!(
+            validate_goals(&rules.definition, &BTreeSet::new(), &rules.goals),
+            []
+        );
         rules
-    }
-
-    fn held(stacks: &[(&str, u32)]) -> Inventory {
-        let mut inventory = Inventory::default();
-        for (item, quantity) in stacks {
-            inventory.add(item, *quantity).unwrap();
-        }
-        inventory
     }
 
     struct World {
@@ -656,15 +898,18 @@ mod tests {
     }
 
     impl World {
-        fn new(stacks: &[(&str, u32)]) -> Self {
+        fn new() -> Self {
             Self {
                 rules: rules(),
                 progress: GoalProgress::default(),
-                inventory: held(stacks),
+                inventory: Inventory::default(),
                 book: RecipeBook::default(),
             }
         }
-        fn apply(&mut self, event: GoalEvent) -> Vec<GoalOutcome> {
+        fn hold(&mut self, item: &str, quantity: u32) {
+            self.inventory.add(item, quantity).unwrap();
+        }
+        fn try_apply(&mut self, event: GoalEvent) -> Result<Vec<GoalOutcome>, GoalError> {
             apply(
                 &self.rules,
                 &mut self.progress,
@@ -672,170 +917,204 @@ mod tests {
                 &mut self.book,
                 event,
             )
-            .unwrap()
         }
-        fn deliver(&mut self) -> Vec<GoalOutcome> {
-            self.apply(GoalEvent::Deliver("deliver".into()))
+        fn apply(&mut self, event: GoalEvent) -> Vec<GoalOutcome> {
+            self.try_apply(event).unwrap()
         }
         fn goal(&self, id: &str) -> &GoalDefinition {
             self.rules.goals.iter().find(|g| g.id == id).unwrap()
         }
+        fn step(&self) -> Option<&str> {
+            let major = self.progress.active_major(&self.rules)?;
+            Some(&self.progress.active_step(&self.rules, major)?.id)
+        }
+        /// Through "heartbeat" and "reeds" to the delivery step, holding nothing.
+        fn at_delivery(&mut self) {
+            self.apply(GoalEvent::ConditionMet(configured()));
+            self.hold("reed", 12);
+            self.apply(GoalEvent::Refresh);
+            self.inventory.take("reed", 12).unwrap();
+            assert_eq!(self.step(), Some("deliver"));
+        }
     }
 
-    fn paid(goal: &str, item: &str, quantity: u32) -> GoalOutcome {
+    fn done(id: &str) -> GoalOutcome {
+        GoalOutcome::GoalCompleted(id.into())
+    }
+    fn opened(id: &str) -> GoalOutcome {
+        GoalOutcome::Opened(id.into())
+    }
+    fn paid(item: &str, quantity: u32) -> GoalOutcome {
         GoalOutcome::Paid {
-            goal: goal.into(),
+            goal: "deliver".into(),
             item: item.into(),
             quantity,
         }
     }
 
     #[test]
+    fn steps_open_in_order_and_the_last_completes_the_major() {
+        let mut world = World::new();
+        assert_eq!(world.step(), Some("heartbeat"));
+        assert!(!world.progress.is_open(&world.rules, world.goal("reeds")));
+        assert!(!world.progress.is_open(&world.rules, world.goal("later")));
+        assert_eq!(
+            world.apply(GoalEvent::ConditionMet(configured())),
+            [done("heartbeat"), opened("reeds")]
+        );
+        world.at_delivery();
+        world.hold("square_wave", 4);
+        world.hold("reed", 6);
+        world.apply(GoalEvent::Deliver("deliver".into()));
+        assert_eq!(
+            world.apply(GoalEvent::ConditionMet(grown(GrowthLevel::Leafed))),
+            [done("bud"), done("camp"), opened("later"), opened("finale")]
+        );
+        assert_eq!(world.step(), Some("finale"));
+    }
+
+    #[test]
+    fn a_condition_holding_when_its_step_opens_completes_it_once() {
+        let mut world = World::new();
+        world.hold("reed", 12);
+        world.apply(GoalEvent::Refresh);
+        assert!(!world.progress.is_complete("reeds"), "not open yet");
+        let outcomes = world.apply(GoalEvent::ConditionMet(configured()));
+        assert_eq!(
+            outcomes,
+            [done("heartbeat"), done("reeds"), opened("deliver")]
+        );
+        // Spending the reeds does not undo it; repeating the events reports nothing.
+        world.inventory.take("reed", 12).unwrap();
+        assert_eq!(world.apply(GoalEvent::Refresh), []);
+        assert_eq!(world.apply(GoalEvent::ConditionMet(configured())), []);
+        assert!(world.progress.is_complete("reeds"));
+    }
+
+    #[test]
+    fn a_cleared_condition_does_not_complete_a_later_step() {
+        let mut world = World::new();
+        world.apply(GoalEvent::ConditionMet(grown(GrowthLevel::Budding)));
+        world.apply(GoalEvent::ConditionCleared(grown(GrowthLevel::Budding)));
+        world.apply(GoalEvent::ConditionMet(configured()));
+        world.hold("reed", 12);
+        world.apply(GoalEvent::Refresh);
+        world.hold("square_wave", 4);
+        world.apply(GoalEvent::Deliver("deliver".into()));
+        assert_eq!(world.step(), Some("bud"));
+        world.apply(GoalEvent::ConditionMet(grown(GrowthLevel::Budding)));
+        assert!(world.progress.is_complete("bud"));
+    }
+
+    #[test]
     fn thresholds_and_progress() {
-        for (held_count, state) in [
+        for (held, state) in [
             (0, ProgressState::Empty),
             (1, ProgressState::Low),
             (2, ProgressState::High),
             (4, ProgressState::Full),
         ] {
-            let world = World::new(&[("square_wave", held_count)]);
+            let mut world = World::new();
+            world.hold("square_wave", held);
             let progress = world
                 .progress
                 .item_progress(world.goal("deliver"), "square_wave", &world.inventory)
                 .unwrap();
-            assert_eq!((progress.held, progress.required), (held_count, 4));
-            assert_eq!(progress.state, state, "held {held_count}");
+            assert_eq!((progress.held, progress.required), (held, 4));
+            assert_eq!(progress.state, state, "held {held}");
         }
-    }
-
-    #[test]
-    fn paid_and_held_count_together_but_holding_does_not_complete() {
-        let mut world = World::new(&[("square_wave", 2)]);
-        world.deliver();
-        world.inventory.add("square_wave", 1).unwrap();
-        let progress = world
+        // An item_held step shows what is held against its quantity.
+        let mut world = World::new();
+        world.hold("reed", 3);
+        let reeds = world
             .progress
-            .item_progress(world.goal("deliver"), "square_wave", &world.inventory)
+            .item_progress(world.goal("reeds"), "reed", &world.inventory)
             .unwrap();
-        assert_eq!((progress.paid, progress.held), (2, 1));
-        assert_eq!(progress.state, ProgressState::High);
-
-        let mut world = World::new(&[("square_wave", 4), ("reed", 6)]);
-        for item in ["square_wave", "reed"] {
-            let progress =
-                world
-                    .progress
-                    .item_progress(world.goal("deliver"), item, &world.inventory);
-            assert_eq!(progress.unwrap().state, ProgressState::Full);
-        }
-        assert!(!world.progress.is_complete("deliver"));
-        world.deliver();
-        assert!(world.progress.is_complete("deliver"));
-    }
-
-    #[test]
-    fn goals_not_yet_open_are_not_active() {
-        let mut world = World::new(&[]);
-        let active = world
-            .progress
-            .active_goal(&world.rules, Horizon::Short)
-            .unwrap();
-        assert_ne!(active.id, "next");
-        let chosen = apply(
-            &world.rules,
-            &mut world.progress,
-            &mut world.inventory,
-            &mut world.book,
-            GoalEvent::Choose {
-                horizon: Horizon::Short,
-                goal: Some("next".into()),
-            },
-        );
-        assert_eq!(chosen, Err(GoalError::GoalNotOpen("next".into())));
+        assert_eq!((reeds.paid, reeds.held, reeds.required), (0, 3, 12));
     }
 
     #[test]
     fn partial_then_completing_delivery() {
-        let mut world = World::new(&[("square_wave", 1), ("reed", 10)]);
+        let mut world = World::new();
+        world.at_delivery();
+        world.hold("square_wave", 1);
+        world.hold("reed", 10);
         assert_eq!(
-            world.deliver(),
-            [
-                paid("deliver", "reed", 6),
-                paid("deliver", "square_wave", 1)
-            ]
+            world.apply(GoalEvent::Deliver("deliver".into())),
+            [paid("reed", 6), paid("square_wave", 1)]
         );
-        assert_eq!(world.progress.paid("deliver", "square_wave"), 1);
-        assert_eq!(world.progress.paid("deliver", "reed"), 6);
         assert_eq!(world.inventory.quantity("reed"), 4);
-        assert_eq!(world.inventory.quantity("square_wave"), 0);
-        assert!(!world.progress.is_complete("deliver"));
+        let progress = world
+            .progress
+            .item_progress(world.goal("deliver"), "square_wave", &world.inventory)
+            .unwrap();
+        assert_eq!((progress.paid, progress.held), (1, 0));
 
-        world.inventory.add("square_wave", 5).unwrap();
+        world.hold("square_wave", 5);
         assert_eq!(
-            world.deliver(),
+            world.apply(GoalEvent::Deliver("deliver".into())),
             [
-                paid("deliver", "square_wave", 3),
-                GoalOutcome::GoalCompleted("deliver".into()),
+                paid("square_wave", 3),
+                done("deliver"),
                 GoalOutcome::Discovered("clock".into()),
-                GoalOutcome::Opened("next".into()),
+                opened("bud"),
             ]
         );
         assert_eq!(world.inventory.quantity("square_wave"), 2);
         assert!(world.book.knows("clock"));
-
-        // Repeated event: completion reported once, nothing more consumed.
-        assert_eq!(world.deliver(), []);
+        // Repeated event: nothing more consumed or reported.
+        assert_eq!(world.apply(GoalEvent::Deliver("deliver".into())), []);
         assert_eq!(world.inventory.quantity("square_wave"), 2);
-        assert_eq!(world.inventory.quantity("reed"), 4);
     }
 
     #[test]
     fn nothing_to_give_changes_nothing() {
-        let mut world = World::new(&[("patch_cable", 3)]);
-        let before = world.inventory.clone();
+        let mut world = World::new();
+        world.at_delivery();
+        world.hold("patch_cable", 3);
+        let before = (world.inventory.clone(), world.progress.clone());
         assert_eq!(
-            world.deliver(),
+            world.apply(GoalEvent::Deliver("deliver".into())),
             [GoalOutcome::NeedItems {
                 goal: "deliver".into(),
                 items: vec![stack("reed", 6), stack("square_wave", 4)],
             }]
         );
-        assert_eq!(world.inventory, before);
-        assert_eq!(world.progress, GoalProgress::default());
+        assert_eq!((world.inventory.clone(), world.progress.clone()), before);
+        assert_eq!(
+            world.try_apply(GoalEvent::Deliver("heartbeat".into())),
+            Err(GoalError::NotDeliverable("heartbeat".into()))
+        );
     }
 
     #[test]
-    fn switching_goals_keeps_paid_amounts() {
-        let mut world = World::new(&[("square_wave", 2)]);
-        world.deliver();
-        for goal in ["build_a_heartbeat", "deliver"] {
-            world.apply(GoalEvent::Choose {
-                horizon: Horizon::Short,
-                goal: Some(goal.into()),
-            });
-            assert_eq!(
-                world
-                    .progress
-                    .active_goal(&world.rules, Horizon::Short)
-                    .unwrap()
-                    .id,
-                goal
-            );
-        }
+    fn choosing_needs_an_open_major_and_keeps_paid_amounts() {
+        let mut world = World::new();
+        assert_eq!(
+            world.try_apply(GoalEvent::Choose(Some("later".into()))),
+            Err(GoalError::GoalNotOpen("later".into()))
+        );
+        assert_eq!(
+            world.try_apply(GoalEvent::Choose(Some("heartbeat".into()))),
+            Err(GoalError::GoalNotOpen("heartbeat".into()))
+        );
+        world.at_delivery();
+        world.hold("square_wave", 2);
+        world.apply(GoalEvent::Deliver("deliver".into()));
+        world.apply(GoalEvent::Choose(Some("camp".into())));
+        world.apply(GoalEvent::Choose(None));
         assert_eq!(world.progress.paid("deliver", "square_wave"), 2);
     }
 
     #[test]
-    fn last_goal_leaves_nothing_active_and_play_continues() {
-        let mut world = World::new(&[("square_wave", 4), ("reed", 7)]);
-        world.deliver();
-        world.apply(GoalEvent::Deliver("next".into()));
-        world.apply(GoalEvent::ConditionMet(Condition::MachineConfigured {
-            machine: "mudpit_burbler".into(),
-        }));
-        world.apply(GoalEvent::ConditionMet(Condition::TreeWatered {
-            mine: "scrub_oak".into(),
-        }));
+    fn after_the_last_goal_nothing_is_active_and_play_continues() {
+        let mut world = World::new();
+        world.at_delivery();
+        world.hold("square_wave", 4);
+        world.hold("reed", 6);
+        world.apply(GoalEvent::Deliver("deliver".into()));
+        world.apply(GoalEvent::ConditionMet(grown(GrowthLevel::FullBloom)));
+        world.apply(GoalEvent::ConditionMet(watered()));
         assert!(
             world
                 .rules
@@ -843,19 +1122,7 @@ mod tests {
                 .iter()
                 .all(|g| world.progress.is_complete(&g.id))
         );
-        assert!(
-            world
-                .progress
-                .active_goal(&world.rules, Horizon::Short)
-                .is_none()
-        );
-        assert!(
-            world
-                .progress
-                .active_goal(&world.rules, Horizon::Long)
-                .is_none()
-        );
-        // Further events still apply.
+        assert!(world.progress.active_major(&world.rules).is_none());
         world.apply(GoalEvent::Pin {
             recipe: "stream_kit".into(),
             count: 1,
@@ -864,7 +1131,7 @@ mod tests {
 
     #[test]
     fn pin_totals_and_crafting_lowers_the_pin() {
-        let mut world = World::new(&[("reed", 10)]);
+        let mut world = World::new();
         world.apply(GoalEvent::Pin {
             recipe: "stream_kit".into(),
             count: 3,
@@ -884,46 +1151,86 @@ mod tests {
         assert_eq!(world.progress.pins().count("stream_kit"), 0);
     }
 
-    #[test]
-    fn build_a_heartbeat_opens_water_the_tree_and_stays_complete() {
-        let mut world = World::new(&[]);
-        let burbler = Condition::MachineConfigured {
-            machine: "mudpit_burbler".into(),
-        };
-        assert_eq!(
-            world.apply(GoalEvent::ConditionMet(burbler.clone())),
-            [
-                GoalOutcome::GoalCompleted("build_a_heartbeat".into()),
-                GoalOutcome::Opened("water_the_tree".into()),
-            ]
-        );
-        // Unpatching sends nothing that reopens it; repeating the condition is harmless.
-        assert_eq!(world.apply(GoalEvent::ConditionMet(burbler)), []);
-        assert!(world.progress.is_complete("build_a_heartbeat"));
+    fn errors(goals: Vec<GoalDefinition>) -> Vec<(String, String, String)> {
+        let rules = Rules::load(&crate::rules::shipped_files()).unwrap();
+        validate_goals(&rules.definition, &BTreeSet::new(), &goals)
+            .into_iter()
+            .map(|e| (e.id, e.field, e.message))
+            .collect()
     }
 
     #[test]
-    fn a_condition_met_before_its_goal_opens_completes_it_on_opening() {
-        let mut world = World::new(&[]);
-        world.apply(GoalEvent::ConditionMet(Condition::TreeWatered {
-            mine: "scrub_oak".into(),
-        }));
-        assert!(!world.progress.is_complete("water_the_tree"));
-        let outcomes = world.apply(GoalEvent::ConditionMet(Condition::MachineConfigured {
-            machine: "mudpit_burbler".into(),
-        }));
-        assert!(outcomes.contains(&GoalOutcome::GoalCompleted("water_the_tree".into())));
+    fn validation_names_the_goal_and_field() {
+        let found = errors(vec![
+            major("lonely"),
+            when("orphan", "nowhere", configured()),
+            when("nested", "orphan", configured()),
+            GoalDefinition {
+                condition: Some(configured()),
+                ..major("bossy")
+            },
+            when("bossy_step", "bossy", configured()),
+            step("empty", "bossy"),
+            when(
+                "greedy",
+                "bossy",
+                Condition::ItemHeld {
+                    item: "unobtainium".into(),
+                    quantity: 1,
+                },
+            ),
+            when(
+                "far",
+                "bossy",
+                Condition::TreeGrown {
+                    mine: "baobab".into(),
+                    level: GrowthLevel::Budding,
+                },
+            ),
+        ]);
+        for (id, field, words) in [
+            ("lonely", "scale", "at least one minor step"),
+            ("orphan", "part_of", "unknown major goal nowhere"),
+            ("nested", "part_of", "not a major goal"),
+            ("bossy", "condition", "completes with its steps"),
+            ("empty", "requires", "needs `requires` or `condition`"),
+            ("greedy", "condition", "unobtainium"),
+            ("far", "condition", "unknown mine baobab"),
+        ] {
+            assert!(
+                found
+                    .iter()
+                    .any(|(i, f, m)| i == id && f == field && m.contains(words)),
+                "{id}.{field}: {words}\n{found:#?}"
+            );
+        }
     }
 
     #[test]
     fn a_prerequisite_cycle_is_rejected() {
-        let rules = crate::Rules::load(&crate::rules::shipped_files()).unwrap();
-        let mut goals = rules.goals.clone();
-        goals[0].after = vec![goals[1].id.clone()];
-        let errors = validate_goals(&rules.definition, &BTreeSet::new(), &goals);
+        let found = errors(vec![
+            GoalDefinition {
+                after: vec!["b".into()],
+                ..major("a")
+            },
+            when("a1", "a", configured()),
+            GoalDefinition {
+                after: vec!["a".into()],
+                ..major("b")
+            },
+            when("b1", "b", configured()),
+        ]);
         assert!(
-            errors.iter().any(|e| e.message.contains("cycle")),
-            "{errors:?}"
+            found
+                .iter()
+                .any(|(_, f, m)| f == "after" && m.contains("cycle")),
+            "{found:?}"
         );
+    }
+
+    #[test]
+    fn an_unknown_growth_level_fails_to_parse() {
+        let row = r#"{"kind": "tree_grown", "mine": "scrub_oak", "level": "towering"}"#;
+        assert!(serde_json::from_str::<Condition>(row).is_err());
     }
 }

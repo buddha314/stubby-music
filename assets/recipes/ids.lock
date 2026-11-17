@@ -1,8 +1,11 @@
 # Every rule ID ever shipped. Maintained by `cargo run -p stubby_recipes --bin rules-fmt`.
 # Never remove a line: a renamed or removed ID needs a row in migrations.json.
+build_a_camp
 build_a_heartbeat
+catch_a_spark
 clock
 clock_source
+cut_reeds
 desert_brush_air
 empty_snail_shell
 lightning_bug
@@ -15,5 +18,6 @@ scrub_oak
 scrub_oak_air
 snail_shell
 square_wave
+stop_the_wind
 stream_segment
 water_the_tree

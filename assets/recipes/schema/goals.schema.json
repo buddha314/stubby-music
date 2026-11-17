@@ -29,7 +29,7 @@
   ],
   "$defs": {
     "Condition": {
-      "description": "Game states a goal can wait for. The game reports each when it starts to hold.",
+      "description": "Game states a step can wait for.",
       "oneOf": [
         {
           "description": "Every `configure.cables` patch of a placed machine is made, so its voice sounds.",
@@ -51,7 +51,7 @@
           ]
         },
         {
-          "description": "A stream delivers water to a placed tree of this mine (needs add-digging).",
+          "description": "A flowing stream waters a placed tree of this mine.",
           "type": "object",
           "properties": {
             "kind": {
@@ -67,6 +67,54 @@
           "required": [
             "kind",
             "mine"
+          ]
+        },
+        {
+          "description": "A placed tree of this mine is at this bloom level or above.",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "tree_grown"
+            },
+            "level": {
+              "$ref": "#/$defs/GrowthLevel"
+            },
+            "mine": {
+              "type": "string",
+              "x-stubby-ref": "mines"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "mine",
+            "level"
+          ]
+        },
+        {
+          "description": "The player holds at least this many of an item.",
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "x-stubby-ref": "items"
+            },
+            "kind": {
+              "type": "string",
+              "const": "item_held"
+            },
+            "quantity": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "item",
+            "quantity"
           ]
         }
       ]
@@ -96,21 +144,29 @@
           "description": "One line the hub shows under the name.",
           "type": "string"
         },
-        "horizon": {
-          "$ref": "#/$defs/Horizon"
-        },
         "id": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
+        "part_of": {
+          "description": "The major goal a minor step belongs to. Steps run in file order.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "x-stubby-ref": "goals"
+        },
         "requires": {
-          "description": "Items delivered to meet it. Exactly one of `requires` and `condition`.",
+          "description": "Items delivered to meet a step. A step has exactly one of `requires` and `condition`.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/Stack"
           }
+        },
+        "scale": {
+          "$ref": "#/$defs/Scale"
         },
         "unlocks": {
           "description": "Items discovered in the recipe book when it completes.",
@@ -126,14 +182,25 @@
         "id",
         "name",
         "description",
-        "horizon"
+        "scale"
       ]
     },
-    "Horizon": {
+    "GrowthLevel": {
+      "description": "A growing plant's bloom levels, lowest first (the growth stages of\n`assets/flora/scrub_oak/asset.json`). A tree at a level is at every level below it.",
       "type": "string",
       "enum": [
-        "long",
-        "short"
+        "budding",
+        "leafing",
+        "leafed",
+        "full_bloom"
+      ]
+    },
+    "Scale": {
+      "description": "A goal's level: a major goal is a set of minor steps.",
+      "type": "string",
+      "enum": [
+        "major",
+        "minor"
       ]
     },
     "Stack": {

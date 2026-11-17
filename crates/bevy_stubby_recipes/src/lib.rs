@@ -218,8 +218,9 @@ pub struct Goals {
     pub progress: GoalProgress,
 }
 
-/// Apply a goal event (deliver, a condition met, choose, pin) to the player's progress.
-/// `Crafted` is sent for you on every [`CraftCompleted`].
+/// Apply a goal event (deliver, a condition met or cleared, choose, pin) to the player's
+/// progress. `Crafted` is sent for you on every [`CraftCompleted`], and the goals are
+/// checked again whenever the inventory changes (`item_held` steps).
 #[derive(Message, Clone)]
 pub struct GoalRequest(pub GoalEvent);
 
@@ -354,11 +355,19 @@ fn apply_goals(
         crafted.clear();
         return;
     };
-    let events: Vec<_> = crafted
+    let mut events: Vec<_> = crafted
         .read()
         .map(|craft| GoalEvent::Crafted(craft.recipe.clone()))
         .chain(requests.read().map(|request| request.0.clone()))
         .collect();
+    // Held items count as they change (harvests, the rack, stream building), and the
+    // first run checks what the player starts with.
+    if player.is_changed() || goals.is_added() {
+        events.push(GoalEvent::Refresh);
+    }
+    if events.is_empty() {
+        return;
+    }
     let Goals { rules, progress } = &mut *goals;
     let PlayerInventory { items, book, .. } = &mut *player;
     for event in events {
@@ -400,9 +409,32 @@ mod tests {
     }
 
     #[test]
-    fn a_met_condition_completes_its_chore_once() {
+    fn a_met_condition_completes_its_step_once() {
         let mut app = App::new();
         app.add_plugins(RecipesPlugin::default());
+        // A fixture, never the shipped goal list.
+        let camp = stubby_recipes::GoalDefinition {
+            id: "camp".into(),
+            name: "Camp".into(),
+            description: String::new(),
+            scale: stubby_recipes::Scale::Major,
+            part_of: None,
+            requires: vec![],
+            condition: None,
+            after: vec![],
+            unlocks: vec![],
+        };
+        let beat = stubby_recipes::GoalDefinition {
+            id: "beat".into(),
+            scale: stubby_recipes::Scale::Minor,
+            part_of: Some("camp".into()),
+            condition: Some(stubby_recipes::Condition::MachineConfigured {
+                machine: "mudpit_burbler".into(),
+            }),
+            ..camp.clone()
+        };
+        let goals = vec![camp, beat];
+        app.world_mut().resource_mut::<Goals>().rules.goals = goals;
         let configured = GoalRequest(GoalEvent::ConditionMet(
             stubby_recipes::Condition::MachineConfigured {
                 machine: "mudpit_burbler".into(),
@@ -412,19 +444,15 @@ mod tests {
         app.update();
         app.world_mut().write_message(configured);
         app.update();
-        assert!(
-            app.world()
-                .resource::<Goals>()
-                .progress
-                .is_complete("build_a_heartbeat")
-        );
+        let progress = &app.world().resource::<Goals>().progress;
+        assert!(progress.is_complete("beat") && progress.is_complete("camp"));
         let completed = app
             .world_mut()
             .resource_mut::<Messages<GoalReported>>()
             .drain()
             .filter(|r| matches!(&r.0, GoalOutcome::GoalCompleted(_)))
             .count();
-        assert_eq!(completed, 1);
+        assert_eq!(completed, 2, "the step and its major, once each");
     }
 }
 
