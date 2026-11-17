@@ -6983,6 +6983,7 @@ dependencies = [
  "jackdaw_runtime",
  "jackdaw_scene_types",
  "serde_json",
+ "stubby_core",
  "stubby_game",
  "tempfile",
 ]

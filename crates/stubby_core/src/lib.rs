@@ -50,7 +50,8 @@ impl ScreenMode {
 pub struct HudCamera;
 
 /// Marks static render geometry included in AudioNimbus's acoustic scene.
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Reflect, Debug, Clone, Copy, PartialEq)]
+#[reflect(Component, Default)]
 pub struct AcousticOccluder {
     pub absorption: [f32; 3],
     pub scattering: f32,
@@ -69,6 +70,12 @@ impl AcousticOccluder {
         scattering: 0.05,
         transmission: [0.015, 0.002, 0.001],
     };
+}
+
+impl Default for AcousticOccluder {
+    fn default() -> Self {
+        Self::GENERIC
+    }
 }
 
 /// The one thing E would act on now.

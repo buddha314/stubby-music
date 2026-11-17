@@ -32,6 +32,7 @@ impl Plugin for DesertWorldPlugin {
             calendar::CalendarPlugin,
             prefabs::PlacedPrefabsPlugin,
         ))
+        .register_type::<stubby_core::AcousticOccluder>()
         .insert_resource(WorldSeed(self.seed))
         // The desert's terrain is the ground the player and creatures stand on.
         .insert_resource(stubby_core::GroundHeight(terrain::height))

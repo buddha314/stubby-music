@@ -44,7 +44,8 @@ fn editor_world() -> App {
         .register_type::<LodLevel>()
         .register_type::<MineNode>()
         .register_type::<ResourceNode>()
-        .register_type::<PulseFollower>();
+        .register_type::<PulseFollower>()
+        .register_type::<stubby_core::AcousticOccluder>();
     app
 }
 

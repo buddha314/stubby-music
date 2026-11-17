@@ -343,6 +343,13 @@ testable by asserting identical output for identical seeds.
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
   `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
+- **Audit acoustics when authoring levels or large geometry.** Read
+  `docs/audio/acoustic-level-authoring.md`; mark sound-critical static `Mesh3d`
+  children with `stubby_core::AcousticOccluder` and choose its absorption,
+  scattering, and transmission values. The marker belongs on the mesh child, not
+  just the prefab root. Record representative source/listener paths and the material
+  choice in the PR. Do not tag all decorative meshes or invent a second occlusion
+  filter alongside AudioNimbus.
 - Ship each glb in its starting pose using **node scale** (Blender's hidden-in-render
   flag does not export).
 - **Placed prefabs need unique instance IDs.** A prefab with a fixed `MineNode` or

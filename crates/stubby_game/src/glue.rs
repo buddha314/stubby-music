@@ -73,12 +73,15 @@ fn publish_acoustic_scene(
     meshes: Res<Assets<Mesh>>,
     changed_occluders: Query<
         (),
-        Or<(
-            Added<stubby_core::AcousticOccluder>,
-            Changed<stubby_core::AcousticOccluder>,
-            Changed<Mesh3d>,
-            Changed<GlobalTransform>,
-        )>,
+        (
+            Or<(
+                Added<stubby_core::AcousticOccluder>,
+                Changed<stubby_core::AcousticOccluder>,
+                Changed<Mesh3d>,
+                Changed<GlobalTransform>,
+            )>,
+            With<stubby_core::AcousticOccluder>,
+        ),
     >,
     occluders: Query<(&stubby_core::AcousticOccluder, &Mesh3d, &GlobalTransform)>,
     mut removed: RemovedComponents<stubby_core::AcousticOccluder>,

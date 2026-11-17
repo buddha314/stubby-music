@@ -77,6 +77,12 @@ assets: open one to edit it, and every instance follows.
 add its game component in the inspector (such as `MineNode`), then right-click it in the hierarchy and choose
 **Save as Prefab**, saving beside the model as `<id>.bsn`.
 
+For large surfaces that affect sound paths, also read
+[`docs/audio/acoustic-level-authoring.md`](../../docs/audio/acoustic-level-authoring.md).
+Add `AcousticOccluder` to the actual `Mesh3d` child in the prefab, select acoustic
+absorption/scattering/transmission values, and include the source/listener path audit
+in the change review. The prefab root marker alone does not tag its child meshes.
+
 - Each prefab names its model with a `GltfSource` (the model beside it). Prefabs never carry their own levels of detail.
 
 **Levels of detail belong to the model**, as in Unity, Unreal and Godot. Select the
