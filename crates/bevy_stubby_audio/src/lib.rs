@@ -278,6 +278,11 @@ fn set_demo(synth: &mut Synth, on: bool) {
                 from: PortRef::new(DEMO_SQUARE_VCA, "out"),
                 to: PortRef::output(),
             },
+            Command::SetEmitter {
+                output: PortRef::new(DEMO_SQUARE_VCA, "out"),
+                offset: [-2.0, 0.0, -4.0],
+                volume: 0.65,
+            },
             Command::AddModule {
                 id: DEMO_CLOCK,
                 kind: ModuleKind::Clock { bpm: 90.0 },
@@ -303,6 +308,11 @@ fn set_demo(synth: &mut Synth, on: bool) {
             Command::Connect {
                 from: PortRef::new(DEMO_BLIP_VCA, "out"),
                 to: PortRef::output(),
+            },
+            Command::SetEmitter {
+                output: PortRef::new(DEMO_BLIP_VCA, "out"),
+                offset: [2.0, 0.0, -4.0],
+                volume: 0.65,
             },
         ]
     } else {

@@ -37,6 +37,7 @@ pub struct AudioNimbusSpatialContext {
 pub struct AudioNimbusBinauralNode {
     spatial: Arc<AudioNimbusSpatialContext>,
     direction: Arc<[AtomicU32; 3]>,
+    volume: Arc<AtomicU32>,
 }
 
 impl AudioNimbusBinauralNode {
@@ -49,6 +50,7 @@ impl AudioNimbusBinauralNode {
                 AtomicU32::new(0.0_f32.to_bits()),
                 AtomicU32::new(1.0_f32.to_bits()),
             ]),
+            volume: Arc::new(AtomicU32::new(1.0_f32.to_bits())),
         }
     }
 
@@ -70,6 +72,12 @@ impl AudioNimbusBinauralNode {
         for (slot, value) in self.direction.iter().zip(normalized) {
             slot.store(value.to_bits(), Ordering::Relaxed);
         }
+    }
+
+    /// Publishes the game-side hearing-radius gain without locking.
+    pub fn set_volume(&self, volume: f32) {
+        self.volume
+            .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
     }
 }
 
@@ -96,6 +104,7 @@ impl AudioNode for AudioNimbusBinauralNode {
         Ok(AudioNimbusBinauralProcessor {
             spatializer: self.spatial.create_binaural_spatializer()?,
             direction: self.direction.clone(),
+            volume: self.volume.clone(),
             block_size,
             frame_index: 0,
             input: vec![0.0; block_size],
@@ -110,6 +119,7 @@ impl AudioNode for AudioNimbusBinauralNode {
 struct AudioNimbusBinauralProcessor {
     spatializer: BinauralSpatializer,
     direction: Arc<[AtomicU32; 3]>,
+    volume: Arc<AtomicU32>,
     block_size: usize,
     frame_index: usize,
     input: Vec<f32>,
@@ -169,6 +179,12 @@ impl AudioNodeProcessor for AudioNimbusBinauralProcessor {
                 }
                 self.frame_index = 0;
             }
+        }
+
+        let volume = f32::from_bits(self.volume.load(Ordering::Relaxed));
+        for frame in 0..info.frames {
+            left_output[frame] *= volume;
+            right_output[frame] *= volume;
         }
 
         ProcessStatus::OutputsModified

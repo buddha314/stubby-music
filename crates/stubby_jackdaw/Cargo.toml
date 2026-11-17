@@ -7,6 +7,7 @@ publish = false
 # Keep this package for saved prefab type paths; dependency versions belong to the root workspace.
 [features]
 dev = ["bevy/dynamic_linking", "stubby_game/dev"]
+spatial-audio = ["stubby_game/spatial-audio"]
 
 [dependencies]
 # The game itself, as an ordinary dependency (split-game-into-systems step 1); this

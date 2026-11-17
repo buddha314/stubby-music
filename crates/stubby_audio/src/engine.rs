@@ -5,6 +5,8 @@
 //! over its own lock-free channel, so commands are applied to the graph here and
 //! published by [`Engine::flush`]. Events come back over one `rtrb` ring per clock.
 
+#[cfg(feature = "audionimbus")]
+use crate::audionimbus_spatial::{AudioNimbusBinauralNode, AudioNimbusSpatialContext};
 use crate::modules::{
     ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
     VcoConfig, VcoNode, Waveform,
@@ -24,6 +26,8 @@ use firewheel::{
 };
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
+#[cfg(feature = "audionimbus")]
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Output is always stereo; mono module outputs feed both channels.
@@ -68,6 +72,17 @@ struct Module {
     state: NodeState,
 }
 
+struct Emitter {
+    node: NodeID,
+    params: EmitterParams,
+}
+
+enum EmitterParams {
+    Basic(SpatialBasicNode),
+    #[cfg(feature = "audionimbus")]
+    AudioNimbus(AudioNimbusBinauralNode),
+}
+
 pub struct Engine {
     cx: FirewheelContext,
     modules: HashMap<ModuleId, Module>,
@@ -78,7 +93,9 @@ pub struct Engine {
     /// Outputs cabled straight to the speakers (`PortRef::ui_output`).
     to_ui: HashSet<PortRef>,
     /// Master outputs placed in the world, each through its own spatial node.
-    emitters: HashMap<PortRef, (NodeID, SpatialBasicNode)>,
+    emitters: HashMap<PortRef, Emitter>,
+    #[cfg(feature = "audionimbus")]
+    audionimbus_spatial: Option<Arc<AudioNimbusSpatialContext>>,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
@@ -144,6 +161,8 @@ impl Engine {
             to_master: HashSet::new(),
             to_ui: HashSet::new(),
             emitters: HashMap::new(),
+            #[cfg(feature = "audionimbus")]
+            audionimbus_spatial: None,
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
@@ -164,6 +183,8 @@ impl Engine {
         let stream = firewheel::cpal::CpalStream::new(&mut engine.cx, Default::default())
             .map_err(|e| EngineError::Device(e.to_string()))?;
         engine.stream = Some(stream);
+        #[cfg(feature = "audionimbus")]
+        engine.initialize_audionimbus()?;
         Ok(engine)
     }
 
@@ -191,7 +212,21 @@ impl Engine {
             max_block: config.max_block_frames as usize,
             frames_rendered: 0,
         };
+        #[cfg(feature = "audionimbus")]
+        engine.initialize_audionimbus()?;
         Ok((engine, renderer))
+    }
+
+    #[cfg(feature = "audionimbus")]
+    fn initialize_audionimbus(&mut self) -> Result<(), EngineError> {
+        let stream = self
+            .cx
+            .stream_info()
+            .ok_or(EngineError::Config("audio stream is not active"))?;
+        let spatial = AudioNimbusSpatialContext::new(stream.sample_rate.get(), 256)
+            .map_err(|error| EngineError::Device(format!("AudioNimbus initialization: {error}")))?;
+        self.audionimbus_spatial = Some(Arc::new(spatial));
+        Ok(())
     }
 
     /// Validate a command and apply it to the graph. Takes effect on the audio
@@ -538,7 +573,7 @@ impl Engine {
             .emitters
             .iter()
             .filter(|(from, _)| from.module == id)
-            .map(|(_, (node, _))| *node)
+            .map(|(_, emitter)| emitter.node)
             .collect();
         self.emitters.retain(|from, _| from.module != id);
         if fading {
@@ -578,30 +613,67 @@ impl Engine {
         if !self.to_master.contains(&output) {
             return Ok(());
         }
-        let volume = firewheel::Volume::Linear(volume.clamp(0., 1.));
-        if let Some((node, old)) = self.emitters.get_mut(&output) {
-            let new = SpatialBasicNode {
-                volume,
-                offset: offset.into(),
-                ..*old
-            };
-            let mut queue = self.cx.event_queue(*node);
-            new.diff(old, PathBuilder::default(), &mut queue);
-            *old = new;
+        let gain = volume.clamp(0., 1.);
+        let volume = firewheel::Volume::Linear(gain);
+        if let Some(emitter) = self.emitters.get_mut(&output) {
+            match &mut emitter.params {
+                EmitterParams::Basic(old) => {
+                    let new = SpatialBasicNode {
+                        volume,
+                        offset: offset.into(),
+                        ..*old
+                    };
+                    let mut queue = self.cx.event_queue(emitter.node);
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
+                #[cfg(feature = "audionimbus")]
+                EmitterParams::AudioNimbus(node) => {
+                    node.set_direction(offset);
+                    node.set_volume(gain);
+                }
+            }
             return Ok(());
         }
-        let mut params = SpatialBasicNode {
-            volume,
-            offset: offset.into(),
-            ..SpatialBasicNode::default()
-        };
-        params.distance_attenuation.distance_gain_factor = 0.;
         let graph = |e: AddEdgeError| EngineError::Graph(e.to_string());
         let (src, src_port) = self.output_port(output)?;
-        let node = self
-            .cx
-            .add_node(params, None)
-            .map_err(|e| EngineError::Graph(e.to_string()))?;
+        #[cfg(feature = "audionimbus")]
+        let (node, params) = if let Some(spatial) = &self.audionimbus_spatial {
+            let params = AudioNimbusBinauralNode::new(spatial.clone());
+            params.set_direction(offset);
+            params.set_volume(gain);
+            let node = self
+                .cx
+                .add_node(params.clone(), None)
+                .map_err(|e| EngineError::Graph(e.to_string()))?;
+            (node, EmitterParams::AudioNimbus(params))
+        } else {
+            let mut params = SpatialBasicNode {
+                volume,
+                offset: offset.into(),
+                ..SpatialBasicNode::default()
+            };
+            params.distance_attenuation.distance_gain_factor = 0.;
+            let node = self
+                .cx
+                .add_node(params, None)
+                .map_err(|e| EngineError::Graph(e.to_string()))?;
+            (node, EmitterParams::Basic(params))
+        };
+        #[cfg(not(feature = "audionimbus"))]
+        let (node, params) = {
+            let mut params = SpatialBasicNode {
+                volume,
+                offset: offset.into(),
+                ..SpatialBasicNode::default()
+            };
+            params.distance_attenuation.distance_gain_factor = 0.;
+            let node = self
+                .cx
+                .add_node(params, None)
+                .map_err(|e| EngineError::Graph(e.to_string()))?;
+            (node, EmitterParams::Basic(params))
+        };
         let out = self.world;
         self.cx
             .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
@@ -611,7 +683,7 @@ impl Engine {
         self.cx
             .connect(node, out, &[(0, 0), (1, 1)], false)
             .map_err(graph)?;
-        self.emitters.insert(output, (node, params));
+        self.emitters.insert(output, Emitter { node, params });
         Ok(())
     }
 
@@ -688,8 +760,8 @@ impl Engine {
             if !self.to_master.remove(&from) {
                 return Err(EngineError::NotConnected { from, to });
             }
-            if let Some((node, _)) = self.emitters.remove(&from) {
-                let _ = self.cx.remove_node(node);
+            if let Some(emitter) = self.emitters.remove(&from) {
+                let _ = self.cx.remove_node(emitter.node);
                 return Ok(());
             }
             let out = self.world;

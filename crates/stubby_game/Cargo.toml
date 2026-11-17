@@ -6,6 +6,7 @@ publish = false
 
 [features]
 dev = ["bevy/dynamic_linking"]
+spatial-audio = ["stubby_audio/audionimbus"]
 
 [dependencies]
 jackdaw_terrain.workspace = true
