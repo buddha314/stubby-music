@@ -914,3 +914,28 @@ impl OfflineRenderer {
         self.frames_rendered
     }
 }
+
+#[cfg(all(test, feature = "audionimbus"))]
+mod audionimbus_control_tests {
+    use super::*;
+
+    #[test]
+    fn reflection_wet_mix_rejects_non_finite_and_clamps_finite_values() {
+        let (mut engine, _renderer) = Engine::offline(EngineConfig::default()).unwrap();
+        assert!(
+            engine
+                .send(Command::SetReflectionWetMix { value: f32::NAN })
+                .is_err()
+        );
+        assert_eq!(engine.reflection_wet_mix, 0.25);
+
+        engine
+            .send(Command::SetReflectionWetMix { value: -2.0 })
+            .unwrap();
+        assert_eq!(engine.reflection_wet_mix, 0.0);
+        engine
+            .send(Command::SetReflectionWetMix { value: 1.5 })
+            .unwrap();
+        assert_eq!(engine.reflection_wet_mix, 1.0);
+    }
+}

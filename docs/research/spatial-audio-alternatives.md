@@ -45,7 +45,7 @@ documentation](https://github.com/ValveSoftware/steam-audio/blob/master/core/doc
 | Project | What it covers | License / state | Fit and disposition |
 | --- | --- | --- | --- |
 | **AudioNimbus + Steam Audio** | HRTF, directivity/distance, geometry occlusion and transmission, reflections/reverb, Ambisonics, probes/pathing. | AudioNimbus MIT OR Apache-2.0; Steam Audio Apache-2.0. Native SDK is already built and direct occlusion has been exercised here. | **Keep as the production baseline.** Broadest mature feature set found and already integrated. First complete the listener wet bus and capability matrix. |
-| **OMG Audio** | Rust engine claiming mesh/BVH propagation, HRTF, wall transmission, diffraction, reflection taps, coupled reverb/RT60, and an Ambisonic bus. | Apache-2.0 code; README identifies separate MIT/CC0/PD media. Active but young and evolving; published performance claims are maintainer-reported. | **Best alternative for a bounded research spike.** Could reduce native C++ SDK/build exposure, but no Bevy/Firewheel adapter is listed. Adopting it likely means writing scene ingestion and a Firewheel bridge, so count net code before calling it a simplification. Validate current engine version/API and media licenses at a pinned commit. |
+| **OMG Audio** | Rust engine with mesh/BVH propagation, HRTF, wall transmission, diffraction, early paths, coupled reverb/RT60, and Ambisonic output. | Apache-2.0 code; built-in HRIR data carries separate Apache attribution. Rapidly evolving and young; published performance figures are maintainer-reported. | **Run a bounded Firewheel prototype.** The high-level mixer is clip-oriented, but the lower-level `omg_dsp::Renderer::process_block` accepts live mono samples, so procedural modular output is technically possible. No Bevy/Firewheel adapter exists. The main gates are frame-update allocations, shared Ambisonic bus routing, scene ingestion, and pinned API stability. |
 | **Resonance Audio** | HRTF, shoebox room reflections and late reverb; host supplies occlusion values. | Apache-2.0; upstream archived/read-only since 2023. | Not a full geometric replacement: room proxies and host raycasts would leave game-specific geometry work. Stale upstream makes it a poor foundation. Useful as a reference for room/reverb controls only. |
 | **OpenAL Soft (EFX)** | Positional rendering and effect slots for air absorption, occlusion and environmental reverb. | LGPL-2.0-or-later; maintained. | An audio API/effects layer rather than a scene propagation solver. We would still compute geometry/material effects and would be adding a second host alongside Firewheel. Not a replacement. |
 | **`phonon_rs`** | Unofficial Rust rewrite of Steam Audio direct effects: distance, air absorption, directivity, occlusion and transmission. | Apache-2.0; early-stage and explicitly incomplete. | Missing reflections, listener reverb, Ambisonics and pathing in the documented feature set. Does not solve the current audible reverb requirement. Watch only. |
@@ -53,30 +53,61 @@ documentation](https://github.com/ValveSoftware/steam-audio/blob/master/core/doc
 | **bevy_seedling / Firewheel** | Bevy-facing audio graph, playback, routing, effect chains and custom processors. | MIT OR Apache-2.0. | Complementary integration layer, not a geometric acoustic solver. We already use Firewheel; compare only if a concrete reduction in our Bevy/Firewheel glue is demonstrated. |
 | **`bevy-raytraced-audio`** | A newly indexed Bevy CPU ray-traced propagation project. | Search-index evidence says MIT; project is extremely new and needs direct code/license review. | Track as an emerging candidate, not a usable dependency yet. Verify the repository, API, audio-thread model, feature scope and activity before a spike. |
 
-### OMG Audio assessment
+### OMG Audio assessment and prototype gate
 
-OMG Audio is the only alternative found that appears to target most of the desired
-feature breadth in Rust. Its current documentation describes arbitrary triangle-mesh
-scenes and BVH acceleration, source-to-listener propagation, wall transmission,
-diffraction, reflections, a coupled late field and a multiband RT60 model. Its own
-documentation also calls out approximations and remaining work, including a limited
-diffuse field and a directional late-field milestone. Those limits matter for our
-factory world and should be tested rather than inferred from feature names.
+I inspected upstream commit `4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869` locally.
+The useful integration seam is lower-level than the README's clip-oriented `Mixer`:
+`omg_dsp::Renderer::process_block` takes arbitrary live mono `f32` samples and emits
+point-rendered stereo plus a shared order-2 Ambisonic bus contribution. `omg_core::ParamBlock`
+is the simulation-to-render contract, carrying path taps, multiband reverb, and remote
+room sends. This makes a procedural Firewheel integration plausible without changing
+the game into a clip-based audio engine.
 
-The project lists core, DSP, scene, application, web and Godot crates; it does not
-advertise a Bevy or Firewheel adapter. The practical comparison is therefore not
-“replace one crate with another.” It is:
+There are still concrete adapter costs. Geometry uses meters and +Z up and must be
+converted from Bevy/Avian's coordinate frame and authored materials. A renderer per
+live source must consume bounded frame updates; point-rendered stereo can be summed,
+while the shared Ambisonic contributions need a coherent aggregate decode. In the
+inspected commit, `Renderer::set_params` constructs several temporary vectors, and
+`threaded::AudioOut::render` calls `Mixer::apply` when new simulation frames arrive.
+The upstream `Mixer` documentation itself says `apply` allocates and is not strictly
+real-time safe. We therefore cannot use the packaged threaded host directly in our
+callback. The prototype should first determine whether its own bounded Firewheel
+handoff can call the low-level renderer safely, and whether fixing/upstreaming reusable
+parameter scratch storage is a small focused change.
 
-1. what the engine supplies without modification;
-2. the Bevy/Jackdaw mesh, transform, material and lifecycle adapter we would need;
-3. a bounded, realtime-safe transfer into Firewheel and routing of direct and wet
-   outputs;
-4. platform build, maintenance, testing, and license-notice burden;
-5. net custom code removed versus added.
+The pinned checkout's `cargo test -p omg-audio --test fx_mixer` passed (9 tests). This
+is upstream unit evidence only, not a Firewheel integration, live-signal test, or
+independent acoustic-quality measurement. Code is Apache-2.0; the checked-in HRIR
+notice cites SADIE II data under Apache-2.0. Keep media/data notices separate from the
+code license. Sources: [OMG Audio upstream](https://github.com/JustGoscha/omg-audio),
+[pinned renderer](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/crates/omg-dsp/src/renderer.rs),
+[pinned threaded host](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/crates/omg-audio/src/threaded.rs),
+[license](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/LICENSE),
+[HRIR notice](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/crates/omg-audio/hrir/NOTICE.md).
 
-Treat the repository README and benchmarks as maintainer statements until independently
-reproduced. Pin a commit for any evaluation. Sources: [OMG Audio repository and
-README](https://github.com/JustGoscha/omg-audio), [workspace manifest](https://github.com/JustGoscha/omg-audio/blob/main/Cargo.toml).
+### Callback-safety blocker found in the current AudioNimbus reflection handoff
+
+Inspection of the locally installed AudioNimbus 0.17.0 source found a concrete native
+memory race in the current reflection-output design. Its `ReflectionsReverbOutput`
+contains reflection parameters pointing at Steam Audio-managed impulse-response
+buffers. Upstream's `unsafe impl Sync` documentation explicitly says the simulation
+thread may overwrite those buffers while the audio thread reads them; it describes the
+result as potentially corrupted reverb. Our `triple_buffer` protects publication of
+the Rust snapshot, but its `Arc` keeps the wrapper alive, not the native IR memory from
+being overwritten. The same handoff is used by the existing per-emitter reflection
+path, so adding a listener bus would widen this exposure.
+
+Do not route listener reverb to the callback or claim callback-safe reflection until
+the buffer lifetime is made safe. Viable next checks are an upstream AudioNimbus fix
+that provides immutable/ref-counted IR snapshots, or a supported API to copy the IR
+into application-owned storage on the simulation worker. Copying must stay off the
+callback and be measured for allocation/copy cost. If neither is available, disabling
+the dynamic reflection path is safer than assuming the race is inaudible. The project
+must also exercise callback allocation and replacement with a non-empty snapshot after
+the ownership fix.
+
+This is a code-level finding from the exact 0.17.0 crate source, not a runtime race
+reproduction. Source: [AudioNimbus reflection output safety comments](https://github.com/MaxenceMaire/audionimbus/blob/main/src/wiring/step/reflections_reverb.rs).
 
 ## Comparison against our actual requirements
 

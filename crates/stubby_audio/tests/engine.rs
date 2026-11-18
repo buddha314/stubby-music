@@ -114,6 +114,12 @@ fn audionimbus_live_emitter_path_is_allocation_free_at_supported_rates() {
                 volume: 1.0,
             })
             .unwrap();
+        // Exercise the developer wet-mix command after the emitter has been
+        // installed. The processor reads this value through its atomic control
+        // on the callback path, alongside the allocation guard below.
+        engine
+            .send(Command::SetReflectionWetMix { value: 0.4 })
+            .unwrap();
         engine.flush().unwrap();
 
         let mut output = vec![0.0; BLOCK * 2];

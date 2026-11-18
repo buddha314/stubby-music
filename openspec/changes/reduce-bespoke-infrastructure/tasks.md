@@ -23,7 +23,7 @@ cross-platform artifacts, and performance remain unverified.
   Radeon Rays, and TrueAudio Next paths; CMake selects PFFFT and built-in vector math.
   The Linux x86_64 build and native HRTF initialization succeeded; details and caveats
   are in design.md.
-- [ ] 1.2 Build a feature matrix and isolated prototypes for AudioNimbus/Steam Audio's
+- [ ] 1.2 (claimed: Codex) Build a feature matrix and isolated prototypes for AudioNimbus/Steam Audio's
   useful documented capabilities: HRTF and custom SOFA, directivity/distance/air
   absorption, occlusion and material transmission, reflection algorithms and
   listener-centric reverb, Ambisonics, baked reflection probes, and pathing. Use open
@@ -32,11 +32,12 @@ cross-platform artifacts, and performance remain unverified.
   supported backend, dependencies/license, and project-specific gaps per feature.
   Candidate alternatives and the current integration decision are tracked in
   [spatial-audio-alternatives.md](../../../docs/research/spatial-audio-alternatives.md);
-  OMG Audio is the leading candidate for a measured spike, not an adopted replacement.
-- [ ] 1.3 Define and prototype scene integration: convert Bevy/Avian geometry and
+  OMG Audio remains a candidate to revisit, but its current integration surface does
+  not yet demonstrate lower total project code; see task 3.3.
+- [ ] 1.3 (claimed: Codex) Define and prototype scene integration: convert Bevy/Avian geometry and
   acoustic materials; handle static, moving, and streamed geometry; establish scene
   lifecycle, probe placement/bake artifacts, invalidation, and designer workflows.
-- [ ] 1.4 Prototype bounded parameter/result transfer into Firewheel-hosted processors
+- [ ] 1.4 (claimed: Codex) Prototype bounded parameter/result transfer into Firewheel-hosted processors
   and buses, including direct path, HRTF, reflections/reverb, and Ambisonic mixing where
   applicable. Measure latency, CPU/memory, allocations, locks, and stale-result behavior
   for moving emitters/listeners and dynamic occluders.
@@ -69,8 +70,14 @@ cross-platform artifacts, and performance remain unverified.
   sampling against current sky, ridge, and foliage-air behavior. Candidate: `noise`
   0.9 provides seeded fBm and Worley, but tileable cloud output and generator stability
   still need a focused fixture before replacing existing functions.
-- [ ] 3.3 Prototype only candidates that cover current requirements; record measured
-  maintenance/code reduction and any output compatibility changes.
+- [ ] 3.3 (claimed: Codex) Prototype OMG Audio against current spatial requirements;
+  record measured maintenance/code reduction and output compatibility. Initial pinned
+  source review (`4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869`) found a useful live-signal
+  seam in `omg_dsp::Renderer::process_block`; the high-level Mixer is clip-oriented,
+  and its threaded host applies frames with allocations on the audio callback. Continue
+  with a low-level Firewheel adapter prototype, bounded parameter updates, shared
+  Ambisonic routing, and Bevy/Avian geometry/material conversion before adoption.
+  Upstream's focused mixer tests passed locally (9/9); this is not integration proof.
 
 ## 4. Adopt verified replacements
 
