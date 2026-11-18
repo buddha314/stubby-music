@@ -48,23 +48,25 @@ settles before the next. Away from every clock it SHALL hold still.
 - **WHEN** no clock is within reach
 - **THEN** the ball does not pulse
 
-### Requirement: Collectibles in reach show as holograms
-While the disco light is on, every available collectible within reach of the player SHALL
-show a holographic shell over its body and a holographic beacon above it, steadily and
-visible through grass and reeds; the beams are its look, not what reveals (user,
-2026-11-18: revealing only what a sweeping beam crossed made pickups blink). A revealed
-collectible SHALL be marked `stubby_core::Spotlit`, and its owner SHALL keep it in view (a
-lightning bug holds its body lit between flashes). Collectibles SHALL be found through the
-pickup contract, without naming asset kinds.
+### Requirement: Collectibles the beams touch show as holograms
+The ball SHALL throw many small beams whose spots land from near the player out to the
+reveal's reach (user, 2026-11-18: "more, smaller"; a dozen wide beams crossed each place
+too seldom, and pickups blinked). Every available collectible within that reach whose
+heading from the ball a beam passes, at any height, SHALL show a holographic shell over its
+body and a holographic beacon above it, visible through grass and reeds; the beams SHALL
+cross each place often enough, against the fade, that a revealed collectible reads as
+steady. A revealed collectible SHALL be marked `stubby_core::Spotlit`, and its owner SHALL
+keep it in view (a lightning bug holds its body lit between flashes). Collectibles SHALL
+be found through the pickup contract, without naming asset kinds.
 
-#### Scenario: A shell in reach
-- **WHEN** the light is on and a snail shell lies 10 m from the player
-- **THEN** a holographic beacon stands over it and its shape glows holographically, without blinking
+#### Scenario: A shell in the beams
+- **WHEN** the light is on and a snail shell lies 10 m from the ball
+- **THEN** a holographic beacon stands over it and its shape glows, steadily as the beams turn
 
 #### Scenario: A bug between flashes
-- **WHEN** the light is on and a lightning bug in reach is between flashes
+- **WHEN** the beams pass a lightning bug while it is between flashes
 - **THEN** its body stays in view, with its hologram and beacon
 
-#### Scenario: Walking away or switching off
-- **WHEN** the player walks out of reach of a collectible, or switches the light off
+#### Scenario: Out of reach or switched off
+- **WHEN** a collectible is beyond the reach, or the light is switched off
 - **THEN** its hologram fades out within a few seconds and its overlay is removed

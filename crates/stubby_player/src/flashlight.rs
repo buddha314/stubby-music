@@ -1,11 +1,13 @@
 //! The disco light (add-forensic-flashlight), on B. A disco ball floats beside the
 //! player: it spins and throws a ring of narrow violet and cyan beams that sweep the
 //! ground. It is not a hand item (user, 2026-11-17): B switches it on and off whatever the
-//! hand holds, so the field recorder stays up, and no flashlight model is shown. While it is
-//! on, every collectible within the beams' reach (anything marked `Interactable::Pickup`, no
-//! asset kind named) shows as a hologram, an overlay on its body and a beacon above it, and
-//! is `Spotlit`, so its owner keeps it in view (a bug between flashes); switched off, they
-//! fade (user, 2026-11-18: revealing only what a sweeping beam crossed made them blink).
+//! hand holds, so the field recorder stays up, and no flashlight model is shown. It throws
+//! many small beams whose spots run out to 30 m (user, 2026-11-18: "more, smaller"; a dozen
+//! wide ones swept too seldom and pickups blinked). A collectible a beam's heading passes
+//! (anything marked `Interactable::Pickup`, no asset kind named) flares into a hologram, an
+//! overlay on its body and a beacon above it, and is `Spotlit`, so its owner keeps it in
+//! view (a bug between flashes); beams cross each point several times a second, and a
+//! hologram fades only when none has for a while.
 //! Style: `assets/ui/flashlight.json`.
 use bevy::{
     light::{NotShadowCaster, NotShadowReceiver},
@@ -54,12 +56,14 @@ struct BeamStyle {
     count: usize,
     colors: Vec<[f32; 3]>,
     intensity_lumens: f32,
+    reference_tilt_deg: f32,
     width_deg: f32,
     range_m: f32,
     tilt_deg: Vec<f32>,
 }
 #[derive(serde::Deserialize, Clone, Debug)]
 struct RevealStyle {
+    width_deg: f32,
     range_m: f32,
     fade_seconds: f32,
 }
@@ -109,16 +113,25 @@ pub fn beam_directions(count: usize, tilts_deg: &[f32]) -> Vec<Vec3> {
         .collect()
 }
 
-/// Whether any beam from `origin` along `beams` (world directions) passes within
-/// `width_deg` of `point`, within `range_m`.
+/// Whether any beam from `origin` along `beams` (world directions) passes `point` within
+/// `width_deg` round the ball (its heading, at any height: a beam's spots run out to its
+/// range, and a bug in the air above them is caught too), within `range_m`.
 pub fn touched(origin: Vec3, beams: &[Vec3], point: Vec3, width_deg: f32, range_m: f32) -> bool {
     let to = point - origin;
-    let distance = to.length();
-    distance > 1e-3
-        && distance <= range_m
-        && beams
-            .iter()
-            .any(|beam| beam.angle_between(to).to_degrees() <= width_deg)
+    let flat = Vec2::new(to.x, to.z);
+    to.length() <= range_m
+        && flat.length() > 1e-3
+        && beams.iter().any(|beam| {
+            let heading = Vec2::new(beam.x, beam.z);
+            heading.length() > 1e-3 && heading.angle_to(flat).abs().to_degrees() <= width_deg
+        })
+}
+
+/// A beam's brightness: `intensity` at `reference_tilt_deg` below the horizon, scaled with
+/// the square of how much farther its spot lands, so far spots read as bright as near ones.
+pub fn beam_intensity(intensity: f32, tilt_deg: f32, reference_tilt_deg: f32) -> f32 {
+    let reach = |tilt: f32| 1. / tilt.to_radians().tan().max(1e-3);
+    intensity * (reach(tilt_deg) / reach(reference_tilt_deg)).powi(2)
 }
 
 /// A hologram's strength after `dt`: full while a beam touches it, else fading out over
@@ -202,6 +215,7 @@ fn hologram(style: &HologramStyle, strength: f32) -> HologramMaterial {
 #[derive(Component)]
 struct DiscoBall {
     angle: f32,
+    beams: Vec<Vec3>,
     /// Whether it has been placed since it was switched on.
     placed: bool,
     /// The last beat heard from the clock it follows, and the next one, which the
@@ -337,6 +351,7 @@ fn setup(
         .spawn((
             DiscoBall {
                 angle: 0.,
+                beams: beams.clone(),
                 placed: false,
                 heard: None,
                 next: None,
@@ -354,10 +369,15 @@ fn setup(
     let width = style.beams.width_deg.to_radians();
     for (i, direction) in beams.iter().enumerate() {
         let [r, g, b] = style.beams.colors[i % style.beams.colors.len().max(1)];
+        let tilt = (-direction.y).asin().to_degrees();
         commands.spawn((
             SpotLight {
                 color: Color::srgb(r, g, b),
-                intensity: style.beams.intensity_lumens,
+                intensity: beam_intensity(
+                    style.beams.intensity_lumens,
+                    tilt,
+                    style.beams.reference_tilt_deg,
+                ),
                 range: style.beams.range_m,
                 // Crisp spots, as a mirror ball's are.
                 inner_angle: width * 0.85,
@@ -462,8 +482,7 @@ fn reveal(
     style: Res<FlashlightStyle>,
     beacon_meshes: Res<BeaconMeshes>,
     mut materials: ResMut<Assets<HologramMaterial>>,
-    balls: Query<(&DiscoBall, &Visibility)>,
-    eyes: Query<&GlobalTransform, (With<Player>, Without<HudCamera>)>,
+    balls: Query<(&DiscoBall, &Transform, &Visibility)>,
     pickups: Query<(
         Entity,
         &Interactable,
@@ -474,14 +493,10 @@ fn reveal(
     mesh_query: Query<&Mesh3d, Without<Overlay>>,
 ) {
     let style = &style.0;
-    let Ok((_, visibility)) = balls.single() else {
+    let Ok((ball, at, visibility)) = balls.single() else {
         return;
     };
-    // Reach is the player's, wherever they walk: the ball stays where it was switched on.
-    let Ok(eye) = eyes.single() else {
-        return;
-    };
-    let eye = eye.translation();
+    let beams: Vec<Vec3> = ball.beams.iter().map(|b| at.rotation * *b).collect();
     let lit = *visibility != Visibility::Hidden;
     let dt = time.delta_secs();
     let mut pickups = pickups;
@@ -489,7 +504,14 @@ fn reveal(
         if *what != Interactable::Pickup {
             continue;
         }
-        let hit = lit && place.translation().distance(eye) <= style.reveal.range_m;
+        let hit = lit
+            && touched(
+                at.translation,
+                &beams,
+                place.translation(),
+                style.reveal.width_deg,
+                style.reveal.range_m,
+            );
         match revealed {
             Some(mut revealed) => {
                 let strength = flare(revealed.strength, hit, dt, style.reveal.fade_seconds);
@@ -652,6 +674,11 @@ mod tests {
         );
         let aside = origin + Quat::from_rotation_y(0.4) * beam * 10.;
         assert!(!touched(origin, &[beam], aside, 7., 30.), "between beams");
+        // A bug in the air over the beam's spots is caught too.
+        let above = origin + Vec3::new(0., 0.5, -12.);
+        assert!(touched(origin, &[beam], above, 7., 30.), "at any height");
+        // Far spots are brighter, so they read as bright as near ones.
+        assert!(beam_intensity(1., 4.4, 14.) > 9. * beam_intensity(1., 14., 14.));
     }
     #[test]
     fn holograms_flare_then_fade() {
@@ -702,8 +729,13 @@ mod tests {
     }
     #[test]
     fn the_shipped_style_loads() {
-        let style = FlashlightStyle::shipped();
-        assert_eq!(style.0.beams.count, 12);
-        assert!(!style.0.beams.colors.is_empty());
+        let style = FlashlightStyle::shipped().0;
+        assert!(!style.beams.colors.is_empty());
+        // The shallowest beam's spot, from a ball about 2 m up, lands out at the reveal's
+        // reach, and its light carries that far.
+        let shallowest = style.beams.tilt_deg.iter().copied().fold(f32::MAX, f32::min);
+        let farthest = 2. / shallowest.to_radians().tan();
+        assert!(farthest >= style.reveal.range_m * 0.85, "{farthest} m");
+        assert!(style.beams.range_m >= farthest);
     }
 }
