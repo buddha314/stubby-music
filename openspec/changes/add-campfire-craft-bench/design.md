@@ -35,7 +35,7 @@ embers and must be lit again. The `fire_lit` goal condition still latches.
 The camp's profile has a `configure` block (`add-rack-configurations`):
 - a `voice` place accepting `square_wave` (becomes `square_vco`, the spark's voice);
 - a `seq` place accepting `snail_shell` (becomes `snail_sequencer`);
-- a `volume` module, normalled to the fire (the "outlet" is the pit);
+- a `volume` module, normalled to the fire;
 - no clock module of its own: its clock is a running burbler or a flowing stream within
   `clock_reach_m` of the camp (D7);
 - two or three comb cables suggesting clock → sequencer CLOCK, sequencer GATE → volume
@@ -50,8 +50,8 @@ completeness. The fire catches after **one full bar** (steps 1–4 in order) in 
 gate fired on steps 2 and 4 and not on 1 and 3, with the voice patched to the fire.
 That bar is the backbeat. The rule's pattern is data in the camp's profile
 (`light_pattern: [false, true, false, true]`), so later fires can ask for other rhythms.
-Each strike shows sparks at the step's stone at its heard instant, so the player sees
-the rhythm. On lighting, the game reports `GoalEvent::ConditionMet(FireLit { buildable:
+Each strike throws sparks from the bundle (`Sparks` node) at its heard instant, so the
+player sees the rhythm. On lighting, the game reports `GoalEvent::ConditionMet(FireLit { buildable:
 "campfire" })`.
 
 ### D4. The crafting screen follows Satisfactory's Craft Bench
@@ -71,11 +71,10 @@ it holds no crafting rules.
 
 ### D5. Art
 Claude builds it in Blender (`tools/blender/create_campfire.py`, headless, stylised PBR):
-- **Pit:** four stones in a ring (the steps), with a small amber glow socket on each
-  for the playhead. Ash and reed kindling sit inside.
-- **Lean-to:** two forked poles and a ridge pole, with reed thatch sloping to the
-  ground behind the fire and the open side facing it. It is about 2 m wide and 1.6 m
-  high at the open edge.
+- **A bundle of sticks** (user, 2026-11-17, replacing the stone ring and lean-to):
+  fourteen dry sticks leaned into a teepee about 1 m high over a 0.55 m bed of ash,
+  kindling at the foot. `Fire` (flame sheets, emissive amber) and `Embers` (glowing
+  coals) ship hidden at start_scale 0; `Light_fire`, `Sparks` and `Interact` nodes.
 - **States:** unlit, a spark burst (particles, from the game), and burning. The flame
   mesh is emissive and its point light flickers on the beat.
 
@@ -93,9 +92,20 @@ and no fire, and a burning fire dies when its beat stops (D1).
 The camp costs **25 reeds** (`buildables.json`). A lit fire does **not** change air or
 light quality: only foliage cleans the air.
 
+### D9. Recipes are made at a tempo (user, 2026-11-17)
+Every recipe may carry a BPM range; the bench's tempo is its clock's (D7). You can only
+build certain things at a given BPM, so the player sets their streams correctly: rhythm
+management is part of crafting. The rule is data (`recipes.json` `bpm: {min, max}`,
+`stubby_recipes::BpmRange`), checked by `Catalog::craft_at` with the clock's tempo, all or
+nothing (`RecipeError::OffTempo`). `CraftRequest` carries the bench's `bpm`. Tempos sit on
+a **24 BPM grid** for now (`stubby_recipes::BPM_STEP`): recipe ranges are validated as
+multiples of 24, the burbler clock's BPM knob has `step: 24` in its module data (the
+engine still runs any whole BPM, so this stays a game rule), and new burblers seed on it
+(48 to 192).
+
 ## Risks / Trade-offs
 
-- [Players don't know what a backbeat is] → the comb's ghost cables and the stones show
+- [Players don't know what a backbeat is] → the comb's ghost cables and the step keys show
   which steps strike; no text (AGENTS.md: not a text adventure). If players still stall,
   the camp could accept any rhythm first and the backbeat later.
 - [Shelter not built yet] → until "Stop the wind" lands, placement ignores shelter

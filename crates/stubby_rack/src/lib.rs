@@ -88,6 +88,10 @@ struct WireDefinition {
 struct KnobDefinition {
     param: String,
     default: f32,
+    /// The knob clicks through multiples of this (a game rule on top of the engine's own
+    /// quantum): tempos on the 24 BPM grid (user, 2026-11-17).
+    #[serde(default)]
+    step: Option<f32>,
 }
 
 /// The parts of `asset.json` the rack reads. The panel belongs to art and carries much
@@ -178,6 +182,19 @@ pub struct Knob {
     /// The knob's travel: where the panel's range and the engine's overlap.
     pub min: f32,
     pub max: f32,
+    /// Values are multiples of this, inside `min..=max`.
+    pub step: Option<f32>,
+}
+impl Knob {
+    /// Snap a value to the knob's step, staying inside its travel.
+    pub fn snap(&self, value: f32) -> f32 {
+        let Some(step) = self.step.filter(|step| *step > 0.) else {
+            return value.clamp(self.min, self.max);
+        };
+        let lowest = (self.min / step).ceil() * step;
+        let highest = (self.max / step).floor() * step;
+        ((value / step).round() * step).clamp(lowest, highest)
+    }
 }
 
 /// Every validated module, by ID.
@@ -378,6 +395,16 @@ fn validate(
             );
             continue;
         };
+        if knob
+            .step
+            .is_some_and(|step| !(step > 0.) || step > panel_param.max - panel_param.min)
+        {
+            fail(
+                &format!("{field}.step"),
+                "a step must be positive and fit inside the knob's range".into(),
+            );
+            continue;
+        }
         let d = knob.default;
         if !(panel_param.min..=panel_param.max).contains(&d) || !(spec.min..=spec.max).contains(&d)
         {
@@ -398,6 +425,7 @@ fn validate(
                 default: d,
                 min: panel_param.min.max(spec.min),
                 max: panel_param.max.min(spec.max),
+                step: knob.step,
             },
         );
     }

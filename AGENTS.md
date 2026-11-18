@@ -255,6 +255,15 @@ so all clocks land together on every master beat and never drift. A newly patche
 starts mid-beat on that grid. Seeded random clocks (bugs) stay free. Player movement and
 UI stay on real time.
 
+**Tempos are on a 24 BPM grid for now** (user, 2026-11-17: 24, 48, ... 120, 144, ... 240):
+a game rule, not the engine's. The burbler's BPM knob clicks through multiples of 24
+(`step` in its module data), new burblers seed on it, and recipe BPM ranges are multiples
+of 24 (`stubby_recipes::BPM_STEP`). **Recipes are made at a tempo**
+(`add-campfire-craft-bench` D9): the bench (the campfire, a bundle of sticks,
+`assets/structures/campfire/`) takes the tempo of the nearest running clock within
+`clock_reach_m` (5 m), and a recipe with a `bpm` range is made only inside it, so the
+player sets their streams to what they want to build.
+
 ### Signals follow Eurorack conventions
 
 All module ports carry `f32` at audio rate, as in VCV Rack — there is no separate

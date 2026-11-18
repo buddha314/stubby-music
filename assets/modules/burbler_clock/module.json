@@ -13,7 +13,8 @@
   "knobs": {
     "bpm": {
       "param": "clock.bpm",
-      "default": 120.0
+      "default": 120.0,
+      "step": 24.0
     }
   }
 }

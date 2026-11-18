@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: The camp is a buildable placed unlit
-The camp (a campfire in a ring of four stones with a lean-to open toward it) SHALL be a
+The camp (a bundle of sticks leaned into a teepee over a bed of ash) SHALL be a
 buildable laid with Q from reeds, at the cost its `buildables.json` row sets (25 reeds).
 It SHALL be placed unlit. A lit fire SHALL NOT change air or light quality.
 
@@ -29,8 +29,8 @@ a place for a voice (accepting `square_wave`) and a place for a sequencer (accep
 ### Requirement: A backbeat lights the fire
 The fire SHALL catch after one full bar, timed by the audio clock, in which the
 sequencer's gate struck the spark voice on the steps the camp's `light_pattern` sets
-(beats 2 and 4) and on no others. Each strike SHALL show sparks at its step's stone at
-the strike's heard instant.
+(beats 2 and 4) and on no others. Each strike SHALL throw sparks from the bundle at the
+strike's heard instant.
 
 #### Scenario: Lighting with the backbeat
 - **WHEN** the player patches clock, sequencer and voice to the fire, lights steps 2 and 4, and a full bar plays
@@ -38,11 +38,11 @@ the strike's heard instant.
 
 #### Scenario: The wrong rhythm
 - **WHEN** a full bar plays with steps 1 and 3 lit
-- **THEN** sparks fly at stones 1 and 3 and the fire does not catch
+- **THEN** sparks fly on beats 1 and 3 and the fire does not catch
 
 #### Scenario: Sparks are on the beat
 - **WHEN** a strike is heard
-- **THEN** its sparks appear at that step's stone at the strike's heard instant, not at the frame it was scheduled
+- **THEN** its sparks burst from the bundle at the strike's heard instant, not at the frame it was scheduled
 
 ### Requirement: The camp's beat comes from nearby water
 The camp SHALL take its clock from the nearest running burbler or flowing stream within
@@ -77,6 +77,30 @@ right, and a craft button. It SHALL craft only through `CraftRequest`.
 #### Scenario: Pinning from the bench
 - **WHEN** the player pins the selected recipe with a count
 - **THEN** it appears in the hub's To-Do List with its ingredient totals
+
+### Requirement: Recipes are made at a tempo
+A recipe with a BPM range SHALL be made only at a tempo inside it. The range is
+`bpm: {min, max}` (whole BPM, multiples of 24); the tempo is the bench's clock's (the
+nearest running burbler or the stream it feeds, within `clock_reach_m`). Off tempo, it SHALL
+take nothing and tell the player the range and the tempo heard.
+Tempos SHALL be on the 24 BPM grid for now: the burbler's BPM knob clicks through
+multiples of 24 and new burblers seed on it.
+
+#### Scenario: In tempo
+- **WHEN** the player crafts a 96-120 BPM recipe at a camp whose stream runs at 120 BPM
+- **THEN** it is made
+
+#### Scenario: Off tempo
+- **WHEN** the same recipe is crafted at a camp whose clock runs at 144 BPM
+- **THEN** nothing is taken and the player is told it is made at 96-120 BPM and the clock is at 144
+
+#### Scenario: Setting the stream
+- **WHEN** the player turns the burbler's BPM knob
+- **THEN** it clicks through multiples of 24, and its streams carry the new tempo to the camp
+
+#### Scenario: A bad range
+- **WHEN** a recipe row sets `bpm` to 100-130
+- **THEN** loading fails naming the recipe and its `bpm` field: ranges are multiples of 24
 
 ### Requirement: Lighting the camp completes "Build a camp"
 The `fire_lit` condition SHALL be a goal condition kind validated by `Rules::load`, and

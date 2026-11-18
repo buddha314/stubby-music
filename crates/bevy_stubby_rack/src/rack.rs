@@ -511,6 +511,12 @@ fn turn_open_knob(
     if let Some(spec) = engine_spec(&module, &hit.param) {
         value = spec.conform(value);
     }
+    // A knob with a step (the BPM's 24 grid) clicks through its multiples.
+    if let Some(knob) = RACK_MODULES.knob(&module, &hit.param)
+        && knob.step.is_some()
+    {
+        value = knob.snap(value);
+    }
     if value != current {
         knobs.0.insert(key, value);
     }
