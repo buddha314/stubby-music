@@ -11,6 +11,7 @@ pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_g
 // The player system (stubby_player), under its old module names.
 pub use stubby_player::{controls, hand, interaction};
 mod inventory_screen;
+mod pause_menu;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
 pub mod glue;
@@ -61,6 +62,7 @@ impl Plugin for DesertPlugin {
             stream_review::StreamReviewPlugin,
             sky_review::SkyReviewPlugin,
             goals_hub::GoalsHubPlugin,
+            pause_menu::PauseMenuPlugin,
             watering::WateringPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));

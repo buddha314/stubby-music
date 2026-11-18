@@ -62,16 +62,25 @@ impl Plugin for PlayerControlsPlugin {
             );
     }
 }
-/// Tab opens and closes the inventory; Escape closes whatever is open.
-pub fn toggle_screens(keys: Res<ButtonInput<KeyCode>>, mut screens: ResMut<ScreenMode>) {
+/// Tab opens and closes the inventory; Escape closes whatever is open. In the world, the
+/// first Escape frees the cursor (`capture_cursor`) and a second opens the pause menu,
+/// Satisfactory's escape menu (user, 2026-11-17).
+pub fn toggle_screens(
+    keys: Res<ButtonInput<KeyCode>>,
+    capture: Res<LookCapture>,
+    mut screens: ResMut<ScreenMode>,
+) {
     let was = screens.open;
-    if keys.just_pressed(INVENTORY) {
+    if keys.just_pressed(INVENTORY) && screens.open != Some(Screen::Pause) {
         screens.open = match screens.open {
             Some(Screen::Inventory) => None,
             _ => Some(Screen::Inventory),
         };
     } else if keys.just_pressed(KeyCode::Escape) {
-        screens.open = None;
+        screens.open = match screens.open {
+            None if !capture.captured() => Some(Screen::Pause),
+            _ => None,
+        };
     }
     screens.closed_this_frame = was.is_some() && screens.open.is_none();
 }
@@ -235,6 +244,43 @@ mod tests {
             .press(KeyCode::Escape);
         app.update();
         assert!(!app.world().resource::<LookCapture>().0);
+    }
+
+    #[test]
+    fn escape_frees_the_cursor_then_opens_the_pause_menu_then_resumes() {
+        let mut app = App::new();
+        app.init_resource::<ButtonInput<KeyCode>>()
+            .insert_resource(LookCapture(true))
+            .init_resource::<ScreenMode>()
+            .add_systems(Update, toggle_screens);
+        let escape = |app: &mut App| {
+            let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            keys.release(KeyCode::Escape);
+            keys.clear();
+            keys.press(KeyCode::Escape);
+            app.update();
+        };
+        let open = |app: &App| app.world().resource::<ScreenMode>().open;
+        // Looking around: the first Escape only frees the cursor (capture_cursor does).
+        escape(&mut app);
+        assert_eq!(open(&app), None);
+        app.world_mut().resource_mut::<LookCapture>().0 = false;
+        // The second opens the pause menu; Tab does not swap it for the inventory.
+        escape(&mut app);
+        assert_eq!(open(&app), Some(Screen::Pause));
+        {
+            // No InputPlugin here: clear last frame's keys as Bevy does each frame.
+            let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            keys.release(KeyCode::Escape);
+            keys.clear();
+            keys.press(INVENTORY);
+        }
+        app.update();
+        assert_eq!(open(&app), Some(Screen::Pause));
+        // Escape on the menu resumes.
+        escape(&mut app);
+        assert_eq!(open(&app), None);
+        assert!(app.world().resource::<ScreenMode>().closed_this_frame);
     }
 
     #[test]
