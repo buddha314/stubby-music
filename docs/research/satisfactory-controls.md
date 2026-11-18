@@ -19,7 +19,7 @@ The table records keyboard/mouse defaults, not controller bindings.
 | Dismantle | F | Reserved; dismantling not implemented |
 | Inventory | Tab | Inventory screen, planned in `add-inventory-and-goals-hud` (goals hub top right, as Satisfactory's milestones) |
 | Codex | O | Recipe book implemented on O |
-| Flashlight | B | Reserved; no flashlight yet |
+| Flashlight | B | The disco light: a toggle, not a hand item (`add-forensic-flashlight`) |
 | Resource scanner | V | Reserved for discovery/scanning |
 | Map / quick search | M / N | Reserved for corresponding future systems |
 | Place / cancel building | Left / right mouse | Future build context |

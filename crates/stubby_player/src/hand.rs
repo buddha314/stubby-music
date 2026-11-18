@@ -1,9 +1,10 @@
 //! What the player holds in the hand. The hand holds one item at a time from
 //! `HAND_ITEMS`; each item has a key that brings it up or puts it away, and a model
-//! and pose in the lower right of the view: the field recorder (add-field-recorder), H,
-//! and the forensic flashlight (add-forensic-flashlight), B.
+//! and pose in the lower right of the view: today the field recorder
+//! (add-field-recorder), H. The disco light on B is not held: it floats beside the
+//! player whatever is in the hand (`flashlight.rs`).
 use bevy::{light::NotShadowCaster, prelude::*};
-use stubby_core::{FLASHLIGHT, RECORDER, ScreenMode};
+use stubby_core::{RECORDER, ScreenMode};
 
 use crate::controls::Player;
 
@@ -11,7 +12,6 @@ use crate::controls::Player;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HandItem {
     FieldRecorder,
-    Flashlight,
 }
 
 struct HandItemDef {
@@ -21,34 +21,17 @@ struct HandItemDef {
     pose: fn() -> Transform,
 }
 
-const HAND_ITEMS: &[HandItemDef] = &[
-    HandItemDef {
-        item: HandItem::FieldRecorder,
-        key: RECORDER,
-        model: "equipment/field_recorder/field_recorder.glb#Scene0",
-        // About a forearm's length out, windguard leaning forward to where it listens.
-        pose: || {
-            Transform::from_xyz(0.17, -0.165, -0.42).with_rotation(
-                Quat::from_rotation_y(0.35)
-                    * Quat::from_rotation_x(-0.7)
-                    * Quat::from_rotation_z(0.12),
-            )
-        },
+const HAND_ITEMS: &[HandItemDef] = &[HandItemDef {
+    item: HandItem::FieldRecorder,
+    key: RECORDER,
+    model: "equipment/field_recorder/field_recorder.glb#Scene0",
+    // About a forearm's length out, windguard leaning forward to where it listens.
+    pose: || {
+        Transform::from_xyz(0.17, -0.165, -0.42).with_rotation(
+            Quat::from_rotation_y(0.35) * Quat::from_rotation_x(-0.7) * Quat::from_rotation_z(0.12),
+        )
     },
-    HandItemDef {
-        item: HandItem::Flashlight,
-        key: FLASHLIGHT,
-        model: "equipment/flashlight/flashlight.glb#Scene0",
-        pose: flashlight_pose,
-    },
-];
-
-/// The flashlight in the lower right, its lens forward and a little toward the centre of
-/// the view, as one holds a torch out in front.
-pub fn flashlight_pose() -> Transform {
-    Transform::from_xyz(0.16, -0.17, -0.34)
-        .with_rotation(Quat::from_rotation_y(0.12) * Quat::from_rotation_x(0.06))
-}
+}];
 
 /// The item in the hand, if any. The game opens with the field recorder in hand
 /// (sync-recorder-feedback): collecting sounds needs it.

@@ -6,14 +6,19 @@ available (`stubby_core`); the aimed one is outlined (`sync-targeting-and-compas
 
 ## Decisions
 
-**D1. A hand item, B.** The flashlight joins `HAND_ITEMS` with `FLASHLIGHT` (B): the torch
-in the hand, its light the disco ball (D2). Holding it is being on: no separate switch. Putting it away (B again, or H for the recorder) turns it
+**D1. A disco light on B, not a hand item (revised by the user, 2026-11-17).** B toggles
+`stubby_player::flashlight::DiscoLight`; the disco ball (D2) shows while it is on,
+whatever the hand holds, so the field recorder stays up and no flashlight model is shown
+(`assets/equipment/flashlight/` is unused). The original decision follows: The flashlight
+joins `HAND_ITEMS` with `FLASHLIGHT` (B): the torch in the hand, its light the disco ball (D2). Holding it is being on: no separate switch. Putting it away (B again, or H for the recorder) turns it
 off. Not while a screen has the controls (as the hand already is).
 
-**D2. The light is a disco ball.** While the flashlight is held, a mirror ball (a
-generated model of square mirror facets) appears, when switched on, above the player's
-head to the left: about 30 cm above the head and a little ahead, where a glance up and
-left finds it (user, 2026-11-16). It is placed once, from the eye's place and heading at
+**D2. The light is a disco ball.** While the disco light is on, a mirror ball (a
+generated model of square mirror facets) appears, when switched on, in view at the left
+edge: about eyebrow level, 1.1 m away and 35 degrees left, so about a third of it is out of
+frame at 16:9 and the player knows it is there (user, 2026-11-17; it was first above the
+head, 2026-11-16, and easy to miss). Near a clock it pulses to the nearest clock's beats as
+they are heard (`pulse` in the style: reach, depth, settle time). It is placed once, from the eye's place and heading at
 that moment, and stays at that place in the world while on; it does not follow the view.
 It spins about the vertical. It carries a ring of narrow `SpotLight`s, aimed outward
 and down from the ball and spread round it, so their spots land on the ground and sweep

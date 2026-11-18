@@ -17,7 +17,7 @@ pub mod keys {
     pub const RECORDER: KeyCode = KeyCode::KeyH;
     /// Dismantle what is aimed at (a stream segment).
     pub const DISMANTLE: KeyCode = KeyCode::KeyF;
-    /// The forensic flashlight (add-forensic-flashlight).
+    /// The disco light (add-forensic-flashlight): on and off, not a hand item.
     pub const FLASHLIGHT: KeyCode = KeyCode::KeyB;
     pub const JUMP: KeyCode = KeyCode::Space;
     pub const CROUCH: KeyCode = KeyCode::KeyC;
