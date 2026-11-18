@@ -10,6 +10,8 @@ pub use bevy_stubby_audio::module_ids;
 pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_generation};
 // The player system (stubby_player), under its old module names.
 pub use stubby_player::{controls, hand, interaction};
+#[cfg(all(feature = "dev", feature = "spatial-audio"))]
+mod audio_developer;
 mod build;
 mod campfire;
 pub mod designer;
@@ -86,6 +88,8 @@ impl Plugin for DesertPlugin {
                     .insert("Access-Control-Allow-Headers", "Content-Type"),
             ),
         ));
+        #[cfg(all(feature = "dev", feature = "spatial-audio"))]
+        app.add_plugins(audio_developer::AudioDeveloperPlugin);
         app.add_systems(Update, capture_preview);
     }
 }

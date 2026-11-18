@@ -108,6 +108,25 @@ A dev build of the game picks up a save within a second. Link to a row with
 `http://127.0.0.1:7878/#<file>/<id>`, e.g. `http://127.0.0.1:7878/#air/scrub_oak_air`.
 Details: [assets/recipes/README.md](assets/recipes/README.md#the-rules-designer).
 
+The same page includes a dev-only Spatial Audio panel for live per-emitter reflection
+wet-gain tuning. Run the Rules Designer in one terminal and the dev game in another;
+the game command below includes the cached native SDK path and enables Bevy Remote:
+
+```sh
+# Terminal 1
+cargo run -p stubby_rules_server
+
+# Terminal 2
+steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
+STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
+LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+  cargo run -p stubby_jackdaw --features dev
+```
+
+Open `http://127.0.0.1:7878/` and use Spatial Audio → Reflection wet gain. A value of
+0.0 is a dry comparison; 0.25 is the current default. The control is session-only and
+does not tune the listener-centric reverb bus, which is not routed yet.
+
 **The crafting system is our own, not a community crate.** `crates/stubby_recipes`
 holds the rules model, inventory, recipe book and crafting, with no Bevy dependency.
 It is used as a Bevy community plugin: the thin `bevy_stubby_recipes` crate, which the

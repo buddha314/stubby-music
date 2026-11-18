@@ -583,6 +583,7 @@ pub struct AudioNimbusBinauralNode {
     direction: Arc<[AtomicU32; 3]>,
     position: Arc<[AtomicU32; 3]>,
     volume: Arc<AtomicU32>,
+    reflection_wet_mix: Arc<AtomicU32>,
     direct_params: Arc<DirectEffectParamsShared>,
     reflections: Arc<Mutex<Option<triple_buffer::Output<Option<AudioNimbusReflectionsSnapshot>>>>>,
     reflection_feed: AudioNimbusReflectionsFeed,
@@ -610,6 +611,7 @@ impl AudioNimbusBinauralNode {
                 AtomicU32::new(0.0_f32.to_bits()),
             ]),
             volume: Arc::new(AtomicU32::new(1.0_f32.to_bits())),
+            reflection_wet_mix: Arc::new(AtomicU32::new(0.25_f32.to_bits())),
             direct_params,
             reflections: Arc::new(Mutex::new(Some(reflections))),
             reflection_feed: Arc::new(Mutex::new(feed)),
@@ -641,6 +643,12 @@ impl AudioNimbusBinauralNode {
     pub fn set_volume(&self, volume: f32) {
         self.volume
             .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
+    }
+
+    /// Publishes the per-emitter reflection wet gain without locking.
+    pub fn set_reflection_wet_mix(&self, mix: f32) {
+        self.reflection_wet_mix
+            .store(mix.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
     }
 
     pub fn set_position(&self, position: [f32; 3]) {
@@ -698,6 +706,7 @@ impl AudioNode for AudioNimbusBinauralNode {
                 .create_binaural_spatializer_with_params(self.direct_params.clone())?,
             direction: self.direction.clone(),
             volume: self.volume.clone(),
+            reflection_wet_mix: self.reflection_wet_mix.clone(),
             direct_params: self.direct_params.clone(),
             reflections,
             output: self.output,
@@ -716,6 +725,7 @@ struct AudioNimbusBinauralProcessor {
     spatializer: BinauralSpatializer,
     direction: Arc<[AtomicU32; 3]>,
     volume: Arc<AtomicU32>,
+    reflection_wet_mix: Arc<AtomicU32>,
     direct_params: Arc<DirectEffectParamsShared>,
     reflections: triple_buffer::Output<Option<AudioNimbusReflectionsSnapshot>>,
     output: PortRef,
@@ -767,6 +777,9 @@ impl AudioNodeProcessor for AudioNimbusBinauralProcessor {
                 self.spatializer.set_direction(direction);
                 self.direct_params
                     .load_into(self.spatializer.direct_params_mut());
+                self.spatializer.set_reflection_wet_mix(f32::from_bits(
+                    self.reflection_wet_mix.load(Ordering::Relaxed),
+                ));
                 let reflection_output = self.reflections.read();
                 let reflection_params = reflection_output
                     .as_ref()
@@ -883,6 +896,7 @@ impl AudioNimbusSpatialContext {
             wet_left: vec![0.0; self.audio_settings.frame_size as usize],
             wet_right: vec![0.0; self.audio_settings.frame_size as usize],
             params,
+            reflection_wet_mix: 0.25,
             frame_size: self.audio_settings.frame_size as usize,
         })
     }
@@ -908,6 +922,7 @@ pub struct BinauralSpatializer {
     wet_left: Vec<f32>,
     wet_right: Vec<f32>,
     params: BinauralEffectParams,
+    reflection_wet_mix: f32,
     frame_size: usize,
 }
 
@@ -915,6 +930,11 @@ impl BinauralSpatializer {
     /// Changes the unit direction from listener to source.
     pub fn set_direction(&mut self, direction: [f32; 3]) {
         self.params.direction = Direction::new(direction[0], direction[1], direction[2]);
+    }
+
+    /// Sets the linear contribution of per-emitter reflections.
+    pub fn set_reflection_wet_mix(&mut self, mix: f32) {
+        self.reflection_wet_mix = mix.clamp(0.0, 1.0);
     }
 
     /// Processes one mono block into separate caller-owned left/right slices.
@@ -952,7 +972,9 @@ impl BinauralSpatializer {
             self.effect
                 .apply(&self.params, &input_buffer, &mut output_buffer)?;
         }
-        if let Some(reflection_params) = reflection_params {
+        if let Some(reflection_params) = reflection_params
+            && self.reflection_wet_mix > 0.0
+        {
             self.reflection_buffer.fill(0.0);
             self.wet_left.fill(0.0);
             self.wet_right.fill(0.0);
@@ -978,10 +1000,10 @@ impl BinauralSpatializer {
             self.reflection_decode
                 .apply(&self.reflection_decode_params, &reflections, &mut wet)?;
             for (dry, wet) in left.iter_mut().zip(&self.wet_left) {
-                *dry += wet * 0.25;
+                *dry += wet * self.reflection_wet_mix;
             }
             for (dry, wet) in right.iter_mut().zip(&self.wet_right) {
-                *dry += wet * 0.25;
+                *dry += wet * self.reflection_wet_mix;
             }
         }
         Ok(())

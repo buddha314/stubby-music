@@ -105,6 +105,8 @@ pub struct Engine {
     audionimbus_spatial: Option<Arc<AudioNimbusSpatialContext>>,
     #[cfg(feature = "audionimbus")]
     audionimbus_simulation: Option<AudioNimbusDirectSimulation>,
+    #[cfg(feature = "audionimbus")]
+    reflection_wet_mix: f32,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
@@ -175,6 +177,8 @@ impl Engine {
             audionimbus_spatial: None,
             #[cfg(feature = "audionimbus")]
             audionimbus_simulation: None,
+            #[cfg(feature = "audionimbus")]
+            reflection_wet_mix: 0.25,
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
@@ -270,6 +274,24 @@ impl Engine {
             } => self.set_emitter(output, offset, position_world, volume),
             Command::SetListener { pose } => {
                 self.listener_pose = pose;
+                Ok(())
+            }
+            Command::SetReflectionWetMix { value } => {
+                if !value.is_finite() {
+                    return Err(EngineError::Config("reflection wet mix must be finite"));
+                }
+                #[cfg(feature = "audionimbus")]
+                {
+                    self.reflection_wet_mix = value.clamp(0.0, 1.0);
+                    for emitter in self.emitters.values() {
+                        if let EmitterParams::AudioNimbus(node) = &emitter.params {
+                            node.set_reflection_wet_mix(self.reflection_wet_mix);
+                        }
+                    }
+                }
+                #[cfg(not(feature = "audionimbus"))]
+                return Err(EngineError::Config("AudioNimbus is disabled"));
+                #[cfg(feature = "audionimbus")]
                 Ok(())
             }
             Command::Connect { from, to } => self.connect(from, to),
@@ -698,6 +720,7 @@ impl Engine {
                 Arc::new(DirectEffectParamsShared::default()),
                 output,
             );
+            params.set_reflection_wet_mix(self.reflection_wet_mix);
             params.set_direction(offset);
             params.set_position(position_world);
             params.set_volume(gain);
