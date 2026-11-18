@@ -11,6 +11,9 @@
 //!   Each struck step throws sparks from the bundle at the instant it is heard.
 //! - **It burns only while its clock runs** (D1): with no clock lent it dies to embers and
 //!   must be lit again. `fire_lit` is reported once and latches.
+//! - **It joins a stream** (add-stream-layers): the nearest stream point within its reach
+//!   is its join (`StreamJoin`), and each step its sequencer gates puts an ember note on
+//!   the stream's staff there, riding downstream, a layer over the heartbeat.
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_stubby_rack::rack::{RackEngine, RackKnobs, RackState, RackTargets};
@@ -31,10 +34,76 @@ impl Plugin for CampfirePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spark_assets).add_systems(
             Update,
-            (lend_clocks, strike, burn, show_fire, fly_sparks)
+            (
+                lend_clocks,
+                join_streams,
+                strike,
+                burn,
+                show_fire,
+                fly_sparks,
+            )
                 .chain()
                 .after(stubby_core::MachineInteractionSet),
         );
+    }
+}
+
+/// Where a camp joins a stream: the chain's burbler, how far down the chain, and the
+/// stream point itself (add-stream-layers). Its layer starts there and flows downstream.
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct StreamJoin {
+    pub source: Entity,
+    pub join_m: f32,
+    pub point: Vec3,
+}
+
+/// The colour of the campfire's notes on the staff.
+const EMBER: Color = Color::srgb(1.0, 0.42, 0.12);
+/// Where across the staff they sit: above the heartbeat's middle line.
+const EMBER_STEP: i8 = 2;
+
+/// A camp joins the nearest stream point within its reach (`clock_reach_m`), or none.
+fn join_streams(
+    mut commands: Commands,
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
+    camps: Query<(Entity, &GlobalTransform, Option<&StreamJoin>), With<Fire>>,
+    streams: Query<&LaidStream>,
+) {
+    let reach_m = rules
+        .as_ref()
+        .and_then(|rules| rules.of(CAMPFIRE)?.clock_reach_m)
+        .unwrap_or(0.);
+    for (camp, at, current) in &camps {
+        let at = at.translation();
+        let flat = |p: Vec3| Vec2::new(p.x - at.x, p.z - at.z).length();
+        let join = streams
+            .iter()
+            .filter_map(|stream| {
+                let source = stream.source?;
+                let (join_m, point) = stream.nearest_along(at);
+                Some((
+                    flat(point),
+                    StreamJoin {
+                        source,
+                        join_m,
+                        point,
+                    },
+                ))
+            })
+            .filter(|(d, _)| *d <= reach_m)
+            .min_by(|a, b| a.0.total_cmp(&b.0))
+            .map(|(_, join)| join);
+        match (current, join) {
+            (Some(now), Some(next))
+                if now.source == next.source && (now.join_m - next.join_m).abs() < 0.05 => {}
+            (_, Some(next)) => {
+                commands.entity(camp).insert(next);
+            }
+            (Some(_), None) => {
+                commands.entity(camp).remove::<StreamJoin>();
+            }
+            (None, None) => {}
+        }
     }
 }
 
@@ -170,14 +239,16 @@ fn strike(
         &mut Bar,
         &mut Fire,
         Has<AssetClock>,
+        Option<&StreamJoin>,
     )>,
     mut pending: Local<Vec<(Entity, Instant)>>,
     mut goals: MessageWriter<GoalRequest>,
+    mut layer: MessageWriter<stubby_streams::LayerNote>,
     mut reported: Local<bool>,
 ) {
     let steps = stubby_audio::SEQUENCER_STEPS as u8;
     for tick in ticks.read() {
-        for (camp, engine, knobs, targets, mut bar, mut fire, clocked) in &mut camps {
+        for (camp, engine, knobs, targets, mut bar, mut fire, clocked, join) in &mut camps {
             if engine.place_of(tick.module) != Some("seq") {
                 continue;
             }
@@ -189,7 +260,18 @@ fn strike(
             };
             let ready = engine.sounding && clocked && targets.met;
             if engine.sounding && gate(usize::from(tick.step)) {
-                pending.push((camp, tick.at.unwrap_or_else(Instant::now)));
+                let at = tick.at.unwrap_or_else(Instant::now);
+                pending.push((camp, at));
+                // Its layer on the stream: a note at the join, riding downstream.
+                if let Some(join) = join {
+                    layer.write(stubby_streams::LayerNote {
+                        source: join.source,
+                        join_m: join.join_m,
+                        at,
+                        step: EMBER_STEP,
+                        colour: Some(EMBER),
+                    });
+                }
             }
             if bar.0.hear(tick.step, steps, ready) && *fire != Fire::Burning {
                 *fire = Fire::Burning;
