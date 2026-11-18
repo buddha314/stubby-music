@@ -419,6 +419,25 @@ fn replenish_nodes(
 
 #[cfg(test)]
 mod tests {
+    /// Every item shows its icon in the inventory and the rack (`stubby_ui::item_icon`
+    /// loads `assets/ui/icons/<item>.png`; 2026-11-18: the snail shell had none, so its box
+    /// showed only a count).
+    #[test]
+    fn every_item_has_an_icon() {
+        let rules = stubby_recipes::rules::shipped_rules().expect("rules");
+        let icons = std::path::Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../assets/ui/icons"
+        ));
+        for item in &rules.definition.items {
+            assert!(
+                icons.join(format!("{}.png", item.id)).is_file(),
+                "{} has no icon: add it to tools/icons/make_item_icons.py",
+                item.id
+            );
+        }
+    }
+
     use super::*;
     use stubby_core::InteractTarget;
     /// Collection as the game runs it: the plugin plus the game's systems around it.

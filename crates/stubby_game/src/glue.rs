@@ -1047,6 +1047,9 @@ mod machine_rule_tests {
             .and_then(|mine| mine.growth.as_ref())
             .expect("oak growth")
             .water_reach_m;
-        assert!(inlet.radius_m > 0. && inlet.radius_m < reach, "{inlet:?} vs {reach} m");
+        assert!(
+            inlet.radius_m > 0. && inlet.radius_m < reach,
+            "{inlet:?} vs {reach} m"
+        );
     }
 }
