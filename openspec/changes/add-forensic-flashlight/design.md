@@ -14,10 +14,10 @@ joins `HAND_ITEMS` with `FLASHLIGHT` (B): the torch in the hand, its light the d
 off. Not while a screen has the controls (as the hand already is).
 
 **D2. The light is a disco ball.** While the disco light is on, a mirror ball (a
-generated model of square mirror facets) appears, when switched on, in view at the left
-edge: about eyebrow level, 1.1 m away and 35 degrees left, so about a third of it is out of
-frame at 16:9 and the player knows it is there (user, 2026-11-17; it was first above the
-head, 2026-11-16, and easy to miss). Near a clock it pulses to the nearest clock's beats as
+generated model of square mirror facets) appears, when switched on, in the upper-left
+corner of a level view: 0.95 m away, 33 degrees left and 17 degrees up, cut by the left and
+top edges at 16:9, so the player knows it is there (matched to the user's reference
+screenshot, 2026-11-17; it was first above the head, 2026-11-16, and easy to miss). Near a clock it pulses to the nearest clock's beats as
 they are heard (`pulse` in the style: reach, depth, settle time). It is placed once, from the eye's place and heading at
 that moment, and stays at that place in the world while on; it does not follow the view.
 It spins about the vertical. It carries a ring of narrow `SpotLight`s, aimed outward
