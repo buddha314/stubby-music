@@ -647,7 +647,9 @@ equivalent of an iron ore node, so the player does not pick it up.
   laid streams, collision checks.
   `tools/jackdaw_timed_test.py --streams` runs the script (`--stream-review=<dir>`)
   under the watchdog. **Streams water trees** (`stubby_game::watering`, 2026-11-17): a
-  flowing stream within `water_reach_m` (3 m) of a scrub oak waters it, and growth rises
+  flowing stream within `water_reach_m` (3 m) of a scrub oak waters it (aimed at an oak, a stream
+  being laid snaps to its inlet ring and runs alongside the trunk; `stubby_core::StreamInlet`,
+  `add-tree-inlets`), and growth rises
   toward the cap its water's clarity allows (`mines.json` `growth`: mud reaches budding,
   silty leafed, clear full bloom) and eases back without water, in simulation time.
 - Requirements: `openspec/changes/add-mudpit-burbler/`. Art (Claude) builds the

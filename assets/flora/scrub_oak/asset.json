@@ -149,5 +149,10 @@
       "near": 11012,
       "far": 767
     }
+  },
+  "stream_inlet": {
+    "radius_m": 2.2,
+    "snap_m": 2.0,
+    "note": "a ring round the trunk that a stream being laid snaps onto, ending along its tangent so it runs alongside the tree (add-tree-inlets); inside water_reach_m (mines.json) so a flowing stream there waters it"
   }
 }
