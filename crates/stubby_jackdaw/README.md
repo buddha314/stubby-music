@@ -236,3 +236,8 @@ remain the subsequent rack tasks.
 
 Checked with one focused interaction regression and one 20-second bounded review.
 The review confirmed the actual rack assets loaded and the screen opened/closed.
+
+Known opening-scene limitation (2026-11-18): the grotto's burbler can currently be
+configured from only one side. Approach it from the open ground at the grotto mouth;
+the other-side interaction reach remains a deferred level fix in
+[`add-echo-grotto`, task 3.3](../../openspec/changes/add-echo-grotto/tasks.md).
