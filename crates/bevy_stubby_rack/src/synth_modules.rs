@@ -798,7 +798,14 @@ mod tests {
     /// Run frames for `seconds`. Returns the scheduled instant of each engine tick that
     /// reached the module's light, and how many separate flashes the light showed.
     fn run_clock(app: &mut App, entity: Entity, seconds: f32) -> (Vec<Instant>, usize) {
-        let (mut ticks, mut flashes, mut prev, mut last_sample) = (Vec::new(), 0, 0.0, None);
+        // Start from the tick already showing: one left from an earlier run flashed then,
+        // not now, and counting it made this run one tick over its flashes.
+        let mut last_sample = app
+            .world()
+            .resource::<PulseBus>()
+            .last(42)
+            .map(|pulse| pulse.sample_time);
+        let (mut ticks, mut flashes, mut prev) = (Vec::new(), 0, 0.0);
         let end = Instant::now() + Duration::from_secs_f32(seconds);
         while Instant::now() < end {
             app.update();
