@@ -40,9 +40,12 @@ grass. It is drawn on overlay copies of the pickup's meshes (children of each me
 they follow its animation and LODs), plus a beacon (a thin column and a turning diamond)
 above the pickup. No crate does this; it is a few dozen lines of standard Bevy.
 - Rejected: outlines for the reveal (the outline already means "E acts on this").
-- Reversed (user, 2026-11-18): reveal only what a beam crosses. It made pickups blink as
-  the ball turned, and bugs between flashes vanished with their overlays. Now everything in
-  reach of the player shows while the light is on (marked `Spotlit`), and the sweep is look.
+- Changed (user, 2026-11-18): a dozen 5-degree beams crossed each place too seldom, so
+  pickups blinked, and bugs between flashes vanished with their overlays. Offered "always
+  on" or "more, smaller", the user chose more, smaller: 48 beams of 2.5 degrees whose spots
+  land from about 3 m to 27 m (far ones brighter by distance squared), a beam's heading
+  revealing at any height, so each place is crossed several times a second; revealed
+  pickups are `Spotlit` and bugs stay lit.
 
 ## Risks
 
