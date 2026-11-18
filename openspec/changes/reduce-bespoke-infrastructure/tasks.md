@@ -30,6 +30,9 @@ cross-platform artifacts, and performance remain unverified.
   mudflat, enclosed cave, occluding wall, and around-corner fixtures; the first two are
   baseline fixtures, not the full scope. Record capability, quality, CPU/memory,
   supported backend, dependencies/license, and project-specific gaps per feature.
+  Candidate alternatives and the current integration decision are tracked in
+  [spatial-audio-alternatives.md](../../../docs/research/spatial-audio-alternatives.md);
+  OMG Audio is the leading candidate for a measured spike, not an adopted replacement.
 - [ ] 1.3 Define and prototype scene integration: convert Bevy/Avian geometry and
   acoustic materials; handle static, moving, and streamed geometry; establish scene
   lifecycle, probe placement/bake artifacts, invalidation, and designer workflows.
