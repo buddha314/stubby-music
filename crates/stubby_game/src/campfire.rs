@@ -13,7 +13,9 @@
 //!   must be lit again. `fire_lit` is reported once and latches.
 //! - **It joins a stream** (add-stream-layers): the nearest stream point within its reach
 //!   is its join (`StreamJoin`), and each step its sequencer gates puts an ember note on
-//!   the stream's staff there, riding downstream, a layer over the heartbeat.
+//!   the stream's staff there, riding downstream, a layer over the heartbeat. Its rack
+//!   inherits the stream's voice (a fixed VCO at the burbler's pitch, patched), and its
+//!   voice is heard from the stream downstream of the join.
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_stubby_rack::rack::{RackEngine, RackKnobs, RackState, RackTargets};
@@ -37,10 +39,12 @@ impl Plugin for CampfirePlugin {
             (
                 lend_clocks,
                 join_streams,
+                inherit_voice,
                 strike,
                 burn,
                 show_fire,
                 fly_sparks,
+                ghost_staff,
             )
                 .chain()
                 .after(stubby_core::MachineInteractionSet),
@@ -97,12 +101,43 @@ fn join_streams(
             (Some(now), Some(next))
                 if now.source == next.source && (now.join_m - next.join_m).abs() < 0.05 => {}
             (_, Some(next)) => {
-                commands.entity(camp).insert(next);
+                // Its layer is heard from the stream downstream of the join, too.
+                commands.entity(camp).insert((
+                    next,
+                    stubby_streams::HeardDownstream {
+                        source: next.source,
+                        from_m: next.join_m,
+                    },
+                ));
             }
             (Some(_), None) => {
-                commands.entity(camp).remove::<StreamJoin>();
+                commands
+                    .entity(camp)
+                    .remove::<(StreamJoin, stubby_streams::HeardDownstream)>();
             }
             (None, None) => {}
+        }
+    }
+}
+
+/// A joined camp's rack shows the stream's voice as it arrives (add-stream-layers): its
+/// inherited VCO plays at the burbler VCO's pitch, following it when the burbler's turns.
+fn inherit_voice(
+    mut camps: Query<(&StreamJoin, &mut RackKnobs), With<Fire>>,
+    burblers: Query<&RackKnobs, Without<Fire>>,
+) {
+    for (join, mut knobs) in &mut camps {
+        let Some(pitch) = burblers
+            .get(join.source)
+            .ok()
+            .and_then(|k| k.0.get(&("vco".to_owned(), "freq".to_owned())))
+            .copied()
+        else {
+            continue;
+        };
+        let key = ("voice".to_owned(), "freq".to_owned());
+        if knobs.0.get(&key) != Some(&pitch) {
+            knobs.0.insert(key, pitch);
         }
     }
 }
@@ -442,6 +477,156 @@ fn fly_sparks(
         transform.translation += spark.velocity * dt;
         transform.scale = Vec3::splat(1. - spark.age / SPARK_LIFE_S);
     }
+}
+
+// ------------------------------------------------------------------ the join, seen
+
+/// A camp's ghostly staff (add-stream-layers D4): while its layer plays, the stream's five
+/// staff lines are drawn translucent from the join along the ground into the fire's base,
+/// as air is pulled into a fire, then drift up from it like heat and fade.
+#[derive(Component)]
+struct GhostStaff(Entity);
+
+const GHOST_LINES: i32 = 5;
+const GHOST_SPACING_M: f32 = 0.12;
+const GHOST_LINE_M: f32 = 0.014;
+const GHOST_RISE_M: f32 = 3.2;
+
+#[allow(clippy::type_complexity)]
+fn ghost_staff(
+    mut commands: Commands,
+    time: Res<Time>,
+    camps: Query<(Entity, &GlobalTransform, Option<&StreamJoin>, &RackEngine), With<Fire>>,
+    mut staffs: Query<(Entity, &GhostStaff, &Mesh3d)>,
+    meshes: Option<ResMut<Assets<Mesh>>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
+    mut material: Local<Option<Handle<StandardMaterial>>>,
+) {
+    let (Some(mut meshes), Some(mut materials)) = (meshes, materials) else {
+        return;
+    };
+    let t = time.elapsed_secs();
+    let playing = |camp: Entity| {
+        camps
+            .get(camp)
+            .ok()
+            .filter(|(_, _, join, engine)| join.is_some() && engine.sounding)
+    };
+    let mut shown = Vec::new();
+    for (entity, GhostStaff(camp), mesh) in &mut staffs {
+        match playing(*camp) {
+            Some((_, at, Some(join), _)) => {
+                shown.push(*camp);
+                if let Some(mut mesh) = meshes.get_mut(&mesh.0) {
+                    *mesh = ghost_staff_mesh(join.point, at.translation(), t);
+                }
+            }
+            _ => commands.entity(entity).despawn(),
+        }
+    }
+    let material = material
+        .get_or_insert_with(|| {
+            materials.add(StandardMaterial {
+                base_color: Color::srgba(1.0, 0.86, 0.62, 0.5),
+                emissive: LinearRgba::rgb(1.6, 1.1, 0.6),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                double_sided: true,
+                cull_mode: None,
+                ..default()
+            })
+        })
+        .clone();
+    for (camp, at, join, engine) in &camps {
+        let (Some(join), true) = (join, engine.sounding) else {
+            continue;
+        };
+        if shown.contains(&camp) {
+            continue;
+        }
+        commands.spawn((
+            Name::new("Ghost staff"),
+            GhostStaff(camp),
+            Mesh3d(meshes.add(ghost_staff_mesh(join.point, at.translation(), t))),
+            MeshMaterial3d(material.clone()),
+            Transform::default(),
+            NotShadowCaster,
+            bevy::camera::visibility::NoFrustumCulling,
+        ));
+    }
+}
+
+/// The ghost staff's path, as air is drawn into a fire (user, 2026-11-18): from the stream
+/// it hugs the ground, pulled in to the fire's base, enters at the bottom, then drifts up
+/// like rising heat, wavering and leaning more the higher it goes. Each point carries how
+/// far along it is (0..1) and how far apart the lines are there (they converge as they are
+/// drawn in, and spread as they rise).
+fn ghost_path(join: Vec3, fire: Vec3, t: f32) -> Vec<(Vec3, f32, f32)> {
+    let start = join + Vec3::Y * 0.05;
+    let base = fire + Vec3::Y * 0.1;
+    let (ground, rise) = (18, 36);
+    let across = Vec3::new(base.x - start.x, 0., base.z - start.z).normalize_or(Vec3::X);
+    let side = across.cross(Vec3::Y).normalize_or(Vec3::Z);
+    let mut points = Vec::with_capacity(ground + rise + 1);
+    for i in 0..=ground {
+        let u = i as f32 / ground as f32;
+        // Drawn in faster near the fire, just above the ground.
+        let pull = u * u * (3. - 2. * u);
+        let p = start.lerp(base, pull) + Vec3::Y * 0.03 * (std::f32::consts::PI * u).sin();
+        points.push((p, 0.35 * u, 1. - 0.55 * u));
+    }
+    for i in 1..=rise {
+        let u = i as f32 / rise as f32;
+        let h = GHOST_RISE_M * u;
+        // Heat leans on with the draw and wavers, slow and growing with height.
+        let lean = across * 0.5 * u.powf(1.5);
+        let waver =
+            side * (0.18 * u * (t * 0.6 + u * 5.).sin() + 0.08 * u * (t * 1.3 + u * 11.).sin());
+        points.push((
+            base + Vec3::Y * h + lean + waver,
+            0.35 + 0.65 * u,
+            0.45 + 1.4 * u,
+        ));
+    }
+    points
+}
+
+/// Five thin translucent bands along the path, the staff's lines, side by side; they
+/// fade toward the top, and a brighter pulse drifts from the stream up into the air.
+fn ghost_staff_mesh(join: Vec3, fire: Vec3, t: f32) -> Mesh {
+    use bevy::asset::RenderAssetUsages;
+    use bevy::mesh::{Indices, PrimitiveTopology};
+    let path = ghost_path(join, fire, t);
+    let across = Vec3::new(fire.x - join.x, 0., fire.z - join.z).normalize_or(Vec3::X);
+    // Lines sit side by side across the direction of travel.
+    let side = across.cross(Vec3::Y).normalize_or(Vec3::Z);
+    let (mut positions, mut colours, mut indices) = (Vec::new(), Vec::new(), Vec::new());
+    for line in 0..GHOST_LINES {
+        let base = positions.len() as u32;
+        for (k, (p, along, spread)) in path.iter().enumerate() {
+            let offset = side * (line - GHOST_LINES / 2) as f32 * GHOST_SPACING_M * spread;
+            // A slow pulse, drifting at the speed of rising air.
+            let pulse = (1. - ((along - (t * 0.22).fract()) * 5.).abs()).max(0.);
+            let alpha = (0.3 + 0.7 * pulse) * (1. - along).powf(0.7);
+            for edge in [-1., 1.] {
+                positions.push((*p + offset + side * edge * GHOST_LINE_M / 2.).to_array());
+                colours.push([1., 1., 1., alpha]);
+            }
+            if k > 0 {
+                let i = base + 2 * k as u32;
+                indices.extend([i - 2, i - 1, i, i - 1, i + 1, i]);
+            }
+        }
+    }
+    let normals = vec![[0., 1., 0.]; positions.len()];
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_COLOR, colours)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 #[cfg(test)]

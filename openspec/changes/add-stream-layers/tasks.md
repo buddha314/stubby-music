@@ -10,9 +10,10 @@
 - [x] 1.2 Notes: the `Pulse_0` note rides the staff from its join on the audio clock (`emit_notes`, `ride_notes`); the heartbeat a note on every beat; the campfire's ember notes (a step up the staff) from its join (`campfire::StreamJoin`, nearest stream point within `clock_reach_m`) on each gated step. Bounded review: join 5.2 m down the chain, heartbeat notes from the mouth, ember notes only from 5.6 m on
 
 ## 2. Campfire
-- [ ] 2.1 Placement snaps beside a stream within 5 m; the placed campfire records its join
-- [ ] 2.2 Rack inheritance: the stream's clock, VCO and volume fixed and patched; only the sequencer open
-- [ ] 2.3 The ghostly staff from the join to the fire and rising (art: campfire profile and model)
+- [x] 2.1 Placement snaps beside a stream within reach (`build::beside_stream`, 2.2 m from its centre line on the aim's side); a campfire joins the nearest stream point within reach (`campfire::StreamJoin`)
+- [x] 2.2 Rack inheritance: `RackPlace::inherited` and `RackCable::inherited` (made, free, never unplugged; `RackState::inherited`); the campfire's `voice` is the stream's VCO, fixed, its pitch the burbler's (`campfire::inherit_voice`); only the sequencer is open. Its voice is heard from the stream downstream of the join (`stubby_streams::HeardDownstream`)
+- [x] 2.3 The ghostly staff from the join to the fire and rising, a pulse travelling up it (`campfire::ghost_staff`, procedural; while the layer plays)
 
 ## 3. Review
-- [ ] 3.1 Bounded review: place a campfire by a sounding stream, patch the sequencer, see the join and 2 and 4 notes downstream only
+- [x] 3.1 Bounded review (2026-11-18): the scene campfire by a sounding stream, sequencer patched, no square wave: it sounds and burns; join 5.2 m down; heartbeat and ember notes downstream; the ghost staff runs from the stream to the fire and rises
+- [ ] 3.2 The user plays it: placing by a stream, the inherited rack, hearing the layer from the stream

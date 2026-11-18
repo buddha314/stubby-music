@@ -26,8 +26,10 @@ and patches it in (clock GATE to sequencer CLOCK, sequencer GATE to volume TRIG)
 inventory cables. The fire lights as now, while the targets (gates on 2 and 4) are met.
 
 ### D4. The join is seen
-While the layer plays, a ghostly staff (the stream's staff lines, translucent) runs from
-the join point to the fire, then rises from the fire into the air and fades. It is the
+While the layer plays, a ghostly staff (the stream's staff lines, translucent) is drawn
+from the join along the ground into the fire's base, as air is pulled into a fire (user,
+2026-11-18: "enters at the bottom and drifts upwards"), then drifts up from it like heat,
+wavering and spreading as it rises, and fades. It is the
 campfire's own art; the stream draws nothing new at the join itself.
 
 ### D5. Notes flow from the join

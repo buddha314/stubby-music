@@ -1244,14 +1244,40 @@ fn ride_notes(
 }
 
 /// Where a voice is heard from: the machine, or the nearest point of its streams.
-fn nearest_source(listener: Vec3, machine: Vec3, streams: &[&LaidStream]) -> Vec3 {
+/// Counting only the chain from `from_m` down: a joined machine's layer is heard
+/// downstream of its join, never upstream (a burbler's own voice from 0).
+fn nearest_source_from(
+    listener: Vec3,
+    machine: Vec3,
+    streams: &[&LaidStream],
+    from_m: f32,
+) -> Vec3 {
     let mut best = machine;
-    for point in streams.iter().flat_map(|stream| stream.samples(0.5)) {
-        if point.distance_squared(listener) < best.distance_squared(listener) {
-            best = point;
+    for stream in streams {
+        let (from, length) = (stream.start_s(), stream.length());
+        let steps = (length / 0.5).ceil().max(1.) as u32;
+        for k in 0..=steps {
+            let s = length * k as f32 / steps as f32;
+            if stream.start + s < from_m {
+                continue;
+            }
+            let point = stream.path.at(from + s).0;
+            if point.distance_squared(listener) < best.distance_squared(listener) {
+                best = point;
+            }
         }
     }
     best
+}
+
+/// A joined machine's voice is heard from its chain downstream of its join, as well as
+/// from the machine (add-stream-layers: the stream sounds the layers it carries).
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct HeardDownstream {
+    /// The chain's burbler.
+    pub source: Entity,
+    /// The join's distance down the chain.
+    pub from_m: f32,
 }
 
 /// Silent beyond the radius, full at the source: the same curve as a lightning bug's click.
@@ -1263,7 +1289,12 @@ fn hearing_gain(distance: f32, radius: f32) -> f32 {
 fn place_voices(
     synth: Option<Res<Synth>>,
     camera: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
-    machines: Query<(Entity, &MachineVoice, &GlobalTransform)>,
+    machines: Query<(
+        Entity,
+        &MachineVoice,
+        &GlobalTransform,
+        Option<&HeardDownstream>,
+    )>,
     streams: Query<&LaidStream>,
 ) {
     let (Some(synth), Ok(camera)) = (synth, camera.single()) else {
@@ -1278,15 +1309,13 @@ fn place_voices(
             ahead: camera.forward().to_array(),
         },
     });
-    for (machine, voice, transform) in &machines {
+    for (machine, voice, transform, downstream) in &machines {
         let Some(output) = voice.output else {
             continue;
         };
-        let fed: Vec<&LaidStream> = streams
-            .iter()
-            .filter(|s| s.source == Some(machine))
-            .collect();
-        let source = nearest_source(listener, transform.translation(), &fed);
+        let (chain, from_m) = downstream.map_or((machine, 0.), |d| (d.source, d.from_m));
+        let fed: Vec<&LaidStream> = streams.iter().filter(|s| s.source == Some(chain)).collect();
+        let source = nearest_source_from(listener, transform.translation(), &fed, from_m);
         synth.send(Command::SetEmitter {
             output,
             offset: (ears.inverse() * (source - listener)).to_array(),
@@ -1589,11 +1618,18 @@ mod tests {
         let machine = port().at - Vec3::X * 2.;
         // Standing by the far end of the stream: heard from there, not the machine.
         let far = port().at + Vec3::new(20., 0., 3.);
-        assert!(nearest_source(far, machine, &[path]).distance(port().at + Vec3::X * 20.) < 0.6);
+        let heard = |listener, streams: &[&LaidStream], from_m| {
+            nearest_source_from(listener, machine, streams, from_m)
+        };
+        assert!(heard(far, &[path], 0.).distance(port().at + Vec3::X * 20.) < 0.6);
         // Standing behind the machine: heard from the machine.
         let behind = machine - Vec3::X * 5.;
-        assert_eq!(nearest_source(behind, machine, &[path]), machine);
-        assert_eq!(nearest_source(far, machine, &[]), machine);
+        assert_eq!(heard(behind, &[path], 0.), machine);
+        assert_eq!(heard(far, &[], 0.), machine);
+        // A layer joined 10 m down is heard from there on, not from upstream of its join.
+        let upstream = port().at + Vec3::new(2., 0., 1.);
+        let at = heard(upstream, &[path], 10.);
+        assert!(at == machine || at.x >= port().at.x + 9.9, "{at:?}");
     }
 
     #[test]

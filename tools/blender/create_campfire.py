@@ -198,16 +198,13 @@ class Campfire(Burbler):
                         ]
                     },
                     {
+                        # The stream's voice as it arrives, fixed (add-stream-layers).
                         "place": "voice",
                         "kind": "vco",
                         "hp": 8,
-                        "fixed": False,
-                        "accepts": [
-                            {
-                                "item": "square_wave",
-                                "module": "square_vco"
-                            }
-                        ]
+                        "fixed": True,
+                        "module": "square_vco",
+                        "inherited": True
                     },
                     {
                         "place": "volume",
@@ -257,7 +254,8 @@ class Campfire(Burbler):
                             "place": "volume",
                             "port": "in"
                         },
-                        "hint": "VCO OUT to volume IN"
+                        "hint": "VCO OUT to volume IN",
+                        "inherited": True
                     }
                 ],
                 "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock"

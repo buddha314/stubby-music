@@ -49,13 +49,9 @@
         "place": "voice",
         "kind": "vco",
         "hp": 8,
-        "fixed": false,
-        "accepts": [
-          {
-            "item": "square_wave",
-            "module": "square_vco"
-          }
-        ]
+        "fixed": true,
+        "module": "square_vco",
+        "inherited": true
       },
       {
         "place": "volume",
@@ -105,7 +101,8 @@
           "place": "volume",
           "port": "in"
         },
-        "hint": "VCO OUT to volume IN"
+        "hint": "VCO OUT to volume IN",
+        "inherited": true
       }
     ],
     "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock"

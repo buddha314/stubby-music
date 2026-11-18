@@ -263,6 +263,30 @@ fn aim_on_ground(eye: Vec3, dir: Vec3, ground: &GroundHeight) -> Vec3 {
     Vec3::new(flat.x, height(flat), flat.z)
 }
 
+/// A campfire aimed within its reach of a stream snaps beside the stream's bank
+/// (add-stream-layers): this far from the stream's centre line, its half width with banks
+/// (1.58 m) and the fire's ash bed.
+const BESIDE_STREAM_M: f32 = 2.2;
+
+/// Where a campfire aimed at `at` goes: beside the nearest stream within `reach_m`, on the
+/// aim's side, or at the aim.
+fn beside_stream(at: Vec3, eye: Vec3, streams: &[(f32, Vec3)], reach_m: f32) -> Option<Vec3> {
+    let (_, point) = streams
+        .iter()
+        .map(|(d, p)| (*d, *p))
+        .filter(|(d, _)| *d <= reach_m)
+        .min_by(|a, b| a.0.total_cmp(&b.0))?;
+    // The aim's side of the stream; aimed at the water itself, the player's side.
+    let away = Vec3::new(at.x - point.x, 0., at.z - point.z);
+    let side = if away.length() > 0.3 {
+        away
+    } else {
+        Vec3::new(eye.x - point.x, 0., eye.z - point.z)
+    }
+    .normalize_or(Vec3::X);
+    Some(point + side * BESIDE_STREAM_M)
+}
+
 #[allow(clippy::too_many_arguments)] // Placing spans input, the world, the rules and stock.
 fn place_campfire(
     mut commands: Commands,
@@ -277,6 +301,8 @@ fn place_campfire(
     mut player: ResMut<PlayerInventory>,
     mut camp: ResMut<CampfireBuild>,
     mut ghosts: Query<&mut Transform, With<Ghost>>,
+    streams: Query<&stubby_streams::LaidStream>,
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
 ) {
     if screens.open.is_some() || keys.just_pressed(KeyCode::Escape) {
         camp.active = false;
@@ -302,7 +328,22 @@ fn place_campfire(
             .id()
     });
     let eye = camera.translation();
-    let at = aim_on_ground(eye, camera.forward().as_vec3(), &ground);
+    let mut at = aim_on_ground(eye, camera.forward().as_vec3(), &ground);
+    let reach_m = rules
+        .as_ref()
+        .and_then(|rules| rules.of(CAMPFIRE)?.clock_reach_m)
+        .unwrap_or(0.);
+    let near: Vec<(f32, Vec3)> = streams
+        .iter()
+        .filter(|s| s.source.is_some())
+        .map(|s| {
+            let point = s.nearest_point(at);
+            (Vec2::new(point.x - at.x, point.z - at.z).length(), point)
+        })
+        .collect();
+    if let Some(snapped) = beside_stream(at, eye, &near, reach_m) {
+        at = Vec3::new(snapped.x, ground.at(snapped.x, snapped.z), snapped.z);
+    }
     let facing = Transform::from_translation(at).looking_at(Vec3::new(eye.x, at.y, eye.z), Vec3::Y);
     if let Ok(mut transform) = ghosts.get_mut(ghost) {
         *transform = facing;
@@ -385,6 +426,20 @@ fn tint_hologram(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_campfire_snaps_beside_a_stream_within_reach() {
+        let stream = [(3., Vec3::ZERO)];
+        let eye = Vec3::new(0., 1.7, 10.);
+        // Aimed 3 m off the stream: beside its bank, on that side.
+        let at = beside_stream(Vec3::new(0., 0., 3.), eye, &stream, 5.).expect("snaps");
+        assert!((at.z - BESIDE_STREAM_M).abs() < 1e-4 && at.x.abs() < 1e-4);
+        // Aimed at the water: the player's side.
+        let at = beside_stream(Vec3::ZERO, eye, &[(0., Vec3::ZERO)], 5.).expect("snaps");
+        assert!(at.z > 0.);
+        // Out of reach: no snap.
+        assert!(beside_stream(Vec3::new(0., 0., 9.), eye, &[(9., Vec3::ZERO)], 5.).is_none());
+    }
 
     #[test]
     fn the_aim_lands_on_the_ground_within_reach() {

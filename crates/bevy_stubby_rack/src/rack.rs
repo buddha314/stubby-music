@@ -41,6 +41,9 @@ pub static RACK_MODULES: LazyLock<Modules> = LazyLock::new(|| {
 pub struct RackState {
     /// Place -> module asset, for places the player filled (fixed places are in the profile).
     pub mounted: HashMap<String, String>,
+    /// Upstream layers' patches, made before the player opens the rack (add-stream-layers):
+    /// free and never unplugged. Set from the profile's inherited cables.
+    pub inherited: Vec<(JackRef, JackRef)>,
     /// The patched cables (output jack, input jack), each one of the player's patch
     /// cables from the inventory; unplugging returns it. Any cable joins any output to any
     /// free input, as in VCV Rack; the profile's patches are only what the screen suggests.
@@ -49,9 +52,9 @@ pub struct RackState {
     pub version: u32,
 }
 impl RackState {
-    /// Every patched connection.
+    /// Every patched connection: inherited and the player's.
     pub fn connections(&self) -> impl Iterator<Item = &(JackRef, JackRef)> {
-        self.own.iter()
+        self.inherited.iter().chain(&self.own)
     }
     pub fn joins(&self, from: &JackRef, to: &JackRef) -> bool {
         self.connections().any(|(f, t)| f == from && t == to)
@@ -388,9 +391,16 @@ fn attach(
 ) {
     for (entity, asset) in &machines {
         if let Some(config) = profiles.0.get(&asset.asset) {
-            let _ = config;
             commands.entity(entity).insert((
-                RackState::default(),
+                RackState {
+                    inherited: config
+                        .cables
+                        .iter()
+                        .filter(|c| c.inherited)
+                        .map(|c| (c.from.clone(), c.to.clone()))
+                        .collect(),
+                    ..default()
+                },
                 RackEngine::default(),
                 RackKnobs::default(),
                 RackTargets::default(),
@@ -2246,7 +2256,7 @@ fn draw_cables(
         unlit: true,
         ..default()
     });
-    for (from, to) in &state.own {
+    for (from, to) in state.connections() {
         let Some((a, b)) = port(from).zip(port(to)) else {
             continue;
         };
