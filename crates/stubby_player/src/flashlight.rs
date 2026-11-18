@@ -1,6 +1,7 @@
-//! The forensic flashlight (add-forensic-flashlight), held on B. Its light is a disco ball
-//! floating in front of the player: it spins and throws a ring of narrow violet and cyan
-//! beams that sweep the ground. A collectible a beam passes over (anything marked
+//! The disco light (add-forensic-flashlight), on B. A disco ball floats beside the
+//! player: it spins and throws a ring of narrow violet and cyan beams that sweep the
+//! ground. It is not a hand item (user, 2026-11-17): B switches it on and off whatever the
+//! hand holds, so the field recorder stays up, and no flashlight model is shown. A collectible a beam passes over (anything marked
 //! `Interactable::Pickup`, no asset kind named) flares into a hologram, an overlay on its
 //! body and a beacon above it, and fades after. Style: `assets/ui/flashlight.json`.
 use bevy::{
@@ -14,16 +15,20 @@ use bevy::{
     },
     shader::ShaderRef,
 };
-use stubby_core::{HudCamera, Interactable, ScreenMode};
+use bevy_stubby_audio::ClockTick;
+use stubby_core::{AssetClock, HudCamera, Interactable, ScreenMode};
 
 use crate::controls::Player;
-use crate::hand::{Hand, HandItem};
+/// Whether the disco light is on. B toggles it (not while a screen is open).
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DiscoLight(pub bool);
 
 // ---------------------------------------------------------------- style
 
 #[derive(serde::Deserialize, Clone, Debug)]
 struct StyleFile {
     ball: BallStyle,
+    pulse: PulseStyle,
     beams: BeamStyle,
     reveal: RevealStyle,
     hologram: HologramStyle,
@@ -33,6 +38,13 @@ struct StyleFile {
 struct BallStyle {
     offset: [f32; 3],
     turns_per_second: f32,
+}
+/// The ball swells on each heard beat of the nearest clock within `reach_m`.
+#[derive(serde::Deserialize, Clone, Debug)]
+struct PulseStyle {
+    reach_m: f32,
+    depth: f32,
+    decay_seconds: f32,
 }
 #[derive(serde::Deserialize, Clone, Debug)]
 struct BeamStyle {
@@ -191,6 +203,19 @@ struct DiscoBall {
     beams: Vec<Vec3>,
     /// Whether it has been placed since it was switched on.
     placed: bool,
+    /// The last beat heard from the clock it follows, and the next one, which the
+    /// engine reports a little before it is heard.
+    heard: Option<std::time::Instant>,
+    next: Option<std::time::Instant>,
+}
+
+/// The ball's size on a beat: `1 + depth` as the beat is heard, settling back to 1 over
+/// `decay` seconds (an exponential ease, so it never snaps).
+pub fn beat_scale(since_beat: f32, depth: f32, decay: f32) -> f32 {
+    if since_beat < 0. {
+        return 1.;
+    }
+    1. + depth * (-since_beat / decay.max(1e-3) * 3.).exp()
 }
 
 /// Where the ball appears: `offset` (right, up, back) from the eye, turned to the way the
@@ -220,6 +245,8 @@ struct BeaconMeshes {
 }
 
 pub(crate) fn add(app: &mut App) {
+    app.init_resource::<DiscoLight>()
+        .add_systems(Update, toggle);
     // Headless apps (tests) have no renderer for the ball, its lights or its holograms.
     if !app.is_plugin_added::<bevy::render::RenderPlugin>() {
         return;
@@ -227,7 +254,63 @@ pub(crate) fn add(app: &mut App) {
     app.add_plugins(MaterialPlugin::<HologramMaterial>::default())
         .insert_resource(FlashlightStyle::shipped())
         .add_systems(Startup, setup)
-        .add_systems(Update, (follow_view, reveal, fade_holograms).chain());
+        .add_systems(Update, (follow_view, reveal, fade_holograms).chain())
+        .add_systems(
+            Update,
+            pulse_on_beats
+                .after(follow_view)
+                .run_if(resource_exists::<bevy::ecs::message::Messages<ClockTick>>),
+        );
+}
+
+/// Near a clock the ball keeps its time: it follows the nearest clock within reach and
+/// swells on each of its beats as the beat is heard (the audio clock's predicted instant,
+/// never the frame), then settles. Away from every clock it holds still.
+fn pulse_on_beats(
+    mut ticks: MessageReader<ClockTick>,
+    style: Res<FlashlightStyle>,
+    clocks: Query<(&AssetClock, &GlobalTransform)>,
+    mut balls: Query<(&mut DiscoBall, &mut Transform)>,
+) {
+    let now = std::time::Instant::now();
+    let pulse = &style.0.pulse;
+    let ticks: Vec<ClockTick> = ticks.read().copied().collect();
+    for (mut ball, mut transform) in &mut balls {
+        let at = transform.translation;
+        let nearest = clocks
+            .iter()
+            .map(|(clock, place)| (clock.engine, place.translation().distance(at)))
+            .filter(|(_, distance)| *distance <= pulse.reach_m)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(engine, _)| engine);
+        for tick in &ticks {
+            if Some(tick.module) == nearest {
+                if let Some(next) = ball.next.take().filter(|next| *next <= now) {
+                    ball.heard = Some(next);
+                }
+                ball.next = Some(tick.at.unwrap_or(now));
+            }
+        }
+        if let Some(next) = ball.next.filter(|next| *next <= now) {
+            ball.heard = Some(next);
+            ball.next = None;
+        }
+        if nearest.is_none() {
+            ball.heard = None;
+            ball.next = None;
+        }
+        let scale = ball.heard.map_or(1., |heard| {
+            beat_scale(
+                now.duration_since(heard).as_secs_f32(),
+                pulse.depth,
+                pulse.decay_seconds,
+            )
+        });
+        let scale = Vec3::splat(scale);
+        if transform.scale != scale {
+            transform.scale = scale;
+        }
+    }
 }
 
 fn setup(
@@ -253,6 +336,8 @@ fn setup(
                 angle: 0.,
                 beams: beams.clone(),
                 placed: false,
+                heard: None,
+                next: None,
             },
             Name::new("Disco ball"),
             Transform::default(),
@@ -284,19 +369,31 @@ fn setup(
     }
 }
 
-/// Show the ball while the flashlight is held (and no screen is open). Switching it on
+/// B switches the disco light on or off. Not while a screen is open.
+fn toggle(
+    keys: Res<ButtonInput<KeyCode>>,
+    screens: Option<Res<ScreenMode>>,
+    mut light: ResMut<DiscoLight>,
+) {
+    if keys.just_pressed(stubby_core::FLASHLIGHT)
+        && !screens.is_some_and(|screens| screens.open.is_some())
+    {
+        light.0 = !light.0;
+    }
+}
+
+/// Show the ball while the disco light is on (and no screen is open). Switching it on
 /// places it above the head to the left; it stays there while on, and spins.
 #[allow(clippy::type_complexity)] // The ball and the eye.
 fn follow_view(
     time: Res<Time<Real>>,
-    hand: Res<Hand>,
+    light: Res<DiscoLight>,
     screens: Option<Res<ScreenMode>>,
     style: Res<FlashlightStyle>,
     eyes: Query<&GlobalTransform, (With<Player>, Without<HudCamera>)>,
     mut balls: Query<(&mut DiscoBall, &mut Transform, &mut Visibility)>,
 ) {
-    let on = hand.0 == Some(HandItem::Flashlight)
-        && !screens.is_some_and(|screens| screens.open.is_some());
+    let on = light.0 && !screens.is_some_and(|screens| screens.open.is_some());
     let Ok(eye) = eyes.single() else { return };
     for (mut ball, mut transform, mut visibility) in &mut balls {
         visibility.set_if_neq(if on {
@@ -464,6 +561,38 @@ fn fade_holograms(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn b_toggles_the_disco_light_and_the_recorder_stays_in_hand() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .init_resource::<ButtonInput<KeyCode>>()
+            .init_resource::<ScreenMode>()
+            .init_resource::<crate::hand::Hand>();
+        add(&mut app);
+        let press = |app: &mut App| {
+            let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            keys.release(stubby_core::FLASHLIGHT);
+            keys.clear();
+            keys.press(stubby_core::FLASHLIGHT);
+            app.update();
+        };
+        let on = |app: &App| app.world().resource::<DiscoLight>().0;
+        assert!(!on(&app), "the game opens with the light off");
+        press(&mut app);
+        assert!(on(&app));
+        assert_eq!(
+            app.world().resource::<crate::hand::Hand>().0,
+            Some(crate::hand::HandItem::FieldRecorder),
+            "the recorder stays in hand"
+        );
+        press(&mut app);
+        assert!(!on(&app));
+        app.world_mut().resource_mut::<ScreenMode>().open = Some(stubby_core::Screen::Inventory);
+        press(&mut app);
+        assert!(!on(&app), "not while a screen is open");
+    }
+
     #[test]
     fn beams_ring_the_ball_tilted_down_near_and_far() {
         let beams = beam_directions(12, &[14., 26.]);
@@ -497,18 +626,50 @@ mod tests {
         assert_eq!(flare(0.1, false, 0.6, 1.2), 0.);
     }
     #[test]
-    fn the_ball_appears_above_the_head_to_the_left_whatever_the_pitch() {
+    fn the_ball_appears_at_the_left_edge_of_view_at_eyebrow_level_whatever_the_pitch() {
         let eye = Vec3::new(2., 1.7, 5.);
         let offset = Vec3::from(FlashlightStyle::shipped().0.ball.offset);
         // Facing north (-Z), looking level: left is -X, up is +Y, ahead is -Z.
         let at = ball_place(eye, Vec3::NEG_Z, offset);
-        assert!(at.x < eye.x && at.y > eye.y + 0.3 && at.z < eye.z, "{at}");
+        assert!(at.x < eye.x && at.z < eye.z, "ahead and to the left: {at}");
+        assert!(
+            (0.0..0.15).contains(&(at.y - eye.y)),
+            "about eyebrow level: {at}"
+        );
+        // At the left edge of a 16:9 view (36 degrees each side of a 45 degree vertical
+        // field of view): its centre in view, about a third of it beyond the edge.
+        let to = at - eye;
+        let left = (-to.x).atan2(-to.z).to_degrees();
+        assert!(
+            (32.0..38.0).contains(&left),
+            "{left} degrees left of the view axis"
+        );
+        assert!(
+            (to.length() - 1.1).abs() < 0.05,
+            "1.1 m away: {}",
+            to.length()
+        );
         // Looking down at the ground does not move it: only the heading counts.
         let down = Vec3::new(0., -0.8, -0.6).normalize();
         assert!(ball_place(eye, down, offset).distance(at) < 1e-4);
         // Facing east (+X), left is north (-Z).
         let east = ball_place(eye, Vec3::X, offset);
         assert!(east.z < eye.z && east.x > eye.x, "{east}");
+    }
+
+    #[test]
+    fn the_ball_swells_on_a_heard_beat_and_settles() {
+        assert_eq!(
+            beat_scale(-0.1, 0.06, 0.2),
+            1.,
+            "not before the beat is heard"
+        );
+        assert!((beat_scale(0., 0.06, 0.2) - 1.06).abs() < 1e-6);
+        assert!(beat_scale(0.1, 0.06, 0.2) < 1.03);
+        assert!(
+            beat_scale(0.4, 0.06, 0.2) < 1.001,
+            "settled well before the next beat"
+        );
     }
     #[test]
     fn the_shipped_style_loads() {

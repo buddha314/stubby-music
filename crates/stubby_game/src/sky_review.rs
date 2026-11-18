@@ -14,7 +14,7 @@ struct SkyReview {
 }
 
 /// (calendar seconds, where the camera stands on the ground (x, z), where to look as a
-/// direction, screenshot name, whether the flashlight is held)
+/// direction, screenshot name, whether the disco light is on)
 const SHOTS: [(u64, Vec2, Vec3, &str, bool); 8] = [
     (
         120,
@@ -114,7 +114,7 @@ fn drive(
     >,
     ground: Res<stubby_core::GroundHeight>,
     master: Option<Res<bevy_stubby_audio::MasterClock>>,
-    mut hand: ResMut<stubby_player::hand::Hand>,
+    mut disco: ResMut<stubby_player::flashlight::DiscoLight>,
     lights: Query<(
         Option<&Name>,
         &DirectionalLight,
@@ -138,7 +138,7 @@ fn drive(
     };
     if review.step % 2 == 0 {
         calendar.elapsed = std::time::Duration::from_secs(seconds);
-        hand.0 = flashlight.then_some(stubby_player::hand::HandItem::Flashlight);
+        disco.0 = flashlight;
         let at = Vec3::new(stand.x, (ground.0)(stand) + 1.7, stand.y);
         for (mut camera, _) in &mut cameras {
             *camera = Transform::from_translation(at).looking_at(at + look, Vec3::Y);
