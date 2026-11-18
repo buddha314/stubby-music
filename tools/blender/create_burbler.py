@@ -69,16 +69,15 @@ INTERACT = {
     "prompt": "Configure burbler",   # the action; the shared prompt adds "[E]"
     "priority": "when a pickup is also in reach, the nearer target wins"
 }
-RACK_HP = {"clock": 8, "vco": 8, "volume": 4, "seq": 8}
-RACK_KIND = {"clock": "clock", "vco": "vco", "volume": "vca", "seq": "sequencer"}   # slot label per place
-# Places the voice does not need: filled or not, the burbler sounds once its cables are
-# patched (sync-snail-shell-sequencer; the snail shell's sequencer, after the Godot game).
-RACK_OPTIONAL = {"seq"}
+# A rack offers only the places its machine's work needs (user, 2026-11-18): the burbler's
+# is a heartbeat, so clock, VCO and volume; no sequencer place (simplify-rack-cables).
+RACK_HP = {"clock": 8, "vco": 8, "volume": 4}
+RACK_KIND = {"clock": "clock", "vco": "vco", "volume": "vca"}   # slot label per place
+RACK_OPTIONAL = set()
 # Built into the burbler's rack; the player adds only the VCO (designer, 2026-11-01).
 RACK_FIXED = {"clock": "burbler_clock", "volume": "volume"}
 # What the player can mount in an open place: an inventory item, consumed, becomes a module.
-RACK_ACCEPTS = {"vco": [{"item": "square_wave", "module": "square_vco"}],
-                "seq": [{"item": "snail_shell", "module": "snail_sequencer"}]}
+RACK_ACCEPTS = {"vco": [{"item": "square_wave", "module": "square_vco"}]}
 RACK_WIDTH = sum(RACK_HP.values()) * HP
 RACK_BASE = 0.30  # module base height in the rack
 RACK_AT = (2.35, -0.25, 0.0)
@@ -103,7 +102,7 @@ CABLES = [
             "port": "trig"
         },
         "step": 1,
-        "hint": "take the green cable  ·  patch GATE to TRIG"
+        "hint": "patch GATE to TRIG"
     },
     {
         "color": "rust",
@@ -116,23 +115,7 @@ CABLES = [
             "port": "in"
         },
         "step": 2,
-        "hint": "take the red cable  ·  patch OUT to IN"
-    },
-    {
-        # A melody, not the heartbeat: offered (and ghosted) only once a snail shell is
-        # mounted, and the voice sounds without it (sync-snail-shell-sequencer 5.1).
-        "color": "ochre",
-        "from": {
-            "place": "seq",
-            "port": "cv"
-        },
-        "to": {
-            "place": "vco",
-            "port": "voct"
-        },
-        "step": 3,
-        "optional": True,
-        "hint": "take the ochre cable  ·  patch CV to V/OCT for a melody"
+        "hint": "patch OUT to IN"
     }
 ]
 
@@ -676,9 +659,9 @@ class Burbler(ModuleKit):
                           # until streams carry it).
                           "normalled_output": {"place": "volume", "port": "out"},
                           "hearing_radius_metres": 30.0,
-                          # One spare cable per patch the voice needs, hanging on the comb. Each
-                          # names the jacks it joins, so the screen can guide the player: ghost
-                          # patches, pods pulsing in the cable's colour, one hint per step.
+                          # The patches the voice needs, each made with one of the player's
+                          # patch cables. Each names the jacks it joins, so the screen can guide
+                          # the player: ghost patches, pods pulsing in the patch's colour.
                           "cables": CABLES,
                           "patched_hint": "patched  ·  the burbler plays on every beat",
                           "sound": "starts only when every cable here is patched; the stream's "

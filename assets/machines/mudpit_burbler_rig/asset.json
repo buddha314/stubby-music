@@ -74,7 +74,7 @@
           "port": "trig"
         },
         "step": 1,
-        "hint": "take the green cable  \u00b7  patch GATE to TRIG"
+        "hint": "patch GATE to TRIG"
       },
       {
         "color": "rust",
@@ -87,7 +87,7 @@
           "port": "in"
         },
         "step": 2,
-        "hint": "take the red cable  \u00b7  patch OUT to IN"
+        "hint": "patch OUT to IN"
       }
     ],
     "patched_hint": "patched  \u00b7  the burbler plays on every beat",

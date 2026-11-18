@@ -29,42 +29,42 @@ component SHALL mount only in a slot of its kind, and a fixed slot SHALL never b
 - **WHEN** the player drags a VCA onto the VCO slot
 - **THEN** it does not mount and the VCA stays in the inventory
 
-### Requirement: Every rack has a cable comb with the machine's spare cables
-Every rack SHALL show a small cable comb on its frame (`CableComb`, `Comb_<n>` slots).
-A machine's configuration SHALL list its spare cables (`configure.cables`), and they
-SHALL hang on the comb, folded over a slot with both plugs down, until the player takes
-one to patch. A comb cable SHALL join any output to any free input, as in VCV Rack; the
-jacks the configuration names for it are only the patch the screen suggests. Unplugging
-a cable SHALL hang it back on the comb.
+### Requirement: Cables come from the inventory
+Every cable on a rack SHALL be one of the player's patch cables, taken from the inventory
+when its first end goes into a jack's patch and given back when it is unplugged; there
+SHALL be no cable comb (user, 2026-11-18; `simplify-rack-cables`). A machine's
+configuration SHALL list the patches its voice needs (`configure.cables`); they are only
+what the screen suggests, and any cable SHALL join any output to any free input, as in
+VCV Rack. A cable making a suggested patch SHALL take that patch's colour.
 
-The cable in hand SHALL snap to a jack it can go into when the pointer comes within
-40 screen pixels of it: its plug shows in that jack, and releasing there SHALL plug it
-in, even off the jack itself.
+A cable SHALL start on a jack. Its far end SHALL snap to a jack it can go into when the
+pointer comes within 40 screen pixels of it: its plug shows in that jack, and releasing
+there SHALL plug it in, even off the jack itself.
 
 #### Scenario: Opening the burbler's rack
-- **WHEN** the player opens an unpatched burbler's configuration screen
-- **THEN** two cables, verdigris and rust, hang on the comb ready to be placed
+- **WHEN** the player opens an unpatched burbler's configuration screen holding 10 patch cables
+- **THEN** the patches to make show as ghosts, and no cables hang on the frame
 
-#### Scenario: Taking a cable
-- **WHEN** the player drags a plug off the comb onto a jack
-- **THEN** that cable leaves the comb and its other end follows the pointer
+#### Scenario: Patching takes a cable and unplugging gives it back
+- **WHEN** the player patches the VCO's OUT to the volume's IN, then unplugs it
+- **THEN** the inventory holds 9 patch cables while it is patched, and 10 again after
 
 #### Scenario: Any cable, any patch
-- **WHEN** the player patches the green cable from the VCO's OUT to the volume's IN and the red one from GATE to TRIG
-- **THEN** the voice is complete and sounds, though the screen suggested the other colours
+- **WHEN** the player patches GATE to TRIG and OUT to IN in either order
+- **THEN** the voice is complete and sounds
 
 #### Scenario: Snapping
 - **WHEN** the player releases the cable in hand just beside a jack it can go into
 - **THEN** it plugs into that jack
 
 ### Requirement: Patch pods pulse while waiting for a cable
-Each jack's halo (`Jack_<port>_Halo`) SHALL pulse, in the cable's colour, while a spare
-cable that the machine's configuration assigns to that jack is still unpatched; other
+Each jack's halo (`Jack_<port>_Halo`) SHALL pulse, in the patch's colour, while a patch
+that the machine's configuration names for that jack is still unmade; other
 jacks' halos SHALL rest, and a halo SHALL rest once its jack is patched.
 
 #### Scenario: Inviting the patch
 - **WHEN** a VCO and the volume are mounted and no cable is patched
-- **THEN** the jacks the burbler's cables are for pulse, each in its cable's colour, and the rest stay dark
+- **THEN** the jacks the burbler's patches are for pulse, each in its patch's colour, and the rest stay dark
 
 #### Scenario: Patched
 - **WHEN** a cable joins two jacks
@@ -81,11 +81,3 @@ with where it comes from.
 - **WHEN** the burbler's rack is open with its VCO slot empty and the player holds 2 square waves
 - **THEN** the Relevant strip shows "[1] Square wave x 2", and pressing 1 mounts a Square VCO and leaves 1 square wave
 
-### Requirement: Spare cables on the comb are free
-The cables a machine's configuration hangs on its comb SHALL come with the rack and SHALL
-NOT use the player's patch cables. Patch cables in the inventory are for patches of the
-player's own.
-
-#### Scenario: Patching the burbler
-- **WHEN** the player patches the burbler's two comb cables while holding 10 patch cables
-- **THEN** the player still holds 10 patch cables
