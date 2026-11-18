@@ -44,6 +44,15 @@ roughly three per group: the research looks wide, and the summary picks the stro
 cleared candidates per group. How groups sit on the procedural map is
 `add-mythic-regions`'s design.
 
+### D5. Unnamed figures, imagery from their heritage (user, 2026-11-18)
+Figures appear unnamed, as spirits of a place, never as a named deity of a people. Their
+look draws on the visual heritage of the cultures their group comes from. The sharing
+check covers imagery as well as stories: a motif, style or pattern is used only when it is
+openly shared, and some are not (Aboriginal designs can belong to a clan or a Dreaming,
+and a design for one figure is not free for another). The game takes elements and styles,
+never a reproduction of a particular work, panel or sacred object. Each entry records the
+imagery it suggests and that imagery's own sharing check.
+
 ## Risks / Trade-offs
 
 - Desk research cannot speak for a community. Entries marked open are the best reading of
@@ -54,5 +63,4 @@ cleared candidates per group. How groups sit on the procedural map is
 
 ## Open Questions
 
-1. Whether figures appear by name, or as unnamed spirits of a place.
-2. Community review before release (who, and how).
+1. Community review before release (who, and how).
