@@ -29,7 +29,7 @@ struct Profiles {
 impl Plugin for ModelPartBindingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Profiles>()
-            .add_systems(Update, bind_parts);
+            .add_systems(Update, (bind_parts, restore_sockets));
     }
 }
 fn node_frame(
@@ -240,5 +240,87 @@ fn bind_parts(
             flattened: true,
             sway: info.sway,
         });
+    }
+}
+
+/// On a placed asset whose sockets are back.
+#[derive(Component)]
+struct SocketsRestored;
+
+/// The model's sockets: childless empties outside its levels of detail (`Interact`,
+/// `Sparks`, a light socket), as `(name, frame in the model)`.
+fn sockets(gltf: &Gltf, nodes: &Assets<GltfNode>) -> Option<Vec<(String, Transform)>> {
+    let all: Vec<_> = gltf
+        .nodes
+        .iter()
+        .map(|handle| nodes.get(handle).map(|node| (handle.id(), node)))
+        .collect::<Option<_>>()?;
+    let parents: HashMap<_, _> = all
+        .iter()
+        .flat_map(|(id, node)| node.children.iter().map(move |child| (child.id(), *id)))
+        .collect();
+    let in_level = |mut id: AssetId<GltfNode>| {
+        while let Some(parent) = parents.get(&id) {
+            if nodes.get(*parent).is_some_and(|n| n.name.contains("_LOD")) {
+                return true;
+            }
+            id = *parent;
+        }
+        false
+    };
+    Some(
+        all.iter()
+            .filter(|(id, node)| {
+                node.mesh.is_none()
+                    && node.children.is_empty()
+                    && parents.contains_key(id)
+                    && !in_level(*id)
+            })
+            .map(|(id, node)| (node.name.clone(), node_frame(*id, nodes, &parents)))
+            .collect(),
+    )
+}
+
+/// Jackdaw's LOD runtime flattens a level into bare meshes, so a flattened model's
+/// sockets never reach the world (2026-11-18: the campfire had no `Interact`, so E reached
+/// past it to the burbler). Each placed asset drawn by flattened parts gets its model's
+/// sockets back, as named children at their place in the model, once.
+#[allow(clippy::type_complexity)]
+fn restore_sockets(
+    mut commands: Commands,
+    gltfs: Res<Assets<Gltf>>,
+    nodes: Option<Res<Assets<GltfNode>>>,
+    profiles: Res<Profiles>,
+    parts: Query<(&Mesh3d, &AssetPart), With<LodPart>>,
+    restored: Query<(), With<SocketsRestored>>,
+) {
+    let Some(nodes) = nodes else {
+        return;
+    };
+    for (mesh, part) in &parts {
+        if !part.flattened || restored.contains(part.root) {
+            continue;
+        }
+        let Some(file) = mesh
+            .0
+            .path()
+            .map(|p| p.clone_owned().without_label().to_string())
+        else {
+            continue;
+        };
+        let Some(gltf) = profiles.models.get(&file).and_then(|h| gltfs.get(h)) else {
+            continue;
+        };
+        let Some(sockets) = sockets(gltf, &nodes) else {
+            continue;
+        };
+        commands
+            .entity(part.root)
+            .insert(SocketsRestored)
+            .with_children(|root| {
+                for (name, frame) in sockets {
+                    root.spawn((Name::new(name), frame, Visibility::default()));
+                }
+            });
     }
 }

@@ -94,7 +94,11 @@ class ModuleKit:
         """Put the model's levels of detail inside it, as nodes named `<asset_id>_LOD0`,
         `<asset_id>_LOD1`, ...: the convention Unity's model importer and Jackdaw's
         `model.lod.import` read. Level 0 takes everything already in the asset except
-        the objects passed for the later levels (one list per level, LOD1 first)."""
+        the objects passed for the later levels (one list per level, LOD1 first), and
+        except sockets: childless empties (`Interact`, `Sparks`, a light socket) stay on
+        the root, beside the levels, because Jackdaw's LOD runtime flattens a level into
+        bare meshes and a socket inside one never reaches the game (2026-11-18: the
+        campfire had no `Interact`, so E reached past it to the burbler)."""
         later = [obj for objs in levels for obj in objs]
         nodes = []
         for level in range(len(levels) + 1):
@@ -103,7 +107,8 @@ class ModuleKit:
             self.link(empty)
             nodes.append(empty)
         for child in list(self.root.children):
-            if child not in nodes and child not in later:
+            socket = child.type == "EMPTY" and not child.children
+            if child not in nodes and child not in later and not socket:
                 child.parent = nodes[0]   # parents sit at the root's origin: transforms hold
         for node, objs in zip(nodes[1:], levels):
             for obj in objs:

@@ -375,6 +375,11 @@ testable by asserting identical output for identical seeds.
   model into bare meshes, so names and extras (`start_scale`, `"acoustic": "rock"`) reach
   the game only through that binding, from the nearest ancestor node that carries them
   (2026-11-17: the grotto's boulders were never acoustic, and the campfire burned unlit).
+  Empties are flattened away too: the binding recreates a model's **sockets**, childless
+  empties outside its `_LOD` nodes (`Interact`, `Sparks`), as named children of the placed
+  asset, and `module_kit.lod_levels` keeps sockets out of the levels (2026-11-18: the
+  campfire had no `Interact`, so E configured the burbler behind it). Ring and label follow
+  E's target.
 - **Placed prefabs need unique instance IDs.** A prefab with a fixed `MineNode` or
   `ResourceNode` `instance` (each `scrub_oak_<k>` is `scrub_oak-<k>`) fails with "duplicate
   or empty instance ID" when placed twice, unless its placement gets its own `instance`.

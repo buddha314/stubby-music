@@ -561,7 +561,14 @@ fn update_hover(
     mut uses: MessageWriter<AssetUsed>,
     mut labels: Query<&mut Text, With<HoverLabel>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
+    interact: Option<Res<stubby_core::InteractTarget>>,
 ) {
+    // The machine E acts on is the one named and ringed, so the ring, the label and the
+    // E prompt never disagree (2026-11-18: a campfire ringed while E configured the
+    // burbler behind it). With no machine in reach, the aim picks as before.
+    let reached = interact
+        .and_then(|target| target.machine())
+        .filter(|machine| roots.contains(*machine));
     let camera = cameras
         .single()
         .ok()
@@ -603,6 +610,9 @@ fn update_hover(
                 .min_by(|a, b| a.1.total_cmp(&b.1))
                 .map(|(entity, _)| entity)
         });
+    let target = reached
+        .filter(|_| screens.as_ref().is_none_or(|s| s.open.is_none()))
+        .or(target);
     if target != hover.entity {
         if let Some(previous) = hover.entity {
             events.write(AssetHoverEvent {
