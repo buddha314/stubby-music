@@ -44,6 +44,15 @@ fn node_frame(
         node_frame(*parent, nodes, parents).mul_transform(local)
     })
 }
+/// A node whose extras the game reads (a `start_scale`, an `acoustic` material) controls
+/// the parts under it, whatever it is named.
+fn controls(node: &GltfNode) -> bool {
+    node.extras.as_ref().is_some_and(|extras| {
+        serde_json::from_str::<serde_json::Value>(&extras.value).is_ok_and(|value| {
+            value.get("start_scale").is_some() || value.get("acoustic").is_some()
+        })
+    })
+}
 fn metadata(
     gltf: &Gltf,
     nodes: &Assets<GltfNode>,
@@ -78,7 +87,7 @@ fn metadata(
         let mut sway = None;
         while let Some(id) = current {
             let ancestor = nodes.get(id)?;
-            if control.is_none() && is_state_node(&ancestor.name) {
+            if control.is_none() && (is_state_node(&ancestor.name) || controls(ancestor)) {
                 control = Some(ancestor);
             }
             if sway.is_none() {
@@ -152,7 +161,9 @@ fn bind_parts(
         };
         if !(asset.asset.starts_with("scrub_oak_")
             || asset.asset.starts_with("reed_clump_")
-            || asset.asset.starts_with("desert_"))
+            || asset.asset.starts_with("desert_")
+            || asset.asset.starts_with("boulder_")
+            || asset.asset == "campfire")
         {
             continue;
         }
@@ -213,6 +224,13 @@ fn bind_parts(
             commands
                 .entity(entity)
                 .insert(rest.with_scale(rest.scale * start as f32));
+        }
+        // Acoustic rock (add-echo-grotto): the flattened part joins the spatial-audio scene,
+        // as an unflattened model's mesh does through its extras.
+        if info.extras["acoustic"].as_str() == Some("rock") {
+            commands
+                .entity(entity)
+                .insert(stubby_core::AcousticOccluder::ROCK);
         }
         commands.entity(entity).insert(AssetPart {
             root,

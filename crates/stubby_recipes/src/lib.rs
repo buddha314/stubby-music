@@ -406,6 +406,10 @@ impl Catalog {
     pub fn buildable(&self, id: &str) -> Option<&BuildableDefinition> {
         self.buildables.get(id)
     }
+    /// Every buildable, by ID (the build menu lists them).
+    pub fn buildable_definitions(&self) -> impl Iterator<Item = &BuildableDefinition> {
+        self.buildables.values()
+    }
     /// The cost of building `count` of a buildable, one stack per item.
     pub fn build_cost(&self, id: &str, count: u32) -> Result<Vec<Stack>, RecipeError> {
         let buildable = self

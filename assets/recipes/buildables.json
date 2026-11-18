@@ -3,6 +3,16 @@
   "format": 1,
   "buildables": [
     {
+      "id": "campfire",
+      "name": "Campfire",
+      "cost": [
+        {
+          "item": "reed",
+          "quantity": 25
+        }
+      ]
+    },
+    {
       "id": "stream_segment",
       "name": "Stream segment",
       "cost": [

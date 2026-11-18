@@ -12,13 +12,13 @@ unless the user assigns otherwise. Decisions first (design, Open Questions).
 
 ## 1. Rules (rule PR)
 - [ ] 1.1 `fire_lit { buildable }` condition kind in `stubby_recipes::goals`, validated against `buildables.json`; rules-fmt; event-table test
-- [ ] 1.2 Camp row in `buildables.json`; "Build a campfire" step under "Build a camp" (with `sync-major-minor-milestones`)
+- [ ] 1.2 Camp row in `buildables.json` (done: `campfire`, 25 reeds until campfire sticks are an item); "Build a campfire" step under "Build a camp" (with `sync-major-minor-milestones`)
 
 ## 2. Art (Claude)
 - [x] 2.1 `tools/blender/create_campfire.py` → `assets-src/blender/structures/campfire.blend` → `assets/structures/campfire/campfire.glb`: a bundle of fourteen sticks over ash with kindling; `Fire` and `Embers` hidden by start_scale 0; `Light_fire`, `Sparks`, `Interact`; LOD0/LOD1 nodes; previews unlit, burning, embers
 - [x] 2.2 Profile with the `configure` block (D2), `clock_reach_m`, `light_pattern`; Jackdaw prefab; collider; LOD policy and metadata
-- [ ] 2.3 Item/buildable icon via `tools/icons/make_item_icons.py`
-- [ ] 2.4 Build hologram for the camp (pale amber, as streams)
+- [x] 2.3 Item/buildable icon via `tools/icons/make_item_icons.py`
+- [x] 2.4 Build hologram for the camp (pale amber, as streams; red when the reeds are short; `stubby_game::build`)
 
 ## 2b. Recipes at a tempo (D9)
 - [x] 2b.1 `RecipeDefinition.bpm` (`BpmRange`, multiples of `BPM_STEP` 24, validated), `Catalog::craft_at` and `RecipeError::OffTempo`; `CraftRequest.bpm`; tests
@@ -27,7 +27,7 @@ unless the user assigns otherwise. Decisions first (design, Open Questions).
 - [ ] 2b.4 First recipe rows with ranges (with 0.5)
 
 ## 3. Game
-- [ ] 3.1 Camp binder (`AssetBinder`), build placement with Q, reed cost
+- [x] 3.1 Camp binder (`AssetBinder`), build placement with Q, reed cost (Q opens the build menu, Satisfactory-style: Stream or Campfire; the binder is scenery until the rack, 3.2a). An unlit camp stands by the opening burbler in `scene.bsn`, to show the player what campfire sticks are for
 - [ ] 3.2 Lighting rule in glue from `StepTick` and rack completeness (D3); sparks from the bundle on the heard instant; report `fire_lit`
 - [ ] 3.2a The camp's clock from the nearest running burbler or flowing stream within `clock_reach_m` (D7); the fire dies when that beat stops (D1)
 - [ ] 3.3 Crafting screen in the Craft Bench layout (D4) over `CraftRequest`, with pinning; shared screen mode

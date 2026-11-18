@@ -313,6 +313,13 @@ impl Plugin for PrefabGluePlugin {
                 install: |_, _, _, _| Ok(()),
                 retire: |_, _| {},
             },
+            // Scenery for now: the grotto's boulders (their rock is acoustic through glTF
+            // extras), and the campfire until its rack and fire come (add-campfire-craft-bench 3.1).
+            AssetBinder {
+                matches: |_, asset| asset.starts_with("boulder_") || asset == "campfire",
+                install: |_, _, _, _| Ok(()),
+                retire: |_, _| {},
+            },
         ]);
     }
 }

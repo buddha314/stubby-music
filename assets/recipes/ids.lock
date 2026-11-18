@@ -2,6 +2,7 @@
 # Never remove a line: a renamed or removed ID needs a row in migrations.json.
 build_a_camp
 build_a_heartbeat
+campfire
 catch_a_spark
 clock
 clock_source
