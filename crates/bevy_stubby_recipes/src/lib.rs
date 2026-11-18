@@ -55,6 +55,7 @@ impl Plugin for RecipesPlugin {
         // Foliage that cleans the air (`air.json`, clean-air-by-foliage), and the goals.
         if let Ok(rules) = stubby_recipes::shipped_rules() {
             app.insert_resource(AirRules(rules.air.clone()));
+            app.insert_resource(MachineRules(rules.machines.clone()));
             if self.catalog.is_none() {
                 app.insert_resource(Goals {
                     rules,
@@ -187,12 +188,24 @@ mod reload {
         ));
         commands.insert_resource(RecipeCatalog(catalog));
         commands.insert_resource(AirRules(rules.air.clone()));
+        commands.insert_resource(MachineRules(rules.machines.clone()));
         // Progress is kept; the goals it refers to are the edited ones.
         if let Some(mut goals) = goals {
             goals.rules = rules;
         }
         reloaded.write(RulesReloaded);
         info!("Rules reloaded from {}", dir.display());
+    }
+}
+
+/// Machine settings (`machines.json`, add-machine-rules): each machine kind's targets and
+/// clock reach. Reloaded with the other rules in dev builds.
+#[derive(Resource, Clone, Default)]
+pub struct MachineRules(pub Vec<stubby_recipes::machines::MachineDefinition>);
+impl MachineRules {
+    /// The settings for a machine kind (its placed asset ID), if it has any.
+    pub fn of(&self, machine: &str) -> Option<&stubby_recipes::machines::MachineDefinition> {
+        self.0.iter().find(|row| row.machine == machine)
     }
 }
 

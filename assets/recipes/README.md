@@ -14,6 +14,7 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 | `buildables.json` | What the player builds in the world and its item cost per one built: `stream_segment` (6 `reed`) |
 | `goals.json` | What the hub tells the player to do next (format 2). A `major` goal is a set of `minor` steps (`part_of` it), done in file order; it completes with its last step and has no cost of its own. A step is met by a `condition` (`machine_configured`, `tree_watered`, `tree_grown` with a bloom `level`, `item_held` with a `quantity`) or by `requires` (items delivered). Majors open in file order, or after their `after` |
 | `start.json` | The starter inventory a new player gets: 10 patch cables |
+| `machines.json` | Machine settings tuned in play: each machine kind's `targets` (knobs its work needs, at a `note` such as `C2` or a `value` such as `1`) and `clock_reach_m` (how far a machine with a borrowed clock reaches). `machine` is the placed asset ID (`campfire`) |
 | `air.json` | Foliage that cleans the air: which placed assets, how far (`radius_m`), how strongly (`strength`), and what their cleaning follows (`growth`, `water_or_light`, `light`) |
 | `migrations.json` | Every renamed or removed ID, so saves survive the change |
 | `ids.lock` | Every ID ever shipped (maintained by the formatter; never delete lines) |
@@ -21,7 +22,10 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 
 ## The rules designer
 
-The easiest way to change the rules is the designer, a page in your browser:
+The easiest way to change the rules is the designer, a page in your browser. **A dev
+build of the game starts it and opens it for you** (unless one is already running, or
+`STUBBY_NO_DESIGNER=1` is set; its output goes to `target/rules_designer.log`). To run it
+alone:
 
 ```bash
 cargo run -p stubby_rules_server        # then open http://127.0.0.1:7878/
@@ -32,7 +36,10 @@ problems appear as you type (click one to jump to it), **Used by** shows where a
 used, and Undo, Redo and Save work as usual (Ctrl+Z, Ctrl+Shift+Z, Ctrl+S). Saving is
 refused while there are problems. A running dev build of the game (standalone or Play in
 Jackdaw) picks up a save within a second, and the **Live game** panel shows values from
-it, such as how clean the basin's air is. Link to a row with `#registry/id`, e.g.
+it, such as how clean the basin's air is. The **Machines** panel lists every placed
+machine with a rack: whether it sounds, and whether its targets are met, naming each
+missed one and where its knob is (`seq.gate_4 at 0`). Tune a machine by editing its row
+in `machines`, saving, and watching the panel. Link to a row with `#registry/id`, e.g.
 `http://127.0.0.1:7878/#air/scrub_oak_air`.
 
 Files saved by the designer are exactly what the formatter writes, so hand edits and the

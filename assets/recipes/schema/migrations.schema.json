@@ -65,7 +65,8 @@
         "recipes",
         "buildables",
         "goals",
-        "air"
+        "air",
+        "machines"
       ]
     }
   }

@@ -9,7 +9,6 @@
     "depth": 0.86,
     "height": 1.15
   },
-  "clock_reach_m": 5.0,
   "states": {
     "unlit": "Fire and Embers at scale 0",
     "burning": "Fire at scale 1, Light_fire at peak",
@@ -109,29 +108,7 @@
         "hint": "VCO OUT to volume IN"
       }
     ],
-    "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock",
-    "targets": [
-      {
-        "place": "seq",
-        "knob": "gate_1",
-        "value": 0.0
-      },
-      {
-        "place": "seq",
-        "knob": "gate_2",
-        "value": 1.0
-      },
-      {
-        "place": "seq",
-        "knob": "gate_3",
-        "value": 0.0
-      },
-      {
-        "place": "seq",
-        "knob": "gate_4",
-        "value": 1.0
-      }
-    ]
+    "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock"
   },
   "triangles": {
     "near": 1028,

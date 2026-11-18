@@ -47,6 +47,7 @@
   .side { display: flex; flex-direction: column; gap: 12px; }
   pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
   .muted { color: var(--muted); }
+  .missed { color: var(--bad); }  .met { color: var(--good); }
   .error { color: var(--bad); }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 </style>
@@ -78,6 +79,10 @@
 stubby_world::lighting::CameraLightQuality
 stubby_world::calendar::Calendar</textarea>
       <pre id="live" class="muted">Waiting for the game…</pre>
+    </section>
+    <section>
+      <h2>Machines</h2>
+      <ul id="machines" class="list"><li class="muted">Waiting for the game…</li></ul>
     </section>
   </div>
 </main>
@@ -285,6 +290,46 @@ async function pollGame() {
   $("live").className = "";
 }
 setInterval(pollGame, 1000);
+
+// Each placed machine with a rack: whether it sounds, and its targets (`machines.json`),
+// met or naming each missed one and where its knob is (add-machine-rules).
+const PLACED = "stubby_core::PlacedAsset";
+const TARGETS = "bevy_stubby_rack::rack::RackTargets";
+async function pollMachines() {
+  let rows;
+  try {
+    const response = await fetch($("game").value, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "world.query",
+        params: { data: { components: [PLACED, TARGETS] } } }),
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    rows = data.result;
+  } catch (error) {
+    $("machines").innerHTML = "";
+    const li = document.createElement("li");
+    li.className = "muted";
+    li.textContent = error instanceof TypeError ? "The game is not running (or not a dev build)." : String(error.message);
+    $("machines").append(li);
+    return;
+  }
+  rows.sort((a, b) => a.components[PLACED].instance.localeCompare(b.components[PLACED].instance));
+  $("machines").innerHTML = "";
+  for (const row of rows) {
+    const placed = row.components[PLACED];
+    const targets = row.components[TARGETS];
+    const li = document.createElement("li");
+    const head = document.createElement("div");
+    head.textContent = `${placed.instance}  ·  ${targets.sounding ? "sounding" : "silent"}`;
+    const detail = document.createElement("div");
+    detail.className = targets.met ? "met" : "missed";
+    detail.textContent = targets.met ? "targets met" : `missed: ${targets.missed.join(", ")}`;
+    li.append(head, detail);
+    $("machines").append(li);
+  }
+}
+setInterval(pollMachines, 1000);
 
 // Files changed on disk (a hand edit, rules-fmt) show up when nothing is unsaved here.
 setInterval(async () => {

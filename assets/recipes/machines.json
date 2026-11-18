@@ -1,0 +1,33 @@
+{
+  "$schema": "schema/machines.schema.json",
+  "format": 1,
+  "machines": [
+    {
+      "id": "campfire_tuning",
+      "machine": "campfire",
+      "targets": [
+        {
+          "place": "seq",
+          "knob": "gate_1",
+          "value": 0.0
+        },
+        {
+          "place": "seq",
+          "knob": "gate_2",
+          "value": 1.0
+        },
+        {
+          "place": "seq",
+          "knob": "gate_3",
+          "value": 0.0
+        },
+        {
+          "place": "seq",
+          "knob": "gate_4",
+          "value": 1.0
+        }
+      ],
+      "clock_reach_m": 5.0
+    }
+  ]
+}

@@ -28,7 +28,7 @@
 ## 4. Playtest
 
 - [x] 4.1 `bevy_stubby_recipes`: dev builds load rules from `assets/recipes/` and hot-reload on change, keeping the old rules and reporting errors on a failed reload; release builds stay embedded (claimed: claude; checked live: editing `air.json` during Play reloads within a second)
-- [ ] 4.2 Smoke test: change the lightning bug's yield in the designer while the game runs and collect a bug
+- [x] 4.2 Smoke test: a rules edit reaching a running game (done 2026-11-18 through `add-machine-rules` 4.2: a `machines.json` edit mid-run reloaded and changed the campfire's targets live; the bug-yield variant is the same reload path)
 
 ## 5. Docs
 

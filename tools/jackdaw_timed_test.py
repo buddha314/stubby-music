@@ -168,7 +168,9 @@ def main():
     original = manifest.read_text()
     env = dict(os.environ)
     env.update(JACKDAW_REMOTE_PORT=str(PORT), JACKDAW_PIE_PREBUILD='0',
-               JACKDAW_OPEN_PROJECT=str(project), CARGO_BUILD_JOBS='2')
+               JACKDAW_OPEN_PROJECT=str(project), CARGO_BUILD_JOBS='2',
+               # Bounded runs never start the rules designer (add-machine-rules D4).
+               STUBBY_NO_DESIGNER='1')
     if args.adapter:
         env['WGPU_ADAPTER_NAME'] = args.adapter
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']

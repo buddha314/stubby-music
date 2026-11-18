@@ -1,7 +1,8 @@
 """The campfire: a bundle of sticks, the craft bench (add-campfire-craft-bench).
 
 A teepee of dry sticks over a bed of ash, with kindling at its foot. It is lit by music:
-a spark voice struck by a snail-shell sequencer on beats 2 and 4 (its `configure.targets`), timed by the nearest
+a spark voice struck by a snail-shell sequencer on beats 2 and 4 (its targets, and its clock reach, are
+rules: `assets/recipes/machines.json`), timed by the nearest
 running clock (a burbler or the stream it feeds) within `clock_reach_m`. Lit, it is the
 craft bench, and it burns only while that clock runs; then it dies down to embers.
 
@@ -33,7 +34,6 @@ from module_kit import PROJECT  # noqa: E402
 STICKS = 14
 APEX = 0.95        # metres: where the sticks meet
 BASE = 0.38        # metres: the radius of the bundle's foot
-CLOCK_REACH_M = 5.0
 
 
 class Campfire(Burbler):
@@ -163,7 +163,6 @@ class Campfire(Burbler):
                      "clock runs, then dies to embers. Lit, E opens the crafting screen, and "
                      "recipes with a bpm range are made only at that clock's tempo.",
             "size_metres": {"width": 2 * BASE + 0.1, "depth": 2 * BASE + 0.1, "height": APEX + 0.2},
-            "clock_reach_m": CLOCK_REACH_M,
             "states": {"unlit": "Fire and Embers at scale 0",
                        "burning": "Fire at scale 1, Light_fire at peak",
                        "embers": "Embers at scale 1, Fire at 0, Light_fire low"},
@@ -223,11 +222,7 @@ class Campfire(Burbler):
                     "port": "out"
                 },
                 "hearing_radius_metres": 20.0,
-                "targets": [
-                {"place": "seq", "knob": f"gate_{k + 1}", "value": 1.0 if k in (1, 3) else 0.0}
-                for k in range(4)
-            ],  # strike on 2 and 4: the backbeat
-            "cables": [
+                "cables": [
                     {
                         "color": "verdigris",
                         "from": {

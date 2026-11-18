@@ -59,7 +59,8 @@ engine still takes Hz. The sketch's VCOs land on C2 and C4. The cutoff is quanti
 523.25 Hz (user, 2026-11-18).
 
 ### D3. Target settings
-A machine profile may add `configure.targets`: a knob in a place at a `note` (`"C2"`, for a
+A machine's targets are rules (`machines.json`, moved there by `add-machine-rules`; first
+written as the profile's `configure.targets`): a knob in a place at a `note` (`"C2"`, for a
 semitone knob) or a `value` (`1` for a gate on). Each rack publishes `RackTargets { met }`;
 the patch itself is checked separately, by `RackEngine::sounding`. A target on an empty
 place is missed, and an unturned knob counts at its starting value. Each time a rack's
