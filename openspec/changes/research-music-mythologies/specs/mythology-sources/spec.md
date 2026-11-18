@@ -14,6 +14,20 @@ The game SHALL use a mythic figure, story or image only when the research note r
 - **WHEN** no community source says how a story is shared
 - **THEN** the note marks it unclear, and it is not used until that is settled
 
+### Requirement: Figures are unnamed and their imagery is openly shared
+
+The game SHALL present mythic figures unnamed, as spirits of a place, never as a named deity of a people. A figure's look SHALL be similar to, not identical with, its cultural heritage: it SHALL draw only on motifs and styles the research note records as openly shared, and SHALL NOT reproduce a particular artwork, rock-art panel or sacred object.
+
+#### Scenario: Designing a figure's look
+
+- **WHEN** an artist designs a figure from the desert group
+- **THEN** its motifs come from the note's cleared imagery, it carries no deity's name, and no element copies a specific work
+
+#### Scenario: A motif owned by a clan
+
+- **WHEN** the research finds a design that belongs to a clan or a particular story
+- **THEN** the note marks it restricted and no figure uses it
+
 ### Requirement: Each figure is recorded with its source and sharing check
 
 The research note SHALL record, for each figure, its people, what it is tied to, a summary in the project's own words, its source and the kind of source, and the sharing check with its reason. It SHALL keep game ideas apart from what the sources say.

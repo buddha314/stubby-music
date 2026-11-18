@@ -1,8 +1,8 @@
 ## 0. Decide (user)
 - [x] 0.1 Only openly shared stories, each with its source (user, 2026-11-18)
 - [x] 0.2 Regions are biome groups: desert (Southwest and Mojave, Aboriginal Australia), Mediterranean, temperate forest (Ireland and England, Pacific Northwest), tropical (Africa, perhaps Southeast Asia); peoples intermingle; about a dozen characters (user, 2026-11-18)
-- [ ] 0.3 Figures by name, or unnamed spirits of a place (Open Question 1)
-- [ ] 0.4 Community review before release (2)
+- [x] 0.3 Figures are unnamed, with imagery similar to (not identical with) their cultural heritage; imagery gets its own sharing check (user, 2026-11-18)
+- [ ] 0.4 Community review before release (Open Question 1)
 
 ## 1. Research (Claude)
 - [ ] 1.1 Desert: the Mojave and US Southwest, and Aboriginal Australia (desert country first; songlines only as openly described), with sources and sharing checks (claimed: claude)
