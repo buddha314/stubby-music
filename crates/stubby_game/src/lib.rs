@@ -12,6 +12,7 @@ pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_g
 pub use stubby_player::{controls, hand, interaction};
 mod build;
 mod campfire;
+mod hud;
 mod inventory_screen;
 mod pause_menu;
 // The rack system (bevy_stubby_rack), under its old module names.
@@ -69,6 +70,7 @@ impl Plugin for DesertPlugin {
             pause_menu::PauseMenuPlugin,
             build::BuildPlugin,
             campfire::CampfirePlugin,
+            hud::HudPlugin,
             watering::WateringPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));

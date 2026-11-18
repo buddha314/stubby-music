@@ -24,8 +24,6 @@ impl Calendar {
         self.elapsed.as_secs() % CYCLE_SECONDS >= DAY_SECONDS
     }
 }
-#[derive(Component)]
-struct CalendarHud;
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct CalendarAdvance;
 pub struct CalendarPlugin;
@@ -37,31 +35,15 @@ impl Plugin for CalendarPlugin {
             .insert_resource(crate::lighting::LightingKeys::shipped())
             .init_resource::<crate::lighting::CameraLightQuality>()
             .add_systems(PreStartup, open_at_authored_time)
-            .add_systems(Startup, (setup, setup_sun))
+            .add_systems(Startup, setup_sun)
             .add_systems(
                 PreUpdate,
                 advance
                     .in_set(CalendarAdvance)
                     .after(bevy_stubby_audio::MasterClockRead),
             )
-            .add_systems(Update, (speed_controls, hud, move_sun).chain());
+            .add_systems(Update, (speed_controls, move_sun).chain());
     }
-}
-fn setup(mut commands: Commands) {
-    commands.spawn((
-        CalendarHud,
-        Text::new(""),
-        TextFont {
-            font_size: bevy::text::FontSize::Px(16.),
-            ..default()
-        },
-        Node {
-            position_type: PositionType::Absolute,
-            right: px(20),
-            top: px(20),
-            ..default()
-        },
-    ));
 }
 /// The sky's authored settings (`assets/lighting/sky.json`).
 #[derive(serde::Deserialize)]
@@ -168,22 +150,6 @@ fn speed_controls(
     }
     if keys.just_pressed(KeyCode::Backslash) {
         set_speed(&mut time, 1.);
-    }
-}
-fn hud(
-    calendar: Res<Calendar>,
-    time: Res<Time<Virtual>>,
-    mut labels: Query<&mut Text, With<CalendarHud>>,
-) {
-    for mut label in &mut labels {
-        let hour = solar_hour(calendar.elapsed.as_secs_f32());
-        **label = format!(
-            "{:02}:{:02} {} | {:.2}x  [ / ] speed | \\ reset",
-            hour as u32,
-            (hour.fract() * 60.) as u32,
-            if calendar.is_night() { "Night" } else { "Day" },
-            time.relative_speed()
-        );
     }
 }
 /// Central California, on the equinox.

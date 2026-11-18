@@ -19,18 +19,14 @@ use stubby_core::{ItemNames, ScreenMode};
 use stubby_recipes::{
     Condition, GoalOutcome, GoalProgress, Inventory, ItemProgress, ProgressState, Rules,
 };
+use stubby_ui::style::{AMBER, INK, MUTED, TILE};
 
 use super::recipes_plugin::{GoalReported, Goals, PlayerInventory};
 
 /// Satisfactory's tracker is a see-through band, not a framed window.
 const BAND: Color = Color::srgba(0.035, 0.033, 0.03, 0.55);
 const STRIP: Color = Color::srgba(0.035, 0.033, 0.03, 0.85);
-const TILE: Color = Color::srgba(0.09, 0.085, 0.075, 0.9);
-const INK: Color = Color::srgb(0.95, 0.94, 0.89);
-const MUTED: Color = Color::srgb(0.7, 0.68, 0.63);
 const TRACK: Color = Color::srgba(1., 1., 1., 0.14);
-/// The signal amber (style guide), the one accent: labels, rules and progress.
-const AMBER: Color = Color::srgb(1., 0.7, 0.31);
 const WIDTH: f32 = 320.;
 /// How long `Complete: <name>` stays up (the Godot goal bar's 4 s).
 const NOTICE_SECONDS: f32 = 4.;

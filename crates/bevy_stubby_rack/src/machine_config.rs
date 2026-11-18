@@ -459,26 +459,8 @@ fn setup(mut commands: Commands) {
                     Pickable::IGNORE,
                 ))
                 .with_children(|keys| {
-                    keys.spawn((
-                        Node {
-                            padding: UiRect::axes(px(8), px(3)),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.85, 0.84, 0.8)),
-                        Pickable::IGNORE,
-                    ))
-                    .with_children(|key| {
-                        key.spawn((
-                            Text::new("Esc"),
-                            text(15., Color::srgb(0.1, 0.1, 0.1)),
-                            Pickable::IGNORE,
-                        ));
-                    });
-                    keys.spawn((
-                        Text::new("Close"),
-                        text(15., Color::srgb(0.85, 0.84, 0.8)),
-                        Pickable::IGNORE,
-                    ));
+                    stubby_ui::style::keycap(keys, "Esc", 15.);
+                    keys.spawn(stubby_ui::style::label("Close", 15., stubby_ui::style::KEY));
                 });
         });
     commands.insert_resource(View {
