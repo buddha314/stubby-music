@@ -35,6 +35,13 @@ validation; do not ship duplicate meshes into gameplay levels just for acoustics
 
 ## Work that still needs authored spaces
 
+The first authored space is the **echo grotto** (`openspec/changes/add-echo-grotto/`,
+2026-11-17): a cluster of rounded granite boulders in the opening scene with a small
+grotto at its base, at world (70.5, −64.5), 95 m from spawn at bearing 45 degrees, mouth
+toward spawn, with its own mudpit burbler at the mouth. Its boulder
+meshes are acoustic rock through glTF extras `"acoustic": "rock"`. Use it for the
+items below and for reflections/reverb (4.8) listening once the reflection path exists.
+
 - Listening reviews of material choices against the actual art and gameplay distances.
 - Checking whether cave, tunnel, building, and doorway meshes represent their visible
   boundaries, including openings and thin walls.

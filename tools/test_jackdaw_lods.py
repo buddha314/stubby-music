@@ -35,7 +35,8 @@ class Tuning(unittest.TestCase):
     def test_bad_distance_order_fails_without_writing(self):
         original = self.meta.read_text()
         policy = copy.deepcopy(self.policy)
-        policy['families'][-1]['cull_metres'] = 0.5
+        snail = next(f for f in policy['families'] if 'snail_shell' in f['models'])
+        snail['cull_metres'] = 0.5
         with self.assertRaisesRegex(ValueError, 'increase strictly'):
             lods.set_switch_points(self.meta, policy)
         self.assertEqual(original, self.meta.read_text())

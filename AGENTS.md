@@ -441,6 +441,14 @@ Several agents work in this repo at once. To avoid stepping on each other:
   so the eastward sunrise is 15 degrees to the right (about 20 degrees at the
   authored 06:30 opening, when the sun clears the mountain skyline). Scene placements and ridge
   rings share that yaw around spawn; keep the physical sky/cardinal frame fixed.
+- **The echo grotto (2026-11-17, `add-echo-grotto`):** a cluster of rounded Mojave-style
+  granite boulders (`assets/props/rocks/`, `tools/blender/create_boulders.py`, Blender's
+  Rock Generator add-on, so run it without `--factory-startup`) with a small grotto at its
+  base, placed in the opening scene at world (70.5, −64.5), 95 m from spawn, with a second
+  burbler at its mouth. It is the first authored acoustic space: its boulders' near meshes
+  are acoustic rock through glTF extras `"acoustic": "rock"`. Reflections, reverb and the
+  listening review there belong to the audio work stream (`add-rack-and-spatial-audio`
+  4.6/4.8).
 - **The game opens at 06:30**, just after astronomical sunrise, so the low sun
   clears the mountain skyline. Reviews set the calendar to midday for screenshots;
   if the opening reads too dark, start the clock later rather than brightening the night.

@@ -1,5 +1,23 @@
 # Props
 
+## Boulders (`tools/blender/create_boulders.py`)
+
+Rounded, weathered granite after the Mojave's (Joshua Tree), from Blender's Rock Generator
+add-on at fixed seeds (`add-echo-grotto`). Five variants make the echo grotto, a cluster
+in the opening scene with a small grotto at its base; their near meshes are acoustic rock
+(glTF extras `"acoustic": "rock"`). CC0: generated geometry.
+
+![grotto](../../previews/props/rocks/grotto.png)
+![inside](../../previews/props/rocks/grotto_inside.png)
+
+| Variant | Role | Size (m) |
+| ------- | ---- | -------- |
+| `boulder_0` | back | 9 × 7 × 6.5 |
+| `boulder_1` | left | 7 × 6 × 5.5 |
+| `boulder_2` | right | 6.5 × 6 × 5 |
+| `boulder_3` | the leaning top, roofing the alcove | 8 × 6 × 3.6 |
+| `boulder_4` | a small rock in front | 3 × 2.5 × 2 |
+
 ## Desert props (`tools/blender/create_desert_props.py`)
 
 The bleak opening's scatter, each with its bloomed counterpart (`add-art-direction` 2.6).

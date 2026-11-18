@@ -1,0 +1,85 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "props/rocks/boulder_0/boulder_0.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 7.65,
+          "y_length": 5.527,
+          "z_length": 5.948,
+          "translation": [
+            -0.0,
+            2.47,
+            -0.0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/boulder_1/boulder_1.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 5.95,
+          "y_length": 4.677,
+          "z_length": 5.101,
+          "translation": [
+            0.001,
+            2.091,
+            -0.001
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/boulder_2/boulder_2.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 5.526,
+          "y_length": 4.248,
+          "z_length": 5.099,
+          "translation": [
+            0.001,
+            1.9,
+            -0.001
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/boulder_3/boulder_3.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 6.799,
+          "y_length": 3.061,
+          "z_length": 5.1,
+          "translation": [
+            -0.0,
+            1.368,
+            -0.001
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/boulder_4/boulder_4.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 2.549,
+          "y_length": 1.7,
+          "z_length": 2.126,
+          "translation": [
+            0.001,
+            0.76,
+            -0.0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

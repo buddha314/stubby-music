@@ -49,6 +49,13 @@ shows a clear reason. The [Steam Audio material guide](https://valvesoftware.git
 defines the properties; the [engine integration guide](https://github.com/ValveSoftware/steam-audio/blob/master/core/doc/integration.rst)
 recommends explicit geometry and material authoring controls.
 
+### Marking a model by glTF extras
+
+A model can opt in from its source instead of the editor: give a mesh node the glTF
+extras `"acoustic": "rock"` in its Blender generator, and the game marks the meshes under
+that node with `AcousticOccluder::ROCK` when they spawn (`add-echo-grotto`; the boulders
+of `tools/blender/create_boulders.py` do this). Only the near level carries the extras.
+
 ## What to mark
 
 Mark geometry that changes an important path between sound sources and the player:

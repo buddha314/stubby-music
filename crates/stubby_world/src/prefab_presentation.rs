@@ -47,7 +47,10 @@ impl Plugin for PrefabPresentationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            restore_start_scale.before(bevy::transform::TransformSystems::Propagate),
+            (
+                restore_start_scale.before(bevy::transform::TransformSystems::Propagate),
+                mark_acoustic_rock,
+            ),
         )
         .init_resource::<HoveredAsset>()
         .add_message::<AssetHoverEvent>()
@@ -131,6 +134,32 @@ fn restore_start_scale(mut parts: Query<(&GltfExtras, &mut Transform), Added<Glt
             .and_then(|value| value.get("start_scale")?.as_f64());
         if let Some(start) = start {
             transform.scale = Vec3::splat(start as f32);
+        }
+    }
+}
+
+/// Model nodes whose glTF extras say `"acoustic": "rock"` are acoustic rock: every mesh
+/// under them gets `AcousticOccluder::ROCK` as it loads, so it enters the spatial-audio
+/// scene (add-echo-grotto; the boulders' near level). No asset kind is named.
+fn mark_acoustic_rock(
+    mut commands: Commands,
+    nodes: Query<(Entity, &GltfExtras), Added<GltfExtras>>,
+    children: Query<&Children>,
+    meshes: Query<(), With<Mesh3d>>,
+) {
+    for (node, extras) in &nodes {
+        let rock = serde_json::from_str::<serde_json::Value>(&extras.value)
+            .ok()
+            .is_some_and(|value| value.get("acoustic").and_then(|v| v.as_str()) == Some("rock"));
+        if !rock {
+            continue;
+        }
+        for entity in std::iter::once(node).chain(children.iter_descendants(node)) {
+            if meshes.contains(entity) {
+                commands
+                    .entity(entity)
+                    .insert(stubby_core::AcousticOccluder::ROCK);
+            }
         }
     }
 }
@@ -792,6 +821,38 @@ mod tests {
             .unwrap(),
         }
     }
+    #[test]
+    fn meshes_under_acoustic_rock_extras_become_rock_occluders() {
+        let mut app = App::new();
+        app.add_systems(Update, mark_acoustic_rock);
+        let extras = |value: &str| GltfExtras {
+            value: value.into(),
+        };
+        let rock = app
+            .world_mut()
+            .spawn(extras(r#"{"acoustic": "rock"}"#))
+            .id();
+        let rock_mesh = app
+            .world_mut()
+            .spawn((Mesh3d(Handle::default()), ChildOf(rock)))
+            .id();
+        let plain = app.world_mut().spawn(extras(r#"{"start_scale": 0}"#)).id();
+        let plain_mesh = app
+            .world_mut()
+            .spawn((Mesh3d(Handle::default()), ChildOf(plain)))
+            .id();
+        app.update();
+        assert_eq!(
+            app.world().get::<stubby_core::AcousticOccluder>(rock_mesh),
+            Some(&stubby_core::AcousticOccluder::ROCK)
+        );
+        assert!(
+            app.world()
+                .get::<stubby_core::AcousticOccluder>(plain_mesh)
+                .is_none()
+        );
+    }
+
     #[test]
     fn tagged_parts_load_hidden_and_others_keep_their_scale() {
         let mut app = App::new();

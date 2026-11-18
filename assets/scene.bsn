@@ -459,4 +459,129 @@ bevy_ecs::hierarchy::Children [
             w: 0.793353340291,
         },
     }
+    --
+    #"Grotto boulder 0"
+    jackdaw::prefab::components::IsA {
+        source: "props/rocks/boulder_0/boulder_0.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437918)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 73.469848480984,
+            y: 0.000000000000,
+            z: -67.469848480984,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.317304656405,
+            z: 0.000000000000,
+            w: 0.948323655206,
+        },
+    }
+    --
+    #"Grotto boulder 1"
+    jackdaw::prefab::components::IsA {
+        source: "props/rocks/boulder_1/boulder_1.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437919)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 66.964466094067,
+            y: 0.000000000000,
+            z: -68.884062043357,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.492423560103,
+            z: 0.000000000000,
+            w: 0.870355695940,
+        },
+    }
+    --
+    #"Grotto boulder 2"
+    jackdaw::prefab::components::IsA {
+        source: "props/rocks/boulder_2/boulder_2.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437920)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 74.813351365238,
+            y: 0.000000000000,
+            z: -61.459440840898,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.207911690818,
+            z: 0.000000000000,
+            w: 0.978147600734,
+        },
+    }
+    --
+    #"Grotto boulder 3"
+    jackdaw::prefab::components::IsA {
+        source: "props/rocks/boulder_3/boulder_3.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437921)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 70.853553390593,
+            y: 3.600000000000,
+            z: -65.419238815543,
+        },
+        rotation: glam::Quat {
+            x: -0.001410398307,
+            y: -0.427003463498,
+            z: -0.077910833831,
+            w: 0.900886205305,
+        },
+    }
+    --
+    #"Grotto boulder 4"
+    jackdaw::prefab::components::IsA {
+        source: "props/rocks/boulder_4/boulder_4.bsn",
+        deleted: [],
+    }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437922)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 72.762741699797,
+            y: 0.000000000000,
+            z: -56.297561338236,
+        },
+        rotation: glam::Quat {
+            x: 0.000000000000,
+            y: -0.043619387365,
+            z: 0.000000000000,
+            w: 0.999048221582,
+        },
+    }
+    --
+    #"Grotto burbler"
+    jackdaw_scene_types::types::GltfSource {
+        path: "machines/mudpit_burbler/mudpit_burbler.glb",
+        scene_index: 0,
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437923)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 69.439339828220,
+            y: 0.000000000000,
+            z: -59.196699141101,
+        },
+        rotation: glam::Quat {
+            x: -0.000000000000,
+            y: -0.382683432365,
+            z: -0.000000000000,
+            w: 0.923879532511,
+        },
+    }
 ]

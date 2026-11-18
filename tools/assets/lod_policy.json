@@ -1,36 +1,53 @@
 {
-  "reference_vertical_fov_degrees": 45.0,
-  "crossfade_fraction": 0.12,
-  "families": [
-    {
-      "models": "flora/scrub_oak/*/*.glb",
-      "handover_profile": "flora/scrub_oak/asset.json",
-      "cull_metres": 240.0
-    },
-    {
-      "models": "flora/reeds/*/*.glb",
-      "handover_profile": "flora/reeds/asset.json",
-      "cull_metres": 120.0
-    },
-    {
-      "models": "machines/mudpit_burbler/mudpit_burbler.glb",
-      "handover_metres": [30.0, 80.0],
-      "cull_metres": 240.0
-    },
-    {
-      "models": "props/desert/desert_brush_*/*.glb",
-      "handover_metres": [20.0, 50.0],
-      "cull_metres": 90.0
-    },
-    {
-      "models": "props/desert/desert_stump_*/*.glb",
-      "handover_metres": [25.0],
-      "cull_metres": 100.0
-    },
-    {
-      "models": "creatures/snail_shell/snail_shell.glb",
-      "handover_metres": [1.0],
-      "cull_metres": 12.0
-    }
-  ]
+ "reference_vertical_fov_degrees": 45.0,
+ "crossfade_fraction": 0.12,
+ "families": [
+  {
+   "models": "flora/scrub_oak/*/*.glb",
+   "handover_profile": "flora/scrub_oak/asset.json",
+   "cull_metres": 240.0
+  },
+  {
+   "models": "flora/reeds/*/*.glb",
+   "handover_profile": "flora/reeds/asset.json",
+   "cull_metres": 120.0
+  },
+  {
+   "models": "machines/mudpit_burbler/mudpit_burbler.glb",
+   "handover_metres": [
+    30.0,
+    80.0
+   ],
+   "cull_metres": 240.0
+  },
+  {
+   "models": "props/desert/desert_brush_*/*.glb",
+   "handover_metres": [
+    20.0,
+    50.0
+   ],
+   "cull_metres": 90.0
+  },
+  {
+   "models": "props/desert/desert_stump_*/*.glb",
+   "handover_metres": [
+    25.0
+   ],
+   "cull_metres": 100.0
+  },
+  {
+   "models": "creatures/snail_shell/snail_shell.glb",
+   "handover_metres": [
+    1.0
+   ],
+   "cull_metres": 12.0
+  },
+  {
+   "models": "props/rocks/*/*.glb",
+   "handover_metres": [
+    40.0
+   ],
+   "cull_metres": 600.0
+  }
+ ]
 }
