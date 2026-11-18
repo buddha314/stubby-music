@@ -9,7 +9,7 @@ available (`stubby_core`); the aimed one is outlined (`sync-targeting-and-compas
 **D1. A disco light on B, not a hand item (revised by the user, 2026-11-17).** B toggles
 `stubby_player::flashlight::DiscoLight`; the disco ball (D2) shows while it is on,
 whatever the hand holds, so the field recorder stays up and no flashlight model is shown
-(`assets/equipment/flashlight/` is unused). The original decision follows: The flashlight
+(the flashlight model, its profile, previews, `.blend` and `tools/blender/create_flashlight.py` were removed on 2026-11-17; they are in git history before that date if a held torch ever returns). The original decision follows: The flashlight
 joins `HAND_ITEMS` with `FLASHLIGHT` (B): the torch in the hand, its light the disco ball (D2). Holding it is being on: no separate switch. Putting it away (B again, or H for the recorder) turns it
 off. Not while a screen has the controls (as the hand already is).
 

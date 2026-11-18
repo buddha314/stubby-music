@@ -18,6 +18,10 @@
     "vca": {
       "node": "Label_vca",
       "word": "VCA"
+    },
+    "sequencer": {
+      "node": "Label_sequencer",
+      "word": "SEQ"
     }
   },
   "use": "clone Label_<kind> onto a slot outline's Label node",

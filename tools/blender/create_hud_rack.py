@@ -59,6 +59,10 @@ KINDS = {                     # component kind -> label word, glyph polyline (x,
     "vcf": ("VCF", [(-0.07, 0.045), (0.0, 0.045), (0.02, 0.04), (0.035, 0.025), (0.05, 0.008),
                     (0.07, 0.0)]),
     "vca": ("VCA", [(-0.07, 0.0), (0.07, 0.0), (0.07, 0.055), (-0.07, 0.0)]),
+    # A rising staircase, one step per beat: the snail shell's place (ported from the
+    # Godot game's "seq" glyph; our burbler names the kind "sequencer").
+    "sequencer": ("SEQ", [(-0.07, 0.0), (-0.035, 0.0), (-0.035, 0.017), (0.0, 0.017), (0.0, 0.034),
+                          (0.035, 0.034), (0.035, 0.051), (0.07, 0.051)]),
 }
 SCREEN = {
     "title": "{machine}",
