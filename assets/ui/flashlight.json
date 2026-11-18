@@ -3,7 +3,7 @@
   "ball": {"offset": [-0.49, 0.28, -0.76], "turns_per_second": 0.12},
   "pulse": {"reach_m": 30.0, "depth": 0.06, "decay_seconds": 0.2},
   "beams": {"count": 12, "colors": [[0.55, 0.32, 1.0], [0.35, 0.9, 1.0]], "intensity_lumens": 1500000.0, "width_deg": 5.0, "range_m": 30.0, "tilt_deg": [14.0, 26.0]},
-  "reveal": {"width_deg": 7.0, "range_m": 30.0, "fade_seconds": 1.2},
+  "reveal": { "range_m": 30.0, "fade_seconds": 1.2},
   "hologram": {"rim": [0.55, 0.95, 1.0], "core": [0.62, 0.3, 1.0], "glow": 3.0, "scanlines_per_m": 14.0, "scroll_m_per_s": 0.6, "flicker": 0.15},
   "beacon": {"height_m": 2.2, "radius_m": 0.012, "diamond_m": 0.11}
 }

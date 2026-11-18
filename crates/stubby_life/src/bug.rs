@@ -351,6 +351,7 @@ fn animate(
             &mut Transform,
             &mut Visibility,
             Option<&mut PlacedBug>,
+            Has<stubby_core::Spotlit>,
         ),
         With<FlashVisual>,
     >,
@@ -362,13 +363,15 @@ fn animate(
         return;
     };
     let now = Instant::now();
-    for (follower, mut transform, mut visibility, placed) in &mut visuals {
+    for (follower, mut transform, mut visibility, placed, spotlit) in &mut visuals {
         let level = bus.level(
             follower.clock,
             now,
             asset.attack_seconds,
             asset.flash_seconds,
         );
+        // A bug the disco light reveals stays in view between flashes.
+        let level = if spotlit { level.max(1.) } else { level };
         *visibility = if level > 0. {
             Visibility::Visible
         } else {

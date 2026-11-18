@@ -552,7 +552,7 @@ fn update_hover(
             &PlacedAsset,
             Has<stubby_core::Harvested>,
             Option<&AssetClock>,
-            Has<stubby_core::Interactable>,
+            Option<&stubby_core::Interactable>,
         ),
         Without<PrefabError>,
     >,
@@ -637,8 +637,8 @@ fn update_hover(
             .unwrap_or_default();
     }
     let selected = target.and_then(|target| roots.get(target).ok());
-    let text = selected.map_or_else(String::new, |(_, asset, _, clock, pickup)| {
-        if pickup {
+    let text = selected.map_or_else(String::new, |(_, asset, _, clock, what)| {
+        if what == Some(&stubby_core::Interactable::Pickup) {
             String::new()
         } else if clock.is_some() {
             String::new()

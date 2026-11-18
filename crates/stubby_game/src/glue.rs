@@ -261,16 +261,24 @@ pub struct InteractPoint {
 }
 
 /// Glue between machines and the player: each placed machine's `Interact` node (named in
-/// its profile) is something E can reach while the machine works.
+/// its profile) is something E can reach while the machine works, and so is the machine's
+/// centre, so E reaches it from every side (2026-11-18: the grotto burbler, whose `Interact`
+/// node sits on one side of its pool, could not be configured from the other).
 fn interact_points(
     mut commands: Commands,
     profiles: Res<Profiles>,
+    unreached: Query<(Entity, &PlacedAsset), Without<InteractPoint>>,
     names: Query<(Entity, &Name), Added<Name>>,
     parents: Query<&ChildOf>,
     machines: Query<&PlacedAsset>,
     points: Query<(Entity, &InteractPoint, Has<stubby_core::Interactable>)>,
     broken: Query<(), With<PrefabError>>,
 ) {
+    for (machine, asset) in &unreached {
+        if profiles.0.contains_key(&asset.asset) {
+            commands.entity(machine).insert(InteractPoint { machine });
+        }
+    }
     for (entity, name) in &names {
         let Some(machine) = parents.iter_ancestors(entity).find(|a| {
             machines.get(*a).is_ok_and(|m| {
