@@ -73,11 +73,21 @@ def stream_segment(d):
         d.line(px(*pts), fill=AMBER, width=3 * SS, joint="curve")
 
 
+def snail_shell(d):
+    """A high-spired shell of four whorls, apex up and to the right, the aperture amber."""
+    whorls = [((52, 86), 30, 18), ((66, 64), 22, 13), ((78, 46), 15, 9), ((88, 32), 9, 6)]
+    for (cx, cy), rx, ry in whorls:
+        d.ellipse(px((cx - rx, cy - ry), (cx + rx, cy + ry)), fill=TILE, outline=BONE, width=5 * SS)
+    d.line(px((92, 26), (96, 18)), fill=BONE, width=5 * SS)
+    d.ellipse(px((30, 82), (54, 106)), fill=AMBER)
+    d.ellipse(px((36, 88), (48, 100)), fill=TILE)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in {"square_wave": square_wave, "patch_cable": patch_cable,
                        "reed": reed, "clock": clock, "campfire": campfire,
-                       "stream_segment": stream_segment}.items():
+                       "stream_segment": stream_segment, "snail_shell": snail_shell}.items():
         img, d = canvas()
         draw(d)
         img.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / f"{name}.png")
