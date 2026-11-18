@@ -92,6 +92,10 @@ pub struct RackCable {
     /// hold a module, and the voice sounds without it.
     #[serde(default)]
     pub optional: bool,
+    /// An upstream layer's patch (add-stream-layers): already made when the rack opens,
+    /// shown, free, and never unplugged.
+    #[serde(default)]
+    pub inherited: bool,
 }
 #[derive(Clone, Deserialize)]
 pub struct Accept {
@@ -123,6 +127,10 @@ pub struct RackPlace {
     /// knobs show that clock but do not turn, and with no clock lent the place is empty.
     #[serde(default)]
     pub borrowed: bool,
+    /// An upstream layer's module, shown as it arrives from the stream (add-stream-layers:
+    /// the campfire shows the burbler's VCO); fixed, and its knobs follow upstream.
+    #[serde(default)]
+    pub inherited: bool,
 }
 #[derive(Resource)]
 pub struct Profiles(pub HashMap<String, RackConfiguration>);

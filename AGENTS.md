@@ -90,7 +90,13 @@ Goals guide; they never end the game. The first chores (short-term goals met by 
 its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`), and later
 **Light the fire**: a campfire within 5 m of a sounding burbler or its stream borrows that
 clock (a `borrowed` rack place), and a whole bar with the snail sequencer's gates on 2 and 4
-lights it; it dies to embers when the clock stops (`stubby_game::campfire`). WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+lights it; it dies to embers when the clock stops (`stubby_game::campfire`). **Streams
+accumulate a composition** (`add-stream-layers`): the heartbeat puts a note on the staff on
+every beat; a campfire placed within 5 m of a stream snaps beside it and joins it there,
+its rack inherits the stream's voice (the burbler's VCO, fixed and patched; the player adds
+only the sequencer), a ghostly staff runs from the join to the fire and rises, and its 2
+and 4 notes (ember) ride the staff downstream of the join, where its voice is heard too.
+Anything downstream inherits every layer above it; splitting a stream comes later. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it; a second Escape opens the pause menu (Satisfactory's escape menu: Resume Game, Exit to Desktop; `stubby_game::pause_menu`), and Escape closes any open screen. E opens a machine's rack and E again closes it.
 
 ### The opening
