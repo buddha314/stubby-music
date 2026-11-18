@@ -101,6 +101,20 @@
         },
         "step": 2,
         "hint": "take the red cable  \u00b7  patch OUT to IN"
+      },
+      {
+        "color": "ochre",
+        "from": {
+          "place": "seq",
+          "port": "cv"
+        },
+        "to": {
+          "place": "vco",
+          "port": "voct"
+        },
+        "step": 3,
+        "optional": true,
+        "hint": "take the ochre cable  \u00b7  patch CV to V/OCT for a melody"
       }
     ],
     "patched_hint": "patched  \u00b7  the burbler plays on every beat",

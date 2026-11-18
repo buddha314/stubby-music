@@ -12,7 +12,7 @@
 use crate::{
     machine_config::{
         ButtonHit, ButtonLight, CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles,
-        RackActions, RackConfiguration, RackModuleView,
+        RackActions, RackCable, RackConfiguration, RackModuleView,
     },
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
@@ -66,7 +66,48 @@ impl RackState {
     /// through patched modules (the clock's gate through a sequencer still reaches the
     /// volume's TRIG; sync-snail-shell-sequencer).
     pub fn complete(&self, config: &RackConfiguration) -> bool {
-        !config.cables.is_empty() && config.cables.iter().all(|c| self.reaches(&c.from, &c.to))
+        let mut needed = config.cables.iter().filter(|c| !c.optional).peekable();
+        needed.peek().is_some() && needed.all(|c| self.reaches(&c.from, &c.to))
+    }
+    /// Whether a place holds a module: a fixed one, or one the player mounted.
+    pub fn filled(&self, config: &RackConfiguration, place: &str) -> bool {
+        self.mounted.contains_key(place)
+            || config
+                .places
+                .iter()
+                .any(|p| p.place == place && p.fixed && p.module.is_some())
+    }
+    /// Whether the comb offers a cable now: always, or an optional one while both its
+    /// places hold a module.
+    pub fn offers(&self, config: &RackConfiguration, cable: &RackCable) -> bool {
+        !cable.optional
+            || (self.filled(config, &cable.from.place) && self.filled(config, &cable.to.place))
+    }
+    /// Mount `item` as `module` in an open place, taking one from the player: all or
+    /// nothing (an occupied place, or none held, takes nothing). Every way of mounting
+    /// (dragging, clicking, number keys) comes here.
+    pub fn mount<S: Stock>(
+        &mut self,
+        player: &mut S,
+        place: &str,
+        item: &str,
+        module: &str,
+    ) -> bool {
+        if self.mounted.contains_key(place) || !player.take(item, 1) {
+            return false;
+        }
+        self.mounted.insert(place.to_owned(), module.to_owned());
+        self.version += 1;
+        player.say(format!("Mounted a {}.", module_name(module)));
+        true
+    }
+    /// Every place the voice needs is filled (an optional place need not be), so the
+    /// screen shows the patches still to make.
+    pub fn ready(&self, config: &RackConfiguration) -> bool {
+        config
+            .places
+            .iter()
+            .all(|p| p.fixed || p.optional || self.mounted.contains_key(&p.place))
     }
     /// Whether a signal from output `from` reaches input `to`: by a cable, or by a cable
     /// into a module whose output (any of it, as a module carries its inputs to its
@@ -928,11 +969,7 @@ fn number_keys<S: Stock>(
     else {
         return;
     };
-    if player.take(&accept.item, 1) {
-        state.mounted.insert(place, accept.module.clone());
-        state.version += 1;
-        player.say(format!("Mounted a {}.", module_name(&accept.module)));
-    }
+    state.mount(&mut *player, &place, &accept.item, &accept.module);
 }
 
 fn module_name(module: &str) -> String {
@@ -956,16 +993,7 @@ fn press_mount<S: Stock>(
     let Ok(mut state) = racks.get_mut(mount.machine) else {
         return;
     };
-    if state.mounted.contains_key(&mount.place) {
-        return;
-    }
-    if player.take(&mount.item, 1) {
-        state
-            .mounted
-            .insert(mount.place.clone(), mount.module.clone());
-        state.version += 1;
-        player.say(format!("Mounted a {}.", module_name(&mount.module)));
-    }
+    state.mount(&mut *player, &mount.place, &mount.item, &mount.module);
 }
 
 use stubby_ui::{icon_slot, item_icon};
@@ -1133,13 +1161,7 @@ fn drop_item<S: Stock>(
     let Ok(mut state) = racks.get_mut(mount.machine) else {
         return;
     };
-    if !state.mounted.contains_key(&mount.place) && player.take(&mount.item, 1) {
-        state
-            .mounted
-            .insert(mount.place.clone(), mount.module.clone());
-        state.version += 1;
-        player.say(format!("Mounted a {}.", module_name(&mount.module)));
-    }
+    state.mount(&mut *player, &mount.place, &mount.item, &mount.module);
 }
 
 // ------------------------------------------------------------------ patching
@@ -1309,11 +1331,10 @@ fn press_jack<S: Stock>(
         return;
     };
     // Jack to jack: the comb's free cable for this patch if it has one, else your own.
-    if let Some(i) = config
-        .cables
-        .iter()
-        .zip(&state.patched)
-        .position(|(c, p)| p.is_none() && c.from == from && c.to == to)
+    if let Some(i) =
+        config.cables.iter().zip(&state.patched).position(|(c, p)| {
+            p.is_none() && state.offers(config, c) && c.from == from && c.to == to
+        })
     {
         state.patched[i] = Some((from, to));
         state.version += 1;
@@ -1581,16 +1602,15 @@ fn pods(
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
-    let ready = config
-        .places
-        .iter()
-        .all(|p| p.fixed || state.mounted.contains_key(&p.place));
+    let ready = state.ready(config);
     let pulse = 0.5 + 0.5 * (time.elapsed_secs() * std::f32::consts::TAU / 1.2).sin();
     for (entity, (pod, mut material, mut visibility)) in entities.iter().zip(meshes.iter_mut()) {
-        let waiting = config
-            .cables
-            .iter()
-            .find(|c| ready && !state.joins(&c.from, &c.to) && (c.from == pod.0 || c.to == pod.0));
+        let waiting = config.cables.iter().find(|c| {
+            ready
+                && state.offers(config, c)
+                && !state.joins(&c.from, &c.to)
+                && (c.from == pod.0 || c.to == pod.0)
+        });
         let Some(cable) = waiting else {
             visibility.set_if_neq(Visibility::Hidden);
             continue;
@@ -2010,10 +2030,7 @@ fn draw_cables(
             .map(|(e, _, _, t)| (e, *t))
     };
     let layer = bevy::camera::visibility::RenderLayers::layer(crate::machine_config::HUD_LAYER);
-    let ready = config
-        .places
-        .iter()
-        .all(|p| p.fixed || state.mounted.contains_key(&p.place));
+    let ready = state.ready(config);
     let ghost = materials.add(StandardMaterial {
         base_color: Color::srgba(1., 0.83, 0.6, 0.22),
         emissive: LinearRgba::rgb(1.5, 1.2, 0.8),
@@ -2038,6 +2055,10 @@ fn draw_cables(
         }
     }
     for (cable, patched) in config.cables.iter().zip(&state.patched) {
+        // An optional cable is not on the comb, nor ghosted, until its places are filled.
+        if patched.is_none() && !state.offers(config, cable) {
+            continue;
+        }
         let mat = materials.add(StandardMaterial {
             base_color: cable_color(&cable.color),
             perceptual_roughness: 0.6,
@@ -2156,15 +2177,104 @@ mod tests {
         // The normalled output only: no tone.
         assert_eq!(connections(&state), 1);
         let link = |c: &crate::machine_config::RackCable| Some((c.from.clone(), c.to.clone()));
-        state.patched = vec![link(&config.cables[0]), None];
+        state.patched = vec![link(&config.cables[0]), None, None];
         assert!(!state.complete(config));
-        state.patched = vec![link(&config.cables[0]), link(&config.cables[1])];
-        assert!(state.complete(config));
+        state.patched = vec![link(&config.cables[0]), link(&config.cables[1]), None];
+        assert!(
+            state.complete(config),
+            "the optional CV cable is not needed"
+        );
         // A comb cable goes anywhere: the red one making the GATE -> TRIG patch and the
         // green one OUT -> IN still completes the voice.
-        state.patched = vec![link(&config.cables[1]), link(&config.cables[0])];
+        state.patched = vec![link(&config.cables[1]), link(&config.cables[0]), None];
         assert!(state.complete(config));
         assert_eq!(connections(&state), 3, "GATE->TRIG and OUT->IN added");
+    }
+
+    #[test]
+    fn the_cv_cable_is_offered_once_a_shell_is_mounted_and_patches_the_melody() {
+        let profiles = Profiles::default();
+        let config = &profiles.0["mudpit_burbler"];
+        let cv = config
+            .cables
+            .iter()
+            .find(|c| c.optional)
+            .expect("the burbler's comb has an optional CV cable");
+        assert_eq!((cv.from.port.as_str(), cv.to.port.as_str()), ("cv", "voct"));
+        let mut state = RackState {
+            patched: vec![None; config.cables.len()],
+            ..default()
+        };
+        state.mounted.insert("vco".into(), "square_vco".into());
+        assert!(
+            state.ready(config),
+            "an empty optional place does not hold the patch up"
+        );
+        assert!(!state.offers(config, cv), "no shell: no CV cable, no ghost");
+        state.mounted.insert("seq".into(), "snail_sequencer".into());
+        assert!(state.offers(config, cv), "with a shell, the ghost shows");
+        // Patched, the plan carries the sequencer's CV into the VCO's pitch.
+        state.own.push((cv.from.clone(), cv.to.clone()));
+        let mut next = 100;
+        let commands = plan(
+            config,
+            &state,
+            &RackKnobs::default(),
+            Some(&machine_clock(ModuleId(1))),
+            &KnobDefaults::default(),
+            || {
+                next += 1;
+                Some(ModuleId(next))
+            },
+        )
+        .commands;
+        let into_pitch = commands
+            .iter()
+            .any(|c| matches!(c, Command::Connect { to, .. } if to.port == "voct"));
+        assert!(into_pitch, "{commands:?}");
+    }
+
+    #[derive(Resource, Default)]
+    struct Shells(u32);
+    impl Stock for Shells {
+        fn quantity(&self, _: &str) -> u32 {
+            self.0
+        }
+        fn boxes(&self) -> Vec<(String, u32)> {
+            vec![]
+        }
+        fn box_count(&self) -> usize {
+            16
+        }
+        fn take(&mut self, _: &str, count: u32) -> bool {
+            let Some(left) = self.0.checked_sub(count) else {
+                return false;
+            };
+            self.0 = left;
+            true
+        }
+        fn give(&mut self, _: &str, count: u32) -> bool {
+            self.0 += count;
+            true
+        }
+        fn say(&mut self, _: String) {}
+    }
+
+    #[test]
+    fn mounting_a_held_shell_takes_one_and_a_failed_mount_takes_nothing() {
+        let mut state = RackState::default();
+        let mut none = Shells(0);
+        assert!(!state.mount(&mut none, "seq", "snail_shell", "snail_sequencer"));
+        assert!(
+            !state.mounted.contains_key("seq"),
+            "nothing held: nothing mounted"
+        );
+        let mut two = Shells(2);
+        assert!(state.mount(&mut two, "seq", "snail_shell", "snail_sequencer"));
+        assert_eq!(two.0, 1, "one shell taken");
+        assert_eq!(state.mounted["seq"], "snail_sequencer");
+        assert!(!state.mount(&mut two, "seq", "snail_shell", "snail_sequencer"));
+        assert_eq!(two.0, 1, "an occupied place takes nothing");
     }
 
     #[test]
