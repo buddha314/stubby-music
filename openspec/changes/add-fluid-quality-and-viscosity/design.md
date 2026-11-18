@@ -15,6 +15,22 @@ add balancing constants or a new machine recipe in this documentation change.
   via audio: **high-pass filters separate out pure liquid; low-pass filters separate
   solids and nutrients**, into separate channels (clear water, and solids/nutrients).
   Do not design another cleaning mechanism.
+- **Where high-pass filters come from** (user, 2026-11-17): openings in rock formations
+  and hollow tree trunks. A narrow opening or bore passes short waves and stops long
+  ones (a duct's cutoff: waves much longer than its width do not get through), so it
+  filters out the low end and raises the pitch. In the game they are world sources, found
+  and harvested like the lightning bug's square wave, not built from nothing; the echo
+  grotto's boulders (`add-echo-grotto`) are the first rock formation, and scrub oaks the
+  first trunks. The opening's size sets the cutoff. Filtering a stream is what makes
+  `LaidStream.clarity` rise above 0 (mud); the muddy/silty/clear stream visuals and the
+  oak's higher bloom levels wait for it.
+- **Low-pass and band-pass filters** (user, 2026-11-17): more important than high-pass,
+  since they separate the solids and nutrients, but where they come from is **not decided
+  yet**. Do not invent their sources.
+- **The oscilloscope** (user, 2026-11-17): low-pass and band-pass filtering both need an
+  oscilloscope asset, so the player can see the waveform a filter shapes. For now it is
+  collected from **rippling water**. Its rack module and item are to be designed with
+  those filters.
 - Existing streams carry musical nutrients and pulse at the burbler's BPM, per
   `docs/art/style-guide.md` and `add-mudpit-burbler`. Cleaning has mechanical and
   visual stages; it is more than changing muddy-water opacity.
