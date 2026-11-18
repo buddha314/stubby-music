@@ -30,6 +30,8 @@ pub use keys::*;
 pub enum Screen {
     Inventory,
     MachineConfiguration(Entity),
+    /// The pause menu (Satisfactory's escape menu): resume, or exit to desktop.
+    Pause,
 }
 
 #[derive(Resource, Default)]
