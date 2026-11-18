@@ -18,7 +18,6 @@ fn main() -> AppExit {
     let seed = config.seed_value().expect("validated world seed");
     // Dev builds bring up the rules designer beside the game (add-machine-rules D4).
     stubby_jackdaw::designer::launch();
-    let grotto_audio_review = std::env::args().any(|arg| arg.starts_with("--grotto-audio-review="));
     let legacy_review = std::env::args().any(|arg| arg.starts_with("--replenishment-review="));
     let mut app = App::new();
     if !legacy_review {
@@ -31,7 +30,7 @@ fn main() -> AppExit {
         .add_plugins(prefab_bridge::PrefabBridgePlugin)
         .add_plugins(lod_review::LodReviewPlugin)
         .add_plugins(stubby_jackdaw::audio::SynthAudioPlugin {
-            demo: std::env::args().any(|a| a == "--audio-demo") || grotto_audio_review,
+            demo: std::env::args().any(|a| a == "--audio-demo"),
             ..default()
         })
         .add_systems(Startup, load_authored_scene)

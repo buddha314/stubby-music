@@ -27,12 +27,13 @@ licensed for our use: AudioNimbus is MIT OR Apache-2.0, and Steam Audio is Apach
 The optional IPP component has separate restrictive terms; keep it disabled and make
 release notices reflect the actual build configuration.
 
-The current game evidence says direct geometry occlusion works. It does not establish
-that the engine lacks reverb. The integration has not yet routed the separate
-listener-centric environmental output into the game mix, and the per-source
-reflection path is subtle. The `BinauralSpatializer` wet contribution is also scaled
-down. Therefore replacing the engine before wiring and measuring both outputs would
-confound an integration defect with a library capability limit.
+The current game evidence confirms that direct geometry occlusion works and that
+per-emitter reflections are audible in the grotto at wet gain 0.75 (player listening
+confirmation, 2026-11-18). The separate listener-centric environmental output is still
+not routed into the game mix, so this is not full room-wide reverb. A real-time
+ownership issue with native reflection data also remains open; see
+`docs/audio/grotto-acoustics-investigation.md`. Do not treat audibility as proof of
+callback safety or final acoustic tuning.
 
 Sources: [AudioNimbus](https://github.com/MaxenceMaire/audionimbus), [Steam Audio
 documentation](https://github.com/ValveSoftware/steam-audio/blob/master/core/doc/index.rst),
@@ -44,8 +45,8 @@ documentation](https://github.com/ValveSoftware/steam-audio/blob/master/core/doc
 
 | Project | What it covers | License / state | Fit and disposition |
 | --- | --- | --- | --- |
-| **AudioNimbus + Steam Audio** | HRTF, directivity/distance, geometry occlusion and transmission, reflections/reverb, Ambisonics, probes/pathing. | AudioNimbus MIT OR Apache-2.0; Steam Audio Apache-2.0. Native SDK is already built and direct occlusion has been exercised here. | **Keep as the production baseline.** Broadest mature feature set found and already integrated. First complete the listener wet bus and capability matrix. |
-| **OMG Audio** | Rust engine with mesh/BVH propagation, HRTF, wall transmission, diffraction, early paths, coupled reverb/RT60, and Ambisonic output. | Apache-2.0 code; built-in HRIR data carries separate Apache attribution. Rapidly evolving and young; published performance figures are maintainer-reported. | **Run a bounded Firewheel prototype.** The high-level mixer is clip-oriented, but the lower-level `omg_dsp::Renderer::process_block` accepts live mono samples, so procedural modular output is technically possible. No Bevy/Firewheel adapter exists. The main gates are frame-update allocations, shared Ambisonic bus routing, scene ingestion, and pinned API stability. |
+| **AudioNimbus + Steam Audio** | HRTF, directivity/distance, geometry occlusion and transmission, per-emitter reflections, listener reverb, Ambisonics, probes/pathing. | AudioNimbus MIT OR Apache-2.0; Steam Audio Apache-2.0. Pinned minimal Linux SDK build works; grotto occlusion and audible per-emitter reflections have been exercised in-game. | **Keep as the current game backend.** Audible and usable for development; production acceptance still needs safe native reflection-data ownership, callback/performance validation, and the listener bus/capability decisions. |
+| **OMG Audio** | Rust engine with mesh/BVH propagation, HRTF, wall transmission, diffraction, early paths, coupled reverb/RT60, and Ambisonic output. | Apache-2.0 code; built-in HRIR data carries separate Apache attribution. Rapidly evolving and young; published performance figures are maintainer-reported. | **Prototype only; not a game alternative yet.** The offline two-source Firewheel spike emits audio, but the in-game grotto route produced a silent world-bus meter despite nonzero traced path/reverb parameters. Keep it separate until live audio, dynamic updates, multi-source routing and callback safety are demonstrated. |
 | **Resonance Audio** | HRTF, shoebox room reflections and late reverb; host supplies occlusion values. | Apache-2.0; upstream archived/read-only since 2023. | Not a full geometric replacement: room proxies and host raycasts would leave game-specific geometry work. Stale upstream makes it a poor foundation. Useful as a reference for room/reverb controls only. |
 | **OpenAL Soft (EFX)** | Positional rendering and effect slots for air absorption, occlusion and environmental reverb. | LGPL-2.0-or-later; maintained. | An audio API/effects layer rather than a scene propagation solver. We would still compute geometry/material effects and would be adding a second host alongside Firewheel. Not a replacement. |
 | **`phonon_rs`** | Unofficial Rust rewrite of Steam Audio direct effects: distance, air absorption, directivity, occlusion and transmission. | Apache-2.0; early-stage and explicitly incomplete. | Missing reflections, listener reverb, Ambisonics and pathing in the documented feature set. Does not solve the current audible reverb requirement. Watch only. |
@@ -87,25 +88,82 @@ code license. Sources: [OMG Audio upstream](https://github.com/JustGoscha/omg-au
 
 #### Firewheel live-signal spike (2026-11-18)
 
-`spikes/spike_omg_audio/` now hosts a pinned, one-source prototype. Firewheel generates
-a square-wave input, sends it through an OMG `Renderer::process_block` node, and the
-node accumulates the 9-channel diffuse bus, decodes it with OMG's `OutputStage`, and
-returns stereo. The integration test creates a real Firewheel processor, builds its
-OMG path parameters before rendering, and processes sixteen 128-frame blocks. Output
-is finite and nonzero; the callback path passes `assert_no_alloc` at 48 kHz. This
-confirms that OMG's live-sample API can host one procedural signal in Firewheel without
-callback allocation when path parameters are already installed.
+`spikes/spike_omg_audio/` now hosts a pinned two-source prototype. Firewheel generates
+two square-wave inputs, one OMG renderer per source adds into a shared 9-channel
+diffuse bus and point-stereo pair, and OMG's `OutputStage` decodes once to stereo. The
+integration test creates a real Firewheel processor, builds both OMG path parameter
+sets before rendering, and processes 256 128-frame blocks. Output is finite and
+nonzero; the callback path passes `assert_no_alloc` at 48 kHz. This proves the shared
+bus shape for two procedural signals with fixed preinstalled paths.
+
+The earlier free-field one-source debug sample measured p50 159.6 µs, p95 213.9 µs,
+and maximum 298.8 µs for a 128-frame callback (2.67 ms period). With a closed rock
+room and two sources, the debug sample measured p50 1.54 ms, p95 1.95 ms, and maximum
+2.47 ms. That approaches the 2.67 ms callback period; release-profile measurements
+and tests on the target machine are mandatory before using this configuration at scale.
 
 This is deliberately not adoption evidence yet: the prototype uses the speaker
-fallback (no HRTF dataset), one source, and a fixed parameter frame. It decodes the
-Ambisonic bus per node, which must be replaced with one shared decode for a multi-source
-mix. It does not exercise frame replacement, parameter-update allocation, game
-geometry/material conversion, moving sources/listeners, or quality/performance against
-the grotto. In particular, upstream `Renderer::set_params` still builds temporary
+fallback (no HRTF dataset), two sources and a fixed parameter frame. It does not
+exercise frame replacement, parameter-update allocation, game geometry/material
+conversion, moving sources/listeners, or quality/performance against the grotto. In
+particular, upstream `Renderer::set_params` still builds temporary
 vectors; the next prototype step must move those allocations out of callback updates
 or provide bounded reusable scratch before testing changing frames under the guard.
 The spike pins upstream source by Git revision and remains outside the production
 workspace/dependency policy until those gates pass.
+
+#### Opt-in in-game grotto route (2026-11-18)
+
+The pinned OMG libraries are now available behind `stubby_audio/omg_audio` and the
+forwarded `omg-audio` game feature. `stubby_audio::omg_spatial::trace_snapshot` maps
+the game's `AcousticSceneGeometry` material/triangle arrays and Y-up coordinates into
+OMG, traces one source/listener frame, and builds a Firewheel processor off the render
+callback. The existing grotto audio review selects this route only when the Cargo
+feature is enabled and `STUBBY_OMG_AUDIO_REVIEW=1` is set. The review now auto-patches
+the actual grotto burbler (square VCO plus both required cables) and waits for its
+`MachineVoice` before starting; its event log records `burbler_autopatched` with
+`complete: true` and the real output module. The camera jumps rebuild snapshots at the
+inside, blocked-outside and clear-outside viewpoints; continuous motion is not yet
+supported.
+
+The first live listen failed: OMG mode's world-bus meter remained at `-inf` (serialized
+as JSON `null`) for all views. A dry reference run using the same auto-patched rack
+reported pulsed peaks around `-23.7 dBFS` with the demo patch disabled, so the burbler,
+clock, audio device and meter work in the game. (Enabling the unrelated demo raises the
+dry meter to about `-17 dBFS`.) The OMG trace itself also returned a direct tap and nonzero reverb levels
+(inside: direct-band gains about `[0.015, 0.015, 0.010]`; reverb about
+`[0.0010, 0.0010, 0.00015]`), but the live output stayed silent. An offline
+Firewheel/OMG test with an open scene passes, so the remaining fault is in the live
+OMG adapter path with the game's traced frame/graph; this evidence does not yet isolate
+whether the processor is receiving the burbler signal or rendering that traced frame.
+Do not treat this prototype as usable in-game until a live OMG run produces non-silent
+output and can be heard.
+
+Launch from the repository root:
+
+```sh
+cargo build -p stubby_jackdaw --no-default-features --features omg-audio,dev
+STUBBY_OMG_AUDIO_REVIEW=1 python3 tools/jackdaw_timed_test.py --seconds 20 --name omg-grotto --command cargo run -p stubby_jackdaw --no-default-features --features omg-audio,dev -- --grotto-audio-review=/tmp/omg-grotto-review
+```
+
+This feature is an evaluation-only integration path, not a production selection.
+Tracing currently runs synchronously on the audio engine's control thread when a
+review view changes, and each source has its own decode node; use short, stationary
+review positions. Smooth movement, bounded background tracing, shared game-level
+Ambisonic routing, HRTF data, and callback-budget performance remain open. The trace
+uses OMG v6/v6.1/v6.2 because the current adapter copies `ParamBlock` but does not
+install the v4 dense kernels from `Frame::kernels`; this matches the isolated spike's
+rendered path while dense-kernel handoff is unimplemented.
+
+The ownership issue is broader than scratch reuse: `ParamBlock` owns a variable-size
+`Vec<Tap>`, so replacing a block inside the audio callback can free its old vector
+there. A safe update path needs fixed-capacity snapshots copied into renderer-owned
+storage, or another handoff that retires old storage off the callback. Firewheel's
+node channel cap is 64. OMG emits nine Ambisonic bus channels plus two point-rendered
+stereo channels per source; routing independent 11-channel results fits five sources
+on one node, while six exceeds the cap. The scalable graph shape is a bounded pool of
+source renderers inside one node, summed into one nine-channel bus plus point stereo,
+then decoded once. The current one-source node does not yet prove this shared route.
 
 ### Callback-safety blocker found in the current AudioNimbus reflection handoff
 

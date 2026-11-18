@@ -72,6 +72,27 @@ scene simulation remain in progress. The node adapter buffers fixed AudioNimbus 
 and adds one block of latency. Pass `--no-default-features` to a game package for a
 temporary build without AudioNimbus.
 
+### OMG Audio review build (experimental)
+
+The pinned `omg_audio` feature and Jackdaw's `omg-audio` feature expose an
+experimental static-snapshot route for the existing grotto review driver. This is
+not the default spatial backend and does not support smooth moving source/listener
+updates. The simulation traces synchronously on the audio control thread when the
+review moves to a new camera position; the Firewheel callback only renders the
+preinstalled OMG frame.
+
+From the repository root, build the game and then run the existing 20-second
+watchdog with this audio route:
+
+```sh
+cargo build -p stubby_jackdaw --no-default-features --features omg-audio,dev
+STUBBY_OMG_AUDIO_REVIEW=1 python3 tools/jackdaw_timed_test.py --seconds 20 --name omg-grotto --command cargo run -p stubby_jackdaw --no-default-features --features omg-audio,dev -- --grotto-audio-review=/tmp/omg-grotto-review
+```
+
+This uses the existing inside / blocked-outside / clear-outside review views. It is
+for a bounded listening experiment only. The fixed-frame implementation and isolated
+two-source shared-bus spike are documented in `docs/research/spatial-audio-alternatives.md`.
+
 To launch the Jackdaw development game with the spatial audio demo:
 
 ```sh

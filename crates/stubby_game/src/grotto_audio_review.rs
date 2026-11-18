@@ -1,20 +1,13 @@
 //! Bounded listening pass for the authored echo grotto.
 //!
-//! `--grotto-audio-review=<directory>` runs the normal square/clock demo patch at
-//! the grotto burbler while moving the listener inside, behind the back boulder,
-//! and outside the mouth. This is a review driver; normal gameplay does not install
-//! it.
+//! `--grotto-audio-review=<directory>` auto-patches the grotto burbler's real rack,
+//! waits for its voice to sound, then moves the listener inside, behind the back
+//! boulder, and outside the mouth. This is a review driver; normal gameplay does not
+//! install it.
 
 use bevy::prelude::*;
 use std::{io::Write, path::PathBuf, time::Instant};
-use stubby_audio::{Command, ListenerPose, ModuleId, PortRef};
-
-const SQUARE_OUTPUT: ModuleId = ModuleId(9_002);
-const CLOCK_OUTPUT: ModuleId = ModuleId(9_007);
-const SQUARE_VCA: ModuleId = ModuleId(9_002);
-const BLIP_VCA: ModuleId = ModuleId(9_007);
-const SQUARE_GAIN: f32 = 0.25;
-const BLIP_GAIN: f32 = 0.3;
+use stubby_audio::{Command, ListenerPose, PortRef};
 const BURBLER: Vec3 = Vec3::new(69.43934, 0.65, -59.1967);
 const VIEWS: [(&str, Vec3); 3] = [
     ("inside", Vec3::new(70.5, 1.6, -64.5)),
@@ -32,10 +25,10 @@ struct Review {
     directory: PathBuf,
     started: Instant,
     view: usize,
+    burbler: Option<Entity>,
     next_sample: f32,
     capture_pending: bool,
     complete_recorded: bool,
-    muted_view: Option<usize>,
 }
 
 impl Plugin for GrottoAudioReviewPlugin {
@@ -50,12 +43,13 @@ impl Plugin for GrottoAudioReviewPlugin {
             directory,
             started: Instant::now(),
             view: usize::MAX,
+            burbler: None,
             next_sample: 0.,
             capture_pending: false,
             complete_recorded: false,
-            muted_view: None,
         })
         .add_systems(Startup, start.after(super::spawn_camera))
+        .add_systems(Last, arm_burbler)
         .add_systems(Update, advance)
         .add_systems(PostUpdate, capture);
     }
@@ -78,6 +72,8 @@ fn set_view(
     index: usize,
     cameras: &mut Query<&mut Transform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     synth: &super::audio::Synth,
+    output: PortRef,
+    source: Vec3,
 ) {
     let Some((name, eye)) = VIEWS.get(index).copied() else {
         return;
@@ -92,32 +88,13 @@ fn set_view(
                 ahead: camera.forward().to_array(),
             },
         });
-        for (module, source) in [
-            (SQUARE_OUTPUT, BURBLER),
-            (CLOCK_OUTPUT, BURBLER + Vec3::new(0.35, 0.0, 0.0)),
-        ] {
-            let offset = camera.rotation.inverse() * (source - eye).normalize();
-            synth.send(Command::SetEmitter {
-                output: PortRef::new(module, "out"),
-                offset: offset.to_array(),
-                position_world: source.to_array(),
-                volume: 0.65,
-            });
-        }
-        // Play a repeatable tone at each position, then silence both demo voices so
-        // the world meter can capture the reflection effect's decay without another
-        // clock blip or continuous oscillator masking it.
-        synth.send(Command::SetParam {
-            module: SQUARE_VCA,
-            param: "gain",
-            value: SQUARE_GAIN,
+        let offset = camera.rotation.inverse() * (source - eye).normalize();
+        synth.send(Command::SetEmitter {
+            output,
+            offset: offset.to_array(),
+            position_world: source.to_array(),
+            volume: 0.65,
         });
-        synth.send(Command::SetParam {
-            module: BLIP_VCA,
-            param: "gain",
-            value: BLIP_GAIN,
-        });
-        review.muted_view = None;
         review.view = index;
         review.capture_pending = true;
         record(
@@ -126,11 +103,62 @@ fn set_view(
                 "event":"view",
                 "name":name,
                 "listener":eye.to_array(),
-                "source":BURBLER.to_array(),
+                "source":source.to_array(),
+                "output_module":output.module.0,
                 "elapsed_seconds":review.started.elapsed().as_secs_f32()
             }),
         );
     }
+}
+
+fn arm_burbler(
+    mut review: ResMut<Review>,
+    profiles: Res<super::machine_config::Profiles>,
+    machines: Query<(Entity, &stubby_core::PlacedAsset, &GlobalTransform)>,
+    mut racks: Query<&mut super::rack::RackState>,
+) {
+    if review.burbler.is_some() {
+        return;
+    }
+    let Some(config) = profiles.0.get("mudpit_burbler") else {
+        return;
+    };
+    let machine = machines
+        .iter()
+        .filter(|(_, asset, _)| asset.asset == "mudpit_burbler")
+        .min_by(|(_, _, a), (_, _, b)| {
+            a.translation()
+                .distance_squared(BURBLER)
+                .total_cmp(&b.translation().distance_squared(BURBLER))
+        })
+        .map(|(entity, _, _)| entity);
+    let Some(machine) = machine else {
+        return;
+    };
+    let Ok(mut rack) = racks.get_mut(machine) else {
+        return;
+    };
+    let mounted = rack.mounted.insert("vco".into(), "square_vco".into());
+    let patched: Vec<_> = config
+        .cables
+        .iter()
+        .map(|cable| (!cable.optional).then(|| (cable.from.clone(), cable.to.clone())))
+        .collect();
+    let changed = mounted.as_deref() != Some("square_vco") || rack.patched != patched;
+    if changed {
+        rack.patched = patched;
+        rack.version = rack.version.wrapping_add(1);
+    }
+    review.burbler = Some(machine);
+    record(
+        &review,
+        serde_json::json!({
+            "event":"burbler_autopatched",
+            "machine":machine.to_bits(),
+            "changed":changed,
+            "complete":rack.complete(config)
+        }),
+    );
 }
 
 fn start(
@@ -155,37 +183,37 @@ fn advance(
     mut cameras: Query<&mut Transform, (With<Camera3d>, Without<stubby_core::HudCamera>)>,
     synth: Res<super::audio::Synth>,
     level: Res<super::audio::WorldLevel>,
+    voices: Query<(&stubby_core::MachineVoice, &GlobalTransform)>,
 ) {
+    let Some(machine) = review.burbler else {
+        return;
+    };
+    let Ok((voice, transform)) = voices.get(machine) else {
+        return;
+    };
+    if !voice.sounding {
+        return;
+    }
+    let Some(output) = voice.output else {
+        return;
+    };
+    let source = transform.translation() + Vec3::Y * 0.65;
     if review.view == usize::MAX {
-        if synth.demo_playing() {
-            review.started = Instant::now();
-            set_view(&mut review, 0, &mut cameras, &synth);
-        }
+        review.started = Instant::now();
+        set_view(&mut review, 0, &mut cameras, &synth, output, source);
         return;
     }
     let elapsed = review.started.elapsed().as_secs_f32();
     let target_view = (elapsed / VIEW_SECONDS) as usize;
     if target_view < VIEWS.len() && target_view != review.view {
-        set_view(&mut review, target_view, &mut cameras, &synth);
-    }
-    let in_view_seconds = elapsed - review.view as f32 * VIEW_SECONDS;
-    if in_view_seconds >= 1.5 && review.muted_view != Some(review.view) {
-        for module in [SQUARE_VCA, BLIP_VCA] {
-            synth.send(Command::SetParam {
-                module,
-                param: "gain",
-                value: 0.0,
-            });
-        }
-        record(
-            &review,
-            serde_json::json!({
-                "event":"sources_muted",
-                "view":VIEWS.get(review.view).map(|view| view.0),
-                "elapsed_seconds":elapsed
-            }),
+        set_view(
+            &mut review,
+            target_view,
+            &mut cameras,
+            &synth,
+            output,
+            source,
         );
-        review.muted_view = Some(review.view);
     }
     if elapsed >= review.next_sample {
         record(

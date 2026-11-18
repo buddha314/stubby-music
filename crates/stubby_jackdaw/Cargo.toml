@@ -10,11 +10,12 @@ publish = false
 default = ["spatial-audio"]
 dev = ["bevy/dynamic_linking", "stubby_game/dev"]
 spatial-audio = ["stubby_game/spatial-audio"]
+omg-audio = ["stubby_game/omg-audio"]
 
 [dependencies]
 # The game itself, as an ordinary dependency (split-game-into-systems step 1); this
 # package adds only the editor bridge and Jackdaw's runtime.
-stubby_game = { path = "../stubby_game" }
+stubby_game = { path = "../stubby_game", default-features = false }
 bevy_stubby_audio = { path = "../bevy_stubby_audio" }
 jackdaw_prefab.workspace = true
 bevy.workspace = true

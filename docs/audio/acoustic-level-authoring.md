@@ -143,5 +143,7 @@ emitters. A source-mute capture measured a short post-mute decay at the inside a
 clear outside positions. This is evidence of a short per-emitter parametric tail,
 not a complete cave-reverb acceptance: the world-bus meter cannot isolate wet
 energy, no reflection-disabled control was captured, and subjective listening is
-not recorded. Keep `add-echo-grotto` task 4.1 open until the controlled comparison
-and listening review are complete.
+now confirmed by the player at reflection wet gain 0.75. This confirms audibility but
+does not establish final tuning or isolate the listener-centric reverb bus. Keep
+`add-echo-grotto` task 4.1 open until the controlled comparison and remaining audio
+ownership checks are complete.

@@ -77,11 +77,25 @@ cross-platform artifacts, and performance remain unverified.
   and its threaded host applies frames with allocations on the audio callback. Continue
   with a low-level Firewheel adapter prototype, bounded parameter updates, shared
   Ambisonic routing, and Bevy/Avian geometry/material conversion before adoption.
-  The one-source spike now processes procedural Firewheel samples through OMG's
-  renderer with finite output and zero callback allocations at 48 kHz, with a fixed
-  preinstalled frame and speaker fallback. Shared Ambisonic mixing, HRTF, changing
-  frames, geometry conversion and performance remain open. Upstream's focused mixer
-  tests passed locally (9/9); this is not full integration proof.
+  The two-source spike processes procedural Firewheel samples through separate OMG
+  renderers, sums them into one Ambisonic bus and decodes once, with finite output and
+  zero callback allocations at 48 kHz using a fixed preinstalled frame and speaker
+  fallback. With rock-room geometry, debug-profile 128-frame timing is p50 1.54 ms,
+  p95 1.95 ms, max 2.47 ms (256 callbacks), close to the 2.67 ms callback period.
+  An opt-in OMG grotto route now compiles in `stubby_jackdaw` and converts the game's
+  acoustic geometry for the existing static review positions. The live listen was
+  silent: the world bus remained at `-inf` despite nonzero traced direct/reverb values;
+  the same burbler is audible through the dry reference route. Diagnose or stop the
+  in-game adapter before considering OMG for adoption. Shared game-level routing, HRTF, smooth frame changes, production
+  performance and geometry lifecycle remain open. Upstream's focused mixer tests
+  passed locally (9/9); this is not full integration proof. `ParamBlock` owns a
+  variable-length tap vector and `set_params`
+  allocates scratch vectors; swapping owned blocks in the callback can also free
+  memory there. Solve both allocation and ownership before guarded live updates.
+  Firewheel caps nodes at 64 channels, so independent 11-channel OMG outputs fit
+  five sources; the bounded shared-bus node has now been prototyped for two sources.
+  The in-game experiment still uses one decode per emitter and only refreshes at
+  stationary review positions; production routing and moving-scene updates remain open.
 
 ## 4. Adopt verified replacements
 

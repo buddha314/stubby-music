@@ -7,7 +7,7 @@
 - **The initial occlusion failure was in the authored-asset-to-runtime bridge.** Jackdaw flattens LOD placed models into mesh entities; acoustic metadata on a prefab root or glTF node was not guaranteed to be present on those runtime mesh entities. AudioNimbus can only include meshes that reach `publish_acoustic_scene` with `AcousticOccluder` attached. The bridge now propagates a prefab root's `AcousticOccluder` to descendant mesh entities after load, and retains support for glTF `"acoustic": "rock"` extras.
 - **Occlusion has both synthetic and authored-level evidence.** The offline zero-transmission wall test is allocation-checked. A bounded grotto review measured a large level difference between matched-distance blocked and clear positions. The review does not establish reflection/reverb behavior.
 - **The live per-emitter reflection path now has matching-output and short-tail evidence.** In the bounded run, AudioNimbus reported five reflection outputs for five active emitters. After muting the two demo VCAs, the inside meter recorded a post-mute residual at about 52 ms, then silence by about 102 ms. The clear outside point showed a smaller decay over about 135 ms; the blocked point was already near the meter floor. This supports a short parametric reflection tail in the grotto, not a long cave reverb.
-- **OpenSpec 4.8 remains incomplete.** The callback allocation test has not exercised non-empty reflection parameters while snapshots are replaced, and AudioNimbus's listener-centric output is not routed to a shared environmental bus. The level meter measures the whole world bus, not an isolated wet signal; subjective listening is not captured in the review.
+- **OpenSpec 4.8 remains incomplete.** The callback allocation test has not exercised non-empty reflection parameters while snapshots are replaced, and AudioNimbus's listener-centric output is not routed to a shared environmental bus. The level meter measures the whole world bus, not an isolated wet signal. The player has now confirmed the grotto reverb is audible at a 0.75 per-emitter wet gain; this is subjective listening evidence, not an isolated wet measurement.
 
 ## Occlusion: what the code and measurements establish
 
@@ -51,11 +51,18 @@ This design is intended to avoid callback-side ArcSwap access and pooled snapsho
 
 ### Existing and missing evidence
 
+- The player confirmed that reverb is audible in the live grotto using `cargo run -p
+  stubby_jackdaw --features dev -- --grotto-audio-review=/tmp/grotto-audionimbus-review`.
+  The session's per-emitter reflection wet gain was 0.75. The player had previously
+  reported the boulder occlusion was clearly audible. This supports audibility at the
+  current tuning, but does not establish that the tail length or level is artistically
+  final, nor does it isolate the listener-centric reverb bus.
+
 - The previous synthetic closed 8 m box test ran the reflection simulation for an impulse and silence and verified finite, non-zero parametric output/tail. This proves the SDK simulation and effect can produce a result for that fixture.
 - A prior callback test with reflection snapshot loading failed the allocation guard; removing callback-side snapshot loading made the guard pass. The current transfer uses `triple_buffer`, but the existing allocation test still does not exercise a non-empty reflection snapshot in the callback.
 - The latest bounded launch logged 800 initial `missing shared simulation inputs: SimulationFlags(REFLECTIONS)` messages before AudioNimbus reported its first `outputs=5 matching_emitters=5` snapshot. The outputs later became non-empty and matched all active emitters, so the startup warnings do not mean the reflection path remained disconnected. Reduce or avoid the initial error burst using an AudioNimbus-supported initialization sequence.
 - The review driver now includes a controlled source mute and 50 ms world-peak sampling. It detects a short post-mute decay, but without a reflection-disabled control it cannot attribute every residual sample solely to the reflection effect.
-- AudioNimbus also produces a listener-centric `output.listener`; the current game processor reads only `output.sources[emitter]`. There is no shared listener environmental bus yet, and subjective listening is not captured.
+- AudioNimbus also produces a listener-centric `output.listener`; the current game processor reads only `output.sources[emitter]`. There is no shared listener environmental bus yet. The player's listening confirmation is recorded above but is not part of the machine review log.
 
 ### Listener reverb is a distinct signal path
 
@@ -100,7 +107,7 @@ These boundaries should remain explicit in future reports. Record source/listene
 2. Add a focused callback allocation test that consumes non-empty reflection parameters while snapshots are replaced and emitters are removed/re-added. Verify retained native handles are released away from the callback and shutdown joins the worker.
 3. Route AudioNimbus's listener-centric output to a shared Firewheel environmental bus fed by the mixed dry world signal. Compare per-source reflections alone with the combined path in an offline render before settling gains or whether both paths remain enabled.
 4. Reduce the initial missing-input error burst with a package-supported initialization sequence, then rerun the bounded review and retain the reflection-match trace, occlusion readings, and tail envelope.
-5. Have a listener confirm the grotto's short tail is audible and useful. Keep OpenSpec 4.8 and grotto task 4.1 open until the control, callback ownership test, bus decision, and listening review pass; keep 4.6's authored-level occlusion evidence separate.
+5. **Listening confirmation complete at wet gain 0.75:** the player reports audible grotto reverb and clear boulder occlusion. Keep OpenSpec 4.8 open for the callback ownership test, listener-bus decision and controlled wet/dry comparison; keep 4.6's authored-level occlusion evidence separate.
 
 ## Package references
 
