@@ -51,7 +51,9 @@ the screen ghosts them like the burbler's.
 
 ### D2. Quantized pitch knobs
 A knob may declare `quantize: "semitone"` in its module data. Turning it clicks through
-equal-tempered semitones (A4 = 440 Hz), and the module's display shows the note name.
+equal-tempered semitones (A4 = 440 Hz), and the knob's readout (VCV Rack's knob tooltip,
+beside the pointer) shows the note name. Knobs with a grid turn by whole clicks (one per
+scroll notch, one per 10 px of drag), so a small move never snaps back to where it was.
 Quantization is the rack's (data plus `stubby_rack::Knob::snap`), not the engine's: the
 engine still takes Hz. The sketch's VCOs land on C2 and C4. The cutoff is quantized too: 531.5 Hz becomes C5,
 523.25 Hz (user, 2026-11-18).

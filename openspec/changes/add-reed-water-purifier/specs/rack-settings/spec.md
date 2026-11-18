@@ -2,12 +2,14 @@
 
 ### Requirement: Pitch knobs click to notes
 A module knob that declares semitone quantization SHALL take only equal-tempered semitone
-values (A4 = 440 Hz) within its range, and the module's display SHALL show the value as a
-note name with its octave.
+values (A4 = 440 Hz) within its range, and the knob's readout (shown beside the pointer
+while it is over the knob or turning it, as VCV Rack's knob tooltip) SHALL show the value
+as a note name with its octave. A knob with a grid SHALL turn by whole clicks: one per
+scroll notch, and one per few pixels of drag.
 
 #### Scenario: Turning a quantized VCO
 - **WHEN** the player turns a quantized frequency knob toward 65.6 Hz
-- **THEN** it settles on C2 (65.41 Hz), the engine plays 65.41 Hz, and the display reads C2
+- **THEN** it settles on C2 (65.41 Hz), the engine plays 65.41 Hz, and the readout reads C2
 
 ### Requirement: A machine can require settings
 A machine's game rule SHALL apply only while its rack sounds and every target setting its

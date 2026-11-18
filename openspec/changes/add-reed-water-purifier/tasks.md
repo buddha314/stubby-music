@@ -12,8 +12,8 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 0.6 The patch is saved as `assets/rack-recipies/reed-water-filter.vcv` (user, 2026-11-18)
 
 ## 1. Rack settings
-- [ ] 1.1 `quantize: "semitone"` on module knobs; `stubby_rack::Knob::snap` to the pitch grid; tests
-- [ ] 1.2 Note-name display on quantized knobs (`bevy_stubby_rack`)
+- [x] 1.1 `quantize: "semitone"` on module knobs; `stubby_rack::Knob::snap` to the pitch grid; tests
+- [x] 1.2 Note-name readout on quantized knobs (`bevy_stubby_rack`: VCV-style knob readout beside the pointer; whole-click turning; starting values snap, so a bug's pitch lands on its nearest note)
 - [ ] 1.3 Profile `targets` and a `targets_met` check; move the campfire's `light_pattern` onto it
 
 ## 2. Engine modules (audio stream)

@@ -214,6 +214,14 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .add_observer(drop_item::<S>)
             .add_observer(turn_knob)
             .add_observer(scroll_knob)
+            .init_resource::<KnobUnderPointer>()
+            .add_observer(knob_over)
+            .add_observer(knob_out)
+            .add_systems(Startup, spawn_knob_readout)
+            .add_systems(
+                Update,
+                show_knob_readout.after(stubby_core::MachineInteractionSet),
+            )
             .add_observer(press_button)
             .add_systems(
                 Update,
@@ -261,13 +269,16 @@ fn starting_value(
         .parts
         .iter()
         .find(|p| p.part == k.part)?;
-    match (part.kind, k.param) {
+    let value = match (part.kind, k.param) {
         ("Clock", "bpm") => clock.map(|c| c.bpm),
         (kind, param) => defaults
             .0
             .get(&(kind.to_owned(), param.to_owned()))
             .copied(),
-    }
+    }?;
+    // A clicking knob starts on its grid (a bug's pitch lands on its nearest note), so
+    // the engine, the knob and its readout agree.
+    Some(if k.clicks() { k.snap(value) } else { value })
 }
 
 /// Starting knob values the game supplies, by engine kind and parameter (a Square VCO
@@ -482,10 +493,21 @@ fn knob_value(norm: f32, p: &ParamProfile) -> f32 {
     }
 }
 
-/// Turn the open rack's knob `hit` by `turn` (a fraction of its range, up is positive).
+/// How far a knob turns: smoothly by a fraction of its range, or by whole clicks on a
+/// knob with a grid (a semitone, a 24 BPM step), so small moves never snap back.
+#[derive(Clone, Copy)]
+enum Turn {
+    Smooth(f32),
+    Clicks(i32),
+}
+
+/// Pixels of drag per click on a knob with a grid.
+const CLICK_PX: f32 = 10.;
+
+/// Turn the open rack's knob `hit` (up is positive).
 fn turn_open_knob(
     hit: &KnobHit,
-    turn: f32,
+    turn: Turn,
     profiles: &Profiles,
     catalog: &ModuleCatalog,
     racks: &mut Query<(
@@ -530,17 +552,19 @@ fn turn_open_knob(
     else {
         return;
     };
-    let mut value = knob_value(knob_norm(current, param) + turn, param);
+    let grid = RACK_MODULES
+        .knob(&module, &hit.param)
+        .filter(|knob| knob.clicks());
+    let mut value = match (turn, grid) {
+        // A knob with a grid (the BPM's 24 steps, a VCO's semitones) clicks.
+        (Turn::Clicks(steps), Some(knob)) => knob.nudge(current, steps),
+        (Turn::Clicks(_), None) => current,
+        (Turn::Smooth(turn), _) => knob_value(knob_norm(current, param) + turn, param),
+    };
     // The knob steps as the engine does (whole BPM, semitones on a sequencer step), so
     // the panel and the sound agree.
     if let Some(spec) = engine_spec(&module, &hit.param) {
         value = spec.conform(value);
-    }
-    // A knob with a step (the BPM's 24 grid) clicks through its multiples.
-    if let Some(knob) = RACK_MODULES.knob(&module, &hit.param)
-        && knob.step.is_some()
-    {
-        value = knob.snap(value);
     }
     if value != current {
         knobs.0.insert(key, value);
@@ -667,6 +691,112 @@ struct OwnLight {
     on: LinearRgba,
 }
 
+/// The knob under the pointer, and whether the pointer is still over it (a drag keeps
+/// its knob after the pointer leaves).
+#[derive(Resource, Default)]
+struct KnobUnderPointer(Option<(Entity, bool)>);
+
+/// The knob readout (VCV Rack's knob tooltip): the knob's name and value beside the
+/// pointer, with a note name on a semitone knob.
+#[derive(Component)]
+struct KnobReadout;
+
+fn knob_over(
+    over: On<bevy::picking::events::PointerOver>,
+    hits: Query<(), With<KnobHit>>,
+    mut under: ResMut<KnobUnderPointer>,
+) {
+    if hits.contains(over.entity) {
+        under.0 = Some((over.entity, true));
+    }
+}
+
+fn knob_out(out: On<bevy::picking::events::PointerOut>, mut under: ResMut<KnobUnderPointer>) {
+    if let Some((entity, inside)) = under.0.as_mut()
+        && *entity == out.entity
+    {
+        *inside = false;
+    }
+}
+
+fn spawn_knob_readout(mut commands: Commands) {
+    commands
+        .spawn((
+            KnobReadout,
+            Node {
+                position_type: PositionType::Absolute,
+                padding: UiRect::axes(px(8), px(4)),
+                border: UiRect::all(px(1)),
+                ..default()
+            },
+            BackgroundColor(stubby_ui::style::PANEL),
+            BorderColor::all(stubby_ui::style::EDGE),
+            GlobalZIndex(200),
+            Visibility::Hidden,
+            Pickable::IGNORE,
+        ))
+        .with_child(stubby_ui::style::label("", 14., stubby_ui::style::INK));
+}
+
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+fn show_knob_readout(
+    screens: Res<ScreenMode>,
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    mut under: ResMut<KnobUnderPointer>,
+    hits: Query<&KnobHit>,
+    profiles: Res<Profiles>,
+    defaults: Res<KnobDefaults>,
+    racks: Query<(&PlacedAsset, &RackState, &RackKnobs, Option<&AssetClock>)>,
+    windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    mut readouts: Query<(&mut Node, &mut Visibility, &Children), With<KnobReadout>>,
+    mut texts: Query<&mut Text>,
+) {
+    // A knob let go of outside it is no longer shown.
+    if let Some((_, false)) = under.0
+        && !buttons.is_some_and(|b| b.pressed(MouseButton::Left))
+    {
+        under.0 = None;
+    }
+    let shown = (|| {
+        let machine = open_rack(&screens)?;
+        let (entity, _) = under.0?;
+        let hit = hits.get(entity).ok()?;
+        let (asset, state, knobs, clock) = racks.get(machine).ok()?;
+        let module = modules(profiles.0.get(&asset.asset)?, state).remove(&hit.place)?;
+        let knob = RACK_MODULES.knob(&module, &hit.param)?;
+        let value = knobs
+            .0
+            .get(&(hit.place.clone(), hit.param.clone()))
+            .copied()
+            .or_else(|| initial_knob(&module, &hit.param, clock, &defaults))?;
+        let cursor = windows.single().ok()?.cursor_position()?;
+        Some((
+            format!(
+                "{}  {}",
+                hit.param.replace('_', " ").to_uppercase(),
+                knob.readout(value)
+            ),
+            cursor,
+        ))
+    })();
+    for (mut node, mut visibility, children) in &mut readouts {
+        let Some((line, cursor)) = &shown else {
+            visibility.set_if_neq(Visibility::Hidden);
+            continue;
+        };
+        visibility.set_if_neq(Visibility::Inherited);
+        node.left = px(cursor.x + 16.);
+        node.top = px(cursor.y + 12.);
+        for child in children {
+            if let Ok(mut text) = texts.get_mut(*child)
+                && text.0 != *line
+            {
+                text.0.clone_from(line);
+            }
+        }
+    }
+}
+
 /// Drag a knob up to turn it up, down to turn it down (VCV Rack).
 fn turn_knob(
     drag: On<bevy::picking::events::PointerDrag>,
@@ -681,11 +811,34 @@ fn turn_knob(
         Option<&AssetClock>,
     )>,
     defaults: Res<KnobDefaults>,
+    mut dragged: Local<(Option<Entity>, f32)>,
 ) {
     let (Ok(hit), Some(machine)) = (hits.get(drag.entity), open_rack(&screens)) else {
         return;
     };
-    let turn = -drag.delta.y / KNOB_DRAG_PX;
+    let grid = racks
+        .get(machine)
+        .ok()
+        .and_then(|(asset, state, _, _)| {
+            modules(profiles.0.get(&asset.asset)?, state).remove(&hit.place)
+        })
+        .and_then(|module| RACK_MODULES.knob(&module, &hit.param).cloned())
+        .is_some_and(|knob| knob.clicks());
+    let turn = if grid {
+        // Drag builds up pixels; each `CLICK_PX` of it is one click.
+        if dragged.0 != Some(drag.entity) {
+            *dragged = (Some(drag.entity), 0.);
+        }
+        dragged.1 += -drag.delta.y;
+        let clicks = (dragged.1 / CLICK_PX).trunc();
+        dragged.1 -= clicks * CLICK_PX;
+        if clicks == 0. {
+            return;
+        }
+        Turn::Clicks(clicks as i32)
+    } else {
+        Turn::Smooth(-drag.delta.y / KNOB_DRAG_PX)
+    };
     turn_open_knob(
         hit, turn, &profiles, &catalog, &mut racks, machine, &defaults,
     );
@@ -713,7 +866,20 @@ fn scroll_knob(
         bevy::input::mouse::MouseScrollUnit::Line => scroll.y,
         bevy::input::mouse::MouseScrollUnit::Pixel => scroll.y / 40.,
     };
-    let turn = notches.signum() * notches.abs().max(1.) * KNOB_SCROLL_STEP;
+    let grid = racks
+        .get(machine)
+        .ok()
+        .and_then(|(asset, state, _, _)| {
+            modules(profiles.0.get(&asset.asset)?, state).remove(&hit.place)
+        })
+        .and_then(|module| RACK_MODULES.knob(&module, &hit.param).cloned())
+        .is_some_and(|knob| knob.clicks());
+    // One notch is one click on a knob with a grid, a small turn otherwise.
+    let turn = if grid {
+        Turn::Clicks(notches.signum() as i32 * notches.abs().round().max(1.) as i32)
+    } else {
+        Turn::Smooth(notches.signum() * notches.abs().max(1.) * KNOB_SCROLL_STEP)
+    };
     if notches != 0. {
         turn_open_knob(
             hit, turn, &profiles, &catalog, &mut racks, machine, &defaults,
@@ -2306,6 +2472,17 @@ mod tests {
         assert_eq!(state.mounted["seq"], "snail_sequencer");
         assert!(!state.mount(&mut two, "seq", "snail_shell", "snail_sequencer"));
         assert_eq!(two.0, 1, "an occupied place takes nothing");
+    }
+
+    #[test]
+    fn a_bugs_pitch_starts_the_vco_on_its_nearest_note() {
+        // A square VCO's frequency knob is quantized to semitones (add-reed-water-purifier):
+        // a bug's 300 Hz becomes D4, so the engine, the knob and its readout agree.
+        let defaults = KnobDefaults([(("SquareVco".to_owned(), "freq".to_owned()), 300.)].into());
+        let start = initial_knob("square_vco", "freq", None, &defaults).unwrap();
+        assert!((start - 293.66).abs() < 0.01, "{start}");
+        let knob = RACK_MODULES.knob("square_vco", "freq").unwrap();
+        assert!(knob.readout(start).starts_with("D4"));
     }
 
     #[test]

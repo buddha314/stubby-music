@@ -92,6 +92,36 @@ struct KnobDefinition {
     /// quantum): tempos on the 24 BPM grid (user, 2026-11-17).
     #[serde(default)]
     step: Option<f32>,
+    /// The knob clicks through a musical grid instead (`"semitone"`: equal-tempered
+    /// notes, A4 = 440 Hz), so pitches are easy to set (add-reed-water-purifier).
+    #[serde(default)]
+    quantize: Option<Quantize>,
+}
+
+/// A musical grid a knob clicks through.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Quantize {
+    /// Equal-tempered semitones, in Hz (A4 = 440 Hz).
+    Semitone,
+}
+
+/// Semitones from A4 to a frequency.
+fn semitones_from_a4(hz: f32) -> f32 {
+    12. * (hz / 440.).log2()
+}
+fn hz_at(semitones_from_a4: f32) -> f32 {
+    440. * 2f32.powf(semitones_from_a4 / 12.)
+}
+
+/// A frequency's nearest note, as its name and octave (`C4`, `F#2`).
+pub fn note_name(hz: f32) -> String {
+    const NAMES: [&str; 12] = [
+        "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+    ];
+    // Semitones from C0 (A4 is 57 above it).
+    let n = semitones_from_a4(hz).round() as i32 + 57;
+    format!("{}{}", NAMES[n.rem_euclid(12) as usize], n.div_euclid(12))
 }
 
 /// The parts of `asset.json` the rack reads. The panel belongs to art and carries much
@@ -184,16 +214,40 @@ pub struct Knob {
     pub max: f32,
     /// Values are multiples of this, inside `min..=max`.
     pub step: Option<f32>,
+    /// Values are notes on this grid, inside `min..=max`.
+    pub quantize: Option<Quantize>,
 }
 impl Knob {
-    /// Snap a value to the knob's step, staying inside its travel.
+    /// Whether the knob clicks (a step or a musical grid) rather than turning smoothly.
+    pub fn clicks(&self) -> bool {
+        self.quantize.is_some() || self.step.is_some_and(|step| step > 0.)
+    }
+    /// Snap a value to the knob's grid, staying inside its travel.
     pub fn snap(&self, value: f32) -> f32 {
+        self.nudge(value, 0)
+    }
+    /// The value `steps` clicks from `value` (0 snaps it), staying inside the travel.
+    pub fn nudge(&self, value: f32, steps: i32) -> f32 {
+        if self.quantize == Some(Quantize::Semitone) && self.min > 0. {
+            let lowest = semitones_from_a4(self.min).ceil();
+            let highest = semitones_from_a4(self.max).floor();
+            let at = semitones_from_a4(value.max(f32::MIN_POSITIVE)).round() + steps as f32;
+            return hz_at(at.clamp(lowest, highest));
+        }
         let Some(step) = self.step.filter(|step| *step > 0.) else {
             return value.clamp(self.min, self.max);
         };
         let lowest = (self.min / step).ceil() * step;
         let highest = (self.max / step).floor() * step;
-        ((value / step).round() * step).clamp(lowest, highest)
+        (((value / step).round() + steps as f32) * step).clamp(lowest, highest)
+    }
+    /// The value as the player reads it: a note name on a semitone knob.
+    pub fn readout(&self, value: f32) -> String {
+        match self.quantize {
+            Some(Quantize::Semitone) => format!("{}  {value:.2} Hz", note_name(value)),
+            None if self.step.is_some() => format!("{value:.0}"),
+            None => format!("{value:.2}"),
+        }
     }
 }
 
@@ -405,6 +459,13 @@ fn validate(
             );
             continue;
         }
+        if knob.quantize == Some(Quantize::Semitone) && !(panel_param.min > 0.) {
+            fail(
+                &format!("{field}.quantize"),
+                "a semitone knob needs a range above 0 Hz".into(),
+            );
+            continue;
+        }
         let d = knob.default;
         if !(panel_param.min..=panel_param.max).contains(&d) || !(spec.min..=spec.max).contains(&d)
         {
@@ -426,6 +487,7 @@ fn validate(
                 min: panel_param.min.max(spec.min),
                 max: panel_param.max.min(spec.max),
                 step: knob.step,
+                quantize: knob.quantize,
             },
         );
     }
