@@ -1,5 +1,9 @@
 # AudioNimbus work before authored acoustic levels
 
+For the current grotto-specific diagnosis, package analysis, measurements, and
+remaining acceptance checks, see
+[`grotto-acoustics-investigation.md`](grotto-acoustics-investigation.md).
+
 Production caves, buildings, and enclosed spaces are not required to make useful
 progress on spatial audio. The engine can validate its transport and algorithms with
 small deterministic test scenes. Keep those fixtures in diagnostics or offline
@@ -97,6 +101,11 @@ fixture. Keep fixture results and authored-level results as separate evidence.
 
 The remaining 4.1c checks are live-device restart/sample-rate changes and realistic
 CPU measurements. The 4.10 target needs the HRTF/pan pools from tasks 4.3 and 4.4.
-The 4.8 integration needs a realtime-safe ownership handoff for AudioNimbus's
-reflection parameters, which retain native source/impulse-response handles, plus a
-listener environmental bus. Do not move or destroy those handles on the callback.
+The current 4.8 branch work adds a worker-to-audio `triple_buffer` handoff for
+reflection snapshots and applies the parametric effect in a preallocated Firewheel
+processor. This addresses the observed callback-side `arc-swap` allocation and
+pooled-object release hazards in the implementation, but the latest handoff has not
+yet been validated end-to-end in a retained test run. Confirm output/emitter
+matching, callback allocation safety during snapshot replacement, and a controlled
+grotto decay before marking 4.8 complete. See the investigation note for the exact
+evidence and limitations.

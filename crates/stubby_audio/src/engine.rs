@@ -312,6 +312,7 @@ impl Engine {
                         output,
                         position: node.position(),
                         params: node.direct_params(),
+                        reflections: node.reflections(),
                     }),
                     EmitterParams::Basic(_) => None,
                 })
@@ -689,10 +690,13 @@ impl Engine {
         let graph = |e: AddEdgeError| EngineError::Graph(e.to_string());
         let (src, src_port) = self.output_port(output)?;
         #[cfg(feature = "audionimbus")]
-        let (node, params) = if let Some(spatial) = &self.audionimbus_spatial {
+        let (node, params) = if let (Some(spatial), Some(_simulation)) =
+            (&self.audionimbus_spatial, &self.audionimbus_simulation)
+        {
             let params = AudioNimbusBinauralNode::new(
                 spatial.clone(),
                 Arc::new(DirectEffectParamsShared::default()),
+                output,
             );
             params.set_direction(offset);
             params.set_position(position_world);
