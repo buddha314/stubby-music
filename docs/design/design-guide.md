@@ -42,6 +42,13 @@ Open:
   initiates, to men or to women), no sacred objects or ceremonies, nothing whose sharing
   is unclear; carvings are our own designs, not copies of real rock art.
   `research-music-mythologies` holds the research and the check on each figure.
+- **Regions: decided (user, 2026-11-18):** similar biomes are grouped, because the
+  creatures are a product of their environment, with small regional differences:
+  **desert** (US Southwest and Mojave, Aboriginal Australia), **Mediterranean**,
+  **temperate forest** (Ireland and England, the Pacific Northwest) and **tropical**
+  (Africa, perhaps Southeast Asia). Everyone in this world lives together well and
+  intermingles, so a region's figures may come from any tradition in its group. The game
+  needs **about a dozen characters** in all.
 - How waking a deity plays (a rack with targets, as the campfire's, is the obvious fit) and
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.

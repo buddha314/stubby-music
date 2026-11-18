@@ -27,8 +27,21 @@ landscape, creature, season); a short summary in our words; the source and its k
 sharing check (open, restricted, unclear) and why; and game notes, kept apart from what
 the source says.
 
-### D4. Regions are research units, not yet map regions
-The note groups figures by people and country. How regions sit on the procedural map is
+### D4. Regions are biome groups (user, 2026-11-18)
+Similar biomes are grouped, because the creatures are a product of their environment,
+with small regional differences:
+
+| Group | Draws on |
+| --- | --- |
+| Desert | the US Southwest and Mojave; Aboriginal Australia |
+| Mediterranean | the Mediterranean lands |
+| Temperate forest | Ireland and England; the Pacific Northwest |
+| Tropical | Africa; perhaps Southeast Asia |
+
+Peoples in this world live together well and intermingle, so a region's figures may come
+from any tradition in its group. The whole game needs **about a dozen characters**, so
+roughly three per group: the research looks wide, and the summary picks the strongest
+cleared candidates per group. How groups sit on the procedural map is
 `add-mythic-regions`'s design.
 
 ## Risks / Trade-offs
@@ -41,6 +54,5 @@ The note groups figures by people and country. How regions sit on the procedural
 
 ## Open Questions
 
-1. How the Southwest and Aboriginal figures blend: separate regions, or one desert region.
-2. Whether figures appear by name, or as unnamed spirits of a place.
-3. Community review before release (who, and how).
+1. Whether figures appear by name, or as unnamed spirits of a place.
+2. Community review before release (who, and how).
