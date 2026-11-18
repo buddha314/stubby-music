@@ -15,6 +15,8 @@ pub mod keys {
     pub const RECIPE_BOOK: KeyCode = KeyCode::KeyO;
     pub const INVENTORY: KeyCode = KeyCode::Tab;
     pub const RECORDER: KeyCode = KeyCode::KeyH;
+    /// The build menu (Satisfactory's Q): pick a buildable, then place it.
+    pub const BUILD: KeyCode = KeyCode::KeyQ;
     /// Dismantle what is aimed at (a stream segment).
     pub const DISMANTLE: KeyCode = KeyCode::KeyF;
     /// The disco light (add-forensic-flashlight): on and off, not a hand item.
@@ -32,6 +34,8 @@ pub enum Screen {
     MachineConfiguration(Entity),
     /// The pause menu (Satisfactory's escape menu): resume, or exit to desktop.
     Pause,
+    /// The build menu (Q): the buildables, each with its cost.
+    Build,
 }
 
 #[derive(Resource, Default)]

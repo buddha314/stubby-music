@@ -56,10 +56,28 @@ def clock(d):
     d.line(px((64, 64), (82, 72)), fill=AMBER, width=6 * SS)
 
 
+def campfire(d):
+    """A teepee of sticks with a flame inside: the build menu's campfire."""
+    for x0, x1 in ((30, 70), (44, 66), (98, 58), (84, 62)):
+        d.line(px((x0, 104), (x1, 22)), fill=BONE, width=6 * SS)
+    d.polygon(px((50, 102), (64, 58), (78, 102)), fill=AMBER)
+
+
+def stream_segment(d):
+    """Two banks and the water's staff between them: the build menu's stream."""
+    for y in (40, 88):
+        pts = [(22 + 84 * t, y + 6 * math.sin(math.tau * t)) for t in (i / 40 for i in range(41))]
+        d.line(px(*pts), fill=GREEN, width=6 * SS, joint="curve")
+    for y in (56, 64, 72):
+        pts = [(30 + 68 * t, y + 4 * math.sin(math.tau * t)) for t in (i / 40 for i in range(41))]
+        d.line(px(*pts), fill=AMBER, width=3 * SS, joint="curve")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in {"square_wave": square_wave, "patch_cable": patch_cable,
-                       "reed": reed, "clock": clock}.items():
+                       "reed": reed, "clock": clock, "campfire": campfire,
+                       "stream_segment": stream_segment}.items():
         img, d = canvas()
         draw(d)
         img.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / f"{name}.png")

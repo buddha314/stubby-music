@@ -1,6 +1,6 @@
 //! Laying mud streams from ports, Satisfactory's conveyor (`add-stream-building`).
 //!
-//! Q enters build mode. Aiming near a free port (a burbler's mouth, a laid stream's end)
+//! The build menu (Q, the game's) starts stream building; Q or Escape leaves it. Aiming near a free port (a burbler's mouth, a laid stream's end)
 //! lights its halo; left click anchors there. The plan then curves from the port to the
 //! aim point as whole 4 m segments, shown by the stream hologram; left click lays it if
 //! it is valid and affordable, and its end becomes the new anchor. Right click drops the
@@ -629,8 +629,9 @@ fn build_input(
     build.click = capture.captured() && buttons.just_pressed(MouseButton::Left);
     if screens.open.is_some() {
         build.active = false;
-    } else if keys.just_pressed(KeyCode::KeyQ) {
-        build.active = !build.active;
+    } else if keys.just_pressed(stubby_core::keys::BUILD) && build.active {
+        // Q leaves stream building; opening it is the build menu's (the game's) job.
+        build.active = false;
     } else if keys.just_pressed(KeyCode::Escape) {
         build.active = false;
     } else if build.active && buttons.just_pressed(MouseButton::Right) {

@@ -21,9 +21,9 @@ bevy.features = ["3d", "ui", "mesh_picking"]
 jackdaw_runtime = { workspace = true, features = ["pie"] }
 jackdaw_scene_types.workspace = true
 serde_json = "~1.0"
+stubby_core = { path = "../stubby_core" }
 
 [dev-dependencies]
-stubby_core = { path = "../stubby_core" }
 gltf = "~1.4"
 tempfile = "~3.27"
 jackdaw_bsn.workspace = true

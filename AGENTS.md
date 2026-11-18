@@ -77,7 +77,7 @@ Use **O** for the recipe book/codex. **What E acts on comes from avian3d, not ha
 (`interaction.rs`): every pickup and machine `Interact` point has a small kinematic sensor
 marker that follows it, one `SpatialQuery` cylinder (3 m, horizontal reach) at the player
 finds them, and the nearest becomes `InteractTarget`, which collecting, prompts and racks read.
-Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. The game opens with the recorder in hand, and **collecting a sound needs it** (reeds need nothing): its record light answers each capture, and its eight bars meter the engine's **world bus** (`WorldLevel`; world and music only; interface sounds go to `PortRef::ui_output()` so they never move it) (`recorder.rs`, `sync-recorder-feedback`). **Q** is build: it enters stream build mode, laid like a Satisfactory conveyor (`streams.rs`, `openspec/changes/add-stream-building/`): aim by a free port (burbler mouth, stream end) and click to anchor, the hologram curves to the aim, click lays it (6 reeds a segment, from `buildables.json`) and chains from its end; right click drops the anchor; Escape or Q leaves. Reserve **F** for dismantle,
+Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. The game opens with the recorder in hand, and **collecting a sound needs it** (reeds need nothing): its record light answers each capture, and its eight bars meter the engine's **world bus** (`WorldLevel`; world and music only; interface sounds go to `PortRef::ui_output()` so they never move it) (`recorder.rs`, `sync-recorder-feedback`). **Q** is build: it opens the **build menu** (`stubby_game::build`, Satisfactory's: a tile per `buildables.json` row with icon and cost). **Campfire** places a hologram on the ground at the aim (amber, red when short of its cost) and a click builds it. **Stream** enters stream build mode, laid like a Satisfactory conveyor (`streams.rs`, `openspec/changes/add-stream-building/`): aim by a free port (burbler mouth, stream end) and click to anchor, the hologram curves to the aim, click lays it (6 reeds a segment, from `buildables.json`) and chains from its end; right click drops the anchor; Escape or Q leaves. Reserve **F** for dismantle,
 **Tab** for inventory and **B** for the disco light (a toggle, not a hand item: the mirror ball floats beside you and its beams reveal pickups; `flashlight.rs`); do not assign these to unrelated
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
@@ -361,6 +361,14 @@ testable by asserting identical output for identical seeds.
   filter alongside AudioNimbus.
 - Ship each glb in its starting pose using **node scale** (Blender's hidden-in-render
   flag does not export).
+- **A new placeable kind needs three lines of game code, or it is hidden or inert:** its file
+  stem in `stubby_jackdaw/src/prefab_bridge.rs` (so it becomes a `PlacedAsset`), an
+  `AssetBinder` in `stubby_game/src/glue.rs` (scenery binds with a no-op; without one it
+  fails as "unknown placed asset" and is hidden), and, if the game reads its node names or
+  glTF extras, its kind in `model_part_bindings.rs`. Jackdaw's LOD runtime flattens a placed
+  model into bare meshes, so names and extras (`start_scale`, `"acoustic": "rock"`) reach
+  the game only through that binding, from the nearest ancestor node that carries them
+  (2026-11-17: the grotto's boulders were never acoustic, and the campfire burned unlit).
 - **Placed prefabs need unique instance IDs.** A prefab with a fixed `MineNode` or
   `ResourceNode` `instance` (each `scrub_oak_<k>` is `scrub_oak-<k>`) fails with "duplicate
   or empty instance ID" when placed twice, unless its placement gets its own `instance`.
