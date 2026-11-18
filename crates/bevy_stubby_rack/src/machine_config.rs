@@ -212,13 +212,21 @@ pub struct ButtonHit {
     pub place: String,
     pub param: String,
 }
-/// A step key's glowing cap: lit while its param is on, inverted while the sequencer's
-/// heard playhead is on its step.
+/// A step key's glowing cap: lit while its param (the step's gate) is on.
 #[derive(Component, Clone)]
 pub struct ButtonLight {
     pub place: String,
     pub param: String,
     /// The step it lights (0-based), from its param's number (`gate_3` is step 2).
+    pub step: u8,
+}
+/// A part of a step's playhead light (`Light_playhead_<n>`, a tiny red light beside its
+/// key): lit while the sequencer's heard playhead is on its step (user, 2026-11-18: a lit
+/// key means the step is selected, the red light shows the beat).
+#[derive(Component, Clone)]
+pub struct StepLed {
+    pub place: String,
+    /// The step it shows (0-based): `Light_playhead_3` is step 2.
     pub step: u8,
 }
 /// A module shown on the rack screen, in its place; its knobs follow the rack's values.
@@ -804,6 +812,19 @@ fn prepare_parts(
                         step,
                     });
                 }
+            } else if is_mesh
+                && let Some(n) = parents.iter_ancestors(entity).find_map(|a| {
+                    names
+                        .get(a)
+                        .ok()
+                        .and_then(|n| n.as_str().strip_prefix("Light_playhead_"))
+                        .and_then(|n| n.parse::<u8>().ok())
+                })
+            {
+                commands.entity(entity).insert(StepLed {
+                    place: place.clone(),
+                    step: n.saturating_sub(1),
+                });
             } else if is_mesh && node.contains("_JackHalo") {
                 commands.entity(entity).insert(PodMesh(jack(port)));
             } else if !is_mesh && let Some(port) = node.strip_prefix("Port_") {

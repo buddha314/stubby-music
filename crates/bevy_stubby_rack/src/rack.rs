@@ -12,7 +12,7 @@
 use crate::{
     machine_config::{
         ButtonHit, ButtonLight, CombNode, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles,
-        RackActions, RackCable, RackConfiguration, RackModuleView,
+        RackActions, RackCable, RackConfiguration, RackModuleView, StepLed,
     },
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
@@ -704,20 +704,25 @@ fn press_button(
     knobs.0.insert(key, if current >= 0.5 { 0. } else { 1. });
 }
 
-/// The step keys' lights: lit while their step is on; inverted while the sequencer's
-/// heard playhead is on their step, switched at the instant each step is heard.
+/// The step keys' lights: a key is lit while its step is on (selected); the red light
+/// beside it is lit while the sequencer's heard playhead is on its step, switched at the
+/// instant each step is heard.
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn step_lights(
     mut commands: Commands,
     mut steps: MessageReader<bevy_stubby_audio::StepTick>,
     screens: Res<ScreenMode>,
     racks: Query<(Entity, &RackEngine, &RackKnobs)>,
-    lights: Query<(
-        Entity,
-        &ButtonLight,
-        &MeshMaterial3d<StandardMaterial>,
-        Option<&OwnLight>,
-    )>,
+    lights: Query<
+        (
+            Entity,
+            Option<&ButtonLight>,
+            Option<&StepLed>,
+            &MeshMaterial3d<StandardMaterial>,
+            Option<&OwnLight>,
+        ),
+        Or<(With<ButtonLight>, With<StepLed>)>,
+    >,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut pending: Local<Vec<(Entity, String, u8, Option<std::time::Instant>)>>,
     mut playheads: Local<HashMap<(Entity, String), u8>>,
@@ -744,7 +749,7 @@ fn step_lights(
     let Ok((_, _, knobs)) = racks.get(machine) else {
         return;
     };
-    for (entity, light, material, own) in &lights {
+    for (entity, key, led, material, own) in &lights {
         // Each key gets its own copy of the cap's glowing material, so it can light alone.
         let Some(own) = own else {
             if let Some(cap) = materials.get(&material.0).cloned() {
@@ -756,16 +761,15 @@ fn step_lights(
             }
             continue;
         };
-        let lit = knobs
-            .0
-            .get(&(light.place.clone(), light.param.clone()))
-            .is_some_and(|v| *v >= 0.5);
-        let playhead = playheads.get(&(machine, light.place.clone())) == Some(&light.step);
-        let glow = if lit != playhead {
-            own.on
-        } else {
-            LinearRgba::BLACK
+        let lit = match (key, led) {
+            (Some(key), _) => knobs
+                .0
+                .get(&(key.place.clone(), key.param.clone()))
+                .is_some_and(|v| *v >= 0.5),
+            (None, Some(led)) => playheads.get(&(machine, led.place.clone())) == Some(&led.step),
+            (None, None) => false,
         };
+        let glow = if lit { own.on } else { LinearRgba::BLACK };
         if let Some(mut cap) = materials.get_mut(&material.0)
             && cap.emissive != glow
         {
