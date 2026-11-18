@@ -23,14 +23,22 @@
   },
   "configure": {
     "screen": "eurorack_hud",
+    "hud": "hud/rack_frame/rack_frame.glb",
     "title": "CAMPFIRE",
+    "interact": {
+      "node": "Interact",
+      "key": "E",
+      "range_m": 3.0,
+      "prompt": "Light the campfire"
+    },
     "places": [
       {
         "place": "clock",
         "kind": "clock",
-        "hp": 4,
+        "hp": 8,
         "fixed": true,
-        "source": "the nearest running clock within clock_reach_m (a burbler, or the stream it feeds); none in reach, no clock"
+        "module": "burbler_clock",
+        "borrowed": true
       },
       {
         "place": "seq",
@@ -66,9 +74,9 @@
     ],
     "normalled_output": {
       "place": "volume",
-      "port": "out",
-      "to": "the fire"
+      "port": "out"
     },
+    "hearing_radius_metres": 20.0,
     "cables": [
       {
         "color": "verdigris",
@@ -79,7 +87,8 @@
         "to": {
           "place": "seq",
           "port": "clock"
-        }
+        },
+        "hint": "clock GATE to sequencer CLOCK"
       },
       {
         "color": "ochre",
@@ -90,7 +99,8 @@
         "to": {
           "place": "volume",
           "port": "trig"
-        }
+        },
+        "hint": "sequencer GATE to volume TRIG"
       },
       {
         "color": "rust",
@@ -101,10 +111,11 @@
         "to": {
           "place": "volume",
           "port": "in"
-        }
+        },
+        "hint": "VCO OUT to volume IN"
       }
     ],
-    "note": "Planned data for the camp's rack (add-campfire-craft-bench D2); the rack loads it once the nearest-clock place is supported (task 3.2a)."
+    "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock"
   },
   "triangles": {
     "near": 1028,

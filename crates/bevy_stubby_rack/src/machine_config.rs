@@ -76,9 +76,19 @@ pub struct RackPlace {
     /// whether or not something is mounted here.
     #[serde(default)]
     pub optional: bool,
+    /// The machine has no clock of its own here (the campfire): the place plays the
+    /// machine's `AssetClock`, which the game lends it from a running neighbour. Its
+    /// knobs show that clock but do not turn, and with no clock lent the place is empty.
+    #[serde(default)]
+    pub borrowed: bool,
 }
 #[derive(Resource)]
 pub struct Profiles(pub HashMap<String, RackConfiguration>);
+impl From<HashMap<String, RackConfiguration>> for Profiles {
+    fn from(profiles: HashMap<String, RackConfiguration>) -> Self {
+        Self(profiles)
+    }
+}
 impl Default for Profiles {
     fn default() -> Self {
         #[derive(Deserialize)]
@@ -86,11 +96,18 @@ impl Default for Profiles {
             id: String,
             configure: RackConfiguration,
         }
-        let profile: Profile = serde_json::from_str(include_str!(
-            "../../../assets/machines/mudpit_burbler/asset.json"
-        ))
-        .expect("machine configuration profile");
-        Self([(profile.id, profile.configure)].into())
+        [
+            include_str!("../../../assets/machines/mudpit_burbler/asset.json"),
+            include_str!("../../../assets/structures/campfire/asset.json"),
+        ]
+        .into_iter()
+        .map(|json| {
+            let profile: Profile =
+                serde_json::from_str(json).expect("machine configuration profile");
+            (profile.id, profile.configure)
+        })
+        .collect::<HashMap<_, _>>()
+        .into()
     }
 }
 #[derive(Resource, Default)]

@@ -171,28 +171,99 @@ class Campfire(Burbler):
                        "embers": "Embers at scale 1, Fire at 0, Light_fire low"},
             "configure": {
                 "screen": "eurorack_hud",
+                "hud": "hud/rack_frame/rack_frame.glb",
                 "title": "CAMPFIRE",
+                "interact": {
+                    "node": "Interact",
+                    "key": "E",
+                    "range_m": 3.0,
+                    "prompt": "Light the campfire"
+                },
                 "places": [
-                    {"place": "clock", "kind": "clock", "hp": 4, "fixed": True,
-                     "source": "the nearest running clock within clock_reach_m (a burbler, or "
-                               "the stream it feeds); none in reach, no clock"},
-                    {"place": "seq", "kind": "sequencer", "hp": 8, "fixed": False,
-                     "accepts": [{"item": "snail_shell", "module": "snail_sequencer"}]},
-                    {"place": "voice", "kind": "vco", "hp": 8, "fixed": False,
-                     "accepts": [{"item": "square_wave", "module": "square_vco"}]},
-                    {"place": "volume", "kind": "vca", "hp": 4, "fixed": True, "module": "volume"},
+                    {
+                        "place": "clock",
+                        "kind": "clock",
+                        "hp": 8,
+                        "fixed": True,
+                        "module": "burbler_clock",
+                        "borrowed": True
+                    },
+                    {
+                        "place": "seq",
+                        "kind": "sequencer",
+                        "hp": 8,
+                        "fixed": False,
+                        "accepts": [
+                            {
+                                "item": "snail_shell",
+                                "module": "snail_sequencer"
+                            }
+                        ]
+                    },
+                    {
+                        "place": "voice",
+                        "kind": "vco",
+                        "hp": 8,
+                        "fixed": False,
+                        "accepts": [
+                            {
+                                "item": "square_wave",
+                                "module": "square_vco"
+                            }
+                        ]
+                    },
+                    {
+                        "place": "volume",
+                        "kind": "vca",
+                        "hp": 4,
+                        "fixed": True,
+                        "module": "volume"
+                    }
                 ],
-                "normalled_output": {"place": "volume", "port": "out", "to": "the fire"},
+                "normalled_output": {
+                    "place": "volume",
+                    "port": "out"
+                },
+                "hearing_radius_metres": 20.0,
                 "cables": [
-                    {"color": "verdigris", "from": {"place": "clock", "port": "gate"},
-                     "to": {"place": "seq", "port": "clock"}},
-                    {"color": "ochre", "from": {"place": "seq", "port": "gate"},
-                     "to": {"place": "volume", "port": "trig"}},
-                    {"color": "rust", "from": {"place": "voice", "port": "out"},
-                     "to": {"place": "volume", "port": "in"}},
+                    {
+                        "color": "verdigris",
+                        "from": {
+                            "place": "clock",
+                            "port": "gate"
+                        },
+                        "to": {
+                            "place": "seq",
+                            "port": "clock"
+                        },
+                        "hint": "clock GATE to sequencer CLOCK"
+                    },
+                    {
+                        "color": "ochre",
+                        "from": {
+                            "place": "seq",
+                            "port": "gate"
+                        },
+                        "to": {
+                            "place": "volume",
+                            "port": "trig"
+                        },
+                        "hint": "sequencer GATE to volume TRIG"
+                    },
+                    {
+                        "color": "rust",
+                        "from": {
+                            "place": "voice",
+                            "port": "out"
+                        },
+                        "to": {
+                            "place": "volume",
+                            "port": "in"
+                        },
+                        "hint": "VCO OUT to volume IN"
+                    }
                 ],
-                "note": "Planned data for the camp's rack (add-campfire-craft-bench D2); the rack "
-                        "loads it once the nearest-clock place is supported (task 3.2a).",
+                "clock_source": "the nearest running clock within clock_reach_m (a sounding burbler, or a stream it feeds), lent to the borrowed clock place; none in reach, no clock"
             },
             "triangles": {"near": self.triangles(near), "far": self.triangles(far)},
             "licence": "CC0-1.0: generated by tools/blender/create_campfire.py",

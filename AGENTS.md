@@ -84,7 +84,10 @@ the goals hub: long- and short-term goals as the items to make, as Satisfactory'
 milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
 Goals guide; they never end the game. The first chores (short-term goals met by a condition, not items) are
 **Build a heartbeat** (configure the burbler so it sounds), then **Water the tree** (lead
-its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`). WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`), and later
+**Light the fire**: a campfire within 5 m of a sounding burbler or its stream borrows that
+clock (a `borrowed` rack place), and a whole bar with the snail sequencer's gates on 2 and 4
+lights it; it dies to embers when the clock stops (`stubby_game::campfire`). WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it; a second Escape opens the pause menu (Satisfactory's escape menu: Resume Game, Exit to Desktop; `stubby_game::pause_menu`), and Escape closes any open screen. E opens a machine's rack and E again closes it.
 
 ### The opening

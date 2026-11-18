@@ -65,6 +65,17 @@
         "mine": "scrub_oak",
         "level": "budding"
       }
+    },
+    {
+      "id": "light_the_fire",
+      "name": "Light the fire",
+      "description": "Build a campfire near a running burbler, then strike it on the backbeat: 2 and 4.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
+      "condition": {
+        "kind": "fire_lit",
+        "buildable": "campfire"
+      }
     }
   ]
 }

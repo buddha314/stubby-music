@@ -11,8 +11,8 @@ unless the user assigns otherwise. Decisions first (design, Open Questions).
 - [ ] 0.5 First recipes at the bench
 
 ## 1. Rules (rule PR)
-- [ ] 1.1 `fire_lit { buildable }` condition kind in `stubby_recipes::goals`, validated against `buildables.json`; rules-fmt; event-table test
-- [ ] 1.2 Camp row in `buildables.json` (done: `campfire`, 25 reeds until campfire sticks are an item); "Build a campfire" step under "Build a camp" (with `sync-major-minor-milestones`)
+- [x] 1.1 `fire_lit { buildable }` condition kind in `stubby_recipes::goals`, validated against `buildables.json`; rules-fmt; event-table test
+- [x] 1.2 Camp row in `buildables.json` (`campfire`, 25 reeds until campfire sticks are an item); "Light the fire" step (`fire_lit`) under "Build a camp" (with `sync-major-minor-milestones`)
 
 ## 2. Art (Claude)
 - [x] 2.1 `tools/blender/create_campfire.py` → `assets-src/blender/structures/campfire.blend` → `assets/structures/campfire/campfire.glb`: a bundle of fourteen sticks over ash with kindling; `Fire` and `Embers` hidden by start_scale 0; `Light_fire`, `Sparks`, `Interact`; LOD0/LOD1 nodes; previews unlit, burning, embers
@@ -28,8 +28,8 @@ unless the user assigns otherwise. Decisions first (design, Open Questions).
 
 ## 3. Game
 - [x] 3.1 Camp binder (`AssetBinder`), build placement with Q, reed cost (Q opens the build menu, Satisfactory-style: Stream or Campfire; the binder is scenery until the rack, 3.2a). An unlit camp stands by the opening burbler in `scene.bsn`, to show the player what campfire sticks are for
-- [ ] 3.2 Lighting rule in glue from `StepTick` and rack completeness (D3); sparks from the bundle on the heard instant; report `fire_lit`
-- [ ] 3.2a The camp's clock from the nearest running burbler or flowing stream within `clock_reach_m` (D7); the fire dies when that beat stops (D1)
+- [x] 3.2 Lighting rule (`stubby_game::campfire`) in glue from `StepTick` and rack completeness (D3); sparks from the bundle on the heard instant; report `fire_lit`
+- [x] 3.2a The camp's clock from the nearest running burbler or flowing stream within `clock_reach_m` (D7); the fire dies when that beat stops (D1). The rack's clock place is `borrowed`: it plays the lent `AssetClock`, its knob does not turn, and it is empty with nothing in reach
 - [ ] 3.3 Crafting screen in the Craft Bench layout (D4) over `CraftRequest`, with pinning; shared screen mode
 - [ ] 3.4 Fire crackle and light (with `add-rack-and-spatial-audio`)
 - [ ] 3.5 Bounded watchdog review: build, patch, light, craft
