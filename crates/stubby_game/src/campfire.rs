@@ -5,14 +5,15 @@
 //!   `clock_reach_m` (a sounding burbler, or a flowing stream it feeds) becomes the camp's
 //!   `AssetClock`, which the rack's borrowed clock place plays. Every clock is locked to the
 //!   master clock, so the camp is on its neighbour's beats.
-//! - **It lights on the backbeat** (D3): with the rack sounding and the sequencer's gates
-//!   set to the profile's `light_pattern` (2 and 4), one whole bar heard in order lights it.
+//! - **It lights on the backbeat** (D3): with the rack sounding and its targets met (the
+//!   profile's `configure.targets`: the sequencer's gates on 2 and 4 only), one whole bar
+//!   heard in order lights it.
 //!   Each struck step throws sparks from the bundle at the instant it is heard.
 //! - **It burns only while its clock runs** (D1): with no clock lent it dies to embers and
 //!   must be lit again. `fire_lit` is reported once and latches.
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
-use bevy_stubby_rack::rack::{RackEngine, RackKnobs, RackState};
+use bevy_stubby_rack::rack::{RackEngine, RackKnobs, RackState, RackTargets};
 use bevy_stubby_recipes::GoalRequest;
 use std::time::Instant;
 use stubby_core::{AssetClock, AssetPart, MachineVoice, PlacedAsset};
@@ -31,7 +32,6 @@ impl Plugin for CampfirePlugin {
         #[derive(serde::Deserialize)]
         struct Profile {
             clock_reach_m: f32,
-            light_pattern: Vec<bool>,
         }
         let profile: Profile = serde_json::from_str(include_str!(
             "../../../assets/structures/campfire/asset.json"
@@ -39,7 +39,6 @@ impl Plugin for CampfirePlugin {
         .expect("campfire profile");
         app.insert_resource(CampProfile {
             reach_m: profile.clock_reach_m,
-            pattern: profile.light_pattern,
         })
         .add_systems(Startup, spark_assets)
         .add_systems(
@@ -54,7 +53,6 @@ impl Plugin for CampfirePlugin {
 #[derive(Resource)]
 struct CampProfile {
     reach_m: f32,
-    pattern: Vec<bool>,
 }
 
 /// A camp's fire.
@@ -170,16 +168,17 @@ fn lend_clocks(
     }
 }
 
-/// Heard sequencer steps: strike sparks on the pattern's steps and light on a whole bar.
+/// Heard sequencer steps: strike sparks on the steps whose gate is on, and light on a
+/// whole bar heard with the rack's targets met.
 #[allow(clippy::type_complexity)]
 fn strike(
     mut commands: Commands,
-    profile: Res<CampProfile>,
     mut ticks: MessageReader<bevy_stubby_audio::StepTick>,
     mut camps: Query<(
         Entity,
         &RackEngine,
         &RackKnobs,
+        &RackTargets,
         &mut Bar,
         &mut Fire,
         Has<AssetClock>,
@@ -188,9 +187,9 @@ fn strike(
     mut goals: MessageWriter<GoalRequest>,
     mut reported: Local<bool>,
 ) {
-    let steps = profile.pattern.len() as u8;
+    let steps = stubby_audio::SEQUENCER_STEPS as u8;
     for tick in ticks.read() {
-        for (camp, engine, knobs, mut bar, mut fire, clocked) in &mut camps {
+        for (camp, engine, knobs, targets, mut bar, mut fire, clocked) in &mut camps {
             if engine.place_of(tick.module) != Some("seq") {
                 continue;
             }
@@ -200,14 +199,8 @@ fn strike(
                     .get(&("seq".to_owned(), format!("gate_{}", step + 1)))
                     .is_some_and(|value| *value >= 0.5)
             };
-            let ready = engine.sounding
-                && clocked
-                && profile
-                    .pattern
-                    .iter()
-                    .enumerate()
-                    .all(|(step, on)| gate(step) == *on);
-            if engine.sounding && gate(usize::from(tick.step) % profile.pattern.len().max(1)) {
+            let ready = engine.sounding && clocked && targets.met;
+            if engine.sounding && gate(usize::from(tick.step)) {
                 pending.push((camp, tick.at.unwrap_or_else(Instant::now)));
             }
             if bar.0.hear(tick.step, steps, ready) && *fire != Fire::Burning {

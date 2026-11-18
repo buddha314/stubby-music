@@ -159,6 +159,14 @@ impl RackEngine {
     }
 }
 
+/// Whether a rack's knobs meet every target setting its profile lists
+/// (`RackConfiguration::targets`). With no targets it is met. The game's rule for a
+/// machine reads it, beside `RackEngine::sounding`.
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RackTargets {
+    pub met: bool,
+}
+
 /// Knob values the player has set on a rack, by (place, param). A knob not yet turned
 /// is at its starting value (`initial_knob`); the clock's BPM lives in `AssetClock`.
 #[derive(Component, Default)]
@@ -228,6 +236,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
                 (
                     attach,
                     apply_knobs,
+                    check_targets,
                     show_knobs,
                     mount_buttons::<S>,
                     number_keys::<S>,
@@ -381,6 +390,7 @@ fn attach(
                 },
                 RackEngine::default(),
                 RackKnobs::default(),
+                RackTargets::default(),
             ));
         }
     }
@@ -427,6 +437,68 @@ fn patch_engine(
         if engine.sounding && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });
+        }
+    }
+}
+
+/// Whether each rack's knobs meet its profile's targets. A target's place must hold a
+/// module (a borrowed clock with nothing lent holds none), and an unturned knob is at its
+/// starting value.
+fn check_targets(
+    profiles: Res<Profiles>,
+    defaults: Res<KnobDefaults>,
+    mut racks: Query<(
+        &PlacedAsset,
+        &RackState,
+        &RackKnobs,
+        Option<&AssetClock>,
+        &mut RackTargets,
+    )>,
+    mut reported: Local<std::collections::HashSet<String>>,
+) {
+    for (asset, state, knobs, clock, mut targets) in &mut racks {
+        let Some(config) = profiles.0.get(&asset.asset) else {
+            continue;
+        };
+        let mut modules = modules(config, state);
+        if clock.is_none() {
+            for place in config.places.iter().filter(|p| p.borrowed) {
+                modules.remove(&place.place);
+            }
+        }
+        let missed: Vec<String> = config
+            .targets
+            .iter()
+            .filter_map(|target| {
+                let at = format!("{}.{}", target.place, target.knob);
+                let Some(module) = modules.get(&target.place) else {
+                    return Some(format!("{at} (empty place)"));
+                };
+                let value = knobs
+                    .0
+                    .get(&(target.place.clone(), target.knob.clone()))
+                    .copied()
+                    .or_else(|| initial_knob(module, &target.knob, clock, &defaults));
+                match value {
+                    Some(value) if target.met(value) => None,
+                    Some(value) => Some(format!("{at} at {value}")),
+                    None => Some(at),
+                }
+            })
+            .collect();
+        let next = RackTargets {
+            met: missed.is_empty(),
+        };
+        if *targets != next || reported.insert(asset.instance.clone()) {
+            // For tuning machines: which targets a rack misses, each time that changes.
+            if config.targets.is_empty() {
+                // Nothing to report.
+            } else if next.met {
+                info!("{}: every target met", asset.instance);
+            } else {
+                info!("{}: targets missed: {}", asset.instance, missed.join(", "));
+            }
+            *targets = next;
         }
     }
 }
@@ -2472,6 +2544,14 @@ mod tests {
         assert_eq!(state.mounted["seq"], "snail_sequencer");
         assert!(!state.mount(&mut two, "seq", "snail_shell", "snail_sequencer"));
         assert_eq!(two.0, 1, "an occupied place takes nothing");
+    }
+
+    #[test]
+    fn shipped_machine_targets_name_real_knobs() {
+        for (machine, config) in &Profiles::default().0 {
+            let problems = config.target_problems();
+            assert!(problems.is_empty(), "{machine}: {problems:#?}");
+        }
     }
 
     #[test]

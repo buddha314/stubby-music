@@ -14,7 +14,7 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 ## 1. Rack settings
 - [x] 1.1 `quantize: "semitone"` on module knobs; `stubby_rack::Knob::snap` to the pitch grid; tests
 - [x] 1.2 Note-name readout on quantized knobs (`bevy_stubby_rack`: VCV-style knob readout beside the pointer; whole-click turning; starting values snap, so a bug's pitch lands on its nearest note)
-- [ ] 1.3 Profile `targets` and a `targets_met` check; move the campfire's `light_pattern` onto it
+- [x] 1.3 Profile `targets` and a `targets_met` check; move the campfire's `light_pattern` onto it (`configure.targets`, `RackTargets`, a log line naming missed targets when they change)
 
 ## 2. Engine modules (audio stream)
 - [ ] 2.1 Triangle and saw VCOs (fundsp), module data for `triangle_vco` and `saw_vco`

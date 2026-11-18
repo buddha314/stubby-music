@@ -59,8 +59,13 @@ engine still takes Hz. The sketch's VCOs land on C2 and C4. The cutoff is quanti
 523.25 Hz (user, 2026-11-18).
 
 ### D3. Target settings
-A machine profile may add `targets`: required knob values per place (a note, a cutoff)
-and, implicitly, its comb patch. The game's rule for the machine (here, cleaning) runs
+A machine profile may add `configure.targets`: a knob in a place at a `note` (`"C2"`, for a
+semitone knob) or a `value` (`1` for a gate on). Each rack publishes `RackTargets { met }`;
+the patch itself is checked separately, by `RackEngine::sounding`. A target on an empty
+place is missed, and an unturned knob counts at its starting value. Each time a rack's
+state changes, the log names the targets it misses (`campfire-…: targets missed:
+seq.gate_4 at 0`), for tuning. A test checks that every shipped profile's targets name a
+real place and knob, and that their values are inside the knob's travel. The game's rule for the machine (here, cleaning) runs
 only while the rack sounds and every target is met. Quantized knobs make a target an
 exact match, so there is no tolerance to tune. The campfire's `light_pattern` is the same
 idea for step gates. Both should move to `targets` once this lands.

@@ -566,6 +566,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   `quantize: "semitone"` in a module's knob data (equal-tempered notes; the square VCO's
   frequency). Such knobs turn by whole clicks, start on the grid (a bug's pitch lands on
   its nearest note), and the knob's readout beside the pointer names the note (`C4`).
+- **Machines can require settings**: `configure.targets` in a machine's profile lists knobs
+  at a `note` or a `value` (the campfire: gates on 2 and 4 only). The rack publishes
+  `RackTargets { met }`, the game's rule for the machine reads it beside
+  `RackEngine::sounding`, and the log names the missed targets whenever that changes.
+  Tune targets in the profile; they are compiled in, so rebuild after editing.
 - **Every machine gets a rack, and all racks share one implementation** (the
   `bevy_stubby_rack` crate): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the

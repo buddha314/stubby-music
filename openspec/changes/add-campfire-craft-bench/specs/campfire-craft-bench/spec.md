@@ -28,7 +28,7 @@ a place for a voice (accepting `square_wave`) and a place for a sequencer (accep
 
 ### Requirement: A backbeat lights the fire
 The fire SHALL catch after one full bar, timed by the audio clock, in which the
-sequencer's gate struck the spark voice on the steps the camp's `light_pattern` sets
+sequencer's gate struck the spark voice on the steps the camp's targets set
 (beats 2 and 4) and on no others. Each strike SHALL throw sparks from the bundle at the
 strike's heard instant.
 

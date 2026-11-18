@@ -290,3 +290,25 @@ fn a_semitone_knob_clicks_to_notes_inside_its_travel() {
     assert_eq!(note_name(knob.nudge(261.63, -12)), "C3");
     assert!(knob.nudge(19000., 24) <= 20000., "stays inside the travel");
 }
+
+#[test]
+fn targets_match_notes_and_values() {
+    let note = |n: &str| Target {
+        place: "vco_low".into(),
+        knob: "freq".into(),
+        note: Some(n.into()),
+        value: None,
+    };
+    assert!(note("C2").met(65.406));
+    assert!(!note("C2").met(69.296), "C#2 is not C2");
+    assert_eq!(note("C2").problem(), None);
+    assert!(note("H2").problem().is_some());
+    let gate = Target {
+        place: "seq".into(),
+        knob: "gate_2".into(),
+        note: None,
+        value: Some(1.),
+    };
+    assert!(gate.met(1.) && !gate.met(0.));
+    assert!((note_hz("A4").unwrap() - 440.).abs() < 1e-3);
+}
