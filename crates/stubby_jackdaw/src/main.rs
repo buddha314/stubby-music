@@ -16,6 +16,8 @@ fn main() -> AppExit {
         }
     };
     let seed = config.seed_value().expect("validated world seed");
+    // Dev builds bring up the rules designer beside the game (add-machine-rules D4).
+    stubby_jackdaw::designer::launch();
     let grotto_audio_review = std::env::args().any(|arg| arg.starts_with("--grotto-audio-review="));
     let legacy_review = std::env::args().any(|arg| arg.starts_with("--replenishment-review="));
     let mut app = App::new();

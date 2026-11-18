@@ -37,6 +37,7 @@ impl Plugin for GluePlugin {
                 attach_air_cleaners.after(stubby_core::PrefabBinding),
                 hide_collected_finds.after(stubby_core::PrefabBinding),
                 report_configured_machines.before(bevy_stubby_recipes::RecipesSystems),
+                machine_targets.before(stubby_core::MachineInteractionSet),
             ),
         )
         .add_systems(
@@ -44,6 +45,42 @@ impl Plugin for GluePlugin {
             publish_acoustic_scene.after(TransformSystems::Propagate),
         );
     }
+}
+
+/// A machine's targets are rules (`machines.json`, add-machine-rules): copy them into the
+/// rack's profiles whenever the rules load or reload, so a saved edit reaches a running
+/// game. A machine with no row has no targets.
+fn machine_targets(
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
+    profiles: Option<ResMut<Profiles>>,
+) {
+    let (Some(rules), Some(mut profiles)) = (rules, profiles) else {
+        return;
+    };
+    if !rules.is_changed() && !profiles.is_added() {
+        return;
+    }
+    for (machine, config) in profiles.0.iter_mut() {
+        config.targets = rack_targets(rules.of(machine));
+    }
+}
+
+/// A machine's rule targets as the rack reads them.
+pub(crate) fn rack_targets(
+    row: Option<&stubby_recipes::machines::MachineDefinition>,
+) -> Vec<stubby_rack::Target> {
+    row.map(|row| {
+        row.targets
+            .iter()
+            .map(|t| stubby_rack::Target {
+                place: t.place.clone(),
+                knob: t.knob.clone(),
+                note: t.note.clone(),
+                value: t.value,
+            })
+            .collect()
+    })
+    .unwrap_or_default()
 }
 
 /// A rack completed is the `machine_configured` goal condition for that machine's mine
@@ -949,5 +986,26 @@ mod reload_regressions {
             *app.world().get::<Visibility>(bug).unwrap(),
             Visibility::Visible
         );
+    }
+}
+
+#[cfg(test)]
+mod machine_rule_tests {
+    /// Every machine row's targets name a real place and knob in that machine's rack,
+    /// within the knob's travel (add-machine-rules D1: checked where both are known).
+    #[test]
+    fn machine_targets_name_real_rack_knobs() {
+        let rules = stubby_recipes::shipped_rules().unwrap();
+        let profiles = super::Profiles::default();
+        for row in &rules.machines {
+            let mut config = profiles
+                .0
+                .get(&row.machine)
+                .unwrap_or_else(|| panic!("{}: no machine `{}`", row.id, row.machine))
+                .clone();
+            config.targets = super::rack_targets(Some(row));
+            let problems = config.target_problems();
+            assert!(problems.is_empty(), "{}: {problems:#?}", row.id);
+        }
     }
 }

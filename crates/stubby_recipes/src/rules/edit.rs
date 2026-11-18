@@ -30,9 +30,10 @@ impl Registry {
             Self::Buildables => "buildables",
             Self::Goals => "goals",
             Self::Air => "air",
+            Self::Machines => "machines",
         }
     }
-    pub const ALL: [Registry; 7] = [
+    pub const ALL: [Registry; 8] = [
         Self::Items,
         Self::Resources,
         Self::Mines,
@@ -40,6 +41,7 @@ impl Registry {
         Self::Buildables,
         Self::Goals,
         Self::Air,
+        Self::Machines,
     ];
 }
 
@@ -530,6 +532,7 @@ fn files_of(texts: &[String]) -> RulesFiles<'_> {
         goals: &texts[6],
         start: &texts[7],
         air: &texts[8],
+        machines: &texts[9],
     }
 }
 

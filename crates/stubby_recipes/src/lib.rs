@@ -2,6 +2,7 @@
 pub mod air;
 pub mod goals;
 pub mod growth;
+pub mod machines;
 pub mod rules;
 mod source;
 pub use goals::{

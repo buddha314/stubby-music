@@ -295,8 +295,8 @@ add a Bevy dependency to the core, not even optional; Bevy versions live only in
 plugin. Use community crates around it (serde, schemars, and as planned
 `bevy_common_assets`, `moonshine-save`).
 
-**Designers use the rules designer** (`cargo run -p stubby_rules_server`, then
-http://127.0.0.1:7878/; `add-crafting-designer`): schema-driven forms over the editing
+**Designers use the rules designer** (dev builds of the game start it; or `cargo run -p
+stubby_rules_server`, then http://127.0.0.1:7878/; `add-crafting-designer`): schema-driven forms over the editing
 model, live problems, undo, canonical save, and a live panel reading the running game over
 Bevy's remote protocol (dev builds serve it on 127.0.0.1:15702). Dev builds of the game
 reload `assets/recipes/` within a second of a save.
@@ -566,11 +566,17 @@ equivalent of an iron ore node, so the player does not pick it up.
   `quantize: "semitone"` in a module's knob data (equal-tempered notes; the square VCO's
   frequency). Such knobs turn by whole clicks, start on the grid (a bug's pitch lands on
   its nearest note), and the knob's readout beside the pointer names the note (`C4`).
-- **Machines can require settings**: `configure.targets` in a machine's profile lists knobs
-  at a `note` or a `value` (the campfire: gates on 2 and 4 only). The rack publishes
-  `RackTargets { met }`, the game's rule for the machine reads it beside
-  `RackEngine::sounding`, and the log names the missed targets whenever that changes.
-  Tune targets in the profile; they are compiled in, so rebuild after editing.
+- **Machines can require settings**: a machine's `targets` (knobs at a `note` or a
+  `value`; the campfire: gates on 2 and 4 only) and its `clock_reach_m` are **rules**, rows
+  in `assets/recipes/machines.json` (`add-machine-rules`), not profile data. The glue copies
+  them into the rack's profiles on every rules reload; the rack publishes `RackTargets
+  { met, missed, sounding }` (reflected); the game's rule for the machine reads it. Tune
+  them in the rules designer: its **Machines** panel shows each placed machine live, and a
+  save reaches the running game within a second. The log names missed targets too.
+- **Dev builds start the rules designer** (`stubby_game::designer`): running the game
+  starts `cargo run -p stubby_rules_server` and opens http://127.0.0.1:7878/, unless one
+  answers there already or `STUBBY_NO_DESIGNER=1` (bounded runs set it). It outlives the
+  game; its output is `target/rules_designer.log`.
 - **Every machine gets a rack, and all racks share one implementation** (the
   `bevy_stubby_rack` crate): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the

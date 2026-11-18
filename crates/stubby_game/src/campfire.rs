@@ -2,7 +2,7 @@
 //! rack, the audio clock, the streams and the goals, so it lives in the game.
 //!
 //! - **Its clock is lent** (D7): the nearest running clock within the profile's
-//!   `clock_reach_m` (a sounding burbler, or a flowing stream it feeds) becomes the camp's
+//!   `clock_reach_m` (rules: `machines.json`; a sounding burbler, or a flowing stream it feeds) becomes the camp's
 //!   `AssetClock`, which the rack's borrowed clock place plays. Every clock is locked to the
 //!   master clock, so the camp is on its neighbour's beats.
 //! - **It lights on the backbeat** (D3): with the rack sounding and its targets met (the
@@ -29,30 +29,13 @@ const SPARK_LIFE_S: f32 = 0.7;
 pub struct CampfirePlugin;
 impl Plugin for CampfirePlugin {
     fn build(&self, app: &mut App) {
-        #[derive(serde::Deserialize)]
-        struct Profile {
-            clock_reach_m: f32,
-        }
-        let profile: Profile = serde_json::from_str(include_str!(
-            "../../../assets/structures/campfire/asset.json"
-        ))
-        .expect("campfire profile");
-        app.insert_resource(CampProfile {
-            reach_m: profile.clock_reach_m,
-        })
-        .add_systems(Startup, spark_assets)
-        .add_systems(
+        app.add_systems(Startup, spark_assets).add_systems(
             Update,
             (lend_clocks, strike, burn, show_fire, fly_sparks)
                 .chain()
                 .after(stubby_core::MachineInteractionSet),
         );
     }
-}
-
-#[derive(Resource)]
-struct CampProfile {
-    reach_m: f32,
 }
 
 /// A camp's fire.
@@ -98,7 +81,7 @@ impl Backbeat {
 #[allow(clippy::type_complexity)]
 fn lend_clocks(
     mut commands: Commands,
-    profile: Res<CampProfile>,
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
     new: Query<(Entity, &PlacedAsset), (With<RackState>, Without<Fire>)>,
     mut camps: Query<
         (
@@ -114,6 +97,11 @@ fn lend_clocks(
     names: Query<&PlacedAsset>,
     streams: Query<&LaidStream>,
 ) {
+    // How far a camp reaches for a clock is a rule (add-machine-rules); with no row, none.
+    let reach_m = rules
+        .as_ref()
+        .and_then(|rules| rules.of(CAMPFIRE)?.clock_reach_m)
+        .unwrap_or(0.);
     // New camps get a fire to keep.
     for (camp, asset) in &new {
         if asset.asset == CAMPFIRE {
@@ -128,7 +116,7 @@ fn lend_clocks(
         let flat = |p: Vec3| Vec2::new(p.x - at.x, p.z - at.z).length();
         let mut best: Option<(f32, AssetClock)> = None;
         let mut consider = |distance: f32, clock: AssetClock| {
-            if distance <= profile.reach_m && best.is_none_or(|(d, _)| distance < d) {
+            if distance <= reach_m && best.is_none_or(|(d, _)| distance < d) {
                 best = Some((distance, clock));
             }
         };

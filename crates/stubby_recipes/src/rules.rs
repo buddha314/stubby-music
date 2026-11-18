@@ -27,6 +27,7 @@ pub const BUILDABLES: &str = "buildables.json";
 pub const MIGRATIONS: &str = "migrations.json";
 pub use crate::air::AIR;
 pub use crate::goals::GOALS;
+pub use crate::machines::MACHINES;
 pub const START: &str = "start.json";
 pub const IDS_LOCK: &str = "ids.lock";
 
@@ -98,6 +99,7 @@ rules_file!(BuildablesFile, buildables, BuildableDefinition);
 rules_file!(MigrationsFile, migrations, Migration);
 rules_file!(GoalsFile, goals, crate::goals::GoalDefinition);
 rules_file!(AirFile, air, crate::air::AirCleanerDefinition);
+rules_file!(MachinesFile, machines, crate::machines::MachineDefinition);
 // What a new player starts with.
 rules_file!(StartFile, inventory, Stack);
 
@@ -126,6 +128,7 @@ pub enum Registry {
     Buildables,
     Goals,
     Air,
+    Machines,
 }
 impl Registry {
     /// The rules file holding this registry.
@@ -138,6 +141,7 @@ impl Registry {
             Self::Buildables => BUILDABLES,
             Self::Goals => GOALS,
             Self::Air => AIR,
+            Self::Machines => MACHINES,
         }
     }
 }
@@ -155,6 +159,7 @@ pub struct RulesFiles<'a> {
     pub goals: &'a str,
     pub start: &'a str,
     pub air: &'a str,
+    pub machines: &'a str,
 }
 
 /// The rules shipped with the game, embedded at build time.
@@ -169,6 +174,7 @@ pub fn shipped_files() -> RulesFiles<'static> {
         goals: include_str!("../../../assets/recipes/goals.json"),
         start: include_str!("../../../assets/recipes/start.json"),
         air: include_str!("../../../assets/recipes/air.json"),
+        machines: include_str!("../../../assets/recipes/machines.json"),
     }
 }
 
@@ -182,6 +188,8 @@ pub struct Rules {
     pub start: Vec<Stack>,
     /// Foliage that cleans the air (clean-air-by-foliage).
     pub air: Vec<crate::air::AirCleanerDefinition>,
+    /// Machine settings (add-machine-rules).
+    pub machines: Vec<crate::machines::MachineDefinition>,
 }
 impl Rules {
     /// Parse every file strictly and validate the set. Reports every problem found.
@@ -199,6 +207,7 @@ impl Rules {
         let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
         let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
         let air = parse::<AirFile>(AIR, files.air, "air", &mut errors);
+        let machines = parse::<MachinesFile>(MACHINES, files.machines, "machines", &mut errors);
         let (
             Some(items),
             Some(resources),
@@ -209,8 +218,9 @@ impl Rules {
             Some(goals),
             Some(start),
             Some(air),
+            Some(machines),
         ) = (
-            items, resources, mines, recipes, buildables, migrations, goals, start, air,
+            items, resources, mines, recipes, buildables, migrations, goals, start, air, machines,
         )
         else {
             return Err(RulesErrors(errors));
@@ -225,6 +235,7 @@ impl Rules {
             (GOALS, goals.format),
             (START, start.format),
             (AIR, air.format),
+            (MACHINES, machines.format),
         ] {
             let reads = if file == GOALS {
                 crate::goals::GOALS_FORMAT
@@ -255,10 +266,12 @@ impl Rules {
             &goals.goals,
         ));
         errors.extend(crate::air::validate_air(&air.air));
+        errors.extend(crate::machines::validate_machines(&machines.machines));
         errors.extend(validate_migrations(
             &definition,
             &goals.goals,
             &air.air,
+            &machines.machines,
             &migrations.migrations,
         ));
         for stack in &start.inventory {
@@ -281,6 +294,7 @@ impl Rules {
                 goals: goals.goals,
                 start: start.inventory,
                 air: air.air,
+                machines: machines.machines,
             })
         } else {
             Err(RulesErrors(errors))
@@ -293,13 +307,14 @@ impl Rules {
             .map(|(id, _)| id)
             .chain(self.goals.iter().map(|g| g.id.clone()))
             .chain(self.air.iter().map(|a| a.id.clone()))
+            .chain(self.machines.iter().map(|m| m.id.clone()))
             .collect()
     }
 }
 
 /// Every rules file, in `RulesFiles` order.
-pub const FILES: [&str; 9] = [
-    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START, AIR,
+pub const FILES: [&str; 10] = [
+    ITEMS, RESOURCES, MINES, RECIPES, BUILDABLES, MIGRATIONS, GOALS, START, AIR, MACHINES,
 ];
 
 /// Load and validate the rules from a directory on disk (dev builds reload the game's
@@ -329,6 +344,7 @@ pub fn load_dir(dir: &std::path::Path) -> Result<Rules, RulesErrors> {
         goals: &texts[6],
         start: &texts[7],
         air: &texts[8],
+        machines: &texts[9],
     })
 }
 
@@ -602,11 +618,13 @@ pub fn validate_migrations(
     definition: &CatalogDefinition,
     goals: &[crate::goals::GoalDefinition],
     air: &[crate::air::AirCleanerDefinition],
+    machines: &[crate::machines::MachineDefinition],
     migrations: &[Migration],
 ) -> Vec<RulesError> {
     let mut current: BTreeSet<(String, &str)> = ids(definition).into_iter().collect();
     current.extend(goals.iter().map(|g| (g.id.clone(), GOALS)));
     current.extend(air.iter().map(|a| (a.id.clone(), AIR)));
+    current.extend(machines.iter().map(|m| (m.id.clone(), MACHINES)));
     let mut errors = Vec::new();
     let mut seen = BTreeSet::new();
     for migration in migrations {
@@ -718,6 +736,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     let goals = parse::<GoalsFile>(GOALS, files.goals, "goals", &mut errors);
     let start = parse::<StartFile>(START, files.start, "inventory", &mut errors);
     let air = parse::<AirFile>(AIR, files.air, "air", &mut errors);
+    let machines = parse::<MachinesFile>(MACHINES, files.machines, "machines", &mut errors);
     let (
         Some(mut items),
         Some(mut resources),
@@ -728,8 +747,9 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         Some(mut goals),
         Some(mut start),
         Some(mut air),
+        Some(mut machines),
     ) = (
-        items, resources, mines, recipes, buildables, migrations, goals, start, air,
+        items, resources, mines, recipes, buildables, migrations, goals, start, air, machines,
     )
     else {
         return Err(RulesErrors(errors));
@@ -751,6 +771,8 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
     start.schema = schema_ref(START);
     air.schema = schema_ref(AIR);
     air.air.sort_by(|a, b| a.id.cmp(&b.id));
+    machines.schema = schema_ref(MACHINES);
+    machines.machines.sort_by(|a, b| a.id.cmp(&b.id));
     Ok(vec![
         (ITEMS, pretty(&items)),
         (RESOURCES, pretty(&resources)),
@@ -761,6 +783,7 @@ pub fn canonical_files(files: &RulesFiles) -> Result<Vec<(&'static str, String)>
         (GOALS, pretty(&goals)),
         (START, pretty(&start)),
         (AIR, pretty(&air)),
+        (MACHINES, pretty(&machines)),
     ])
 }
 
@@ -777,6 +800,7 @@ pub fn schemas() -> Vec<(String, String)> {
         (GOALS, schemars::schema_for!(GoalsFile)),
         (START, schemars::schema_for!(StartFile)),
         (AIR, schemars::schema_for!(AirFile)),
+        (MACHINES, schemars::schema_for!(MachinesFile)),
     ] {
         out.push((schema_ref(file).unwrap_or_default(), pretty(&schema)));
     }
@@ -802,6 +826,7 @@ mod tests {
             "goals" => files.goals = text,
             "start" => files.start = text,
             "air" => files.air = text,
+            "machines" => files.machines = text,
             _ => files.migrations = text,
         }
         files

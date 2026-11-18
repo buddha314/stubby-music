@@ -159,12 +159,18 @@ impl RackEngine {
     }
 }
 
-/// Whether a rack's knobs meet every target setting its profile lists
-/// (`RackConfiguration::targets`). With no targets it is met. The game's rule for a
-/// machine reads it, beside `RackEngine::sounding`.
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
+/// Whether a rack's knobs meet every target setting its machine has
+/// (`RackConfiguration::targets`, from the rules). With no targets it is met. The game's
+/// rule for a machine reads it, beside `RackEngine::sounding`. Reflected, so the rules
+/// designer's live panel shows it (add-machine-rules).
+#[derive(Component, Reflect, Default, Debug, Clone, PartialEq)]
+#[reflect(Component, Default)]
 pub struct RackTargets {
     pub met: bool,
+    /// Each missed target and where its knob is: `seq.gate_4 at 0`.
+    pub missed: Vec<String>,
+    /// Whether the rack's voice sounds (every needed cable patched, a clock lent).
+    pub sounding: bool,
 }
 
 /// Knob values the player has set on a rack, by (place, param). A knob not yet turned
@@ -205,6 +211,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
         app.add_plugins(stubby_ui::ItemTooltipPlugin)
             .init_resource::<ItemNames>()
             .init_resource::<KnobDefaults>()
+            .register_type::<RackTargets>()
             .init_resource::<PatchSelection>()
             .init_resource::<HeldCable>()
             .add_observer(take_cable)
@@ -451,12 +458,13 @@ fn check_targets(
         &PlacedAsset,
         &RackState,
         &RackKnobs,
+        &RackEngine,
         Option<&AssetClock>,
         &mut RackTargets,
     )>,
     mut reported: Local<std::collections::HashSet<String>>,
 ) {
-    for (asset, state, knobs, clock, mut targets) in &mut racks {
+    for (asset, state, knobs, engine, clock, mut targets) in &mut racks {
         let Some(config) = profiles.0.get(&asset.asset) else {
             continue;
         };
@@ -488,16 +496,25 @@ fn check_targets(
             .collect();
         let next = RackTargets {
             met: missed.is_empty(),
+            missed,
+            sounding: engine.sounding,
         };
-        if *targets != next || reported.insert(asset.instance.clone()) {
+        let logged = next.met != targets.met || next.missed != targets.missed;
+        if logged || reported.insert(asset.instance.clone()) {
             // For tuning machines: which targets a rack misses, each time that changes.
             if config.targets.is_empty() {
                 // Nothing to report.
             } else if next.met {
                 info!("{}: every target met", asset.instance);
             } else {
-                info!("{}: targets missed: {}", asset.instance, missed.join(", "));
+                info!(
+                    "{}: targets missed: {}",
+                    asset.instance,
+                    next.missed.join(", ")
+                );
             }
+        }
+        if *targets != next {
             *targets = next;
         }
     }
@@ -2544,14 +2561,6 @@ mod tests {
         assert_eq!(state.mounted["seq"], "snail_sequencer");
         assert!(!state.mount(&mut two, "seq", "snail_shell", "snail_sequencer"));
         assert_eq!(two.0, 1, "an occupied place takes nothing");
-    }
-
-    #[test]
-    fn shipped_machine_targets_name_real_knobs() {
-        for (machine, config) in &Profiles::default().0 {
-            let problems = config.target_problems();
-            assert!(problems.is_empty(), "{machine}: {problems:#?}");
-        }
     }
 
     #[test]

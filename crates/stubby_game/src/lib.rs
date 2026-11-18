@@ -12,6 +12,7 @@ pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_g
 pub use stubby_player::{controls, hand, interaction};
 mod build;
 mod campfire;
+pub mod designer;
 mod hud;
 mod inventory_screen;
 mod pause_menu;

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MachinesFile",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Points editors at the generated JSON Schema, for autocomplete.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "format": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "machines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MachineDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "machines"
+  ],
+  "$defs": {
+    "MachineDefinition": {
+      "type": "object",
+      "properties": {
+        "clock_reach_m": {
+          "description": "How far, in metres, a machine with a borrowed clock reaches for a running one.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
+        "id": {
+          "type": "string"
+        },
+        "machine": {
+          "description": "The machine kind these settings are for: its placed asset ID.",
+          "type": "string"
+        },
+        "targets": {
+          "description": "The knobs its work needs, all at once (the campfire lights only with these met).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MachineTarget"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "machine"
+      ]
+    },
+    "MachineTarget": {
+      "description": "A knob a machine's work needs set: in a rack place, at a note (`C2`, for a semitone\nknob) or at a value (`1`, a step gate on). Give one of `note` or `value`.",
+      "type": "object",
+      "properties": {
+        "knob": {
+          "description": "The knob, as the module's data names it (`gate_2`, `freq`).",
+          "type": "string"
+        },
+        "note": {
+          "description": "A note with its octave: `C4`, `F#2`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "place": {
+          "description": "The rack place (`seq`, `vco_low`), as the machine's profile names it.",
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "place",
+        "knob"
+      ]
+    }
+  }
+}
