@@ -8,8 +8,10 @@ four-whorl glyph tops the panel.
 
 Reproduce:  ~/.local/bin/blender -b --factory-startup -P tools/blender/create_snail_sequencer.py
 
-8HP. Game-facing nodes: `Knob_cv_<n>`, `Button_gate_<n>` (lit: light `step_<n>`),
-`Port_clock`, `Port_reset`, `Port_gate`, `Port_cv` (see module_kit.py).
+8HP. Game-facing nodes: `Knob_cv_<n>`, `Button_gate_<n>` (lit while step n's gate is on:
+light `step_<n>`), `Light_playhead_<n>` (a tiny red light beside each key, lit while the
+sequencer plays that step; user, 2026-11-18), `Port_clock`, `Port_reset`, `Port_gate`,
+`Port_cv` (see module_kit.py).
 """
 from pathlib import Path
 import math
@@ -23,6 +25,7 @@ STEP_TOP = 0.98          # z of step 1
 STEP_PITCH = 0.15        # z between steps
 KNOB_X = -0.085
 BUTTON_X = 0.105
+PLAYHEAD_X = 0.165       # the step's red playhead light, right of its key
 CV_MAX = 2.0             # volts: two octaves on V/OCT, in semitone steps (the engine snaps)
 
 
@@ -39,6 +42,8 @@ def build():
     kit = ModuleKit("SnailSequencer", "snail_sequencer", steps=STEPS)
     glyph_mat = kit.material("Glyph", (0.2, 0.08, 0.02), roughness=0.4, emission=AMBER, strength=4.0)
     step_mat = kit.material("StepKey", (0.32, 0.16, 0.05), roughness=0.35, emission=AMBER, strength=6.0)
+    red = (1.0, 0.12, 0.06)
+    playhead_mat = kit.material("Playhead", (0.25, 0.03, 0.02), roughness=0.4, emission=red, strength=8.0)
 
     kit.case()
     kit.title("SNAIL")
@@ -50,10 +55,13 @@ def build():
         kit.knob(f"cv_{n}", z, "", x=KNOB_X, radius=0.06)
         kit.label(f"Step{n}Label", str(n), (0.0, PANEL_FRONT - 0.0005, z), size=0.03)
         kit.button(f"gate_{n}", f"step_{n}", BUTTON_X, z, step_mat)
+        kit.soft_light(f"playhead_{n}", (PLAYHEAD_X, PANEL_FRONT - 0.004, z), playhead_mat,
+                       peak_strength=8.0, core_r=0.007, halo_r=0.012)
         params.append({"node": f"Knob_cv_{n}", "param": f"cv_{n}", "min": 0.0, "max": CV_MAX,
                        "default": 0.0, "taper": "linear", "rotation_degrees": 300.0})
         buttons.append({"node": f"Button_gate_{n}", "param": f"gate_{n}", "light": f"step_{n}"})
         lights.append({"node": f"Button_gate_{n}", "light": f"step_{n}", "rest_strength": 0.0, "peak_strength": 6.0})
+        lights.append({"node": f"Light_playhead_{n}", "light": f"playhead_{n}", "rest_strength": 0.0, "peak_strength": 8.0})
 
     kit.jack("clock", "in", 0.36, "CLOCK", x=-0.095)
     kit.jack("reset", "in", 0.36, "RESET", x=0.095)
