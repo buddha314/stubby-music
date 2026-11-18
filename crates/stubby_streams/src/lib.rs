@@ -227,9 +227,18 @@ impl LaidStream {
 
     /// The horizontal distance from `at` to the nearest point of this stream.
     pub fn horizontal_distance(&self, at: Vec3) -> f32 {
+        let nearest = self.nearest_point(at);
+        Vec2::new(nearest.x - at.x, nearest.z - at.z).length()
+    }
+
+    /// The point of this stream (on its centre line) horizontally nearest `at`.
+    pub fn nearest_point(&self, at: Vec3) -> Vec3 {
         self.samples(0.25)
-            .map(|point| Vec2::new(point.x - at.x, point.z - at.z).length())
-            .fold(f32::MAX, f32::min)
+            .min_by(|a, b| {
+                let d = |p: &Vec3| Vec2::new(p.x - at.x, p.z - at.z).length_squared();
+                d(a).total_cmp(&d(b))
+            })
+            .unwrap_or(at)
     }
 }
 
