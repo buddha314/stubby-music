@@ -16,6 +16,7 @@ mod pause_menu;
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
 pub mod glue;
 mod goals_hub;
+mod grotto_audio_review;
 mod prefab_review;
 /// The prefab lifecycle (stubby_world), plus the game's crafting view of placed sources.
 pub mod prefabs {
@@ -57,6 +58,7 @@ impl Plugin for DesertPlugin {
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
+        .add_plugins(grotto_audio_review::GrottoAudioReviewPlugin)
         .add_plugins((
             streams::StreamBuildPlugin::<resources::PlayerInventory>::default(),
             stream_review::StreamReviewPlugin,

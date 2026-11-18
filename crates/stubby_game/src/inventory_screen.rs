@@ -279,6 +279,7 @@ mod tests {
         app.add_plugins(crate::recipes_plugin::RecipesPlugin::default())
             .init_resource::<ButtonInput<KeyCode>>()
             .init_resource::<ScreenMode>()
+            .insert_resource(super::super::controls::LookCapture(true))
             .add_plugins(InventoryScreenPlugin)
             .add_systems(PreUpdate, super::super::controls::toggle_screens);
         app.world_mut()

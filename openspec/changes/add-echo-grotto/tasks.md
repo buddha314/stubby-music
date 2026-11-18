@@ -13,4 +13,4 @@ the listening review: the audio work stream (Codex, `add-rack-and-spatial-audio`
 - [x] 3.2 Bounded watchdog review: the grotto from spawn's direction and from inside, the burbler at its mouth (standalone, 2026-11-17: from 25 m in front the cluster stands backlit at dawn with the burbler glowing at its mouth; from the alcove the ground is in the top boulder's shade, rock frames the view and the burbler sits at the mouth)
 
 ## 4. Audio (audio stream)
-- [ ] 4.1 Reflections/reverb heard in the grotto with its burbler patched (`add-rack-and-spatial-audio` 4.8); the in-game occlusion listening check for 4.6; record the review in `docs/audio/acoustic-level-authoring.md`
+- [ ] 4.1 (claimed: Codex) Reflections/reverb heard in the grotto with its burbler patched (`add-rack-and-spatial-audio` 4.8); pass the in-game occlusion check for 4.6; record the review in `docs/audio/acoustic-level-authoring.md`. First bounded review (2026-11-17) confirmed the scene geometry is published, but the square demo source stayed unoccluded at matched-distance outside points; live reverb is not routed into Firewheel yet.
