@@ -49,6 +49,9 @@
   .muted { color: var(--muted); }
   .missed { color: var(--bad); }  .met { color: var(--good); }
   .error { color: var(--bad); }
+  .control { display: grid; gap: 6px; margin-top: 8px; }
+  .control-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -83,6 +86,14 @@ stubby_world::calendar::Calendar</textarea>
     <section>
       <h2>Machines</h2>
       <ul id="machines" class="list"><li class="muted">Waiting for the game…</li></ul>
+      <h2>Spatial audio</h2>
+      <p class="muted">Per-emitter reflections. Listener reverb is not routed yet. Changes last for this game session.</p>
+      <label class="control" for="reflection-mix">
+        <span class="control-row"><span>Reflection wet gain</span><output id="reflection-value">0.25</output></span>
+        <input id="reflection-mix" type="range" min="0" max="1" step="0.01" value="0.25" disabled>
+      </label>
+      <div class="row-actions"><button id="apply-reflection" class="primary" disabled>Apply</button></div>
+      <pre id="audio-status" class="muted">Waiting for the dev game…</pre>
     </section>
   </div>
 </main>
@@ -90,7 +101,9 @@ stubby_world::calendar::Calendar</textarea>
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
-const ui = { registry: null, rowId: null, rows: [], state: null, editor: null, pending: null };
+const ui = { registry: null, rowId: null, rows: [], state: null, editor: null, pending: null,
+  appliedReflectionMix: null, reflectionDirty: false };
+const AUDIO_SETTINGS = "stubby_game::audio_developer::AudioDeveloperSettings";
 
 async function api(method, path, body) {
   const response = await fetch(path, {
@@ -330,6 +343,67 @@ async function pollMachines() {
   }
 }
 setInterval(pollMachines, 1000);
+function gameRequest(method, params) {
+  return fetch($("game").value, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  }).then((response) => response.json()).then((data) => {
+    if (data.error) throw new Error(data.error.message);
+    return data.result;
+  });
+}
+
+function updateReflectionValue() {
+  const value = Number($("reflection-mix").value);
+  $("reflection-value").textContent = value.toFixed(2);
+  $("apply-reflection").disabled = $("reflection-mix").disabled
+    || value === ui.appliedReflectionMix;
+}
+
+$("reflection-mix").addEventListener("input", () => {
+  ui.reflectionDirty = Number($("reflection-mix").value) !== ui.appliedReflectionMix;
+  updateReflectionValue();
+});
+$("apply-reflection").onclick = async () => {
+  const value = Number($("reflection-mix").value);
+  $("apply-reflection").disabled = true;
+  $("audio-status").textContent = "Applying…";
+  try {
+    await gameRequest("world.insert_resources", {
+      resource: AUDIO_SETTINGS, value: { reflection_wet_mix: value },
+    });
+    ui.appliedReflectionMix = value;
+    ui.reflectionDirty = false;
+    $("audio-status").textContent = `Applied ${value.toFixed(2)} to the running dev game.`;
+  } catch (error) {
+    $("audio-status").textContent = `Unavailable: ${error.message}`;
+    $("audio-status").className = "error";
+  }
+  updateReflectionValue();
+};
+
+async function pollAudioSettings() {
+  try {
+    const result = await gameRequest("world.get_resources", { resource: AUDIO_SETTINGS });
+    const value = Number(result.value.reflection_wet_mix);
+    if (!Number.isFinite(value)) throw new Error("Game returned an invalid reflection wet gain");
+    $("reflection-mix").disabled = false;
+    if (!ui.reflectionDirty) {
+      $("reflection-mix").value = String(value);
+      ui.appliedReflectionMix = value;
+    }
+    $("audio-status").textContent = `Connected · current mix ${value.toFixed(2)}`;
+    $("audio-status").className = "";
+    updateReflectionValue();
+  } catch (error) {
+    $("reflection-mix").disabled = true;
+    $("apply-reflection").disabled = true;
+    $("audio-status").textContent = `Tuning unavailable: ${error.message}`;
+    $("audio-status").className = "muted";
+  }
+}
+setInterval(pollAudioSettings, 1000);
+pollAudioSettings();
 
 // Files changed on disk (a hand edit, rules-fmt) show up when nothing is unsaved here.
 setInterval(async () => {

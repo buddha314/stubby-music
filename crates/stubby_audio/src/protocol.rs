@@ -149,6 +149,10 @@ pub enum Command {
     SetListener {
         pose: ListenerPose,
     },
+    /// Set the linear wet gain for AudioNimbus per-emitter reflections (0..1).
+    SetReflectionWetMix {
+        value: f32,
+    },
     /// Place an output already cabled to the master output in the world. `offset` is
     /// listener-local for binaural rendering; `position_world` feeds acoustic scene
     /// simulation. `volume` scales it (0..1). An output no longer cabled is ignored,
