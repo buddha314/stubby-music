@@ -54,6 +54,12 @@ pub enum Condition {
         mine: String,
         level: GrowthLevel,
     },
+    /// A placed buildable's fire has caught (the campfire, lit on a backbeat). It latches:
+    /// the fire dying later does not clear it.
+    FireLit {
+        #[schemars(extend("x-stubby-ref" = "buildables"))]
+        buildable: String,
+    },
     /// The player holds at least this many of an item.
     ItemHeld {
         #[schemars(extend("x-stubby-ref" = "items"))]
@@ -104,6 +110,11 @@ pub fn validate_goals(
     let mut errors = Vec::new();
     let items: BTreeSet<&str> = definition.items.iter().map(|i| i.id.as_str()).collect();
     let mines: BTreeSet<&str> = definition.mines.iter().map(|m| m.id.as_str()).collect();
+    let buildables: BTreeSet<&str> = definition
+        .buildables
+        .iter()
+        .map(|b| b.id.as_str())
+        .collect();
     let ids: BTreeSet<&str> = goals.iter().map(|g| g.id.as_str()).collect();
     let scales: BTreeMap<&str, Scale> = goals.iter().map(|g| (g.id.as_str(), g.scale)).collect();
     let mut seen = BTreeSet::new();
@@ -221,6 +232,13 @@ pub fn validate_goals(
                     &goal.id,
                     "condition",
                     format!("unknown machine {machine}"),
+                ));
+            }
+            Some(Condition::FireLit { buildable }) if !buildables.contains(buildable.as_str()) => {
+                errors.push(err(
+                    &goal.id,
+                    "condition",
+                    format!("unknown buildable {buildable}"),
                 ));
             }
             Some(Condition::TreeWatered { mine } | Condition::TreeGrown { mine, .. })
@@ -1191,6 +1209,13 @@ mod tests {
                     level: GrowthLevel::Budding,
                 },
             ),
+            when(
+                "smoky",
+                "bossy",
+                Condition::FireLit {
+                    buildable: "bonfire".into(),
+                },
+            ),
         ]);
         for (id, field, words) in [
             ("lonely", "scale", "at least one minor step"),
@@ -1200,6 +1225,7 @@ mod tests {
             ("empty", "requires", "needs `requires` or `condition`"),
             ("greedy", "condition", "unobtainium"),
             ("far", "condition", "unknown mine baobab"),
+            ("smoky", "condition", "unknown buildable bonfire"),
         ] {
             assert!(
                 found

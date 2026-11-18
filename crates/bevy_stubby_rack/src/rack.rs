@@ -149,6 +149,15 @@ pub struct RackEngine {
     parts: HashMap<(String, String), ModuleId>,
     configured: bool,
 }
+impl RackEngine {
+    /// The place whose module is this engine module, if the rack plays it.
+    pub fn place_of(&self, module: ModuleId) -> Option<&str> {
+        self.parts
+            .iter()
+            .find(|(_, id)| **id == module)
+            .map(|((place, _), _)| place.as_str())
+    }
+}
 
 /// Knob values the player has set on a rack, by (place, param). A knob not yet turned
 /// is at its starting value (`initial_knob`); the clock's BPM lives in `AssetClock`.
@@ -306,7 +315,13 @@ fn plan(
     defaults: &KnobDefaults,
     fresh: impl FnMut() -> Option<ModuleId>,
 ) -> Plan {
-    let modules = modules(config, state);
+    let mut modules = modules(config, state);
+    // A borrowed clock with nothing lent is an empty place.
+    if clock.is_none() {
+        for place in config.places.iter().filter(|p| p.borrowed) {
+            modules.remove(&place.place);
+        }
+    }
     let mut provided = HashMap::new();
     if let Some(clock) = clock {
         for (place, module) in &modules {
@@ -395,8 +410,10 @@ fn patch_engine(
         engine.owned = plan.owned;
         engine.parts = plan.parts;
         engine.voice = plan.voice;
-        engine.sounding = state.complete(config);
-        if state.complete(config) && !engine.configured {
+        // A borrowed clock must be lent for the voice to sound.
+        let lent = clock.is_some() || !config.places.iter().any(|p| p.borrowed);
+        engine.sounding = lent && state.complete(config);
+        if engine.sounding && !engine.configured {
             engine.configured = true;
             configured.write(MachineConfigured { machine });
         }
@@ -486,6 +503,14 @@ fn turn_open_knob(
     let Some(config) = profiles.0.get(&asset.asset) else {
         return;
     };
+    // A borrowed clock is the neighbour's: it is shown, never turned here.
+    if config
+        .places
+        .iter()
+        .any(|p| p.place == hit.place && p.borrowed)
+    {
+        return;
+    }
     let Some(module) = modules(config, state).remove(&hit.place) else {
         return;
     };
