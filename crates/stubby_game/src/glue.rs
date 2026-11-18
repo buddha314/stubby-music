@@ -501,6 +501,21 @@ fn install_module(
     Ok(())
 }
 
+/// The scrub oak's stream inlet: its profile's `stream_inlet` ring.
+fn scrub_oak_inlet() -> stubby_core::StreamInlet {
+    static INLET: std::sync::LazyLock<stubby_core::StreamInlet> = std::sync::LazyLock::new(|| {
+        let profile: serde_json::Value =
+            serde_json::from_str(include_str!("../../../assets/flora/scrub_oak/asset.json"))
+                .expect("scrub oak profile");
+        let ring = &profile["stream_inlet"];
+        stubby_core::StreamInlet {
+            radius_m: ring["radius_m"].as_f64().expect("stream_inlet.radius_m") as f32,
+            snap_m: ring["snap_m"].as_f64().expect("stream_inlet.snap_m") as f32,
+        }
+    });
+    *INLET
+}
+
 fn install_mine(
     world: &mut World,
     entity: Entity,
@@ -522,6 +537,10 @@ fn install_mine(
         mine: mine.into(),
         instance: definition.instance.clone(),
     });
+    if mine == "scrub_oak" {
+        // Streams snap alongside the tree, never through it (add-tree-inlets).
+        world.entity_mut(entity).insert(scrub_oak_inlet());
+    }
     if asset == "mudpit_burbler" {
         let id = allocate(world)?;
         let seed = world.resource::<stubby_world::WorldSeed>().0;
@@ -1015,5 +1034,19 @@ mod machine_rule_tests {
             let problems = config.target_problems();
             assert!(problems.is_empty(), "{}: {problems:#?}", row.id);
         }
+    }
+
+    /// A stream snapped to an oak's inlet runs within the oak's watering reach, so laying
+    /// one there waters the tree.
+    #[test]
+    fn a_stream_on_the_oak_inlet_waters_it() {
+        let inlet = super::scrub_oak_inlet();
+        let catalog = stubby_recipes::shipped_catalog().expect("rules");
+        let reach = catalog
+            .mine("scrub_oak")
+            .and_then(|mine| mine.growth.as_ref())
+            .expect("oak growth")
+            .water_reach_m;
+        assert!(inlet.radius_m > 0. && inlet.radius_m < reach, "{inlet:?} vs {reach} m");
     }
 }

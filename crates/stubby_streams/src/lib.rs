@@ -30,6 +30,7 @@ use stubby_audio::{Command, ListenerPose};
 use stubby_core::ScreenMode;
 use stubby_core::{
     AssetClock, AssetPart, AssetState, HudCamera, LookCapture, MachineVoice, PlacedAsset, Stock,
+    StreamInlet,
 };
 
 mod dismantle;
@@ -464,11 +465,15 @@ pub struct Path {
 impl Path {
     /// Leave `from` along its direction and curve to `to` (design D3).
     fn new(from: &Port, to: Vec3) -> Self {
+        Self::arriving(from, to, None)
+    }
+    /// The same, arriving at `to` along `end` when given (a stream snapped to an inlet).
+    fn arriving(from: &Port, to: Vec3, end: Option<Vec3>) -> Self {
         let p0 = from.at;
         let p3 = Vec3::new(to.x, p0.y, to.z);
         let reach = p0.distance(p3);
         let p1 = p0 + from.dir * reach / 3.;
-        let d1 = (p3 - p1).normalize_or(from.dir);
+        let d1 = end.unwrap_or_else(|| (p3 - p1).normalize_or(from.dir));
         let p2 = p3 - d1 * reach / 3.;
         let points = [p0, p1, p2, p3];
         let mut table = vec![(0., 0.)];
@@ -602,6 +607,37 @@ fn free_ports(
     ports
 }
 
+/// Snap a stream laid from `from` and aimed at `aim` to the nearest inlet whose ring the
+/// aim is inside or within `snap_m` of: the point on the ring nearest the aim, and the ring's tangent
+/// there that leads away from `from`, so the stream arrives alongside the inlet's owner.
+pub fn snap_to_inlet(
+    from: Vec3,
+    aim: Vec3,
+    inlets: impl IntoIterator<Item = (StreamInlet, Vec3)>,
+) -> Option<(Vec3, Vec3)> {
+    inlets
+        .into_iter()
+        .filter_map(|(inlet, centre)| {
+            let centre = Vec3::new(centre.x, aim.y, centre.z);
+            let out = Vec3::new(aim.x - centre.x, 0., aim.z - centre.z);
+            // Anywhere inside the ring snaps too: aiming at the trunk means the tree.
+            let off_ring = (out.length() - inlet.radius_m).max(0.);
+            (off_ring <= inlet.snap_m).then(|| {
+                let radial = out.normalize_or((from - centre).with_y(0.).normalize_or(Vec3::X));
+                let at = centre + radial * inlet.radius_m;
+                let tangent = radial.cross(Vec3::Y);
+                let along = if tangent.dot(at - from) >= 0. {
+                    tangent
+                } else {
+                    -tangent
+                };
+                (off_ring, at, along)
+            })
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .map(|(_, at, along)| (at, along))
+}
+
 /// Where the camera's ray meets the horizontal plane at `height`, at most `MAX_PLAN`
 /// from `from` (looking at or above the horizon aims at that limit).
 fn aim(camera: &GlobalTransform, height: f32, from: Vec3) -> Vec3 {
@@ -657,6 +693,7 @@ fn plan<S: Stock>(
     burblers: Query<(Entity, &PlacedAsset, &mut AssetState)>,
     outlets: Query<(&AssetPart, &GlobalTransform)>,
     streams: Query<&mut LaidStream>,
+    inlets: Query<(&StreamInlet, &GlobalTransform)>,
     cost: Res<SegmentCost>,
     inventory: Option<Res<S>>,
 ) {
@@ -680,7 +717,16 @@ fn plan<S: Stock>(
             .map(|(port, _)| *port);
         return;
     };
-    let path = Path::new(&anchor, aim(camera, anchor.at.y, anchor.at));
+    let target = aim(camera, anchor.at.y, anchor.at);
+    let snapped = snap_to_inlet(
+        anchor.at,
+        target,
+        inlets.iter().map(|(inlet, at)| (*inlet, at.translation())),
+    );
+    let path = match snapped {
+        Some((at, along)) => Path::arriving(&anchor, at, Some(along)),
+        None => Path::new(&anchor, target),
+    };
     let length = path.length();
     let segments = ((length / SEGMENT_LENGTH).round() as u32).max(1);
     let affordable = inventory
@@ -1363,6 +1409,29 @@ mod tests {
         // Straight ahead is a straight line; a hairpin behind the port is too tight.
         assert!((Path::new(&port(), Vec3::new(12., 0., 0.)).length() - 12.).abs() < 1e-3);
         assert!(Path::new(&port(), Vec3::new(-3., 0., 1.)).min_radius() < MIN_RADIUS);
+    }
+
+    #[test]
+    fn a_stream_aimed_at_a_tree_snaps_alongside_it_not_through_it() {
+        let inlet = StreamInlet {
+            radius_m: 2.2,
+            snap_m: 2.,
+        };
+        let tree = Vec3::new(12., 0., 0.);
+        // Aimed straight at the trunk: it ends on the ring, along its tangent.
+        let (at, along) = snap_to_inlet(Vec3::ZERO, tree, [(inlet, tree)]).expect("snaps");
+        assert!((at.distance(tree) - 2.2).abs() < 1e-3);
+        assert!(along.dot(at - tree).abs() < 1e-3, "tangent to the ring");
+        let path = Path::arriving(&port(), at, Some(along));
+        let closest = (0..=64)
+            .map(|i| path.at(path.length() * i as f32 / 64.).0.distance(tree))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            closest > 1.5,
+            "the stream stays clear of the trunk ({closest} m)"
+        );
+        // Aimed well away from it: no snap.
+        assert!(snap_to_inlet(Vec3::ZERO, Vec3::new(12., 0., 8.), [(inlet, tree)]).is_none());
     }
 
     #[test]

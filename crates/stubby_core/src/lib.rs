@@ -132,6 +132,17 @@ impl GroundHeight {
     }
 }
 
+/// Where a laid stream can end beside its owner, as a conveyor snaps to a machine's input
+/// in Satisfactory (add-tree-inlets): a ring of `radius_m` round the owner's origin. A
+/// stream being laid that is aimed within `snap_m` of the ring snaps its end onto it,
+/// running along the ring's tangent, so it passes alongside (a scrub oak's trunk), never
+/// through. The owner's system adds it; streams read it.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct StreamInlet {
+    pub radius_m: f32,
+    pub snap_m: f32,
+}
+
 /// On a collectible the disco light reveals (`stubby_player`'s flashlight), while it is
 /// revealed. Its owner shows it steadily: a lightning bug holds its body lit between
 /// flashes, so a revealed bug never vanishes.

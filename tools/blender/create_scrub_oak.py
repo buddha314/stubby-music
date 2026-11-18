@@ -408,6 +408,10 @@ def write_profile():
         "sway": {"nodes": "Limb_<n>", "pivot": "node origin (stem base)", "max_deg": 2.5,
                  "phase": "per_instance.sway_phase, plus the limb index"},
         "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
+        "stream_inlet": {"radius_m": 2.2, "snap_m": 2.0,
+                         "note": "a ring round the trunk that a stream being laid snaps onto, ending along "
+                                 "its tangent so it runs alongside the tree (add-tree-inlets); inside "
+                                 "water_reach_m (mines.json) so a flowing stream there waters it"},
         "far_lod": {"distance_m": FAR_LOD_M, "levels": "nodes scrub_oak_<k>_LOD0 and scrub_oak_<k>_LOD1 inside the model",
                     "nodes": ["ScrubOak_Far_Bark", "ScrubOak_Far_Foliage_Node"],
                     "note": "LOD1. ScrubOak_Far_Foliage_Node ships at scale 0 and scales "
