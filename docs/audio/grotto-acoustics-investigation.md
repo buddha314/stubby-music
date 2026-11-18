@@ -57,6 +57,33 @@ This design is intended to avoid callback-side ArcSwap access and pooled snapsho
 - The review driver now includes a controlled source mute and 50 ms world-peak sampling. It detects a short post-mute decay, but without a reflection-disabled control it cannot attribute every residual sample solely to the reflection effect.
 - AudioNimbus also produces a listener-centric `output.listener`; the current game processor reads only `output.sources[emitter]`. There is no shared listener environmental bus yet, and subjective listening is not captured.
 
+### Listener reverb is a distinct signal path
+
+Inspection of the pinned AudioNimbus 0.17.0 source resolves what this output means. In
+`wiring/step/reflections_reverb.rs`, `ReflectionsReverbOutput` contains both a
+`sources: HashMap<SourceId, ...>` described as per-source reflection effect parameters
+and an optional `listener` described as listener-centric reverb. The simulation step
+populates these independently from each source and the configured listener source. The
+current game callback reads only `sources[emitter]`; it never reads `listener`.
+
+AudioNimbus's FMOD and Wwise adapter docs describe listener-centric reverb as a source
+placed at the listener, with reflections simulated there. In this game, the intended
+use is consequently a shared environmental wet bus fed by the already mixed dry world
+signal, while per-source reflection processing remains directional. Whether using both
+paths double-counts the same early energy, and the correct wet gain/latency, still need
+an A/B render and listening review. The listener result is not a ready-made wet audio
+signal: the host must run `ReflectionEffect` on the bus input and decode its Ambisonic
+output, just as the per-source path currently does.
+
+This narrows the implementation question: route `output.listener` into a Firewheel
+listener bus after emitter dry signals are summed, with a no-allocation handoff that
+retains native reflection parameters off the callback; compare per-source reflections
+alone against per-source plus listener reverb in the same grotto. Do not add another
+game-owned reverb algorithm. The listener source is currently initialized at the
+default pose and its reflection parameters become available only after a simulation
+frame completes, which also explains why the first empty snapshot and startup warning
+burst need an explicit readiness/initial-input policy.
+
 ## Why this took several iterations
 
 The work involved two independent bridges and their evidence was easy to conflate:
@@ -71,7 +98,7 @@ These boundaries should remain explicit in future reports. Record source/listene
 
 1. Add a reflection-disabled control run with the same source mute timing and positions; compare post-mute envelopes to attribute the measured tail to the AudioNimbus reflection effect rather than the rest of the output chain.
 2. Add a focused callback allocation test that consumes non-empty reflection parameters while snapshots are replaced and emitters are removed/re-added. Verify retained native handles are released away from the callback and shutdown joins the worker.
-3. Route or explicitly exclude AudioNimbus's listener-centric output. If included, design the listener environmental bus so it does not duplicate per-emitter reflections, then add an offline comparison test.
+3. Route AudioNimbus's listener-centric output to a shared Firewheel environmental bus fed by the mixed dry world signal. Compare per-source reflections alone with the combined path in an offline render before settling gains or whether both paths remain enabled.
 4. Reduce the initial missing-input error burst with a package-supported initialization sequence, then rerun the bounded review and retain the reflection-match trace, occlusion readings, and tail envelope.
 5. Have a listener confirm the grotto's short tail is audible and useful. Keep OpenSpec 4.8 and grotto task 4.1 open until the control, callback ownership test, bus decision, and listening review pass; keep 4.6's authored-level occlusion evidence separate.
 

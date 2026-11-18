@@ -50,19 +50,19 @@ audio thread drives the lightning bugs’ clocks and short click patches. The op
 is silent until a bug is nearby. A patched burbler's voice pans from the nearest point
 of the burbler or its streams and fades out at its hearing radius. For a test patch, add `--audio-demo` or press F8.
 
-The default game run uses AudioNimbus/Steam Audio HRTF and direct propagation. To run
-that same path in the Jackdaw game with the sustained audio demo tone:
+The default game run uses AudioNimbus/Steam Audio HRTF and direct propagation. From a
+terminal at the repository root, launch the game without the sustained audio demo tone:
 
 ```sh
 steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
 STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
 LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-  cargo run -p stubby_jackdaw --features dev -- --audio-demo
+  cargo run -p stubby_jackdaw --features dev
 ```
 
 The SDK helper uses its local cache and rebuilds only when its pinned inputs change;
-ordinary Cargo builds do not invoke it. `--audio-demo` intentionally sustains a 110 Hz
-square-wave tone alongside clock blips, so the low hum is expected. The direct path
+ordinary Cargo builds do not invoke it. Add `-- --audio-demo` to the Cargo command only
+when you want a sustained 110 Hz square-wave test tone alongside clock blips. The direct path
 supports distance, air absorption, geometry occlusion and material transmission.
 Reflections/reverb, authored cave or building validation, live device-restart handling,
 and multi-emitter budgets remain in progress. Details and evidence:
