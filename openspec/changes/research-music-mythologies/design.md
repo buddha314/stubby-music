@@ -24,7 +24,8 @@ use does not settle it either: Kokopelli is everywhere, and still gets the same 
 ### D3. One entry per figure
 Each entry gives: name and people; what the figure is tied to (sound, instrument,
 landscape, creature, season); a short summary in our words; the source and its kind; the
-sharing check (open, restricted, unclear) and why; and game notes, kept apart from what
+sharing check (open, restricted, unclear) and why; the imagery it suggests, with its own
+check; and game notes, kept apart from what
 the source says.
 
 ### D4. Regions are biome groups (user, 2026-11-18)
@@ -49,8 +50,9 @@ Figures appear unnamed, as spirits of a place, never as a named deity of a peopl
 look draws on the visual heritage of the cultures their group comes from. The sharing
 check covers imagery as well as stories: a motif, style or pattern is used only when it is
 openly shared, and some are not (Aboriginal designs can belong to a clan or a Dreaming,
-and a design for one figure is not free for another). The game takes elements and styles,
-never a reproduction of a particular work, panel or sacred object. Each entry records the
+and a design for one figure is not free for another). A figure looks similar to its heritage, not identical
+(user, 2026-11-18): the game takes elements and styles, never a reproduction of a
+particular work, panel or sacred object. Each entry records the
 imagery it suggests and that imagery's own sharing check.
 
 ## Risks / Trade-offs

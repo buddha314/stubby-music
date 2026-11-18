@@ -49,6 +49,9 @@ Open:
   (Africa, perhaps Southeast Asia). Everyone in this world lives together well and
   intermingles, so a region's figures may come from any tradition in its group. The game
   needs **about a dozen characters** in all.
+- **Figures: decided (user, 2026-11-18):** unnamed, as spirits of a place, with imagery
+  similar to, not identical with, their cultural heritage. Imagery gets the same check as
+  stories: only openly shared motifs and styles, never a copy of a particular work.
 - How waking a deity plays (a rack with targets, as the campfire's, is the obvious fit) and
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.
