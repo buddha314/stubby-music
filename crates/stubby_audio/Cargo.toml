@@ -16,6 +16,7 @@ audionimbus = { version = "=0.17.0", default-features = false, features = ["dyna
 firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing", "sampler_node", "spatial_basic_node", "peak_meter_node"] }
 fundsp = "0.23.0"
 rtrb = "0.4.1"
+triple_buffer = "=9.0.0"
 thiserror = "2"
 
 [features]

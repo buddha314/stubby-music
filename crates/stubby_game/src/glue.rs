@@ -83,7 +83,12 @@ fn publish_acoustic_scene(
             With<stubby_core::AcousticOccluder>,
         ),
     >,
-    occluders: Query<(&stubby_core::AcousticOccluder, &Mesh3d, &GlobalTransform)>,
+    occluders: Query<(
+        &stubby_core::AcousticOccluder,
+        &Mesh3d,
+        &GlobalTransform,
+        Option<&Name>,
+    )>,
     mut removed: RemovedComponents<stubby_core::AcousticOccluder>,
     mut initialized: Local<bool>,
 ) {
@@ -94,7 +99,8 @@ fn publish_acoustic_scene(
     *initialized = true;
     let Some(synth) = synth else { return };
     let mut geometry = stubby_audio::AcousticSceneGeometry::default();
-    for (material, handle, transform) in &occluders {
+    let trace = std::env::var_os("STUBBY_AUDIO_SPATIAL_TRACE").is_some();
+    for (material, handle, transform, name) in &occluders {
         let Some(mesh) = meshes.get(&handle.0) else {
             continue;
         };
@@ -112,6 +118,22 @@ fn publish_acoustic_scene(
                 .transform_point(Vec3::from_array(*position))
                 .to_array()
         }));
+        if trace && material.transmission[0] < 0.02 {
+            let vertices = &geometry.vertices[base as usize..];
+            let mut min = [f32::INFINITY; 3];
+            let mut max = [f32::NEG_INFINITY; 3];
+            for vertex in vertices {
+                for axis in 0..3 {
+                    min[axis] = min[axis].min(vertex[axis]);
+                    max[axis] = max[axis].max(vertex[axis]);
+                }
+            }
+            eprintln!(
+                "AudioNimbus rock mesh name={:?} vertices={} bounds={min:?}..{max:?}",
+                name.map(Name::as_str),
+                vertices.len(),
+            );
+        }
         let indices: Vec<u32> = match mesh.indices() {
             Some(Indices::U16(indices)) => indices.iter().map(|&index| u32::from(index)).collect(),
             Some(Indices::U32(indices)) => indices.clone(),

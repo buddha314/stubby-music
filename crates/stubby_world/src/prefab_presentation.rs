@@ -143,16 +143,38 @@ fn restore_start_scale(mut parts: Query<(&GltfExtras, &mut Transform), Added<Glt
 /// scene (add-echo-grotto; the boulders' near level). No asset kind is named.
 fn mark_acoustic_rock(
     mut commands: Commands,
-    nodes: Query<(Entity, &GltfExtras), Added<GltfExtras>>,
+    acoustic_roots: Query<(Entity, &stubby_core::AcousticOccluder), Without<Mesh3d>>,
+    nodes: Query<(Entity, &GltfExtras)>,
     children: Query<&Children>,
-    meshes: Query<(), With<Mesh3d>>,
+    all_meshes: Query<(), With<Mesh3d>>,
+    meshes: Query<(), (With<Mesh3d>, Without<stubby_core::AcousticOccluder>)>,
+    mut trace_counts: Local<std::collections::HashMap<Entity, usize>>,
 ) {
+    let trace = std::env::var_os("STUBBY_AUDIO_SPATIAL_TRACE").is_some();
+    for (root, material) in &acoustic_roots {
+        for entity in children.iter_descendants(root) {
+            if meshes.contains(entity) {
+                commands.entity(entity).insert(*material);
+            }
+        }
+    }
     for (node, extras) in &nodes {
         let rock = serde_json::from_str::<serde_json::Value>(&extras.value)
             .ok()
             .is_some_and(|value| value.get("acoustic").and_then(|v| v.as_str()) == Some("rock"));
         if !rock {
             continue;
+        }
+        let mesh_count = std::iter::once(node)
+            .chain(children.iter_descendants(node))
+            .filter(|entity| all_meshes.contains(*entity))
+            .count();
+        if trace && trace_counts.get(&node) != Some(&mesh_count) {
+            eprintln!(
+                "AudioNimbus acoustic tag node={node:?} extras={} mesh_descendants={mesh_count}",
+                extras.value,
+            );
+            trace_counts.insert(node, mesh_count);
         }
         for entity in std::iter::once(node).chain(children.iter_descendants(node)) {
             if meshes.contains(entity) {
@@ -832,14 +854,16 @@ mod tests {
             .world_mut()
             .spawn(extras(r#"{"acoustic": "rock"}"#))
             .id();
-        let rock_mesh = app
-            .world_mut()
-            .spawn((Mesh3d(Handle::default()), ChildOf(rock)))
-            .id();
         let plain = app.world_mut().spawn(extras(r#"{"start_scale": 0}"#)).id();
         let plain_mesh = app
             .world_mut()
             .spawn((Mesh3d(Handle::default()), ChildOf(plain)))
+            .id();
+        app.update();
+        // glTF extras may arrive before the mesh descendants finish loading.
+        let rock_mesh = app
+            .world_mut()
+            .spawn((Mesh3d(Handle::default()), ChildOf(rock)))
             .id();
         app.update();
         assert_eq!(
@@ -850,6 +874,26 @@ mod tests {
             app.world()
                 .get::<stubby_core::AcousticOccluder>(plain_mesh)
                 .is_none()
+        );
+    }
+
+    #[test]
+    fn prefab_acoustic_material_reaches_mesh_children_loaded_later() {
+        let mut app = App::new();
+        app.add_systems(Update, mark_acoustic_rock);
+        let root = app
+            .world_mut()
+            .spawn(stubby_core::AcousticOccluder::ROCK)
+            .id();
+        app.update();
+        let mesh = app
+            .world_mut()
+            .spawn((Mesh3d(Handle::default()), ChildOf(root)))
+            .id();
+        app.update();
+        assert_eq!(
+            app.world().get::<stubby_core::AcousticOccluder>(mesh),
+            Some(&stubby_core::AcousticOccluder::ROCK)
         );
     }
 

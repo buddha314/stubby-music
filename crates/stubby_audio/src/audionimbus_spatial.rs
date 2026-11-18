@@ -8,13 +8,19 @@ use crate::{
     protocol::{AcousticMaterial, AcousticSceneGeometry, ListenerPose},
 };
 use arc_swap::ArcSwap;
+use audionimbus::dynamic::{
+    ReflectionAlgorithm, ReflectionEffect, ReflectionEffectParams as DynamicReflectionEffectParams,
+};
 use audionimbus::{
-    AirAbsorptionModel, AudioBufferMut, AudioBufferRef, AudioSettings, BinauralEffect,
+    AirAbsorptionModel, AmbisonicsDecodeEffect, AmbisonicsDecodeEffectParams,
+    AmbisonicsDecodeEffectSettings, AudioBufferMut, AudioBufferRef, AudioSettings, BinauralEffect,
     BinauralEffectParams, BinauralEffectSettings, Context, CoordinateSystem, DirectEffect,
     DirectEffectParams, DirectEffectSettings, DirectSimulationParameters, DirectSimulationSettings,
     Direction, Directivity, DistanceAttenuationModel, Equalizer, Hrtf, HrtfInterpolation,
-    HrtfSettings, Material, Occlusion, OcclusionAlgorithm, Point, SimulationFlags,
-    StaticMeshSettings, SteamAudioError, Transmission, TransmissionParameters, Triangle,
+    HrtfSettings, Material, Occlusion, OcclusionAlgorithm, ParametricParameters,
+    ParametricSettings, Point, ReflectionEffectSettings, ReflectionsSharedInputs, Rendering,
+    SimulationFlags, SpeakerLayout, StaticMeshSettings, SteamAudioError, Transmission,
+    TransmissionParameters, Triangle,
 };
 use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
@@ -24,11 +30,20 @@ use firewheel::{
     },
 };
 use std::sync::{
-    Arc,
+    Arc, Mutex,
     atomic::{AtomicU32, Ordering},
     mpsc::{self, SyncSender, TrySendError},
 };
 use std::time::{Duration, Instant};
+
+pub type AudioNimbusReflectionsOutput = audionimbus::wiring::SharedSimulationOutput<
+    audionimbus::dynamic::ReflectionsReverbOutput<PortRef>,
+>;
+type ReflectionData = audionimbus::dynamic::ReflectionsReverbOutput<PortRef>;
+pub type AudioNimbusReflectionsSnapshot =
+    Arc<dyn std::ops::Deref<Target = ReflectionData> + Send + Sync>;
+pub type AudioNimbusReflectionsFeed =
+    Arc<Mutex<triple_buffer::Input<Option<AudioNimbusReflectionsSnapshot>>>>;
 
 /// Shared AudioNimbus state for spatial processors at one sample rate and block size.
 ///
@@ -47,6 +62,7 @@ pub struct DirectEmitterInput {
     pub output: PortRef,
     pub position: [f32; 3],
     pub params: Arc<DirectEffectParamsShared>,
+    pub reflections: AudioNimbusReflectionsFeed,
 }
 
 /// Fixed-size atomic transport for simulation output. The audio callback copies scalar
@@ -171,7 +187,7 @@ impl AudioNimbusDirectSimulation {
             .map_err(|error| format!("spawn direct simulation worker: {error}"))?;
         ready_rx
             .recv()
-            .map_err(|error| format!("direct simulation worker did not initialize: {error}"))??;
+            .map_err(|error| format!("spatial simulation worker did not initialize: {error}"))??;
         Ok(Self {
             latest,
             wake,
@@ -232,16 +248,24 @@ fn run_direct_simulation_worker(
     frame_size: u32,
     ready: SyncSender<Result<(), String>>,
 ) -> Result<(), String> {
+    let trace = std::env::var_os("STUBBY_AUDIO_SPATIAL_TRACE").is_some();
     let context = Context::default();
     let audio_settings = AudioSettings {
         sampling_rate: sample_rate,
         frame_size,
     };
-    let settings = audionimbus::dynamic::SimulationSettings::new(&audio_settings).with_direct(
-        DirectSimulationSettings {
+    let settings = audionimbus::dynamic::SimulationSettings::new(&audio_settings)
+        .with_direct(DirectSimulationSettings {
             max_num_occlusion_samples: 16,
-        },
-    );
+        })
+        .with_reflections(ParametricSettings {
+            max_num_rays: 512,
+            num_diffuse_samples: 32,
+            max_duration: 1.0,
+            max_num_sources: 32,
+            num_threads: 2,
+            max_order: 1,
+        });
     let mut simulator = audionimbus::dynamic::Simulator::try_new(&context, &settings)
         .map_err(|error| format!("create simulator: {error}"))?;
     let mut scene = audionimbus::dynamic::Scene::try_new(
@@ -250,13 +274,34 @@ fn run_direct_simulation_worker(
     )
     .map_err(|error| format!("create scene: {error}"))?;
     scene.commit();
+    let mut reflection_pipeline =
+        audionimbus::dynamic::Simulation::new::<PortRef>(simulator.clone());
+    let listener_source =
+        audionimbus::dynamic::Source::try_new(&simulator, SimulationFlags::REFLECTIONS)
+            .map_err(|error| format!("create reflections listener: {error}"))?;
+    simulator
+        .try_add_source(&listener_source)
+        .map_err(|error| format!("add reflections listener: {error}"))?;
+    simulator.commit();
+    reflection_pipeline
+        .set_listener(Some(reflections_listener(
+            &listener_source,
+            ListenerPose::default(),
+        )))
+        .map_err(|error| format!("set reflections listener: {error}"))?;
+    let mut reflection_worker = reflection_pipeline
+        .spawn_reflections_reverb(|error| eprintln!("AudioNimbus reflections simulation: {error}"))
+        .map_err(|error| format!("start reflections simulation: {error}"))?;
+    let reflections = reflection_worker.output();
     ready
         .send(Ok(()))
         .map_err(|error| format!("publish worker readiness: {error}"))?;
 
-    let mut sources = std::collections::HashMap::new();
+    let mut source_map = std::collections::HashMap::new();
     let mut scene_revision = u64::MAX;
     let mut static_mesh = None;
+    let mut traced_listener = None;
+    let mut traced_reflection_counts = None;
     while let Ok(true) = wake.recv() {
         let snapshot = latest.load();
         if scene_revision != snapshot.geometry_revision {
@@ -331,6 +376,23 @@ fn run_direct_simulation_worker(
                 .try_set_scene(&scene)
                 .map_err(|error| format!("set scene: {error}"))?;
             simulator.commit();
+            if trace {
+                let mut min = [f32::INFINITY; 3];
+                let mut max = [f32::NEG_INFINITY; 3];
+                for point in &snapshot.geometry.vertices {
+                    for axis in 0..3 {
+                        min[axis] = min[axis].min(point[axis]);
+                        max[axis] = max[axis].max(point[axis]);
+                    }
+                }
+                eprintln!(
+                    "AudioNimbus scene rev={} vertices={} triangles={} materials={:?} bounds={min:?}..{max:?}",
+                    snapshot.geometry_revision,
+                    snapshot.geometry.vertices.len(),
+                    snapshot.geometry.triangles.len(),
+                    snapshot.geometry.materials,
+                );
+            }
             scene_revision = snapshot.geometry_revision;
         }
         let current: std::collections::HashSet<_> = snapshot
@@ -338,7 +400,7 @@ fn run_direct_simulation_worker(
             .iter()
             .map(|emitter| emitter.output)
             .collect();
-        sources.retain(|output, source| {
+        source_map.retain(|output, source| {
             if current.contains(output) {
                 true
             } else {
@@ -347,82 +409,169 @@ fn run_direct_simulation_worker(
             }
         });
         for emitter in &snapshot.emitters {
-            if !sources.contains_key(&emitter.output) {
-                let source =
-                    audionimbus::dynamic::Source::try_new(&simulator, SimulationFlags::DIRECT)
-                        .map_err(|error| format!("create source: {error}"))?;
+            if !source_map.contains_key(&emitter.output) {
+                let source = audionimbus::dynamic::Source::try_new(
+                    &simulator,
+                    SimulationFlags::DIRECT | SimulationFlags::REFLECTIONS,
+                )
+                .map_err(|error| format!("create source: {error}"))?;
                 simulator
                     .try_add_source(&source)
                     .map_err(|error| format!("add source: {error}"))?;
-                sources.insert(emitter.output, source);
+                source_map.insert(emitter.output, source);
             }
         }
         simulator.commit();
 
         for emitter in &snapshot.emitters {
-            let Some(source) = sources.get(&emitter.output) else {
+            let Some(source) = source_map.get(&emitter.output) else {
                 continue;
             };
-            let inputs = audionimbus::dynamic::SimulationInputs {
-                source: CoordinateSystem {
-                    origin: Point::new(
-                        emitter.position[0],
-                        emitter.position[1],
-                        emitter.position[2],
-                    ),
-                    ..CoordinateSystem::default()
-                },
-                parameters: audionimbus::dynamic::SimulationParameters {
-                    direct: Some(
-                        DirectSimulationParameters::new()
-                            .with_distance_attenuation(DistanceAttenuationModel::default())
-                            .with_air_absorption(AirAbsorptionModel::default())
-                            .with_directivity(Directivity::WeightedDipole {
-                                weight: 0.0,
-                                power: 1.0,
-                            })
-                            .with_occlusion(
-                                Occlusion::new(OcclusionAlgorithm::Raycast).with_transmission(
-                                    TransmissionParameters {
-                                        num_transmission_rays: 16,
-                                    },
-                                ),
-                            ),
-                    ),
-                    ..Default::default()
-                },
-            };
+            let inputs = spatial_simulation_inputs(emitter.position);
             source
                 .set_inputs(&inputs)
                 .map_err(|error| format!("set source inputs: {error}"))?;
         }
+        reflection_pipeline
+            .update_sources(|active_sources| {
+                for emitter in &snapshot.emitters {
+                    if let Some(source) = source_map.get(&emitter.output) {
+                        active_sources.push((
+                            emitter.output,
+                            audionimbus::dynamic::SourceWithInputs {
+                                source: source.clone(),
+                                simulation_inputs: spatial_simulation_inputs(emitter.position),
+                            },
+                        ));
+                    }
+                }
+            })
+            .map_err(|error| format!("publish reflections sources: {error}"))?;
+        reflection_pipeline
+            .set_listener(Some(reflections_listener(
+                &listener_source,
+                snapshot.listener,
+            )))
+            .map_err(|error| format!("update reflections listener: {error}"))?;
+        let shared_inputs = audionimbus::dynamic::SimulationSharedInputs::new(CoordinateSystem {
+            origin: Point::new(
+                snapshot.listener.position[0],
+                snapshot.listener.position[1],
+                snapshot.listener.position[2],
+            ),
+            right: snapshot.listener.right.into(),
+            up: snapshot.listener.up.into(),
+            ahead: snapshot.listener.ahead.into(),
+        })
+        .with_reflections(ReflectionsSharedInputs {
+            num_rays: 512,
+            num_bounces: 4,
+            duration: 1.0,
+            order: 1,
+            irradiance_min_distance: 1.0,
+        });
+        reflection_worker.set_input(shared_inputs.clone());
+        let reflection_snapshot = reflections.load();
+        let matching_sources = snapshot
+            .emitters
+            .iter()
+            .filter(|emitter| reflection_snapshot.sources.contains_key(&emitter.output))
+            .count();
+        let reflection_counts = (reflection_snapshot.sources.len(), matching_sources);
+        if trace && traced_reflection_counts != Some(reflection_counts) {
+            eprintln!(
+                "AudioNimbus reflections outputs={} matching_emitters={matching_sources} listener={:?}",
+                reflection_counts.0, snapshot.listener.position,
+            );
+            traced_reflection_counts = Some(reflection_counts);
+        }
+        let reflection_snapshot = Arc::clone(&*reflection_snapshot);
+        let reflection_snapshot: AudioNimbusReflectionsSnapshot = reflection_snapshot;
+        for emitter in &snapshot.emitters {
+            if let Ok(mut feed) = emitter.reflections.lock() {
+                feed.write(Some(Arc::clone(&reflection_snapshot)));
+            }
+        }
         simulator
             .set_shared_inputs(
-                SimulationFlags::DIRECT,
-                &audionimbus::dynamic::SimulationSharedInputs::new(CoordinateSystem {
-                    origin: Point::new(
-                        snapshot.listener.position[0],
-                        snapshot.listener.position[1],
-                        snapshot.listener.position[2],
-                    ),
-                    right: snapshot.listener.right.into(),
-                    up: snapshot.listener.up.into(),
-                    ahead: snapshot.listener.ahead.into(),
-                }),
+                SimulationFlags::DIRECT | SimulationFlags::REFLECTIONS,
+                &shared_inputs,
             )
             .map_err(|error| format!("set listener inputs: {error}"))?;
         simulator
             .run_direct()
             .map_err(|error| format!("run direct simulation: {error}"))?;
+        let trace_listener_changed = trace && traced_listener != Some(snapshot.listener);
         for emitter in &snapshot.emitters {
-            if let Some(source) = sources.get(&emitter.output) {
+            if let Some(source) = source_map.get(&emitter.output) {
                 if let Ok(params) = source.get_direct_outputs() {
+                    if trace_listener_changed {
+                        eprintln!(
+                            "AudioNimbus direct output={:?} source={:?} listener={:?} params={params:?}",
+                            emitter.output, emitter.position, snapshot.listener.position,
+                        );
+                    }
                     emitter.params.store(&params);
                 }
             }
         }
+        if trace_listener_changed {
+            traced_listener = Some(snapshot.listener);
+        }
     }
+    reflection_worker.shutdown();
+    let _ = reflection_worker.join();
     Ok(())
+}
+
+fn spatial_simulation_inputs(position: [f32; 3]) -> audionimbus::dynamic::SimulationInputs {
+    audionimbus::dynamic::SimulationInputs {
+        source: CoordinateSystem {
+            origin: Point::new(position[0], position[1], position[2]),
+            ..CoordinateSystem::default()
+        },
+        parameters: audionimbus::dynamic::SimulationParameters {
+            direct: Some(
+                DirectSimulationParameters::new()
+                    .with_distance_attenuation(DistanceAttenuationModel::default())
+                    .with_air_absorption(AirAbsorptionModel::default())
+                    .with_directivity(Directivity::WeightedDipole {
+                        weight: 0.0,
+                        power: 1.0,
+                    })
+                    .with_occlusion(
+                        Occlusion::new(OcclusionAlgorithm::Raycast).with_transmission(
+                            TransmissionParameters {
+                                num_transmission_rays: 16,
+                            },
+                        ),
+                    ),
+            ),
+            reflections: Some(ParametricParameters::default().into()),
+            ..Default::default()
+        },
+    }
+}
+
+fn reflections_listener(
+    source: &audionimbus::dynamic::Source,
+    pose: ListenerPose,
+) -> audionimbus::dynamic::SourceWithInputs {
+    audionimbus::dynamic::SourceWithInputs {
+        source: source.clone(),
+        simulation_inputs: audionimbus::dynamic::SimulationInputs {
+            source: CoordinateSystem {
+                origin: Point::new(pose.position[0], pose.position[1], pose.position[2]),
+                right: pose.right.into(),
+                up: pose.up.into(),
+                ahead: pose.ahead.into(),
+            },
+            parameters: audionimbus::dynamic::SimulationParameters {
+                reflections: Some(ParametricParameters::default().into()),
+                ..Default::default()
+            },
+        },
+    }
 }
 
 /// Firewheel node that runs the AudioNimbus binaural effect with fixed-size internal
@@ -435,6 +584,9 @@ pub struct AudioNimbusBinauralNode {
     position: Arc<[AtomicU32; 3]>,
     volume: Arc<AtomicU32>,
     direct_params: Arc<DirectEffectParamsShared>,
+    reflections: Arc<Mutex<Option<triple_buffer::Output<Option<AudioNimbusReflectionsSnapshot>>>>>,
+    reflection_feed: AudioNimbusReflectionsFeed,
+    output: PortRef,
 }
 
 impl AudioNimbusBinauralNode {
@@ -442,7 +594,9 @@ impl AudioNimbusBinauralNode {
     pub fn new(
         spatial: Arc<AudioNimbusSpatialContext>,
         direct_params: Arc<DirectEffectParamsShared>,
+        output: PortRef,
     ) -> Self {
+        let (feed, reflections) = triple_buffer::TripleBuffer::new(&None).split();
         Self {
             spatial,
             direction: Arc::new([
@@ -457,6 +611,9 @@ impl AudioNimbusBinauralNode {
             ]),
             volume: Arc::new(AtomicU32::new(1.0_f32.to_bits())),
             direct_params,
+            reflections: Arc::new(Mutex::new(Some(reflections))),
+            reflection_feed: Arc::new(Mutex::new(feed)),
+            output,
         }
     }
 
@@ -501,6 +658,10 @@ impl AudioNimbusBinauralNode {
     pub fn direct_params(&self) -> Arc<DirectEffectParamsShared> {
         self.direct_params.clone()
     }
+
+    pub fn reflections(&self) -> AudioNimbusReflectionsFeed {
+        self.reflection_feed.clone()
+    }
 }
 
 impl AudioNode for AudioNimbusBinauralNode {
@@ -523,6 +684,14 @@ impl AudioNode for AudioNimbusBinauralNode {
             )));
         }
         let block_size = self.spatial.audio_settings.frame_size as usize;
+        let reflections = self
+            .reflections
+            .lock()
+            .map_err(|_| NodeError::from(std::io::Error::other("reflection feed poisoned")))?
+            .take()
+            .ok_or_else(|| {
+                NodeError::from(std::io::Error::other("reflection feed already used"))
+            })?;
         Ok(AudioNimbusBinauralProcessor {
             spatializer: self
                 .spatial
@@ -530,6 +699,8 @@ impl AudioNode for AudioNimbusBinauralNode {
             direction: self.direction.clone(),
             volume: self.volume.clone(),
             direct_params: self.direct_params.clone(),
+            reflections,
+            output: self.output,
             block_size,
             frame_index: 0,
             input: vec![0.0; block_size],
@@ -546,6 +717,8 @@ struct AudioNimbusBinauralProcessor {
     direction: Arc<[AtomicU32; 3]>,
     volume: Arc<AtomicU32>,
     direct_params: Arc<DirectEffectParamsShared>,
+    reflections: triple_buffer::Output<Option<AudioNimbusReflectionsSnapshot>>,
+    output: PortRef,
     block_size: usize,
     frame_index: usize,
     input: Vec<f32>,
@@ -594,9 +767,18 @@ impl AudioNodeProcessor for AudioNimbusBinauralProcessor {
                 self.spatializer.set_direction(direction);
                 self.direct_params
                     .load_into(self.spatializer.direct_params_mut());
+                let reflection_output = self.reflections.read();
+                let reflection_params = reflection_output
+                    .as_ref()
+                    .and_then(|snapshot| (**snapshot).sources.get(&self.output));
                 if self
                     .spatializer
-                    .process(&self.input, &mut self.left, &mut self.right)
+                    .process(
+                        &self.input,
+                        &mut self.left,
+                        &mut self.right,
+                        reflection_params,
+                    )
                     .is_ok()
                 {
                     std::mem::swap(&mut self.pending_left, &mut self.left);
@@ -656,6 +838,30 @@ impl AudioNimbusSpatialContext {
             &self.audio_settings,
             &DirectEffectSettings { num_channels: 1 },
         )?;
+        let reflection_effect = ReflectionEffect::try_new(
+            &self.context,
+            &self.audio_settings,
+            &ReflectionEffectSettings {
+                impulse_response_size: self.audio_settings.sampling_rate,
+                num_channels: 4,
+            },
+            ReflectionAlgorithm::Parametric,
+        )?;
+        let reflection_decode = AmbisonicsDecodeEffect::try_new(
+            &self.context,
+            &self.audio_settings,
+            &AmbisonicsDecodeEffectSettings {
+                speaker_layout: SpeakerLayout::Stereo,
+                hrtf: self.hrtf.clone(),
+                max_order: 1,
+                rendering: Rendering::Binaural,
+            },
+        )?;
+        let reflection_decode_params = AmbisonicsDecodeEffectParams {
+            order: 1,
+            hrtf: self.hrtf.clone(),
+            orientation: CoordinateSystem::default(),
+        };
         let params = BinauralEffectParams {
             direction: Direction::new(0.0, 0.0, 1.0),
             interpolation: HrtfInterpolation::Bilinear,
@@ -668,8 +874,14 @@ impl AudioNimbusSpatialContext {
             hrtf: self.hrtf.clone(),
             effect,
             direct_effect,
+            reflection_effect,
+            reflection_decode,
+            reflection_decode_params,
             direct_params: DirectEffectParams::default(),
             direct_buffer: vec![0.0; self.audio_settings.frame_size as usize],
+            reflection_buffer: vec![0.0; self.audio_settings.frame_size as usize * 4],
+            wet_left: vec![0.0; self.audio_settings.frame_size as usize],
+            wet_right: vec![0.0; self.audio_settings.frame_size as usize],
             params,
             frame_size: self.audio_settings.frame_size as usize,
         })
@@ -687,8 +899,14 @@ pub struct BinauralSpatializer {
     hrtf: Hrtf,
     effect: BinauralEffect,
     direct_effect: DirectEffect,
+    reflection_effect: ReflectionEffect,
+    reflection_decode: AmbisonicsDecodeEffect,
+    reflection_decode_params: AmbisonicsDecodeEffectParams,
     direct_params: DirectEffectParams,
     direct_buffer: Vec<f32>,
+    reflection_buffer: Vec<f32>,
+    wet_left: Vec<f32>,
+    wet_right: Vec<f32>,
     params: BinauralEffectParams,
     frame_size: usize,
 }
@@ -708,6 +926,7 @@ impl BinauralSpatializer {
         input: &[f32],
         left: &mut [f32],
         right: &mut [f32],
+        reflection_params: Option<&DynamicReflectionEffectParams>,
     ) -> Result<(), SpatialProcessError> {
         if input.len() != self.frame_size
             || left.len() != self.frame_size
@@ -728,9 +947,43 @@ impl BinauralSpatializer {
                 .apply_in_place(&self.direct_params, &mut buffer)?;
         }
         let input_buffer = AudioBufferRef::try_from(&self.direct_buffer[..])?;
-        let mut output_buffer = AudioBufferMut::try_from_channels([left, right])?;
-        self.effect
-            .apply(&self.params, &input_buffer, &mut output_buffer)?;
+        {
+            let mut output_buffer = AudioBufferMut::try_from_channels([&mut *left, &mut *right])?;
+            self.effect
+                .apply(&self.params, &input_buffer, &mut output_buffer)?;
+        }
+        if let Some(reflection_params) = reflection_params {
+            self.reflection_buffer.fill(0.0);
+            self.wet_left.fill(0.0);
+            self.wet_right.fill(0.0);
+            let input_buffer = AudioBufferRef::try_from(self.direct_buffer.as_slice())?;
+            let frame_size = self.frame_size;
+            let (channel_0, rest) = self.reflection_buffer.split_at_mut(frame_size);
+            let (channel_1, rest) = rest.split_at_mut(frame_size);
+            let (channel_2, channel_3) = rest.split_at_mut(frame_size);
+            let mut reflections =
+                AudioBufferMut::try_from_channels([channel_0, channel_1, channel_2, channel_3])?;
+            self.reflection_effect
+                .apply(reflection_params, &input_buffer, &mut reflections)
+                .map_err(|_| SpatialProcessError::Reflection)?;
+            let (channel_0, rest) = self.reflection_buffer.split_at(frame_size);
+            let (channel_1, rest) = rest.split_at(frame_size);
+            let (channel_2, channel_3) = rest.split_at(frame_size);
+            let reflections =
+                AudioBufferRef::try_from_channels([channel_0, channel_1, channel_2, channel_3])?;
+            let mut wet = AudioBufferMut::try_from_channels([
+                &mut self.wet_left[..],
+                &mut self.wet_right[..],
+            ])?;
+            self.reflection_decode
+                .apply(&self.reflection_decode_params, &reflections, &mut wet)?;
+            for (dry, wet) in left.iter_mut().zip(&self.wet_left) {
+                *dry += wet * 0.25;
+            }
+            for (dry, wet) in right.iter_mut().zip(&self.wet_right) {
+                *dry += wet * 0.25;
+            }
+        }
         Ok(())
     }
 
@@ -759,6 +1012,8 @@ pub enum SpatialProcessError {
     Buffer(#[from] audionimbus::audio_buffer::AudioBufferError),
     #[error(transparent)]
     Effect(#[from] audionimbus::effect::EffectError),
+    #[error("AudioNimbus reflection effect failed")]
+    Reflection,
 }
 
 #[cfg(test)]
@@ -784,11 +1039,13 @@ mod simulation_tests {
             }],
         });
         let params = Arc::new(DirectEffectParamsShared::default());
+        let (reflection_feed, _reflection_reader) = triple_buffer::TripleBuffer::new(&None).split();
         simulation.publish(
             vec![DirectEmitterInput {
                 output: PortRef::new(crate::ModuleId(42), "out"),
                 position: [0.0, 0.0, 3.0],
                 params: params.clone(),
+                reflections: Arc::new(Mutex::new(reflection_feed)),
             }],
             ListenerPose::default(),
         );
