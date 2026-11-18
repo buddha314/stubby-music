@@ -92,7 +92,8 @@ its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`), and 
 clock (a `borrowed` rack place), and a whole bar with the snail sequencer's gates on 2 and 4
 lights it; it dies to embers when the clock stops (`stubby_game::campfire`). **Streams
 accumulate a composition** (`add-stream-layers`): the heartbeat puts a note on the staff on
-every beat; a campfire placed within 5 m of a stream snaps beside it and joins it there,
+every beat. The player builds a campfire from reeds (Q, 25 reeds, `buildables.json`), places
+it, then configures it (E): placed within 5 m of a stream it snaps beside it and joins it there,
 its rack inherits the stream's voice (the burbler's VCO, fixed and patched; the player adds
 only the sequencer), a ghostly staff runs from the join to the fire and rises, and its 2
 and 4 notes (ember) ride the staff downstream of the join, where its voice is heard too.

@@ -10,6 +10,8 @@ accumulates a composition; later stages split it into several.
 
 - **A stream carries layers.** The burbler's heartbeat is the first; a machine joined to
   the stream adds one at its join point, and it flows downstream from there.
+- **The player's flow** (user, 2026-11-18): build a campfire from reeds (Q, 25 reeds), place
+  it by a stream, then configure it (E): mount a snail shell and patch its two cables.
 - **The campfire joins a stream.** Placed within 5 m of a stream, its hologram snaps to
   the stream's bank (user, 2026-11-18); that point on the stream is its join.
 - **The campfire inherits the stream's voice.** Its rack shows the voice as it arrives
