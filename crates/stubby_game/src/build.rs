@@ -303,6 +303,7 @@ fn place_campfire(
     mut ghosts: Query<&mut Transform, With<Ghost>>,
     streams: Query<&stubby_streams::LaidStream>,
     rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
+    mut goals: MessageWriter<bevy_stubby_recipes::GoalRequest>,
 ) {
     if screens.open.is_some() || keys.just_pressed(KeyCode::Escape) {
         camp.active = false;
@@ -371,6 +372,12 @@ fn place_campfire(
         return;
     }
     camp.built += 1;
+    // The opening's first step (user, 2026-11-18): build a campfire.
+    goals.write(bevy_stubby_recipes::GoalRequest(
+        stubby_recipes::GoalEvent::ConditionMet(stubby_recipes::Condition::Built {
+            buildable: CAMPFIRE.into(),
+        }),
+    ));
     commands.spawn((
         Name::new("Campfire"),
         facing,

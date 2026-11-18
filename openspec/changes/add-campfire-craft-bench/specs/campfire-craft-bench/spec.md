@@ -102,10 +102,20 @@ multiples of 24 and new burblers seed on it.
 - **WHEN** a recipe row sets `bpm` to 100-130
 - **THEN** loading fails naming the recipe and its `bpm` field: ranges are multiples of 24
 
+### Requirement: Building the camp is the first step
+The player SHALL start with enough reeds for one campfire (`start.json`), and "Build a
+campfire" SHALL be the first step of the "Build a camp" major goal, met by the `built`
+condition (validated by `Rules::load`) when the player builds one with the build menu
+(user, 2026-11-18). The opening scene SHALL have no campfire placed.
+
+#### Scenario: First step
+- **WHEN** a new game starts and the player builds a campfire with Q
+- **THEN** 25 reeds are spent and "Build a campfire" completes, opening the next step
+
 ### Requirement: Lighting the camp completes "Build a camp"
 The `fire_lit` condition SHALL be a goal condition kind validated by `Rules::load`, and
-"Build a campfire" SHALL be the last step of the "Build a camp" major goal.
+"Light the fire" SHALL be the last step of the "Build a camp" major goal.
 
 #### Scenario: Last step
-- **WHEN** the camp's fire catches while "Build a campfire" is open
+- **WHEN** the camp's fire catches while "Light the fire" is open
 - **THEN** the step completes, and with it the major goal "Build a camp"

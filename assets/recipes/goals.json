@@ -9,6 +9,17 @@
       "scale": "major"
     },
     {
+      "id": "build_a_campfire",
+      "name": "Build a campfire",
+      "description": "Press Q and build a campfire from the reeds you carry.",
+      "scale": "minor",
+      "part_of": "build_a_camp",
+      "condition": {
+        "kind": "built",
+        "buildable": "campfire"
+      }
+    },
+    {
       "id": "catch_a_spark",
       "name": "Catch a spark",
       "description": "Hold the field recorder up to a lightning bug and collect its square wave.",

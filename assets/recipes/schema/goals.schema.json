@@ -112,6 +112,25 @@
           ]
         },
         {
+          "description": "The player has built one of this buildable with the build menu (Q). It latches:\ndismantling it later does not clear it.",
+          "type": "object",
+          "properties": {
+            "buildable": {
+              "type": "string",
+              "x-stubby-ref": "buildables"
+            },
+            "kind": {
+              "type": "string",
+              "const": "built"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "buildable"
+          ]
+        },
+        {
           "description": "The player holds at least this many of an item.",
           "type": "object",
           "properties": {

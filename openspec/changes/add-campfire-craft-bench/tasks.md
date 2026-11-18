@@ -27,7 +27,7 @@ unless the user assigns otherwise. Decisions first (design, Open Questions).
 - [ ] 2b.4 First recipe rows with ranges (with 0.5)
 
 ## 3. Game
-- [x] 3.1 Camp binder (`AssetBinder`), build placement with Q, reed cost (Q opens the build menu, Satisfactory-style: Stream or Campfire; the binder is scenery until the rack, 3.2a). An unlit camp stands by the opening burbler in `scene.bsn`, to show the player what campfire sticks are for
+- [x] 3.1 Camp binder (`AssetBinder`), build placement with Q, reed cost (Q opens the build menu, Satisfactory-style: Stream or Campfire; the binder is scenery until the rack, 3.2a). The opening scene no longer places a camp (2026-11-18): the player starts with 25 reeds and builds one as the first step, "Build a campfire" (`built` condition)
 - [x] 3.2 Lighting rule (`stubby_game::campfire`) in glue from `StepTick` and rack completeness (D3); sparks from the bundle on the heard instant; report `fire_lit`
 - [x] 3.2a The camp's clock from the nearest running burbler or flowing stream within `clock_reach_m` (D7); the fire dies when that beat stops (D1). The rack's clock place is `borrowed`: it plays the lent `AssetClock`, its knob does not turn, and it is empty with nothing in reach
 - [ ] 3.3 Crafting screen in the Craft Bench layout (D4) over `CraftRequest`, with pinning; shared screen mode

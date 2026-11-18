@@ -584,25 +584,4 @@ bevy_ecs::hierarchy::Children [
             w: 0.923879532511,
         },
     }
-    --
-    #"Campfire"
-    jackdaw::prefab::components::IsA {
-        source: "structures/campfire/campfire.bsn",
-        deleted: [],
-    }
-    jackdaw::prefab::components::PrefabEntityId(0)
-    jackdaw_scene_types::node_id::SceneNodeId(8620410544732437924)
-    bevy_transform::components::transform::Transform {
-        translation: glam::Vec3 {
-            x: 36.291274325674,
-            y: 0.000000000000,
-            z: -3.008386275252,
-        },
-        rotation: glam::Quat {
-            x: 0.000000000000,
-            y: -0.608761429009,
-            z: 0.000000000000,
-            w: 0.793353340291,
-        },
-    }
 ]
