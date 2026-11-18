@@ -12,9 +12,14 @@
 //! Segment and hologram meshes are taken once from their glTFs, baked into the asset's
 //! root space, and bent along the plan per segment (design D4).
 //!
-//! A laid stream carries its burbler's voice in two ways. Bar lines ride the staff, one
-//! on each downbeat of the audio clock (`add-mudpit-burbler` 2.7), and the voice is heard
-//! from the nearest point of the burbler or its streams (`add-localized-machine-voices`).
+//! A laid stream carries its burbler's voice in two ways. Bar lines and notes ride the
+//! staff, a bar line on each downbeat and a note on each beat of the audio clock
+//! (`add-mudpit-burbler` 2.7), and the voice is heard from the nearest point of the
+//! burbler or its streams (`add-localized-machine-voices`).
+//!
+//! A stream accumulates a composition (`add-stream-layers`): the heartbeat's notes start
+//! at the burbler's mouth, and a machine joined further down adds its own notes from its
+//! join (`LayerNote`), so they ride only downstream of it.
 use bevy::{
     camera::visibility::NoFrustumCulling,
     ecs::message::Messages,
@@ -101,6 +106,7 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                     .before(stubby_core::CursorCapture),
             )
             .add_message::<Dismantle>()
+            .add_message::<LayerNote>()
             .add_systems(
                 Update,
                 (
@@ -109,6 +115,8 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                     resolve_sources,
                     emit_bars.run_if(resource_exists::<Messages<ClockTick>>),
                     ride_bars,
+                    emit_notes.run_if(resource_exists::<Messages<ClockTick>>),
+                    ride_notes,
                     place_voices,
                 )
                     .chain()
@@ -231,6 +239,23 @@ impl LaidStream {
         Vec2::new(nearest.x - at.x, nearest.z - at.z).length()
     }
 
+    /// The point of this stream horizontally nearest `at`, and how far down the whole
+    /// chain from the burbler's mouth it is (`add-stream-layers`: a machine's join).
+    pub fn nearest_along(&self, at: Vec3) -> (f32, Vec3) {
+        let (from, length) = (self.start_s(), self.length());
+        let steps = (length / 0.25).ceil().max(1.) as u32;
+        (0..=steps)
+            .map(|k| {
+                let s = length * k as f32 / steps as f32;
+                (self.start + s, self.path.at(from + s).0)
+            })
+            .min_by(|a, b| {
+                let d = |p: &Vec3| Vec2::new(p.x - at.x, p.z - at.z).length_squared();
+                d(&a.1).total_cmp(&d(&b.1))
+            })
+            .unwrap_or((self.start, at))
+    }
+
     /// The point of this stream (on its centre line) horizontally nearest `at`.
     pub fn nearest_point(&self, at: Vec3) -> Vec3 {
         self.samples(0.25)
@@ -273,6 +298,8 @@ struct Templates {
     tints: Vec<(Handle<StandardMaterial>, Handle<StandardMaterial>)>,
     /// The bar line's parts, centred on the staff (`Bar_0` without its place on it).
     bar: Vec<(Handle<Mesh>, Handle<StandardMaterial>)>,
+    /// A note's parts (head, stem, halo), centred on the staff (`Pulse_0`, likewise).
+    note: Vec<(Handle<Mesh>, Handle<StandardMaterial>)>,
     pool: Vec<Vec<(Entity, Handle<Mesh>)>>,
 }
 
@@ -315,6 +342,7 @@ fn harvest_template(
     };
     let mut out = Vec::new();
     let mut bar = Vec::new();
+    let mut note = Vec::new();
     for entity in children.iter_descendants(root) {
         let Ok((mesh, material)) = pieces.get(entity) else {
             continue;
@@ -335,8 +363,8 @@ fn harvest_template(
             if transform.scale.length_squared() < 1e-6 {
                 transform.scale = Vec3::ONE;
             }
-            // A bar line keeps its height on the staff; `bar_pose` gives the rest.
-            if name.is_some_and(|name| name.as_str() == "Bar_0") {
+            // A bar line or note keeps its height on the staff; `bar_pose` gives the rest.
+            if name.is_some_and(|name| matches!(name.as_str(), "Bar_0" | "Pulse_0")) {
                 transform = Transform::from_xyz(0., transform.translation.y, 0.);
             }
             affine = transform.to_matrix() * affine;
@@ -347,12 +375,15 @@ fn harvest_template(
             at = parent.parent();
         }
         let under = |node: &str| names.iter().any(|n| n == node);
-        // Notes come with a later pass.
-        if under("Pulse_0") || under("Port_in_Halo") {
+        if under("Port_in_Halo") {
             continue;
         }
         let mut baked = plain_copy(source);
         transform_mesh(&mut baked, affine);
+        if under("Pulse_0") {
+            note.push((meshes.add(baked), material.0.clone()));
+            continue;
+        }
         if under("Bar_0") {
             bar.push((meshes.add(baked), material.0.clone()));
             continue;
@@ -378,6 +409,7 @@ fn harvest_template(
         Kind::Segment => {
             templates.segment = out;
             templates.bar = bar;
+            templates.note = note;
         }
         Kind::Hologram => {
             let valid = hex("#ffd39a");
@@ -935,6 +967,8 @@ fn resolve_sources(mut streams: Query<(Entity, &mut LaidStream)>) {
 struct StaffProfile {
     beats_per_bar: u32,
     flow_speed: f32,
+    /// Between the staff's lines; a note's step moves it half of this across the staff.
+    spacing: f32,
     wave_amplitude: f32,
     wavelength: f32,
 }
@@ -950,6 +984,7 @@ impl StaffProfile {
                 .as_u64()
                 .expect("beats per bar") as u32,
             flow_speed: number(&profile["notes"]["flow_speed_mps"]),
+            spacing: number(&profile["staff"]["spacing_m"]),
             wave_amplitude: number(&profile["staff"]["wave"]["amplitude_m"]),
             wavelength: number(&profile["staff"]["wave"]["wavelength_m"]),
         }
@@ -1054,6 +1089,153 @@ fn ride_bars(
         if let Some(stream) = on {
             let along = stream.start_s() + distance - stream.start;
             *transform = bar_pose(&stream.path, stream.span, along, &staff);
+            *visibility = Visibility::Visible;
+        } else {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+/// A note for the staff from a machine joined to a chain (`add-stream-layers`): it
+/// appears at the join and rides downstream, never upstream. The heartbeat's notes come
+/// from the burbler's own clock; a joined machine's (the campfire's sequencer) from glue.
+#[derive(Message, Clone, Debug)]
+pub struct LayerNote {
+    /// The chain's burbler.
+    pub source: Entity,
+    /// How far down the chain the join is, in metres from the burbler's mouth.
+    pub join_m: f32,
+    /// When the note is heard, from the audio clock.
+    pub at: Instant,
+    /// Where across the staff it sits: 0 is the middle line, each step half a space.
+    pub step: i8,
+    /// Its colour, or the staff's own.
+    pub colour: Option<Color>,
+}
+
+/// A note riding a chain's staff.
+#[derive(Component)]
+pub struct StaffNote {
+    pub source: Entity,
+    pub join_m: f32,
+    pub at: Instant,
+    pub step: i8,
+}
+
+/// How far down the chain a note is, `elapsed` seconds after it was heard at its join.
+fn note_distance(join_m: f32, elapsed: f32, flow_speed: f32) -> f32 {
+    join_m + elapsed * flow_speed
+}
+
+/// A note on every beat of a sounding burbler with a stream (the heartbeat, joined at the
+/// mouth), and one for each layer note a joined machine sends.
+#[allow(clippy::too_many_arguments)]
+fn emit_notes(
+    mut commands: Commands,
+    mut ticks: MessageReader<ClockTick>,
+    mut layers: MessageReader<LayerNote>,
+    templates: Res<Templates>,
+    machines: Query<(Entity, &AssetClock, &MachineVoice)>,
+    streams: Query<&LaidStream>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut tints: Local<Vec<([u8; 4], Vec<Handle<StandardMaterial>>)>>,
+) {
+    let mut notes: Vec<LayerNote> = Vec::new();
+    for tick in ticks.read() {
+        for (machine, clock, voice) in &machines {
+            if clock.engine == tick.module
+                && voice.sounding
+                && streams.iter().any(|s| s.source == Some(machine))
+            {
+                notes.push(LayerNote {
+                    source: machine,
+                    join_m: 0.,
+                    at: tick.at.unwrap_or_else(Instant::now),
+                    step: 0,
+                    colour: None,
+                });
+            }
+        }
+    }
+    notes.extend(layers.read().cloned());
+    for note in notes {
+        // A coloured layer's parts share one tinted copy of each template material.
+        let parts: Vec<_> = match note.colour {
+            None => templates.note.clone(),
+            Some(colour) => {
+                let key = colour.to_srgba().to_u8_array();
+                let tinted = match tints.iter().find(|(k, _)| *k == key) {
+                    Some((_, tinted)) => tinted.clone(),
+                    None => {
+                        let tinted: Vec<_> = templates
+                            .note
+                            .iter()
+                            .map(|(_, material)| {
+                                let mut m = materials.get(material).cloned().unwrap_or_default();
+                                let alpha = m.base_color.alpha();
+                                m.base_color = colour.with_alpha(alpha);
+                                let glow =
+                                    m.emissive.red.max(m.emissive.green).max(m.emissive.blue);
+                                m.emissive = colour.to_linear() * glow.max(1.);
+                                materials.add(m)
+                            })
+                            .collect();
+                        tints.push((key, tinted.clone()));
+                        tinted
+                    }
+                };
+                templates
+                    .note
+                    .iter()
+                    .zip(tinted)
+                    .map(|((mesh, _), material)| (mesh.clone(), material))
+                    .collect()
+            }
+        };
+        commands
+            .spawn((
+                Name::new("Staff note"),
+                StaffNote {
+                    source: note.source,
+                    join_m: note.join_m,
+                    at: note.at,
+                    step: note.step,
+                },
+                Transform::default(),
+                Visibility::Hidden,
+            ))
+            .with_children(|n| {
+                for (mesh, material) in parts {
+                    n.spawn((Mesh3d(mesh), MeshMaterial3d(material)));
+                }
+            });
+    }
+}
+
+/// Move notes down their chain at the water's speed, from the audio clock; one past the
+/// end of its chain is gone.
+fn ride_notes(
+    mut commands: Commands,
+    staff: Res<StaffProfile>,
+    mut notes: Query<(Entity, &StaffNote, &mut Transform, &mut Visibility)>,
+    streams: Query<&LaidStream>,
+) {
+    let now = Instant::now();
+    for (entity, note, mut transform, mut visibility) in &mut notes {
+        if now < note.at {
+            continue;
+        }
+        let elapsed = now.duration_since(note.at).as_secs_f32();
+        let distance = note_distance(note.join_m, elapsed, staff.flow_speed);
+        let on = streams.iter().find(|s| {
+            s.source == Some(note.source) && (s.start..s.start + s.length()).contains(&distance)
+        });
+        if let Some(stream) = on {
+            let along = stream.start_s() + distance - stream.start;
+            let mut pose = bar_pose(&stream.path, stream.span, along, &staff);
+            let side = pose.rotation * Vec3::Z;
+            pose.translation += side * f32::from(note.step) * staff.spacing / 2.;
+            *transform = pose;
             *visibility = Visibility::Visible;
         } else {
             commands.entity(entity).despawn();
@@ -1341,9 +1523,23 @@ mod tests {
         StaffProfile {
             beats_per_bar: 4,
             flow_speed: 1.5,
+            spacing: 0.12,
             wave_amplitude: 0.07,
             wavelength: 2.0,
         }
+    }
+
+    #[test]
+    fn a_joined_layer_rides_only_downstream_of_its_join() {
+        // A note heard at a join 12 m down is never upstream of it, and moves at the water.
+        let flow = staff().flow_speed;
+        assert_eq!(note_distance(12., 0., flow), 12.);
+        assert!((note_distance(12., 2., flow) - 15.).abs() < 1e-5);
+        assert_eq!(
+            note_distance(0., 0., flow),
+            0.,
+            "the heartbeat starts at the mouth"
+        );
     }
 
     #[test]

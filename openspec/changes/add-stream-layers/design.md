@@ -35,12 +35,16 @@ On each beat the layer's sequencer gates, a note appears on the staff at the joi
 rides downstream at the water's speed, as bar lines do, timed by the audio clock. Notes
 never appear upstream of their join.
 
-## Open Questions
+### D6. Decided (user, 2026-11-18)
+- **Sound and sight.** Downstream of a join, the stream sounds the layered composition
+  (the heartbeat and the campfire's 2 and 4), heard from the stream, and the staff shows it.
+- **Heartbeat notes.** The heartbeat puts a note on the staff on every beat, from the
+  burbler's mouth, so a campfire's notes read as a second layer.
+- **Inheritance.** A machine's rack shows every layer upstream of its join, fixed: the
+  burbler's voice, and any machine's layer between.
 
-1. **Sound (user to decide).** Downstream of the join, does the stream's heard voice
-   become the layered composition (heartbeat plus 2 and 4), or does only the staff show
-   it for now?
-2. The heartbeat's own notes (every beat) on the staff: draw them too (stream task 2.7),
-   so the campfire's are the second layer, or leave the heartbeat as bar lines only?
-3. A second machine downstream: which layers does its rack show (all of them as fixed
-   modules, or only the nearest machine's)?
+### D7. How layers reach the staff
+`stubby_streams` owns the staff. A machine adds a note with a `LayerNote` message: the
+chain's burbler, the join's distance down the chain, the instant the note is heard (the
+audio clock's), and its staff step and colour. The heartbeat's notes come from the
+burbler's own clock ticks. Who sends layer notes is glue (the campfire's sequencer steps).
