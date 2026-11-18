@@ -30,6 +30,15 @@ in the default game features. The first SDK build is separate from Cargo and may
 while; later launch commands only verify the cached SDK unless a pinned input changes.
 Use `--no-default-features` for a temporary build without AudioNimbus.
 
+From the repository root, launch the game with:
+
+```sh
+cargo run
+```
+
+The workspace defaults to the `stubby_jackdaw` game package. To enable development
+features, use `cargo run --features dev`.
+
 To save a preview after shader warmup, append
 `--screenshot=/tmp/stubby-desert-preview.png` to the game arguments.
 
