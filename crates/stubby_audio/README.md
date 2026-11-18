@@ -45,7 +45,7 @@ engine crate keeps it optional; `stubby_game` and `stubby_jackdaw` enable spatia
 by default:
 
 ```sh
-STEAMAUDIO_LIB_DIR=/path/to/steam-audio/lib/linux-x64 cargo build -p stubby_audio --features audionimbus
+cargo build -p stubby_audio --features audionimbus   # after tools/build_steam_audio_sdk.sh
 ```
 
 The native Steam Audio 4.8.1 library must be built or provisioned separately and
@@ -59,8 +59,10 @@ The helper stores the SDK beneath `target/native/steam-audio/`, skips the build 
 the pinned source, dependency manifest, build script, toolchain, configuration and
 artifact hash are unchanged, and rebuilds when any of those inputs change. Use
 `tools/build_steam_audio_sdk.sh --force` to rebuild explicitly. It is not called from
-Cargo, so ordinary builds do not pay this build cost. Direct Cargo builds using game
-defaults need `STEAMAUDIO_LIB_DIR` set to the returned library directory. The source
+Cargo, so ordinary builds do not pay this build cost. Build scripts (`steam_audio_lib.rs`)
+point the linker at that cache and put it in the binaries' run path, so direct Cargo
+builds and runs need no `STEAMAUDIO_LIB_DIR` or `LD_LIBRARY_PATH`; setting
+`STEAMAUDIO_LIB_DIR` overrides the cache. The source
 build uses Steam Audio's minimal configuration
 with IPP disabled; do not enable AudioNimbus `auto-install` in reproducible or offline
 builds.
@@ -73,9 +75,7 @@ temporary build without AudioNimbus.
 To launch the Jackdaw development game with the spatial audio demo:
 
 ```sh
-steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
-STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
-LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+tools/build_steam_audio_sdk.sh
 cargo run -p stubby_jackdaw --features dev -- --audio-demo
 ```
 
