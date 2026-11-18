@@ -60,6 +60,12 @@ pub enum Condition {
         #[schemars(extend("x-stubby-ref" = "buildables"))]
         buildable: String,
     },
+    /// The player has built one of this buildable with the build menu (Q). It latches:
+    /// dismantling it later does not clear it.
+    Built {
+        #[schemars(extend("x-stubby-ref" = "buildables"))]
+        buildable: String,
+    },
     /// The player holds at least this many of an item.
     ItemHeld {
         #[schemars(extend("x-stubby-ref" = "items"))]
@@ -234,7 +240,9 @@ pub fn validate_goals(
                     format!("unknown machine {machine}"),
                 ));
             }
-            Some(Condition::FireLit { buildable }) if !buildables.contains(buildable.as_str()) => {
+            Some(Condition::FireLit { buildable } | Condition::Built { buildable })
+                if !buildables.contains(buildable.as_str()) =>
+            {
                 errors.push(err(
                     &goal.id,
                     "condition",
@@ -1216,6 +1224,13 @@ mod tests {
                     buildable: "bonfire".into(),
                 },
             ),
+            when(
+                "builder",
+                "bossy",
+                Condition::Built {
+                    buildable: "tower".into(),
+                },
+            ),
         ]);
         for (id, field, words) in [
             ("lonely", "scale", "at least one minor step"),
@@ -1226,6 +1241,7 @@ mod tests {
             ("greedy", "condition", "unobtainium"),
             ("far", "condition", "unknown mine baobab"),
             ("smoky", "condition", "unknown buildable bonfire"),
+            ("builder", "condition", "unknown buildable tower"),
         ] {
             assert!(
                 found
@@ -1234,6 +1250,27 @@ mod tests {
                 "{id}.{field}: {words}\n{found:#?}"
             );
         }
+    }
+
+    #[test]
+    fn the_opening_starts_by_building_a_campfire_from_the_reeds_you_carry() {
+        // User, 2026-11-18: one campfire's reeds to start, and building it the first step.
+        let rules = crate::shipped_rules().expect("rules");
+        let first = rules
+            .goals
+            .iter()
+            .find(|g| g.part_of.as_deref() == Some("build_a_camp"))
+            .expect("Build a camp has steps");
+        assert_eq!(
+            first.condition,
+            Some(Condition::Built {
+                buildable: "campfire".into()
+            })
+        );
+        let mut inventory = Inventory::default();
+        inventory.grant(&rules.start).expect("start fits");
+        let catalog = crate::shipped_catalog().expect("catalog");
+        assert!(catalog.build("campfire", 1, &mut inventory).is_ok());
     }
 
     #[test]

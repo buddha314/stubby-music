@@ -5,6 +5,10 @@
     {
       "item": "patch_cable",
       "quantity": 10
+    },
+    {
+      "item": "reed",
+      "quantity": 25
     }
   ]
 }

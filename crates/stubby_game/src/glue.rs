@@ -875,6 +875,12 @@ mod prefab_tests {
             Transform::from_xyz(1., 0., 0.),
         );
         app.world_mut().entity_mut(reed).insert(ChildOf(parent));
+        // The player starts with some reeds (start.json); count what a harvest adds.
+        let start = app
+            .world()
+            .resource::<PlayerInventory>()
+            .items
+            .quantity("reed");
         // Reach is avian's (interaction.rs); the reed is the target.
         *app.world_mut()
             .resource_mut::<stubby_core::InteractTarget>() =
@@ -888,7 +894,7 @@ mod prefab_tests {
                 .resource::<PlayerInventory>()
                 .items
                 .quantity("reed"),
-            6
+            start + 6
         );
         assert!(app.world().get::<ResourceNode>(reed).unwrap().collected);
         app.update();
@@ -897,7 +903,7 @@ mod prefab_tests {
                 .resource::<PlayerInventory>()
                 .items
                 .quantity("reed"),
-            6
+            start + 6
         );
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
@@ -912,7 +918,7 @@ mod prefab_tests {
                 .resource::<PlayerInventory>()
                 .items
                 .quantity("reed"),
-            6
+            start + 6
         );
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
@@ -923,7 +929,7 @@ mod prefab_tests {
                 .resource::<PlayerInventory>()
                 .items
                 .quantity("reed"),
-            12
+            start + 12
         );
     }
     #[test]

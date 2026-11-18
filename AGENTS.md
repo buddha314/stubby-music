@@ -85,7 +85,9 @@ Never put a physics body on a visual whose scale animates (bugs flash from scale
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
 milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
-Goals guide; they never end the game. The first chores (short-term goals met by a condition, not items) are
+Goals guide; they never end the game. The player starts with 25 reeds, one campfire's worth
+(`start.json`), and the first chore is **Build a campfire** (Q; condition `built`); the
+opening scene has none placed. The first chores (short-term goals met by a condition, not items) go on with
 **Build a heartbeat** (configure the burbler so it sounds), then **Water the tree** (lead
 its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`), and later
 **Light the fire**: a campfire within 5 m of a sounding burbler or its stream borrows that

@@ -386,7 +386,8 @@ fn observe(
             && errors.is_empty()
             // Two from the bug, one mounted in the burbler's rack as its Square VCO.
             && player.items.quantity("square_wave") == 1
-            && player.items.quantity("reed") == 6
+            // 25 to start (start.json: one campfire's worth) and one clump's 6.
+            && player.items.quantity("reed") == 31
             && standing
             && leaves > 0
             && review.saw_animation
@@ -411,7 +412,7 @@ fn observe(
             && player.items.quantity("patch_cable") == 8
             && errors.is_empty()
             && player.items.quantity("square_wave") == 1
-            && player.items.quantity("reed") == 6;
+            && player.items.quantity("reed") == 31;
         write(
             &review,
             serde_json::json!({"event":"complete","success":success,"seconds":elapsed,"near_pass":review.near_pass,"rack_opened":review.rack_opened,"rack_loaded":review.rack_loaded,"rack_configured":review.rack_configured,"far_seen":review.far_seen,"saw_animation":review.saw_animation,"saw_flash":review.saw_flash}),

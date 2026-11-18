@@ -1,6 +1,7 @@
 # Every rule ID ever shipped. Maintained by `cargo run -p stubby_recipes --bin rules-fmt`.
 # Never remove a line: a renamed or removed ID needs a row in migrations.json.
 build_a_camp
+build_a_campfire
 build_a_heartbeat
 campfire
 campfire_tuning
