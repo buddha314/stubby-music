@@ -67,9 +67,11 @@ impl Plugin for PlayerControlsPlugin {
 /// Satisfactory's escape menu (user, 2026-11-17).
 pub fn toggle_screens(
     keys: Res<ButtonInput<KeyCode>>,
-    capture: Res<LookCapture>,
+    capture: Option<Res<LookCapture>>,
     mut screens: ResMut<ScreenMode>,
 ) {
+    // Without a look capture (tests, tools) the cursor counts as captured.
+    let captured = capture.is_none_or(|capture| capture.captured());
     let was = screens.open;
     if keys.just_pressed(INVENTORY) && screens.open != Some(Screen::Pause) {
         screens.open = match screens.open {
@@ -78,7 +80,7 @@ pub fn toggle_screens(
         };
     } else if keys.just_pressed(KeyCode::Escape) {
         screens.open = match screens.open {
-            None if !capture.captured() => Some(Screen::Pause),
+            None if !captured => Some(Screen::Pause),
             _ => None,
         };
     }

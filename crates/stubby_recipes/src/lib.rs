@@ -84,6 +84,31 @@ pub struct RecipeDefinition {
     pub name: String,
     pub inputs: Vec<Stack>,
     pub outputs: Vec<Stack>,
+    /// The tempo it is made at: the bench's clock (the nearest running burbler or flowing
+    /// stream) must be in this range, so the player tunes their streams to what they want
+    /// to make (add-campfire-craft-bench). None: any tempo, or none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bpm: Option<BpmRange>,
+}
+
+/// Tempos are multiples of this many BPM for now (user, 2026-11-17): 120 and 144 are on
+/// the grid, and matching a recipe's tempo stays easy.
+pub const BPM_STEP: u32 = 24;
+
+/// An inclusive range of whole beats per minute (tempo clocks are whole multiples of the
+/// 1 BPM master clock).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BpmRange {
+    pub min: u32,
+    pub max: u32,
+}
+impl BpmRange {
+    /// Whether a heard tempo is in range (rounded to the whole BPM the clock runs at).
+    pub fn contains(&self, bpm: f32) -> bool {
+        let bpm = bpm.round();
+        bpm >= self.min as f32 && bpm <= self.max as f32
+    }
 }
 /// Something the player builds in the world (not an inventory item), and what one costs.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -122,6 +147,12 @@ pub enum RecipeError {
     MineRequiresProduction(String),
     #[error("resource instance already collected: {0}")]
     AlreadyCollected(String),
+    #[error("made at {min}-{max} BPM; the clock here is {}", heard.map_or("silent".to_string(), |b| format!("{b} BPM")))]
+    OffTempo {
+        min: u32,
+        max: u32,
+        heard: Option<u32>,
+    },
     #[error("need {needed} {item}; have {available}")]
     MissingIngredient {
         item: String,
@@ -565,10 +596,29 @@ impl Catalog {
         recipe: &str,
         inventory: &mut Inventory,
     ) -> Result<Vec<Stack>, RecipeError> {
+        self.craft_at(recipe, inventory, None)
+    }
+    /// Craft at a bench whose clock runs at `bpm` (None: no clock in reach). A recipe with a
+    /// `bpm` range is made only at a tempo inside it; nothing is taken otherwise.
+    pub fn craft_at(
+        &self,
+        recipe: &str,
+        inventory: &mut Inventory,
+        bpm: Option<f32>,
+    ) -> Result<Vec<Stack>, RecipeError> {
         let recipe = self
             .recipes
             .get(recipe)
             .ok_or_else(|| RecipeError::UnknownRecipe(recipe.into()))?;
+        if let Some(range) = recipe.bpm
+            && !bpm.is_some_and(|bpm| range.contains(bpm))
+        {
+            return Err(RecipeError::OffTempo {
+                min: range.min,
+                max: range.max,
+                heard: bpm.map(|bpm| bpm.round().max(0.) as u32),
+            });
+        }
         let mut staged = inventory.clone();
         staged.take_stacks(&recipe.inputs)?;
         for (item, quantity) in aggregate(&recipe.outputs)? {
@@ -608,6 +658,34 @@ impl Catalog {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_tempo_bound_recipe_is_made_only_at_its_tempo() {
+        let mut definition = fixture();
+        definition.recipes[0].bpm = Some(BpmRange { min: 72, max: 96 });
+        let catalog = Catalog::new(definition).unwrap();
+        let mut inventory = Inventory::default();
+        inventory.add("square_wave", 4).unwrap();
+        for heard in [None, Some(48.0), Some(120.0)] {
+            assert!(
+                matches!(
+                    catalog.craft_at("test_recipe", &mut inventory, heard),
+                    Err(RecipeError::OffTempo {
+                        min: 72,
+                        max: 96,
+                        ..
+                    })
+                ),
+                "{heard:?}"
+            );
+            assert_eq!(inventory.quantity("square_wave"), 4, "nothing taken");
+        }
+        // 95.6 BPM rounds to 96: in range, as the clock runs at whole BPM.
+        catalog
+            .craft_at("test_recipe", &mut inventory, Some(95.6))
+            .unwrap();
+        assert_eq!(inventory.quantity("square_wave"), 2);
+    }
+
     fn fixture() -> CatalogDefinition {
         serde_json::from_str(r#"{
             "items":[{"id":"square_wave","name":"Square wave","description":"Waveform resource"},{"id":"test_module","name":"Test output","description":"Test-only recipe output"}],

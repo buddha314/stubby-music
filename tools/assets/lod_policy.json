@@ -48,6 +48,13 @@
     40.0
    ],
    "cull_metres": 600.0
+  },
+  {
+   "models": "structures/campfire/campfire.glb",
+   "handover_metres": [
+    30.0
+   ],
+   "cull_metres": 300.0
   }
  ]
 }

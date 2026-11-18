@@ -157,12 +157,20 @@ def boulder(glb):
     return [box]
 
 
+def campfire(glb):
+    """A cylinder around the bundle of sticks: the player walks around the fire."""
+    parts = world_meshes(glb)
+    near = np.concatenate([p for name, p in parts.items() if not name.endswith("_Far")])
+    return [cylinder_around(near)]
+
+
 FAMILIES = {
     # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
     "flora/reeds": ("flora/reeds/*/*.glb", "thin reeds: the player walks through, like grass"),
     "props/desert": ("props/desert/*/*.glb", None),
     "props/rocks": ("props/rocks/*/*.glb", boulder),
+    "structures/campfire": ("structures/campfire/campfire.glb", campfire),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

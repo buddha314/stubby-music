@@ -247,3 +247,19 @@ fn the_same_rack_gets_the_same_ids() {
     let b = plan_with(&[], |_, _| None);
     assert_eq!(a.parts, b.parts);
 }
+
+#[test]
+fn a_stepped_knob_clicks_through_the_24_bpm_grid_inside_its_travel() {
+    let knob = Knob {
+        part: "clock".into(),
+        param: "bpm",
+        default: 120.,
+        min: 30.,
+        max: 240.,
+        step: Some(24.),
+    };
+    assert_eq!(knob.snap(130.), 120.);
+    assert_eq!(knob.snap(137.), 144.);
+    assert_eq!(knob.snap(30.), 48., "the lowest multiple inside the travel");
+    assert_eq!(knob.snap(250.), 240.);
+}

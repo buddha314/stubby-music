@@ -9,7 +9,7 @@
 //! app.add_plugins(RecipesPlugin::default());
 //! // the game decides *when* to harvest or craft:
 //! harvests.write(HarvestRequest { source, now });
-//! crafts.write(CraftRequest { recipe: "stream_segment_from_reeds".into() });
+//! crafts.write(CraftRequest { recipe: "stream_segment_from_reeds".into(), bpm: Some(90.) });
 //! // and reacts to the results after `RecipesSystems`:
 //! for collected in reader.read() { /* mark the node, play a cue */ }
 //! ```
@@ -247,6 +247,9 @@ pub struct ResourceCollected {
 #[derive(Message, Clone)]
 pub struct CraftRequest {
     pub recipe: String,
+    /// The tempo of the bench's clock (the nearest running burbler or flowing stream), or
+    /// None with no clock in reach. A recipe with a `bpm` range is made only inside it.
+    pub bpm: Option<f32>,
 }
 
 /// Something could not go into the player's inventory: no box had room for `item`
@@ -323,7 +326,10 @@ fn apply_crafts(
         return;
     };
     for request in requests.read() {
-        match catalog.0.craft(&request.recipe, &mut player.items) {
+        match catalog
+            .0
+            .craft_at(&request.recipe, &mut player.items, request.bpm)
+        {
             Ok(outputs) => {
                 player.feedback = format!("Crafted {}.", request.recipe);
                 completed.write(CraftCompleted {

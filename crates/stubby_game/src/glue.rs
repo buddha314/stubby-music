@@ -454,7 +454,9 @@ fn install_mine(
         let hash = definition.instance.bytes().fold(seed, |hash, byte| {
             hash.wrapping_mul(1099511628211) ^ u64::from(byte)
         });
-        let bpm = 40. + (hash % 141) as f32;
+        // A seeded tempo on the 24 BPM grid, 48 to 192 (user, 2026-11-17: tempos are
+        // multiples of 24 for now, which keeps 120 and 144).
+        let bpm = stubby_recipes::BPM_STEP as f32 * (2 + hash % 7) as f32;
         world.entity_mut(entity).insert((
             AssetClock {
                 engine: id,

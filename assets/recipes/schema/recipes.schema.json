@@ -28,9 +28,41 @@
     "recipes"
   ],
   "$defs": {
+    "BpmRange": {
+      "description": "An inclusive range of whole beats per minute (tempo clocks are whole multiples of the\n1 BPM master clock).",
+      "type": "object",
+      "properties": {
+        "max": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "min": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ]
+    },
     "RecipeDefinition": {
       "type": "object",
       "properties": {
+        "bpm": {
+          "description": "The tempo it is made at: the bench's clock (the nearest running burbler or flowing\nstream) must be in this range, so the player tunes their streams to what they want\nto make (add-campfire-craft-bench). None: any tempo, or none.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BpmRange"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "id": {
           "type": "string"
         },

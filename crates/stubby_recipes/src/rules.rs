@@ -526,6 +526,24 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
     for recipe in &definition.recipes {
         stacks(&mut errors, RECIPES, &recipe.id, "inputs", &recipe.inputs);
         stacks(&mut errors, RECIPES, &recipe.id, "outputs", &recipe.outputs);
+        if let Some(range) = recipe.bpm
+            && (range.min == 0
+                || range.min > range.max
+                || range.min % crate::BPM_STEP != 0
+                || range.max % crate::BPM_STEP != 0)
+        {
+            errors.push(RulesError::new(
+                RECIPES,
+                &recipe.id,
+                "bpm",
+                format!(
+                    "{}-{} BPM: min and max are multiples of {} with min no more than max",
+                    range.min,
+                    range.max,
+                    crate::BPM_STEP
+                ),
+            ));
+        }
     }
     for buildable in &definition.buildables {
         stacks(
