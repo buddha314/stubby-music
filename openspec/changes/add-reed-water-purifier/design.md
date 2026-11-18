@@ -1,11 +1,13 @@
 ## Context
 
-The user's VCV Rack sketch (2026-11-18) is the purifier's patch, cable by cable:
+The user's VCV Rack patch is the purifier's patch, saved for reference as
+`assets/rack-recipies/reed-water-filter.vcv` (user, 2026-11-18; read from its
+`patch.json`, which settles what the screenshot leaves ambiguous). Cable by cable:
 
 | Cable | From | To |
 | --- | --- | --- |
-| purple | VCO 1 TRI | MIX IN 1 |
-| blue | VCO 2 SAW | MIX IN 2 |
+| purple | VCO 1 (C2) SAW | MIX IN 1 |
+| blue | VCO 2 (C4) TRI | MIX IN 2 |
 | yellow | MIX OUT | VCF IN |
 | green | VCF HPF | VCA IN |
 | blue | clock CLK 1 | VCA CV |
@@ -17,7 +19,7 @@ Settings in the sketch:
 - VCO 2 at 261.63 Hz (C4);
 - VCF cutoff 531.5 Hz, which is C5 (523.25 Hz) +27 cents, with resonance and drive near
   their defaults;
-- mixer channels 1 and 2 up, channel 1 higher;
+- mixer: every level at 1 (channels and mix);
 - the clock at 120 BPM.
 
 Rack rules already in force: a rack plays only what it shows (AGENTS.md); the rack is data
@@ -32,8 +34,8 @@ The recipe makes a placeable purifier. Its rack is the sketch, as places:
 | Place | Module | Fixed? |
 | --- | --- | --- |
 | clock | `burbler_clock`, `borrowed` | fixed |
-| vco_low | `triangle_vco` | fixed (no triangle source yet; user, 2026-11-18) |
-| vco_high | `saw_vco` | fixed (no saw source yet) |
+| vco_low | `saw_vco` at C2 | fixed (no saw source yet; user, 2026-11-18) |
+| vco_high | `triangle_vco` at C4 | fixed (no triangle source yet) |
 | mix | `mixer` | fixed |
 | filter | `vcf` | fixed: the recipe's high-pass filter |
 | vca | `volume` (its CV/TRIG as gain) | fixed |

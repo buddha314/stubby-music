@@ -9,7 +9,7 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 0.5 Triangle and saw: fixed VCOs until their sources are designed; cutoff quantized to C5 (user, 2026-11-18)
 - [ ] 0.7 How clean (Open Question 4) and placement (5)
 - [ ] 0.8 Collecting a high-pass filter and an oscilloscope (their own changes; the recipe cannot be made before)
-- [ ] 0.6 Commit the sketch as `docs/design/reed-water-purifier-patch.png` (crop out the browser)
+- [x] 0.6 The patch is saved as `assets/rack-recipies/reed-water-filter.vcv` (user, 2026-11-18)
 
 ## 1. Rack settings
 - [ ] 1.1 `quantize: "semitone"` on module knobs; `stubby_rack::Knob::snap` to the pitch grid; tests

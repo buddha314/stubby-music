@@ -14,8 +14,8 @@ campfire's clock is inside the recipe's BPM range.
 
 ### Requirement: The purifier's rack is the high-pass patch
 A placed purifier SHALL have a rack with a borrowed clock, a low VCO, a high VCO, a mixer,
-a VCF, a VCA and a scope, and its comb SHALL suggest the patch: low VCO TRI to mixer 1,
-high VCO SAW to mixer 2, mixer OUT to VCF IN, VCF HPF to VCA IN, clock to VCA CV, VCA OUT
+a VCF, a VCA and a scope, and its comb SHALL suggest the patch: low VCO SAW to mixer 1,
+high VCO TRI to mixer 2, mixer OUT to VCF IN, VCF HPF to VCA IN, clock to VCA CV, VCA OUT
 to scope IN, scope OUT to the outlet. The clock SHALL be the nearest running burbler's or
 flowing stream's, lent as on the campfire.
 
