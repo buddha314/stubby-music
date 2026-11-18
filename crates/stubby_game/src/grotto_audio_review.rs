@@ -139,14 +139,25 @@ fn arm_burbler(
         return;
     };
     let mounted = rack.mounted.insert("vco".into(), "square_vco".into());
-    let patched: Vec<_> = config
+    let previous_cables = rack.own.clone();
+    let required: Vec<_> = config
         .cables
         .iter()
-        .map(|cable| (!cable.optional).then(|| (cable.from.clone(), cable.to.clone())))
+        .filter(|cable| !cable.optional)
+        .map(|cable| (cable.from.clone(), cable.to.clone()))
         .collect();
-    let changed = mounted.as_deref() != Some("square_vco") || rack.patched != patched;
+    rack.own.retain(|(_, target)| {
+        !required
+            .iter()
+            .any(|(_, required_target)| target == required_target)
+    });
+    for (source, target) in &required {
+        if !rack.joins(source, target) {
+            rack.own.push((source.clone(), target.clone()));
+        }
+    }
+    let changed = mounted.as_deref() != Some("square_vco") || rack.own != previous_cables;
     if changed {
-        rack.patched = patched;
         rack.version = rack.version.wrapping_add(1);
     }
     review.burbler = Some(machine);
