@@ -135,6 +135,8 @@ def main():
                         help='Run the built stubby_jackdaw binary under the same watchdog (no editor)')
     parser.add_argument('--audio-demo', action='store_true',
                         help='Run the spatial two-source audio demo (standalone only)')
+    parser.add_argument('--grotto-audio-review', action='store_true',
+                        help='Review the authored grotto inside, behind the boulders, and outside')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
     parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
@@ -152,8 +154,10 @@ def main():
         parser.error('--lods and --prefabs are separate reviews')
     if args.audio_demo and not args.standalone:
         parser.error('--audio-demo requires --standalone')
+    if args.grotto_audio_review and not args.standalone:
+        parser.error('--grotto-audio-review requires --standalone')
     if args.standalone and (args.command or args.play or args.review or args.streams or args.sky):
-        parser.error('--standalone supports the opening or --prefabs review only')
+        parser.error('--standalone cannot be combined with editor-only review flags')
     if not args.command:
         check = [sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py')]
         if not args.standalone:
@@ -179,6 +183,8 @@ def main():
                         f'--prefab-review=/tmp/stubby-lod-{args.name}']
         if args.audio_demo:
             command += ['--audio-demo']
+        if args.grotto_audio_review:
+            command += ['--grotto-audio-review=/tmp/grotto-audio-review']
         if not Path(command[0]).is_file():
             parser.error('build stubby_jackdaw before the standalone diagnostic')
     output = Path('/tmp') / f'jackdaw-flicker-{args.name}.log'

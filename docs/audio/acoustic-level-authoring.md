@@ -109,6 +109,32 @@ listen for the clock blips or a dedicated test patch for transient detail.
 The bridge snapshots marked meshes into a world-space AudioNimbus scene off the
 audio callback. The generated mudflat and mountain ridges are tagged in code. The
 Jackdaw component is reflectable for authored mesh children. Authored walls/caves
-still need tags and an in-game occlusion/transmission listening review. Reflection
-and reverb simulation, animated acoustic geometry, and per-triangle material indices
-are not implemented yet; do not describe them as supported in a level review.
+still need tags and a successful in-game occlusion/transmission listening review.
+The AudioNimbus reflection API has an offline synthetic-room test, but there is no
+live reflection/reverb bus in the Firewheel graph yet. Animated acoustic geometry
+and per-triangle material indices are also not implemented; do not describe them as
+supported in a level review.
+
+## Opening boulder grotto review (2026-11-17)
+
+`tools/jackdaw_timed_test.py --standalone --grotto-audio-review --name <name>` runs a
+20-second bounded standalone pass. It plays the square/clock demo at the grotto
+burbler, moves the listener to an interior/mouth point and two outside points, and
+records listener/source positions, world-bus peak levels, and screenshots under
+`/tmp/grotto-audio-review/`. The outside comparison points are both 17 m from the
+source: one ray passes through boulder 0; the other is on the spawn-facing side.
+
+The scene snapshot contained 1,302,514 vertices, 434,172 triangles, and 104 material
+records. The test did **not** pass the occlusion check: the steady world-bus peak was
+−33.71 dBFS at both matched-distance outside points. At the blocked point, a direct
+simulation diagnostic also returned `occlusion=1` and unity transmission for the
+square demo emitter. The interior/mouth point measured −23.64 dBFS at about 5.5 m,
+so that level difference is explained by distance and does not establish occlusion.
+A visible boulder lies across the blocked camera ray, so investigate why this
+source's ray does not register the tagged rock before treating the grotto as
+acoustically validated.
+
+Live echo/reverb could not be evaluated: the Firewheel graph does not yet consume
+AudioNimbus reflection outputs. Keep `add-echo-grotto` task 4.1 open until the direct
+occlusion path is corrected and the live reflection/reverb bus is integrated and
+heard in the grotto.
