@@ -9,8 +9,9 @@
 
 ## 2. World generation
 
+- [ ] 2.0 Use maintained FOSS noise/PRNG implementations for seeded fBm and per-chunk randomness where they meet deterministic requirements; avoid handwritten noise primitives. Keep only the game's Voronoi crack shaping and chunk/placement rules that have no suitable library equivalent, and record the selected crate versions.
 - [ ] 2.1 Seeded per-chunk RNG keyed by (seed, cx, cz); determinism test
-- [ ] 2.2 Voronoi crack heightfield + low-amplitude fBm; flatness test for spawn area
+- [ ] 2.2 Voronoi crack heightfield + low-amplitude fBm from the selected FOSS noise implementation; flatness test for spawn area
 - [ ] 2.3 Seamless chunk borders (shared edge vertices and normals); seam test
 - [ ] 2.4 Async chunk streaming and despawn around the player
 - [ ] 2.5 Placement of Square VCO (40–120 m, outside its 35 m hearing radius) and Clock (farther, ≤300 m); placement tests across 1,000 seeds
