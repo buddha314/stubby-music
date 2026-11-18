@@ -36,6 +36,48 @@ pub struct RackConfiguration {
     pub cables: Vec<RackCable>,
     #[serde(default)]
     pub patched_hint: String,
+    /// The settings the machine's work needs (`stubby_rack::Target`): a knob at a note or
+    /// a value. The rack publishes whether they are all met (`RackTargets`); the game's
+    /// rule for the machine reads it (the campfire's backbeat, the purifier's notes).
+    #[serde(default)]
+    pub targets: Vec<stubby_rack::Target>,
+}
+impl RackConfiguration {
+    /// What is wrong with the profile's targets: each must name a place in the rack and a
+    /// knob a module there has, and a note or a value that knob can reach.
+    pub fn target_problems(&self) -> Vec<String> {
+        let modules = &*crate::rack::RACK_MODULES;
+        let mut problems = Vec::new();
+        for target in &self.targets {
+            let at = format!("{}.{}", target.place, target.knob);
+            if let Some(problem) = target.problem() {
+                problems.push(format!("{at}: {problem}"));
+                continue;
+            }
+            let Some(place) = self.places.iter().find(|p| p.place == target.place) else {
+                problems.push(format!("{at}: no place `{}`", target.place));
+                continue;
+            };
+            let held = place
+                .module
+                .iter()
+                .chain(place.accepts.iter().map(|a| &a.module));
+            let knobs: Vec<_> = held.filter_map(|m| modules.knob(m, &target.knob)).collect();
+            if knobs.is_empty() {
+                problems.push(format!("{at}: no module there has knob `{}`", target.knob));
+                continue;
+            }
+            let want = target
+                .value
+                .or_else(|| target.note.as_deref().and_then(stubby_rack::note_hz));
+            if let Some(want) = want
+                && !knobs.iter().any(|k| (k.min..=k.max).contains(&want))
+            {
+                problems.push(format!("{at}: {want} is outside the knob's travel"));
+            }
+        }
+        problems
+    }
 }
 /// A jack on a rack: the place and the module's panel jack (`stubby_rack`'s type).
 pub use stubby_rack::Jack as JackRef;

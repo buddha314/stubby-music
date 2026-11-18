@@ -124,6 +124,54 @@ pub fn note_name(hz: f32) -> String {
     format!("{}{}", NAMES[n.rem_euclid(12) as usize], n.div_euclid(12))
 }
 
+/// A setting a machine needs for its work (add-reed-water-purifier "target settings"):
+/// a knob in a place at a note (`"note": "C2"`, for a semitone knob) or at a value
+/// (`"value": 1`, a step gate on). Machine profiles list them under `configure.targets`.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Target {
+    pub place: String,
+    pub knob: String,
+    #[serde(default)]
+    pub note: Option<String>,
+    #[serde(default)]
+    pub value: Option<f32>,
+}
+impl Target {
+    /// Whether the knob's value meets the target: the same note, or the same value.
+    pub fn met(&self, value: f32) -> bool {
+        match (&self.note, self.value) {
+            (Some(note), None) => note_name(value) == *note,
+            (None, Some(want)) => (value - want).abs() <= 1e-3 * want.abs().max(1.),
+            _ => false,
+        }
+    }
+    /// What is wrong with the target as written, if anything.
+    pub fn problem(&self) -> Option<String> {
+        match (&self.note, self.value) {
+            (Some(_), Some(_)) | (None, None) => {
+                Some("give a `note` or a `value`, not both".into())
+            }
+            (Some(note), None) if note_hz(note).map(note_name).as_ref() != Some(note) => {
+                Some(format!("`{note}` is not a note like C4 or F#2"))
+            }
+            _ => None,
+        }
+    }
+}
+
+/// A note's frequency (`C4` → 261.63 Hz), if it is written as a note.
+pub fn note_hz(name: &str) -> Option<f32> {
+    let split = name.find(|c: char| c == '-' || c.is_ascii_digit())?;
+    let (letter, octave) = name.split_at(split);
+    let octave: i32 = octave.parse().ok()?;
+    const NAMES: [&str; 12] = [
+        "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+    ];
+    let index = NAMES.iter().position(|n| *n == letter)? as i32;
+    Some(hz_at((octave * 12 + index - 57) as f32))
+}
+
 /// The parts of `asset.json` the rack reads. The panel belongs to art and carries much
 /// more (model, lights, display), so unknown fields are ignored here.
 #[derive(Deserialize)]

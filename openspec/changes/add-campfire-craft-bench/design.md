@@ -49,7 +49,8 @@ events (heard instant, step index, gate) for the camp's sequencer and the rack's
 completeness. The fire catches after **one full bar** (steps 1–4 in order) in which the
 gate fired on steps 2 and 4 and not on 1 and 3, with the voice patched to the fire.
 That bar is the backbeat. The rule's pattern is data in the camp's profile
-(`light_pattern: [false, true, false, true]`), so later fires can ask for other rhythms.
+(its `configure.targets`: `seq.gate_1..4` at 0, 1, 0, 1; it was `light_pattern` until
+`add-reed-water-purifier` 1.3), so later fires can ask for other rhythms.
 Each strike throws sparks from the bundle (`Sparks` node) at its heard instant, so the
 player sees the rhythm. On lighting, the game reports `GoalEvent::ConditionMet(FireLit { buildable:
 "campfire" })`.
