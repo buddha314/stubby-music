@@ -44,7 +44,7 @@ fn hints() -> [(String, &'static str); 6] {
     [
         (style::key_name(keys::BUILD), "Build"),
         (style::key_name(keys::RECORDER), "Recorder"),
-        (style::key_name(keys::FLASHLIGHT), "Disco light"),
+        (style::key_name(keys::FLASHLIGHT), "Scanner"),
         (style::key_name(keys::INVENTORY), "Inventory"),
         (style::key_name(keys::RECIPE_BOOK), "Recipes"),
         ("[ ]".into(), "Time"),
