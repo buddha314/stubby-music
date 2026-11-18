@@ -626,27 +626,21 @@ mod tests {
         assert_eq!(flare(0.1, false, 0.6, 1.2), 0.);
     }
     #[test]
-    fn the_ball_appears_at_the_left_edge_of_view_at_eyebrow_level_whatever_the_pitch() {
+    fn the_ball_appears_in_the_upper_left_corner_of_a_level_view_whatever_the_pitch() {
         let eye = Vec3::new(2., 1.7, 5.);
         let offset = Vec3::from(FlashlightStyle::shipped().0.ball.offset);
         // Facing north (-Z), looking level: left is -X, up is +Y, ahead is -Z.
         let at = ball_place(eye, Vec3::NEG_Z, offset);
-        assert!(at.x < eye.x && at.z < eye.z, "ahead and to the left: {at}");
-        assert!(
-            (0.0..0.15).contains(&(at.y - eye.y)),
-            "about eyebrow level: {at}"
-        );
-        // At the left edge of a 16:9 view (36 degrees each side of a 45 degree vertical
-        // field of view): its centre in view, about a third of it beyond the edge.
         let to = at - eye;
+        // Matched to the user's reference: 33 degrees left, 17 up, 0.95 m away, so a
+        // level 16:9 view (36 degrees each side, 22.5 up) cuts it at the left and top.
         let left = (-to.x).atan2(-to.z).to_degrees();
+        let up = to.y.atan2(Vec2::new(to.x, to.z).length()).to_degrees();
+        assert!((30.0..36.0).contains(&left), "{left} degrees left");
+        assert!((14.0..20.0).contains(&up), "{up} degrees up");
         assert!(
-            (32.0..38.0).contains(&left),
-            "{left} degrees left of the view axis"
-        );
-        assert!(
-            (to.length() - 1.1).abs() < 0.05,
-            "1.1 m away: {}",
+            (to.length() - 0.95).abs() < 0.05,
+            "0.95 m away: {}",
             to.length()
         );
         // Looking down at the ground does not move it: only the heading counts.

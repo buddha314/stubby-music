@@ -16,15 +16,15 @@ in it. B SHALL do nothing while a screen has the controls.
 ### Requirement: The light is a spinning disco ball
 While the disco light is on, it SHALL appear as a mirror ball that spins and throws
 a ring of narrow violet and cyan beams, without shadows, whose spots sweep the ground as it
-turns. When switched on, the ball SHALL appear in view so the player knows it is there: at
-about eyebrow level, about 1.1 m away and 35 degrees to the left, at the left edge of the view
-with about a third of it out of frame (user, 2026-11-17, replacing "above the head" of
-2026-11-16). It SHALL stay at that place in the world while on, not following the player's view. Its size, place, spin and beams SHALL come from
+turns. When switched on, the ball SHALL appear in view so the player knows it is there: about
+0.95 m away, 33 degrees to the left and 17 degrees up, so that in a level view it sits in the
+upper-left corner, cut by the left and top edges (the user's reference screenshot,
+2026-11-17, replacing "above the head" of 2026-11-16). It SHALL stay at that place in the world while on, not following the player's view. Its size, place, spin and beams SHALL come from
 `assets/ui/flashlight.json`.
 
 #### Scenario: It appears in view
 - **WHEN** the player, looking level, switches the disco light on
-- **THEN** the ball is at the left edge of the view at eyebrow level, about a third of it out of frame
+- **THEN** the ball is in the upper-left corner of the view, partly out of frame at the left and top
 
 #### Scenario: The spots sweep
 - **WHEN** the player holds still with the disco light on for a few seconds

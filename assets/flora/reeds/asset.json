@@ -75,19 +75,19 @@
   "triangles": {
     "reed_clump_0": {
       "near": 1392,
-      "far": 6
+      "far": 24
     },
     "reed_clump_1": {
       "near": 1720,
-      "far": 6
+      "far": 24
     },
     "reed_clump_2": {
       "near": 1684,
-      "far": 6
+      "far": 24
     },
     "reed_clump_3": {
       "near": 1592,
-      "far": 6
+      "far": 24
     }
   }
 }

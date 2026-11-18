@@ -181,13 +181,20 @@ class ReedClump(Burbler):
         return standing, stubble
 
     def far_lod(self):
-        """Three crossed tapered strips with the clump's silhouette."""
+        """A fan of twelve thin tapered blades leaning out from the base, so a distant
+        clump keeps a reed tuft's ragged silhouette (three solid crossed strips read as
+        posts at the horizon; user, 2026-11-17). Each blade is a narrow quad set across
+        its lean, so some show broad from any side; 24 triangles in all."""
         def fill(bm):
-            for k in range(3):
-                a = math.pi * k / 3
-                dx, dy = math.cos(a) * 0.35, math.sin(a) * 0.35
-                v = [bm.verts.new(c) for c in ((-dx, -dy, 0), (dx, dy, 0), (dx * 0.4, dy * 0.4, 1.6),
-                                               (-dx * 0.4, -dy * 0.4, 1.6))]
+            for k in range(12):
+                a = math.tau * k / 12 + 0.21 * ((k * 5) % 3 - 1)
+                out = Vector((math.cos(a), math.sin(a), 0))
+                across = Vector((-math.sin(a), math.cos(a), 0))
+                h = 1.15 + 0.5 * ((k * 7) % 5) / 4
+                base = out * 0.05
+                top = out * (0.12 + 0.22 * h / 1.65) + Vector((0, 0, h))
+                v = [bm.verts.new(c) for c in (base - across * 0.035, base + across * 0.035,
+                                               top + across * 0.006, top - across * 0.006)]
                 bm.faces.new(v)
         obj = self.mesh_obj("Far", fill, self.stalk, smooth=False)
         obj["lod"] = "far"
