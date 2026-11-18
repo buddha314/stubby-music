@@ -11,6 +11,10 @@ use stubby_audio::{Command, ListenerPose, ModuleId, PortRef};
 
 const SQUARE_OUTPUT: ModuleId = ModuleId(9_002);
 const CLOCK_OUTPUT: ModuleId = ModuleId(9_007);
+const SQUARE_VCA: ModuleId = ModuleId(9_002);
+const BLIP_VCA: ModuleId = ModuleId(9_007);
+const SQUARE_GAIN: f32 = 0.25;
+const BLIP_GAIN: f32 = 0.3;
 const BURBLER: Vec3 = Vec3::new(69.43934, 0.65, -59.1967);
 const VIEWS: [(&str, Vec3); 3] = [
     ("inside", Vec3::new(70.5, 1.6, -64.5)),
@@ -31,6 +35,7 @@ struct Review {
     next_sample: f32,
     capture_pending: bool,
     complete_recorded: bool,
+    muted_view: Option<usize>,
 }
 
 impl Plugin for GrottoAudioReviewPlugin {
@@ -48,6 +53,7 @@ impl Plugin for GrottoAudioReviewPlugin {
             next_sample: 0.,
             capture_pending: false,
             complete_recorded: false,
+            muted_view: None,
         })
         .add_systems(Startup, start.after(super::spawn_camera))
         .add_systems(Update, advance)
@@ -98,6 +104,20 @@ fn set_view(
                 volume: 0.65,
             });
         }
+        // Play a repeatable tone at each position, then silence both demo voices so
+        // the world meter can capture the reflection effect's decay without another
+        // clock blip or continuous oscillator masking it.
+        synth.send(Command::SetParam {
+            module: SQUARE_VCA,
+            param: "gain",
+            value: SQUARE_GAIN,
+        });
+        synth.send(Command::SetParam {
+            module: BLIP_VCA,
+            param: "gain",
+            value: BLIP_GAIN,
+        });
+        review.muted_view = None;
         review.view = index;
         review.capture_pending = true;
         record(
@@ -148,6 +168,25 @@ fn advance(
     if target_view < VIEWS.len() && target_view != review.view {
         set_view(&mut review, target_view, &mut cameras, &synth);
     }
+    let in_view_seconds = elapsed - review.view as f32 * VIEW_SECONDS;
+    if in_view_seconds >= 1.5 && review.muted_view != Some(review.view) {
+        for module in [SQUARE_VCA, BLIP_VCA] {
+            synth.send(Command::SetParam {
+                module,
+                param: "gain",
+                value: 0.0,
+            });
+        }
+        record(
+            &review,
+            serde_json::json!({
+                "event":"sources_muted",
+                "view":VIEWS.get(review.view).map(|view| view.0),
+                "elapsed_seconds":elapsed
+            }),
+        );
+        review.muted_view = Some(review.view);
+    }
     if elapsed >= review.next_sample {
         record(
             &review,
@@ -155,10 +194,11 @@ fn advance(
                 "event":"level",
                 "view":VIEWS.get(review.view).map(|view| view.0),
                 "peak_dbfs":level.peak_db,
+                "silent":!level.peak_db.is_finite(),
                 "elapsed_seconds":elapsed
             }),
         );
-        review.next_sample = elapsed + 0.25;
+        review.next_sample = elapsed + 0.05;
     }
     if elapsed >= VIEW_SECONDS * VIEWS.len() as f32 && !review.complete_recorded {
         record(

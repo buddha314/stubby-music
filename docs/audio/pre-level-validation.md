@@ -101,11 +101,12 @@ fixture. Keep fixture results and authored-level results as separate evidence.
 
 The remaining 4.1c checks are live-device restart/sample-rate changes and realistic
 CPU measurements. The 4.10 target needs the HRTF/pan pools from tasks 4.3 and 4.4.
-The current 4.8 branch work adds a worker-to-audio `triple_buffer` handoff for
+The current 4.8 implementation adds a worker-to-audio `triple_buffer` handoff for
 reflection snapshots and applies the parametric effect in a preallocated Firewheel
-processor. This addresses the observed callback-side `arc-swap` allocation and
-pooled-object release hazards in the implementation, but the latest handoff has not
-yet been validated end-to-end in a retained test run. Confirm output/emitter
-matching, callback allocation safety during snapshot replacement, and a controlled
-grotto decay before marking 4.8 complete. See the investigation note for the exact
-evidence and limitations.
+processor. A bounded live review reported five reflection outputs matching five
+active emitters and a short post-mute decay at the inside and clear grotto views.
+The offline callback allocation test still does not consume non-empty reflection
+parameters during snapshot replacement, and the listener-centric output is not
+routed to a shared environmental bus. A reflection-disabled comparison and
+subjective listening review remain before marking 4.8 complete. See the investigation
+note for the exact measurements and limits.

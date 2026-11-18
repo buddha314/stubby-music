@@ -6,8 +6,8 @@
 
 - **The initial occlusion failure was in the authored-asset-to-runtime bridge.** Jackdaw flattens LOD placed models into mesh entities; acoustic metadata on a prefab root or glTF node was not guaranteed to be present on those runtime mesh entities. AudioNimbus can only include meshes that reach `publish_acoustic_scene` with `AcousticOccluder` attached. The bridge now propagates a prefab root's `AcousticOccluder` to descendant mesh entities after load, and retains support for glTF `"acoustic": "rock"` extras.
 - **Occlusion has both synthetic and authored-level evidence.** The offline zero-transmission wall test is allocation-checked. A bounded grotto review measured a large level difference between matched-distance blocked and clear positions. The review does not establish reflection/reverb behavior.
-- **The reflection simulation/effect works in isolation, but integrated reverb is not yet demonstrated.** An earlier synthetic 8 m room test produced a finite, non-zero tail. The current live path moves the latest reflection snapshot through `triple_buffer` before the audio callback reads it, addressing a concrete real-time hazard in AudioNimbus's `arc-swap` output access. No retained result from the current handoff proves that live reflection parameters match the grotto emitter, and the grotto review's level meter is not a reverb-tail measurement.
-- **The immediate remaining blocker is verification of the complete handoff and rendered tail.** Confirm non-empty, emitter-matched reflection parameters in the bounded live review, then measure or listen to a source stop and its decay inside the grotto. Keep OpenSpec 4.8 and grotto task 4.1 open until this is done.
+- **The live per-emitter reflection path now has matching-output and short-tail evidence.** In the bounded run, AudioNimbus reported five reflection outputs for five active emitters. After muting the two demo VCAs, the inside meter recorded a post-mute residual at about 52 ms, then silence by about 102 ms. The clear outside point showed a smaller decay over about 135 ms; the blocked point was already near the meter floor. This supports a short parametric reflection tail in the grotto, not a long cave reverb.
+- **OpenSpec 4.8 remains incomplete.** The callback allocation test has not exercised non-empty reflection parameters while snapshots are replaced, and AudioNimbus's listener-centric output is not routed to a shared environmental bus. The level meter measures the whole world bus, not an isolated wet signal; subjective listening is not captured in the review.
 
 ## Occlusion: what the code and measurements establish
 
@@ -27,7 +27,8 @@ The first unsuccessful grotto checks are consistent with a missing step between 
   - inside: `[70.5, 1.6, -64.5]`;
   - blocked outside: `[76.89, 1.6, -74.48]`;
   - clear outside: `[69.44, 1.6, -42.2]`.
-- Its recorded steady peak readings were about `−97.4 dBFS` at the blocked position and `−33.7 dBFS` at the clear position (about 63.7 dB difference). This supports strong attenuation along that authored blocked path and recovery on the clear path. The inside readings are not a controlled dry/wet comparison, and the level script does not measure a decay after stopping the source.
+- Its recorded steady peak readings were about `−97.4 dBFS` at the blocked position and `−33.7 dBFS` at the clear position (about 63.7 dB difference). This supports strong attenuation along that authored blocked path and recovery on the clear path.
+- A follow-up bounded review emits both demo voices for 1.5 s at each position, then sets their VCA gains to zero and samples the latest-block peak every 50 ms. The trace reported `outputs=5 matching_emitters=5` after entering the grotto. At the inside listener, the last pre-mute reading was about `−8.7 dBFS`; the first post-mute reading at about +52 ms was `−42.6 dBFS`, followed by silence by +102 ms. At the clear outside listener, readings were about `−72.9 dBFS` at +83 ms and `−100.1 dBFS` at +135 ms, then silence by +200 ms. At the blocked outside listener, the pre-mute level was already about `−97.4 dBFS` and the first post-mute sample was silent. These are world-bus peaks, not an isolated wet stem; they show a short post-mute decay at the unblocked views, while a reflection-disabled control is still needed to attribute all residual energy exclusively to reflections.
 - Screenshots and raw events from that bounded run were written to `/tmp/grotto-audio-review/` on the test machine; runtime logs are under `/tmp/jackdaw-flicker-grotto-audio-review-final.log` and related named logs. These are machine-local artifacts, not versioned test fixtures.
 
 ### Limits
@@ -44,17 +45,17 @@ The reflection output is backed by `arc-swap`. In the installed `arc-swap 1.9.5`
 
 ### Current ownership design
 
-The current uncommitted implementation has the simulation worker read `SharedSimulationOutput` away from the callback and publish the latest snapshot via `triple_buffer`. The callback obtains a borrowed latest value from the preallocated single-consumer output and applies AudioNimbus's parametric `ReflectionEffect` and Ambisonics decode using buffers allocated when the processor is constructed. The producer-side mutex is used by the simulation/control side; it is not acquired by the audio callback.
+The current implementation has the simulation worker read `SharedSimulationOutput` away from the callback and publish the latest snapshot via `triple_buffer`. The callback obtains a borrowed latest value from the preallocated single-consumer output and applies AudioNimbus's parametric `ReflectionEffect` and Ambisonics decode using buffers allocated when the processor is constructed. The producer-side mutex is used by the simulation/control side; it is not acquired by the audio callback.
 
-This design is intended to avoid callback-side ArcSwap access and pooled snapshot destruction. It is a code-path argument, not yet a complete integration result: run the focused test with the current revision under `assert_no_alloc`, verify reflection source/output matching, and verify ownership remains valid while snapshots are replaced and emitters are removed. Do not mark the whole reflection path real-time safe based only on the triple-buffer API; exercise the exact native effect path.
+This design is intended to avoid callback-side ArcSwap access and pooled snapshot destruction. The live review confirms that output IDs match active emitters, but it does not prove callback safety while a non-empty snapshot is read and replaced. The existing offline live-emitter allocation test can see an empty snapshot; the isolated synthetic tail test is not guarded by `assert_no_alloc`. Add a focused test that feeds real or retained reflection parameters through the exact Firewheel processor while replacing snapshots and removing emitters. Do not mark the whole reflection path real-time safe based only on the triple-buffer API.
 
 ### Existing and missing evidence
 
 - The previous synthetic closed 8 m box test ran the reflection simulation for an impulse and silence and verified finite, non-zero parametric output/tail. This proves the SDK simulation and effect can produce a result for that fixture.
-- A prior callback test with reflection snapshot loading failed the allocation guard; removing callback-side snapshot loading made the guard pass. This isolated the unsafe access path. The latest implementation changes the transfer to a triple buffer, but its current full test output was not retained, so this note does not claim that the newest code passed.
-- A bounded live launch logged repeated initial errors `missing shared simulation inputs: SimulationFlags(REFLECTIONS)` before the game had published its first simulation input. The log sequence places those messages before the first game catalog-load message. This demonstrates a startup race/noisy initial worker state in that run; it does not establish whether reflection outputs later reached a matching emitter. Filter expected startup diagnostics only after verifying the worker's input/output lifecycle, or fix initialization ordering in a way supported by AudioNimbus's API.
-- The trace added to the current branch is intended to report output count and matches against emitter `PortRef`s when those counts change. The available retained grotto event file contains only listener positions and peak levels, not those trace values. Capture and retain the trace from the next rebuilt review.
-- No current in-game test stops a sound and measures its tail. The meter remains active throughout the three views, so its values cannot distinguish direct sound from reflection energy.
+- A prior callback test with reflection snapshot loading failed the allocation guard; removing callback-side snapshot loading made the guard pass. The current transfer uses `triple_buffer`, but the existing allocation test still does not exercise a non-empty reflection snapshot in the callback.
+- The latest bounded launch logged 800 initial `missing shared simulation inputs: SimulationFlags(REFLECTIONS)` messages before AudioNimbus reported its first `outputs=5 matching_emitters=5` snapshot. The outputs later became non-empty and matched all active emitters, so the startup warnings do not mean the reflection path remained disconnected. Reduce or avoid the initial error burst using an AudioNimbus-supported initialization sequence.
+- The review driver now includes a controlled source mute and 50 ms world-peak sampling. It detects a short post-mute decay, but without a reflection-disabled control it cannot attribute every residual sample solely to the reflection effect.
+- AudioNimbus also produces a listener-centric `output.listener`; the current game processor reads only `output.sources[emitter]`. There is no shared listener environmental bus yet, and subjective listening is not captured.
 
 ## Why this took several iterations
 
@@ -68,11 +69,11 @@ These boundaries should remain explicit in future reports. Record source/listene
 
 ## Next validation sequence
 
-1. Rebase this branch on current `origin/main`, rebuild with the pinned AudioNimbus SDK, and run the focused `stubby_audio` spatial test(s) under the callback allocation guard.
-2. Run the bounded standalone grotto review. Retain the log lines for initial worker input, nonzero reflection output count, and a matching emitter `PortRef`; separately retain the occlusion position/level events.
-3. Add a controlled reverb review: same source and listener, fixed geometry, short repeatable tone or impulse followed by silence, and a captured level envelope. Compare with reflections disabled or source/listener in a dry control position. Confirm the effect has a measurable decay after direct output stops and is audible without clipping or an unexplained constant bed.
-4. Re-run the callback allocation test while snapshots are being replaced, and exercise emitter removal/re-addition. Verify shutdown joins the reflection worker and retained native handles are dropped off the callback.
-5. Only then update OpenSpec `add-rack-and-spatial-audio` 4.8 and grotto task 4.1; keep 4.6's authored-level check separate from the reverb acceptance.
+1. Add a reflection-disabled control run with the same source mute timing and positions; compare post-mute envelopes to attribute the measured tail to the AudioNimbus reflection effect rather than the rest of the output chain.
+2. Add a focused callback allocation test that consumes non-empty reflection parameters while snapshots are replaced and emitters are removed/re-added. Verify retained native handles are released away from the callback and shutdown joins the worker.
+3. Route or explicitly exclude AudioNimbus's listener-centric output. If included, design the listener environmental bus so it does not duplicate per-emitter reflections, then add an offline comparison test.
+4. Reduce the initial missing-input error burst with a package-supported initialization sequence, then rerun the bounded review and retain the reflection-match trace, occlusion readings, and tail envelope.
+5. Have a listener confirm the grotto's short tail is audible and useful. Keep OpenSpec 4.8 and grotto task 4.1 open until the control, callback ownership test, bus decision, and listening review pass; keep 4.6's authored-level occlusion evidence separate.
 
 ## Package references
 
