@@ -40,7 +40,7 @@
    "handover_metres": [
     1.0
    ],
-   "cull_metres": 12.0
+   "cull_metres": 30.0
   },
   {
    "models": "props/rocks/*/*.glb",

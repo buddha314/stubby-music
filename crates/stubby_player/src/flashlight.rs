@@ -1,9 +1,12 @@
 //! The disco light (add-forensic-flashlight), on B. A disco ball floats beside the
 //! player: it spins and throws a ring of narrow violet and cyan beams that sweep the
 //! ground. It is not a hand item (user, 2026-11-17): B switches it on and off whatever the
-//! hand holds, so the field recorder stays up, and no flashlight model is shown. A collectible a beam passes over (anything marked
-//! `Interactable::Pickup`, no asset kind named) flares into a hologram, an overlay on its
-//! body and a beacon above it, and fades after. Style: `assets/ui/flashlight.json`.
+//! hand holds, so the field recorder stays up, and no flashlight model is shown. While it is
+//! on, every collectible within the beams' reach (anything marked `Interactable::Pickup`, no
+//! asset kind named) shows as a hologram, an overlay on its body and a beacon above it, and
+//! is `Spotlit`, so its owner keeps it in view (a bug between flashes); switched off, they
+//! fade (user, 2026-11-18: revealing only what a sweeping beam crossed made them blink).
+//! Style: `assets/ui/flashlight.json`.
 use bevy::{
     light::{NotShadowCaster, NotShadowReceiver},
     mesh::MeshVertexBufferLayoutRef,
@@ -57,7 +60,6 @@ struct BeamStyle {
 }
 #[derive(serde::Deserialize, Clone, Debug)]
 struct RevealStyle {
-    width_deg: f32,
     range_m: f32,
     fade_seconds: f32,
 }
@@ -200,7 +202,6 @@ fn hologram(style: &HologramStyle, strength: f32) -> HologramMaterial {
 #[derive(Component)]
 struct DiscoBall {
     angle: f32,
-    beams: Vec<Vec3>,
     /// Whether it has been placed since it was switched on.
     placed: bool,
     /// The last beat heard from the clock it follows, and the next one, which the
@@ -229,7 +230,9 @@ pub fn ball_place(eye: Vec3, forward: Vec3, offset: Vec3) -> Vec3 {
 struct Revealed {
     strength: f32,
     material: Handle<HologramMaterial>,
-    overlays: Vec<Entity>,
+    /// Each dressed mesh and its overlay. Meshes that arrive later (a level of detail
+    /// placed as the player nears) are dressed as they come.
+    overlays: Vec<(Entity, Entity)>,
     beacon: Entity,
 }
 #[derive(Component)]
@@ -334,7 +337,6 @@ fn setup(
         .spawn((
             DiscoBall {
                 angle: 0.,
-                beams: beams.clone(),
                 placed: false,
                 heard: None,
                 next: None,
@@ -420,7 +422,39 @@ fn follow_view(
     }
 }
 
-/// Light the collectibles the beams touch; start a hologram on newly lit ones.
+/// Overlay each mesh below `entity` not yet in `dressed` with the hologram.
+fn dress(
+    commands: &mut Commands,
+    entity: Entity,
+    material: &Handle<HologramMaterial>,
+    dressed: &mut Vec<(Entity, Entity)>,
+    children: &Query<&Children>,
+    meshes: &Query<&Mesh3d, Without<Overlay>>,
+) {
+    for child in children.iter_descendants(entity) {
+        let Ok(mesh) = meshes.get(child) else {
+            continue;
+        };
+        if dressed.iter().any(|(m, _)| *m == child) {
+            continue;
+        }
+        let overlay = commands
+            .spawn((
+                Overlay,
+                Mesh3d(mesh.0.clone()),
+                MeshMaterial3d(material.clone()),
+                Transform::default(),
+                NotShadowCaster,
+                NotShadowReceiver,
+                ChildOf(child),
+            ))
+            .id();
+        dressed.push((child, overlay));
+    }
+}
+
+/// While the light is on, show every collectible within reach; start a hologram on newly
+/// shown ones.
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn reveal(
     mut commands: Commands,
@@ -428,7 +462,8 @@ fn reveal(
     style: Res<FlashlightStyle>,
     beacon_meshes: Res<BeaconMeshes>,
     mut materials: ResMut<Assets<HologramMaterial>>,
-    balls: Query<(&DiscoBall, &Transform, &Visibility)>,
+    balls: Query<(&DiscoBall, &Visibility)>,
+    eyes: Query<&GlobalTransform, (With<Player>, Without<HudCamera>)>,
     pickups: Query<(
         Entity,
         &Interactable,
@@ -439,25 +474,22 @@ fn reveal(
     mesh_query: Query<&Mesh3d, Without<Overlay>>,
 ) {
     let style = &style.0;
-    let Ok((ball, at, visibility)) = balls.single() else {
+    let Ok((_, visibility)) = balls.single() else {
         return;
     };
+    // Reach is the player's, wherever they walk: the ball stays where it was switched on.
+    let Ok(eye) = eyes.single() else {
+        return;
+    };
+    let eye = eye.translation();
     let lit = *visibility != Visibility::Hidden;
-    let beams: Vec<Vec3> = ball.beams.iter().map(|b| at.rotation * *b).collect();
     let dt = time.delta_secs();
     let mut pickups = pickups;
     for (entity, what, place, revealed) in &mut pickups {
         if *what != Interactable::Pickup {
             continue;
         }
-        let hit = lit
-            && touched(
-                at.translation,
-                &beams,
-                place.translation(),
-                style.reveal.width_deg,
-                style.reveal.range_m,
-            );
+        let hit = lit && place.translation().distance(eye) <= style.reveal.range_m;
         match revealed {
             Some(mut revealed) => {
                 let strength = flare(revealed.strength, hit, dt, style.reveal.fade_seconds);
@@ -467,31 +499,29 @@ fn reveal(
                         material.hologram.params.x = strength;
                     }
                 }
+                if hit {
+                    let material = revealed.material.clone();
+                    dress(
+                        &mut commands,
+                        entity,
+                        &material,
+                        &mut revealed.overlays,
+                        &children,
+                        &mesh_query,
+                    );
+                }
             }
             None if hit => {
                 let material = materials.add(hologram(&style.hologram, 1.));
-                let overlays: Vec<Entity> = children
-                    .iter_descendants(entity)
-                    .filter_map(|child| {
-                        mesh_query
-                            .get(child)
-                            .ok()
-                            .map(|mesh| (child, mesh.0.clone()))
-                    })
-                    .map(|(child, mesh)| {
-                        commands
-                            .spawn((
-                                Overlay,
-                                Mesh3d(mesh),
-                                MeshMaterial3d(material.clone()),
-                                Transform::default(),
-                                NotShadowCaster,
-                                NotShadowReceiver,
-                                ChildOf(child),
-                            ))
-                            .id()
-                    })
-                    .collect();
+                let mut overlays = Vec::new();
+                dress(
+                    &mut commands,
+                    entity,
+                    &material,
+                    &mut overlays,
+                    &children,
+                    &mesh_query,
+                );
                 let diamond = commands
                     .spawn((
                         Mesh3d(beacon_meshes.diamond.clone()),
@@ -518,12 +548,15 @@ fn reveal(
                     ))
                     .add_children(&[column, diamond])
                     .id();
-                commands.entity(entity).insert(Revealed {
-                    strength: 1.,
-                    material,
-                    overlays,
-                    beacon,
-                });
+                commands.entity(entity).insert((
+                    stubby_core::Spotlit,
+                    Revealed {
+                        strength: 1.,
+                        material,
+                        overlays,
+                        beacon,
+                    },
+                ));
             }
             None => {}
         }
@@ -542,11 +575,13 @@ fn fade_holograms(
 ) {
     for (entity, hologram, place, available) in &revealed {
         if hologram.strength <= 0. || available.is_none() {
-            for overlay in &hologram.overlays {
+            for (_, overlay) in &hologram.overlays {
                 commands.entity(*overlay).try_despawn();
             }
             commands.entity(hologram.beacon).try_despawn();
-            commands.entity(entity).remove::<Revealed>();
+            commands
+                .entity(entity)
+                .remove::<(Revealed, stubby_core::Spotlit)>();
             continue;
         }
         if let Ok((beacon, mut transform)) = beacons.get_mut(hologram.beacon) {

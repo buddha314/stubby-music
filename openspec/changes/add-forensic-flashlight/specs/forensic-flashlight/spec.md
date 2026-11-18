@@ -48,20 +48,23 @@ settles before the next. Away from every clock it SHALL hold still.
 - **WHEN** no clock is within reach
 - **THEN** the ball does not pulse
 
-### Requirement: Collectibles the beams touch show as holograms
-Every available collectible within range that a beam passes over SHALL show a holographic
-shell over its body and a holographic beacon above it, visible through grass and reeds,
-flaring as the beam crosses it and fading after. Collectibles SHALL be found through the
+### Requirement: Collectibles in reach show as holograms
+While the disco light is on, every available collectible within reach of the player SHALL
+show a holographic shell over its body and a holographic beacon above it, steadily and
+visible through grass and reeds; the beams are its look, not what reveals (user,
+2026-11-18: revealing only what a sweeping beam crossed made pickups blink). A revealed
+collectible SHALL be marked `stubby_core::Spotlit`, and its owner SHALL keep it in view (a
+lightning bug holds its body lit between flashes). Collectibles SHALL be found through the
 pickup contract, without naming asset kinds.
 
-#### Scenario: A shell in a beam
-- **WHEN** a beam crosses a snail shell 10 m away
-- **THEN** a holographic beacon stands over it and its shape glows holographically
+#### Scenario: A shell in reach
+- **WHEN** the light is on and a snail shell lies 10 m from the player
+- **THEN** a holographic beacon stands over it and its shape glows holographically, without blinking
 
 #### Scenario: A bug between flashes
-- **WHEN** a beam crosses a lightning bug while it is dark
-- **THEN** its beacon still shows where it is
+- **WHEN** the light is on and a lightning bug in reach is between flashes
+- **THEN** its body stays in view, with its hologram and beacon
 
-#### Scenario: After the beam passes
-- **WHEN** no beam has crossed a collectible for a few seconds
-- **THEN** its hologram has faded out and its overlay is removed
+#### Scenario: Walking away or switching off
+- **WHEN** the player walks out of reach of a collectible, or switches the light off
+- **THEN** its hologram fades out within a few seconds and its overlay is removed

@@ -40,12 +40,14 @@ grass. It is drawn on overlay copies of the pickup's meshes (children of each me
 they follow its animation and LODs), plus a beacon (a thin column and a turning diamond)
 above the pickup. No crate does this; it is a few dozen lines of standard Bevy.
 - Rejected: outlines for the reveal (the outline already means "E acts on this").
-- Rejected: revealing everything in range regardless of the beams: the sweep is the feel.
+- Reversed (user, 2026-11-18): reveal only what a beam crosses. It made pickups blink as
+  the ball turned, and bugs between flashes vanished with their overlays. Now everything in
+  reach of the player shows while the light is on (marked `Spotlit`), and the sweep is look.
 
 ## Risks
 
-- [Overlay copies of thousands of reed blades] → only pickups in the beam are revealed,
-  and the copies are removed when they leave it.
+- [Overlay copies of reed clumps] → only pickups within reach (30 m) are revealed, and
+  their copies are removed when the player leaves or switches off.
 - [Through-occluder drawing reads as a cheat] → it is the point of the tool; range keeps
   it local.
 

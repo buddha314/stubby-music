@@ -132,6 +132,12 @@ impl GroundHeight {
     }
 }
 
+/// On a collectible the disco light reveals (`stubby_player`'s flashlight), while it is
+/// revealed. Its owner shows it steadily: a lightning bug holds its body lit between
+/// flashes, so a revealed bug never vanishes.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct Spotlit;
+
 /// Something E can act on, marked by whichever system owns it while it is available: a
 /// finite pickup (the entity itself), or a machine's interaction point (the machine).
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
