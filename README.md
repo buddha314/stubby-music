@@ -54,14 +54,16 @@ The default game run uses AudioNimbus/Steam Audio HRTF and direct propagation. F
 terminal at the repository root, launch the game without the sustained audio demo tone:
 
 ```sh
-steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
-STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
-LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-  cargo run -p stubby_jackdaw --features dev
+tools/build_steam_audio_sdk.sh      # once per checkout, and after the SDK pin changes
+cargo run -p stubby_jackdaw --features dev
 ```
 
-The SDK helper uses its local cache and rebuilds only when its pinned inputs change;
-ordinary Cargo builds do not invoke it. Add `-- --audio-demo` to the Cargo command only
+The SDK helper builds Steam Audio from pinned source into this checkout's
+`target/native/steam-audio/` and rebuilds only when its pinned inputs change; Cargo never
+builds it. The game's build scripts find that cache and record it in the binaries' run
+path, so no `STEAMAUDIO_LIB_DIR` or `LD_LIBRARY_PATH` is needed (setting
+`STEAMAUDIO_LIB_DIR` still overrides it). Until the SDK is built, Cargo warns and the link
+fails. Add `-- --audio-demo` to the Cargo command only
 when you want a sustained 110 Hz square-wave test tone alongside clock blips. The direct path
 supports distance, air absorption, geometry occlusion and material transmission.
 Reflections/reverb, authored cave or building validation, live device-restart handling,
@@ -110,17 +112,15 @@ Details: [assets/recipes/README.md](assets/recipes/README.md#the-rules-designer)
 
 The same page includes a dev-only Spatial Audio panel for live per-emitter reflection
 wet-gain tuning. Run the Rules Designer in one terminal and the dev game in another;
-the game command below includes the cached native SDK path and enables Bevy Remote:
+a dev build of the game starts the designer itself (unless one is running) and serves Bevy
+Remote:
 
 ```sh
 # Terminal 1
 cargo run -p stubby_rules_server
 
 # Terminal 2
-steam_audio_lib="$(tools/build_steam_audio_sdk.sh)"
-STEAMAUDIO_LIB_DIR="$steam_audio_lib" \
-LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-  cargo run -p stubby_jackdaw --features dev
+cargo run -p stubby_jackdaw --features dev
 ```
 
 Open `http://127.0.0.1:7878/` and use Spatial Audio → Reflection wet gain. A value of
