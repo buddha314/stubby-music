@@ -533,14 +533,17 @@ equivalent of an iron ore node, so the player does not pick it up.
   BPM knob sets the BPM, starting at the burbler's seeded tempo), a **VCO** slot (a
   square wave from a lightning bug makes a Square VCO), and a **volume** module (a VCA
   opened by TRIG while the gate is high; no envelope, so the voice stays square). The player **patches the voice with cables**: clock GATE →
-  volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. With a snail
-  shell mounted, a third, **optional** ochre comb cable suggests sequencer CV → VCO V/OCT for
-  a melody (ghosted only while both places are filled; the voice sounds without it). Patch cables
-  are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). Every rack has a small
-  **cable comb** holding the machine's spare cables (the burbler: two), and each jack's
-  halo (patch pod) **pulses** in its cable's colour while it waits for a cable. The comb's
-  cables are free; the player starts with 10 patch cables (`start.json`) for their own
-  patches, and later makes them from discarded bird nests. The rack screen shows a
+  volume TRIG, VCO OUT → volume IN; volume OUT is normalled to the outlet. **A rack offers
+  only the places its machine's work needs** (user, 2026-11-18): the burbler has no
+  sequencer place; the campfire, which needs one, does. Patch cables
+  are a general asset and **fully elastic, as in VCV Rack** (`assets/cables/`). **Every
+  cable is one of the player's patch cables, from the inventory** (no cable comb;
+  `simplify-rack-cables`): patching takes one, unplugging gives it back. The player starts
+  with 10 (`start.json`) and later makes them from discarded bird nests. Each jack's halo
+  (patch pod) **pulses** in its patch's colour while it waits for a cable; once a cable's
+  first end is in one end of a known patch, only the other end shows, **blinking**. A cable
+  making a known patch takes that patch's colour (others are bone), and **hovering a
+  patched cable lights it end to end**. The rack screen shows a
   **Layout follows Satisfactory's craft bench** (`machine_config::layout`): a framed window
   with a title bar; on the left a **Relevant** list of the items an open slot accepts that
   the player **holds** (nothing held, nothing shown); the rack in the middle panel; the
@@ -548,15 +551,14 @@ equivalent of an iron ore node, so the player does not pick it up.
   too); key prompts under the window. Each item shows its icon and count
   (`assets/ui/icons/<item_id>.png`, from `tools/icons/make_item_icons.py`; hover names the
   item), **dragged into its slot** (or clicked, or keys 1-0). Cables follow **VCV Rack**:
-  drag from a jack (or a comb cable) and drop on the other, or click each. **Any cable
-  joins any output to any free input**; a comb cable's configured jacks are only the
-  suggested patch (the ghosts and pods), and the voice completes when those patches exist
-  by whichever cables. Within 40 px of a jack it can enter, the cable **snaps**: the plug
+  drag from a jack and drop on the other, or click each. **Any cable joins any output to
+  any free input**; the profile's patches are only suggestions (the ghosts and pods), and
+  the voice completes when those patches exist by whichever cables. A cable starts on a
+  jack; within 40 px of a jack it can enter, its far end **snaps**: the plug
   shows in the jack, and letting go plugs it in. The cable in
-  hand is **shown, animated, never described**: taken from the comb it leaves the comb and
-  hangs from the pointer, swinging (a damped spring); with one end in a jack it runs to the
-  pointer with the same elastic sag, springing after each move; plugs take the cable's
-  colour. **Sound begins only when every cable is patched**, and the screen guides it
+  hand is **shown, animated, never described**: with one end in a jack it runs to the
+  pointer with VCV Rack's elastic sag, springing after each move (a damped spring); plugs
+  take the cable's colour. **Sound begins only when every cable is patched**, and the screen guides it
   visually: ghost cables show the patches still to make and pods pulse in their colour.
   **This is not a text adventure: no hint lines or step text on the rack screen.**
   Plugging a cable in **snaps**: three CC0 clicks (Kenney Interface Sounds, licence in

@@ -52,11 +52,12 @@ impl Review {
         self.rack_loaded && self.rack_step < RACK_STEPS
     }
 }
-/// Drag the square wave's icon onto the VCO slot; take the green cable from the comb and
-/// carry it over the rack (screenshot); click just beside the VCO's OUT and the volume's
-/// IN (comb cables go anywhere and snap to a jack within reach); take the red one, click
-/// beside GATE, move partway (the live cable: screenshot), click beside TRIG; then the
-/// patched screenshot. Only what the rack shows is patched (AGENTS.md).
+/// Drag the square wave's icon onto the VCO slot; click the VCO's OUT (one of the
+/// player's patch cables goes in) and carry it over the rack (screenshot); click beside
+/// the volume's IN (the far end snaps to a jack within reach); click GATE, move partway
+/// (the live cable: screenshot), click beside TRIG; then the patched screenshot.
+/// Every cable comes from the inventory (simplify-rack-cables). Only what the rack shows
+/// is patched (AGENTS.md).
 const RACK_STEPS: usize = 12;
 pub struct PrefabReviewPlugin;
 impl Plugin for PrefabReviewPlugin {
@@ -406,8 +407,8 @@ fn observe(
             && standing
             && leaves > 0
             && review.rack_configured
-            // The comb's two cables are free: the player's ten are untouched.
-            && player.items.quantity("patch_cable") == 10
+            // Two of the player's ten cables are patched.
+            && player.items.quantity("patch_cable") == 8
             && errors.is_empty()
             && player.items.quantity("square_wave") == 1
             && player.items.quantity("reed") == 6;
@@ -429,15 +430,13 @@ fn drive_rack(
     hud: Query<(&Camera, &GlobalTransform), With<stubby_core::HudCamera>>,
     jacks: Query<(&super::machine_config::JackHit, &GlobalTransform)>,
     slots: Query<(&super::machine_config::SlotHit, &GlobalTransform)>,
-    plugs: Query<(&super::rack::CombCable, &GlobalTransform), Without<Mesh3d>>,
     buttons: Query<(&bevy::ui::UiGlobalTransform, &ComputedNode), With<super::rack::MountButton>>,
-    mut racks: Query<(
-        &mut super::rack::RackState,
-        Option<&mut super::rack::RackKnobs>,
+    racks: Query<(
+        &super::rack::RackState,
+        Option<&super::rack::RackKnobs>,
         Option<&super::prefabs::AssetClock>,
     )>,
     knobs: Query<(&super::machine_config::KnobHit, &GlobalTransform)>,
-    held: Res<super::rack::HeldCable>,
     hovers: Res<bevy::picking::hover::HoverMap>,
     names: Query<(
         Option<&Name>,
@@ -527,17 +526,8 @@ fn drive_rack(
             .world_to_viewport(transform, world.translation())
             .ok()
     };
-    // A hanging cable's plug on the comb (just above its rest point, on the plug body).
-    let comb = |index: usize| {
-        let (camera, transform) = hud.single().ok()?;
-        let (_, at) = plugs.iter().find(|(c, _)| c.0 == index)?;
-        camera
-            .world_to_viewport(transform, at.translation() + Vec3::Y * 0.03)
-            .ok()
-    };
     let slot = || {
         let (camera, transform) = hud.single().ok()?;
-        // The VCO's place: the burbler also has an open sequencer place now.
         let (_, world) = slots.iter().find(|(s, _)| s.0 == "vco")?;
         camera
             .world_to_viewport(transform, world.translation())
@@ -551,22 +541,6 @@ fn drive_rack(
             .ok()
     };
     let step = review.rack_step;
-    // First show a snail sequencer in its optional place with steps 1 and 3 lit, so the
-    // patched screenshot shows its panel and step keys (sync-snail-shell-sequencer). The
-    // review mounts it directly (the VCO takes the drag-to-mount path), then lets the
-    // rebuilt rack settle before the first click. The voice needs no sequencer.
-    if step == 0
-        && let Some((mut state, Some(mut knobs), _)) = racks.iter_mut().next()
-        && !state.mounted.contains_key("seq")
-    {
-        state.mounted.insert("seq".into(), "snail_sequencer".into());
-        state.version += 1;
-        for param in ["gate_1", "gate_3"] {
-            knobs.0.insert(("seq".into(), param.into()), 1.);
-        }
-        review.rack_wait = 0.6;
-        return;
-    }
     // Beside a jack, inside the snap reach but off the jack itself.
     let near = |p: Vec2| p + Vec2::new(22., 14.);
     // (press here, then drag to, or None for a click), or a pointer move only.
@@ -579,8 +553,9 @@ fn drive_rack(
             slot(),
             false,
         ),
-        1 => (comb(0), None, false),
-        // Carry the green cable over the rack: it hangs from the pointer (screenshot).
+        // One end in at OUT (a cable starts on a jack; only its far end snaps).
+        1 => (jack("vco", "out"), None, false),
+        // Carry it over the rack: it runs from OUT to the pointer (screenshot).
         2 => (
             jack("vco", "out")
                 .zip(jack("volume", "in"))
@@ -588,12 +563,13 @@ fn drive_rack(
             None,
             true,
         ),
-        // A comb cable goes anywhere, and snaps: the green one, clicked just beside the
-        // VCO's OUT and then beside IN (off the jacks), makes OUT -> IN.
+        // Clicking beside OUT again keeps the cable in hand; beside IN (off the jack)
+        // snaps it in: OUT -> IN.
         3 => (jack("vco", "out").map(near), None, false),
         4 => (jack("volume", "in").map(near), None, false),
-        5 => (comb(1), None, false),
-        6 => (jack("clock", "gate").map(near), None, false),
+        // A pause over GATE before the second cable.
+        5 => (jack("clock", "gate"), None, true),
+        6 => (jack("clock", "gate"), None, false),
         7 => (
             jack("clock", "gate")
                 .zip(jack("volume", "trig"))
@@ -645,7 +621,7 @@ fn drive_rack(
         }
     }
     let rack = racks.iter().next();
-    let state = rack.as_ref().map(|(s, _, _)| &**s);
+    let state = rack.map(|(s, _, _)| s);
     let knob_values = rack.as_ref().map(|(_, k, c)| {
         let mut values: Vec<_> = k
             .iter()
@@ -660,8 +636,7 @@ fn drive_rack(
         serde_json::json!({"event":"rack_step","step":step,"at":point.map(|p| [p.x, p.y]),
             "window":[window.width(), window.height(), window.scale_factor()],
             "hovered":hovers.get(&PointerId::Mouse).map(|h| h.keys().map(|e| names.get(*e).map(|(n, jack, ui)| format!("{:?} jack={jack} ui={ui}", n.map(Name::as_str))).unwrap_or_default()).collect::<Vec<_>>()),
-            "held":held.cable,
-            "mounted":state.map(|s| s.mounted.len()),"patched":state.map(|s| s.patched.iter().map(Option::is_some).collect::<Vec<_>>()),"own":state.map(|s| s.own.len()),"knobs":knob_values}),
+            "mounted":state.map(|s| s.mounted.len()),"own":state.map(|s| s.own.len()),"knobs":knob_values}),
     );
     review.rack_step += 1;
     review.rack_wait = 0.12;

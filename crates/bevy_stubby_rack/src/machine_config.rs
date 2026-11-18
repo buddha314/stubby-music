@@ -31,7 +31,8 @@ pub struct RackConfiguration {
     /// How far the voice carries from the machine and its streams. Beyond this it is
     /// silent, so the world stays quiet until the player walks into earshot.
     pub hearing_radius_metres: f32,
-    /// The spare cables on the comb, each for one patch the voice needs.
+    /// The patches the voice needs, each made with one of the player's patch cables; the
+    /// screen ghosts them and pulses their jacks (no cable comb: simplify-rack-cables).
     #[serde(default)]
     pub cables: Vec<RackCable>,
     #[serde(default)]
@@ -87,9 +88,8 @@ pub struct RackCable {
     pub from: JackRef,
     pub to: JackRef,
     pub hint: String,
-    /// A patch the voice does not need (the sequencer's CV to the VCO's V/OCT, for a
-    /// melody): the comb offers it, with its ghost, only while both its places hold a
-    /// module, and the voice sounds without it.
+    /// A patch the voice does not need: the screen ghosts it only while both its places
+    /// hold a module, and the voice sounds without it.
     #[serde(default)]
     pub optional: bool,
 }
@@ -240,9 +240,6 @@ pub struct PodMesh(pub JackRef);
 /// A jack's cable socket (`Port_<port>`) on the rack screen.
 #[derive(Component, Clone)]
 pub struct PortNode(pub JackRef);
-/// A node of the rack frame's cable comb (`Comb_<n>`, `Comb_<n>_PlugA/B`).
-#[derive(Component, Clone)]
-pub struct CombNode(pub String);
 /// An empty place's slot outline mesh on the rack screen: a drop target for modules.
 #[derive(Component, Clone)]
 pub struct SlotHit(pub String);
@@ -535,11 +532,11 @@ fn rack_viewport(target: UVec2) -> Viewport {
 }
 
 /// Fit the rack camera to the rack: the modules (`width`), the frame's posts either side
-/// and the cable comb to the right of the right post, with a small margin, so the rack
+/// with a small margin, so the rack
 /// fills the middle panel whatever its size.
 fn frame_rack(width: f32, projection: &mut Projection, transform: &mut Transform) {
     const MARGIN: f32 = 0.06;
-    let (left, right) = (-(width / 2. + 0.16), width / 2. + 0.1 + 0.045 + 0.3);
+    let (left, right) = (-(width / 2. + 0.16), width / 2. + 0.16);
     let (bottom, top) = (-0.04, 1.34);
     let centre = Vec2::new((left + right) / 2., (bottom + top) / 2.);
     *transform = Transform::from_xyz(centre.x, HUD_Y + centre.y, 4.)
@@ -720,7 +717,7 @@ fn sync_view(
     }
 }
 
-/// Tag imported parts the rack needs (jacks, pods, ports, the comb) and fit the frame;
+/// Tag imported parts the rack needs (jacks, pods, ports) and fit the frame;
 /// render layers come from the root's `Propagate`. Never rebuilds model geometry.
 fn prepare_parts(
     mut commands: Commands,
@@ -836,11 +833,6 @@ fn prepare_parts(
         };
         match &scene.kind {
             SceneKind::Frame => {
-                if name.as_str().starts_with("Comb_") {
-                    commands
-                        .entity(entity)
-                        .insert(CombNode(name.as_str().into()));
-                }
                 if let Some(mut transform) = transform {
                     match name.as_str() {
                         "RailTop" | "RailBottom" => transform.scale.x = scene.width + 0.12,

@@ -55,19 +55,6 @@
         "hp": 4,
         "fixed": true,
         "module": "volume"
-      },
-      {
-        "place": "seq",
-        "kind": "sequencer",
-        "hp": 8,
-        "fixed": false,
-        "optional": true,
-        "accepts": [
-          {
-            "item": "snail_shell",
-            "module": "snail_sequencer"
-          }
-        ]
       }
     ],
     "normalled_output": {
@@ -87,7 +74,7 @@
           "port": "trig"
         },
         "step": 1,
-        "hint": "take the green cable  \u00b7  patch GATE to TRIG"
+        "hint": "patch GATE to TRIG"
       },
       {
         "color": "rust",
@@ -100,21 +87,7 @@
           "port": "in"
         },
         "step": 2,
-        "hint": "take the red cable  \u00b7  patch OUT to IN"
-      },
-      {
-        "color": "ochre",
-        "from": {
-          "place": "seq",
-          "port": "cv"
-        },
-        "to": {
-          "place": "vco",
-          "port": "voct"
-        },
-        "step": 3,
-        "optional": true,
-        "hint": "take the ochre cable  \u00b7  patch CV to V/OCT for a melody"
+        "hint": "patch OUT to IN"
       }
     ],
     "patched_hint": "patched  \u00b7  the burbler plays on every beat",

@@ -9,16 +9,15 @@ assembled from the shared frame, slot outlines and labels (create_hud_rack.py). 
 the mudpit burbler's, in two states:
 
   hud_mock_empty.png   construction: the built-in clock in place, the VCO and VCA
-                       slots empty, each a labelled outline of what goes there; the
-                       burbler's two spare cables hang on the rack's cable comb
-  hud_mock_ready.png   built, not patched (step 1): Square VCO and volume mounted, both
-                       cables on the comb; each needed patch drawn as a ghost cable, and
-                       the two jacks each cable is for pulse in that cable's colour
-  hud_mock_step2.png   GATE to TRIG patched; the red cable still hangs, its ghost and
-                       its two pods still show
+                       slots empty, each a labelled outline of what goes there
+  hud_mock_ready.png   built, not patched (step 1): Square VCO and volume mounted; each
+                       needed patch drawn as a ghost cable, and the two jacks each patch
+                       is for pulse in its colour (cables come from the inventory; there
+                       is no comb: simplify-rack-cables)
+  hud_mock_step2.png   GATE to TRIG patched; the other patch's ghost and pods still show
   hud_mock.png         patched: clock GATE to volume TRIG, VCO OUT to volume IN, drawn
                        with the game's elastic cable rule (`create_patch_cable.cable_curve`);
-                       the comb is empty and the pods rest
+                       the pods rest
 
 A look reference, not a game asset.
 
@@ -235,7 +234,7 @@ def render(built, patched, out, hints):
     cables = patches()
     done, waiting = cables[:patched], cables[patched:]
     patch(ports, done)
-    hang(comb, [c for (_, _, c) in waiting])
+    # No comb: cables come from the inventory (simplify-rack-cables).
     if built:
         ghost(ports, waiting)
         pods(halos, waiting)
