@@ -16,8 +16,10 @@ each source recorded.
   and who shares the story and how freely.
 - A sharing check on every entry: openly shared by its community, restricted, or unclear.
   Only the first may be used in the game.
-- First regions: the Mojave and the US Southwest, then Aboriginal Australia (desert
-  country, and songlines).
+- Regions are biome groups (user, 2026-11-18): desert (US Southwest and Mojave,
+  Aboriginal Australia), Mediterranean, temperate forest (Ireland and England, the
+  Pacific Northwest) and tropical (Africa, perhaps Southeast Asia). About a dozen
+  characters in all. The desert comes first.
 - **No code, assets or rule changes.** Figures stay research until a region or shrine
   change adopts them.
 
