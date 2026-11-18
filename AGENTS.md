@@ -570,7 +570,15 @@ equivalent of an iron ore node, so the player does not pick it up.
   mud is **raw**: muddy on purpose, like ore. It is cleaned later by a **filter
   mini-rack** (direction, not yet designed): **high-pass filters separate out pure
   liquid, low-pass filters separate solids and nutrients**, into separate channels,
-  controlled via audio. The stream's water goes **from muddy to clear**.
+  controlled via audio. The stream's water goes **from muddy to clear**. **High-pass
+  filters come from the world** (user, 2026-11-17): openings in rock formations and
+  hollow tree trunks, which pass short waves and stop long ones, raising the pitch, like
+  sound through a narrow duct. They are found like other waveform sources (the grotto's
+  boulders are the first rock formation), not invented as machines. **Low-pass and
+  band-pass filters matter more** (they separate the solids and nutrients) but their
+  sources are **not decided yet**: do not invent them. Both need an **oscilloscope**
+  asset to see what they do, collected for now from **rippling water**. Until filters
+  exist every stream stays mud (`LaidStream.clarity` 0), so no clarity visuals yet.
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds
   outline every laid segment's banks. They are a frequent renewable, as easy to get as
   leaves in Satisfactory: abundant on wet ground, harvested with E (hold E for nearby
