@@ -37,12 +37,11 @@ Aboriginal** myth (both desert lands; Aboriginal songlines map country through s
 as our streams are staff music).
 
 Open:
-- **Sources.** Many of these are living, sacred traditions, and some knowledge is
-  restricted (to initiates, to men or to women); petroglyphs are sacred sites to the
-  descendants of their makers. The choice to make: draw only on stories their
-  communities share openly, with each source recorded, or design original deities from
-  the landscape and the kinds of myth there, not from specific sacred beings. The research
-  (`research-music-mythologies`) records how freely each story is shared either way.
+- **Sources: decided (user, 2026-11-18):** the game draws only on stories their
+  communities share openly, each with its source recorded. Nothing restricted (to
+  initiates, to men or to women), no sacred objects or ceremonies, nothing whose sharing
+  is unclear; carvings are our own designs, not copies of real rock art.
+  `research-music-mythologies` holds the research and the check on each figure.
 - How waking a deity plays (a rack with targets, as the campfire's, is the obvious fit) and
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.
@@ -72,8 +71,8 @@ To do: add this as a pillar in `docs/art/style-guide.md` (`add-art-direction`).
 
 ## Planned changes
 
-Proposed 2026-11-18, not yet opened: `research-music-mythologies` (first; regions and
-shrines need it), `add-narrative-arc`, `add-vardo-hub` (waits for the reference images),
+Opened: `research-music-mythologies` (2026-11-18; regions and shrines need it). Proposed,
+not yet opened: `add-narrative-arc`, `add-vardo-hub` (waits for the reference images),
 `add-mythic-regions`, `add-deity-shrines`. Existing changes to amend: `add-art-direction`
 (the styling pillar), `add-opening-region` (region one of the Mojave; the vardo at spawn),
 `sync-major-minor-milestones` (major goals as arc stages), `add-campfire-craft-bench` (the
