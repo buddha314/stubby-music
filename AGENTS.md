@@ -562,6 +562,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   that cannot fit sends `InventoryFull` (`bevy_stubby_recipes`) and shows Satisfactory's
   **INVENTORY FULL** banner (red, with the item's icon, under the reticle or under an
   open machine window), fading after about 2 s; nothing is taken or lost.
+- **Knobs can click to a grid** (`add-reed-water-purifier`): `step` (the 24 BPM grid) or
+  `quantize: "semitone"` in a module's knob data (equal-tempered notes; the square VCO's
+  frequency). Such knobs turn by whole clicks, start on the grid (a bug's pitch lands on
+  its nearest note), and the knob's readout beside the pointer names the note (`C4`).
 - **Every machine gets a rack, and all racks share one implementation** (the
   `bevy_stubby_rack` crate): this is the general pattern. A machine is data, its profile's
   `configure` block: places (fixed modules, or what an open place accepts from the

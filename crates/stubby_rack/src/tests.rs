@@ -257,9 +257,36 @@ fn a_stepped_knob_clicks_through_the_24_bpm_grid_inside_its_travel() {
         min: 30.,
         max: 240.,
         step: Some(24.),
+        quantize: None,
     };
     assert_eq!(knob.snap(130.), 120.);
     assert_eq!(knob.snap(137.), 144.);
     assert_eq!(knob.snap(30.), 48., "the lowest multiple inside the travel");
     assert_eq!(knob.snap(250.), 240.);
+}
+
+#[test]
+fn a_semitone_knob_clicks_to_notes_inside_its_travel() {
+    let knob = Knob {
+        part: "vco".into(),
+        param: "freq",
+        default: 261.63,
+        min: 1.,
+        max: 20000.,
+        step: None,
+        quantize: Some(Quantize::Semitone),
+    };
+    // The reed water purifier's patch (add-reed-water-purifier): C2, C4, and the cutoff C5.
+    for (hz, note, exact) in [
+        (65.625, "C2", 65.406),
+        (261.63, "C4", 261.626),
+        (531.5, "C5", 523.251),
+    ] {
+        let snapped = knob.snap(hz);
+        assert!((snapped - exact).abs() < 0.01, "{hz} -> {snapped}");
+        assert_eq!(note_name(snapped), note);
+    }
+    assert_eq!(note_name(knob.nudge(261.63, 1)), "C#4");
+    assert_eq!(note_name(knob.nudge(261.63, -12)), "C3");
+    assert!(knob.nudge(19000., 24) <= 20000., "stays inside the travel");
 }
