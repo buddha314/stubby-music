@@ -60,6 +60,12 @@ struct BeamStyle {
     width_deg: f32,
     range_m: f32,
     tilt_deg: Vec<f32>,
+    /// A second ring thrown upward, tilted above the horizon by `up_tilt_deg` in turn
+    /// (user, 2026-11-18: for later use, lighting what is above: canopies, boulders, sky).
+    #[serde(default)]
+    up_count: usize,
+    #[serde(default)]
+    up_tilt_deg: Vec<f32>,
 }
 #[derive(serde::Deserialize, Clone, Debug)]
 struct RevealStyle {
@@ -110,6 +116,16 @@ pub fn beam_directions(count: usize, tilts_deg: &[f32]) -> Vec<Vec3> {
                 .to_radians();
             Vec3::new(yaw.sin() * tilt.cos(), -tilt.sin(), -yaw.cos() * tilt.cos())
         })
+        .collect()
+}
+
+/// The upward ring's directions: spread round the ball between the downward beams' headings
+/// (offset by half a step), each tilted above the horizon by the next of `tilts_deg`.
+pub fn upward_beam_directions(count: usize, tilts_deg: &[f32]) -> Vec<Vec3> {
+    let half_step = Quat::from_rotation_y(std::f32::consts::PI / count.max(1) as f32);
+    beam_directions(count, tilts_deg)
+        .into_iter()
+        .map(|d| half_step * Vec3::new(d.x, -d.y, d.z))
         .collect()
 }
 
@@ -330,12 +346,25 @@ fn pulse_on_beats(
     }
 }
 
+/// Room in the GPU's light clusters for the ball's many spotlights, from the start: Bevy
+/// grows these lists when they overflow, but lighting can be wrong for a few frames when it
+/// does (it warned of it the first time the ball lit near the camera, 2026-11-18).
+const CLUSTER_Z_SLICES: usize = 4096;
+const CLUSTER_INDICES: usize = 262_144;
+
 fn setup(
     mut commands: Commands,
     style: Res<FlashlightStyle>,
     assets: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
+    clusters: Option<ResMut<bevy::light::cluster::GlobalClusterSettings>>,
 ) {
+    if let Some(mut clusters) = clusters
+        && let Some(gpu) = clusters.gpu_clustering.as_mut()
+    {
+        gpu.initial_z_slice_list_capacity = gpu.initial_z_slice_list_capacity.max(CLUSTER_Z_SLICES);
+        gpu.initial_index_list_capacity = gpu.initial_index_list_capacity.max(CLUSTER_INDICES);
+    }
     let style = &style.0;
     commands.insert_resource(BeaconMeshes {
         column: meshes.add(Cylinder::new(style.beacon.radius_m, style.beacon.height_m)),
@@ -346,7 +375,11 @@ fn setup(
                 .expect("ico"),
         ),
     });
-    let beams = beam_directions(style.beams.count, &style.beams.tilt_deg);
+    let mut beams = beam_directions(style.beams.count, &style.beams.tilt_deg);
+    beams.extend(upward_beam_directions(
+        style.beams.up_count,
+        &style.beams.up_tilt_deg,
+    ));
     let ball = commands
         .spawn((
             DiscoBall {
@@ -370,14 +403,20 @@ fn setup(
     for (i, direction) in beams.iter().enumerate() {
         let [r, g, b] = style.beams.colors[i % style.beams.colors.len().max(1)];
         let tilt = (-direction.y).asin().to_degrees();
+        // Downward spots land farther the shallower they are; upward ones keep the base.
+        let intensity = if direction.y < 0. {
+            beam_intensity(
+                style.beams.intensity_lumens,
+                tilt,
+                style.beams.reference_tilt_deg,
+            )
+        } else {
+            style.beams.intensity_lumens
+        };
         commands.spawn((
             SpotLight {
                 color: Color::srgb(r, g, b),
-                intensity: beam_intensity(
-                    style.beams.intensity_lumens,
-                    tilt,
-                    style.beams.reference_tilt_deg,
-                ),
+                intensity,
                 range: style.beams.range_m,
                 // Crisp spots, as a mirror ball's are.
                 inner_angle: width * 0.85,
@@ -663,6 +702,19 @@ mod tests {
         assert!(beams[0].xz().normalize().dot(beams[6].xz().normalize()) < -0.999);
     }
     #[test]
+    fn the_upward_ring_points_above_the_horizon_between_the_downward_beams() {
+        let down = beam_directions(8, &[14.]);
+        let up = upward_beam_directions(8, &[25., 50.]);
+        for (i, beam) in up.iter().enumerate() {
+            let above = beam.y.asin().to_degrees();
+            assert!((above - if i % 2 == 0 { 25. } else { 50. }).abs() < 1e-3);
+        }
+        // Half a step round from each downward beam's heading.
+        let step = std::f32::consts::TAU / 8.;
+        let between = down[0].xz().angle_to(up[0].xz()).abs();
+        assert!((between - step / 2.).abs() < 1e-4, "{between}");
+    }
+    #[test]
     fn a_beam_lights_what_it_crosses_within_range() {
         let origin = Vec3::new(0., 1.5, 0.);
         let beam = (Vec3::new(0., -1., -4.)).normalize();
@@ -733,7 +785,12 @@ mod tests {
         assert!(!style.beams.colors.is_empty());
         // The shallowest beam's spot, from a ball about 2 m up, lands out at the reveal's
         // reach, and its light carries that far.
-        let shallowest = style.beams.tilt_deg.iter().copied().fold(f32::MAX, f32::min);
+        let shallowest = style
+            .beams
+            .tilt_deg
+            .iter()
+            .copied()
+            .fold(f32::MAX, f32::min);
         let farthest = 2. / shallowest.to_radians().tan();
         assert!(farthest >= style.reveal.range_m * 0.85, "{farthest} m");
         assert!(style.beams.range_m >= farthest);

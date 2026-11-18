@@ -45,7 +45,10 @@ above the pickup. No crate does this; it is a few dozen lines of standard Bevy.
   on" or "more, smaller", the user chose more, smaller: 48 beams of 2.5 degrees whose spots
   land from about 3 m to 27 m (far ones brighter by distance squared), a beam's heading
   revealing at any height, so each place is crossed several times a second; revealed
-  pickups are `Spotlit` and bugs stay lit.
+  pickups are `Spotlit` and bugs stay lit. A second ring of 16 beams goes up (25 and 50
+  degrees above the horizon, between the downward ones; user, 2026-11-18: "for later
+  use"), lighting what is overhead. The GPU light clusters start large enough for all of
+  them, so Bevy never resizes them mid-play (it warned it might draw a few wrong frames).
 
 ## Risks
 
