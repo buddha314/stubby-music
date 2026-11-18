@@ -11,9 +11,10 @@ the bridge and simulation, but do not replace authored-level listening reviews.
 
 ## What the component controls
 
-Add `AcousticOccluder` to the entity that owns the relevant `Mesh3d` primitive.
-Adding it to a prefab root does not mark its child meshes. Jackdaw exposes these
-fields in the inspector; `Default` is the generic material.
+For explicit authoring, add `AcousticOccluder` to the entity that owns the relevant
+`Mesh3d` primitive. Jackdaw prefab roots can also carry the component: the game's
+placed-asset bridge propagates it to descendant mesh entities after they load.
+Jackdaw exposes these fields in the inspector; `Default` is the generic material.
 
 Each marked mesh has one acoustic material shared by all its triangles:
 
@@ -108,33 +109,39 @@ listen for the clock blips or a dedicated test patch for transient detail.
 
 The bridge snapshots marked meshes into a world-space AudioNimbus scene off the
 audio callback. The generated mudflat and mountain ridges are tagged in code. The
-Jackdaw component is reflectable for authored mesh children. Authored walls/caves
-still need tags and a successful in-game occlusion/transmission listening review.
-The AudioNimbus reflection API has an offline synthetic-room test, but there is no
-live reflection/reverb bus in the Firewheel graph yet. Animated acoustic geometry
-and per-triangle material indices are also not implemented; do not describe them as
-supported in a level review.
+grotto boulder prefab root now propagates its material to runtime mesh children,
+which is required because Jackdaw flattens placed LOD models. Per-emitter
+AudioNimbus parametric reflections are connected to the Firewheel binaural
+processor, but callback allocation safety with non-empty reflection snapshots has
+not been measured. The listener-centric reflection output is not routed to a shared
+environmental bus. Animated acoustic geometry and per-triangle material indices
+are not implemented; do not describe them as supported in a level review.
 
-## Opening boulder grotto review (2026-11-17)
+## Opening boulder grotto review (2026-11-18)
 
 `tools/jackdaw_timed_test.py --standalone --grotto-audio-review --name <name>` runs a
 20-second bounded standalone pass. It plays the square/clock demo at the grotto
-burbler, moves the listener to an interior/mouth point and two outside points, and
-records listener/source positions, world-bus peak levels, and screenshots under
-`/tmp/grotto-audio-review/`. The outside comparison points are both 17 m from the
-source: one ray passes through boulder 0; the other is on the spawn-facing side.
+burbler, moves the listener to an interior point and two outside points, and records
+listener/source positions, world-bus peak levels, and screenshots under
+`/tmp/grotto-audio-review/`. The outside comparison points are both about 17 m from
+the source: one path passes through boulder 0; the other is on the spawn-facing
+side.
 
-The scene snapshot contained 1,302,514 vertices, 434,172 triangles, and 104 material
-records. The test did **not** pass the occlusion check: the steady world-bus peak was
-−33.71 dBFS at both matched-distance outside points. At the blocked point, a direct
-simulation diagnostic also returned `occlusion=1` and unity transmission for the
-square demo emitter. The interior/mouth point measured −23.64 dBFS at about 5.5 m,
-so that level difference is explained by distance and does not establish occlusion.
-A visible boulder lies across the blocked camera ray, so investigate why this
-source's ray does not register the tagged rock before treating the grotto as
-acoustically validated.
+The first review on 2026-11-17 failed: both outside points measured about
+−33.7 dBFS. Investigation found that Jackdaw's placed-model flattening left acoustic
+metadata off runtime mesh entities. The prefab-root propagation fix is now in place.
 
-Live echo/reverb could not be evaluated: the Firewheel graph does not yet consume
-AudioNimbus reflection outputs. Keep `add-echo-grotto` task 4.1 open until the direct
-occlusion path is corrected and the live reflection/reverb bus is integrated and
-heard in the grotto.
+On 2026-11-18 the same source measured about −97.4 dBFS behind the boulders and
+−33.7 dBFS on the clear path, a difference of about 63.7 dB. The source and
+listener coordinates, screenshots, and event data are recorded in
+[`grotto-acoustics-investigation.md`](grotto-acoustics-investigation.md). This
+supports occlusion and recovery for these authored paths; it does not establish
+material calibration for other spaces.
+
+The later bounded run also reported five reflection outputs matching five active
+emitters. A source-mute capture measured a short post-mute decay at the inside and
+clear outside positions. This is evidence of a short per-emitter parametric tail,
+not a complete cave-reverb acceptance: the world-bus meter cannot isolate wet
+energy, no reflection-disabled control was captured, and subjective listening is
+not recorded. Keep `add-echo-grotto` task 4.1 open until the controlled comparison
+and listening review are complete.
