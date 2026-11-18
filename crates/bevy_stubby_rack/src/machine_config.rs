@@ -229,7 +229,8 @@ impl Plugin for MachineConfigurationPlugin {
     }
 }
 
-/// E opens the rack of the machine `interaction::InteractTarget` points at.
+/// E opens the rack of the machine `interaction::InteractTarget` points at, and E again
+/// closes it (as Escape does).
 fn interact(
     keys: Res<ButtonInput<KeyCode>>,
     profiles: Res<Profiles>,
@@ -243,7 +244,7 @@ fn interact(
     state.target = None;
     state.prompt.clear();
     if let Some(Screen::MachineConfiguration(entity)) = screens.open {
-        if !machines.contains(entity) {
+        if !machines.contains(entity) || keys.just_pressed(stubby_core::INTERACT) {
             screens.close();
         }
         return;
@@ -844,7 +845,28 @@ mod tests {
             app.world().resource::<ScreenMode>().open,
             Some(Screen::MachineConfiguration(machine))
         );
+        // E again closes it.
         let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        keys.release(KeyCode::KeyE);
+        keys.clear();
+        keys.press(KeyCode::KeyE);
+        app.update();
+        assert_eq!(app.world().resource::<ScreenMode>().open, None);
+        // E opens it again, and Escape closes it too.
+        let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        keys.release(KeyCode::KeyE);
+        keys.clear();
+        app.update();
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::KeyE);
+        app.update();
+        assert_eq!(
+            app.world().resource::<ScreenMode>().open,
+            Some(Screen::MachineConfiguration(machine))
+        );
+        let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        keys.release(KeyCode::KeyE);
         keys.clear();
         keys.press(KeyCode::Escape);
         app.update();
