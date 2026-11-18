@@ -146,11 +146,23 @@ def burbler(glb):
              "translation": [r4(centre[0]), 0.5, r4(centre[2])]}]
 
 
+def boulder(glb):
+    """A cuboid around the near mesh, shrunk to 85%: a rounded boulder fills less than
+    its box, and a full box would narrow the grotto's alcove (add-echo-grotto)."""
+    parts = world_meshes(glb)
+    near = np.concatenate([p for name, p in parts.items() if not name.endswith("_Far")])
+    box = cuboid_around(near)
+    for axis in ("x_length", "y_length", "z_length"):
+        box[axis] = r4(box[axis] * 0.85)
+    return [box]
+
+
 FAMILIES = {
     # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
     "flora/reeds": ("flora/reeds/*/*.glb", "thin reeds: the player walks through, like grass"),
     "props/desert": ("props/desert/*/*.glb", None),
+    "props/rocks": ("props/rocks/*/*.glb", boulder),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

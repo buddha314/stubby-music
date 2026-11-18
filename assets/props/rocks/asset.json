@@ -1,0 +1,68 @@
+{
+  "family": "boulder",
+  "about": "Weathered granite boulders after the Mojave's (Joshua Tree), from Blender's Rock Generator (tools/blender/create_boulders.py); the echo grotto (add-echo-grotto) is a cluster of them in the opening scene. Near meshes are acoustic rock by glTF extras {\"acoustic\": \"rock\"}.",
+  "licence": "CC0-1.0 (generated geometry; the Rock Generator add-on is a GPL tool, its output is ours)",
+  "roles": {
+    "boulder_0": "back wall",
+    "boulder_1": "left wall",
+    "boulder_2": "right wall",
+    "boulder_3": "the leaning top, roofing the alcove",
+    "boulder_4": "a small rock in front"
+  },
+  "variants": [
+    "boulder_0",
+    "boulder_1",
+    "boulder_2",
+    "boulder_3",
+    "boulder_4"
+  ],
+  "triangles": {
+    "boulder_0": {
+      "near": 6000,
+      "far": 240
+    },
+    "boulder_1": {
+      "near": 6000,
+      "far": 240
+    },
+    "boulder_2": {
+      "near": 6000,
+      "far": 240
+    },
+    "boulder_3": {
+      "near": 6000,
+      "far": 240
+    },
+    "boulder_4": {
+      "near": 6000,
+      "far": 240
+    }
+  },
+  "size_metres": {
+    "boulder_0": {
+      "width": 9.0,
+      "depth": 7.0,
+      "height": 6.5
+    },
+    "boulder_1": {
+      "width": 7.0,
+      "depth": 6.0,
+      "height": 5.5
+    },
+    "boulder_2": {
+      "width": 6.5,
+      "depth": 6.0,
+      "height": 5.0
+    },
+    "boulder_3": {
+      "width": 8.0,
+      "depth": 6.0,
+      "height": 3.6
+    },
+    "boulder_4": {
+      "width": 3.0,
+      "depth": 2.5,
+      "height": 2.0
+    }
+  }
+}
