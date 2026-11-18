@@ -25,6 +25,9 @@ Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 
 ## What we are building
 
+The story is `NARRATIVE.md` (the user's: from desolate mudflat to solarpunk city); design
+notes that serve it (mythic regions, the vardo base, styling) are `docs/design/design-guide.md`.
+
 A 3D game that fuses **modular synthesis** (Eurorack-style patching: oscillators,
 clocks, sequencers, filters, VCAs, connected by patch cables) with a **factory
 builder** (Satisfactory-style discovery, placement, and throughput). The factory *is*
