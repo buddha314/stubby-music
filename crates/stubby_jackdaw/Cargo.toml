@@ -2,6 +2,7 @@
 name = "stubby_jackdaw"
 version = "0.1.0"
 edition = "2024"
+default-run = "stubby_jackdaw"
 publish = false
 
 # Keep this package for saved prefab type paths; dependency versions belong to the root workspace.
