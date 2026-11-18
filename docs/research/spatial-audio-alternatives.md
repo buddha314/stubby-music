@@ -85,6 +85,28 @@ code license. Sources: [OMG Audio upstream](https://github.com/JustGoscha/omg-au
 [license](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/LICENSE),
 [HRIR notice](https://github.com/JustGoscha/omg-audio/blob/4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869/crates/omg-audio/hrir/NOTICE.md).
 
+#### Firewheel live-signal spike (2026-11-18)
+
+`spikes/spike_omg_audio/` now hosts a pinned, one-source prototype. Firewheel generates
+a square-wave input, sends it through an OMG `Renderer::process_block` node, and the
+node accumulates the 9-channel diffuse bus, decodes it with OMG's `OutputStage`, and
+returns stereo. The integration test creates a real Firewheel processor, builds its
+OMG path parameters before rendering, and processes sixteen 128-frame blocks. Output
+is finite and nonzero; the callback path passes `assert_no_alloc` at 48 kHz. This
+confirms that OMG's live-sample API can host one procedural signal in Firewheel without
+callback allocation when path parameters are already installed.
+
+This is deliberately not adoption evidence yet: the prototype uses the speaker
+fallback (no HRTF dataset), one source, and a fixed parameter frame. It decodes the
+Ambisonic bus per node, which must be replaced with one shared decode for a multi-source
+mix. It does not exercise frame replacement, parameter-update allocation, game
+geometry/material conversion, moving sources/listeners, or quality/performance against
+the grotto. In particular, upstream `Renderer::set_params` still builds temporary
+vectors; the next prototype step must move those allocations out of callback updates
+or provide bounded reusable scratch before testing changing frames under the guard.
+The spike pins upstream source by Git revision and remains outside the production
+workspace/dependency policy until those gates pass.
+
 ### Callback-safety blocker found in the current AudioNimbus reflection handoff
 
 Inspection of the locally installed AudioNimbus 0.17.0 source found a concrete native

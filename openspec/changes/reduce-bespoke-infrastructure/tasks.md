@@ -32,8 +32,8 @@ cross-platform artifacts, and performance remain unverified.
   supported backend, dependencies/license, and project-specific gaps per feature.
   Candidate alternatives and the current integration decision are tracked in
   [spatial-audio-alternatives.md](../../../docs/research/spatial-audio-alternatives.md);
-  OMG Audio remains a candidate to revisit, but its current integration surface does
-  not yet demonstrate lower total project code; see task 3.3.
+  OMG Audio is under a pinned low-level Firewheel prototype; adoption still depends on
+  changing-frame safety and multi-source routing; see task 3.3.
 - [ ] 1.3 (claimed: Codex) Define and prototype scene integration: convert Bevy/Avian geometry and
   acoustic materials; handle static, moving, and streamed geometry; establish scene
   lifecycle, probe placement/bake artifacts, invalidation, and designer workflows.
@@ -77,7 +77,11 @@ cross-platform artifacts, and performance remain unverified.
   and its threaded host applies frames with allocations on the audio callback. Continue
   with a low-level Firewheel adapter prototype, bounded parameter updates, shared
   Ambisonic routing, and Bevy/Avian geometry/material conversion before adoption.
-  Upstream's focused mixer tests passed locally (9/9); this is not integration proof.
+  The one-source spike now processes procedural Firewheel samples through OMG's
+  renderer with finite output and zero callback allocations at 48 kHz, with a fixed
+  preinstalled frame and speaker fallback. Shared Ambisonic mixing, HRTF, changing
+  frames, geometry conversion and performance remain open. Upstream's focused mixer
+  tests passed locally (9/9); this is not full integration proof.
 
 ## 4. Adopt verified replacements
 
