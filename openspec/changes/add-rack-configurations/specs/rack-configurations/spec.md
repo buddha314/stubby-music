@@ -80,4 +80,3 @@ with where it comes from.
 #### Scenario: Inserting the VCO
 - **WHEN** the burbler's rack is open with its VCO slot empty and the player holds 2 square waves
 - **THEN** the Relevant strip shows "[1] Square wave x 2", and pressing 1 mounts a Square VCO and leaves 1 square wave
-
