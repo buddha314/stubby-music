@@ -32,6 +32,9 @@ struct InventoryHud;
 struct CollectionPopup;
 #[derive(Component)]
 struct CollectionPopupText;
+/// The prompt's muted second word ("hold for more", for pickups).
+#[derive(Component)]
+struct CollectionPopupHold;
 #[derive(Resource, Default)]
 struct RecipeBookView {
     open: bool,
@@ -168,35 +171,48 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
             },
         ))
         .with_children(|parent| {
-            parent.spawn((
-                CollectionPopupText,
-                Text::new("[E] Collect lightning bug"),
-                TextFont {
-                    font_size: bevy::text::FontSize::Px(20.),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.95, 0.94, 0.87)),
-                BackgroundColor(Color::srgba(0.04, 0.035, 0.025, 0.8)),
-                Node {
-                    padding: UiRect::axes(px(12), px(6)),
-                    ..default()
-                },
-            ));
+            // Satisfactory's prompt: the key as a keycap, then the action, over the world.
+            parent
+                .spawn((
+                    Node {
+                        column_gap: px(8),
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    Pickable::IGNORE,
+                ))
+                .with_children(|row| {
+                    stubby_ui::style::keycap(
+                        row,
+                        &stubby_ui::style::key_name(stubby_core::INTERACT),
+                        16.,
+                    );
+                    row.spawn((
+                        CollectionPopupText,
+                        stubby_ui::style::world_label("", 18., stubby_ui::style::INK),
+                    ));
+                    row.spawn((
+                        CollectionPopupHold,
+                        stubby_ui::style::world_label("", 13., stubby_ui::style::MUTED),
+                    ));
+                });
         });
+    // The recipe book (O), until it has its own screen (2.7): a panel on the left.
     commands.spawn((
         InventoryHud,
-        Text::new(""),
-        TextFont {
-            font_size: bevy::text::FontSize::Px(18.),
-            ..default()
-        },
-        TextColor(Color::srgb(0.95, 0.94, 0.90)),
+        Visibility::Hidden,
+        stubby_ui::style::label("", 15., stubby_ui::style::INK),
         Node {
             position_type: PositionType::Absolute,
             left: px(20),
-            bottom: px(20),
+            top: percent(28),
+            max_width: px(360),
+            padding: UiRect::all(px(14)),
+            border: UiRect::left(px(3)),
             ..default()
         },
+        BackgroundColor(stubby_ui::style::PANEL),
+        BorderColor::all(stubby_ui::style::AMBER),
     ));
 }
 /// The game decides *when* to harvest (E held, nearest available node within reach) and
@@ -272,9 +288,11 @@ fn update_collection_popup(
     catalog: Option<Res<RecipeCatalog>>,
     machine: Option<Res<super::machine_config::MachineInteraction>>,
     mut popups: Query<&mut Visibility, With<CollectionPopup>>,
-    mut labels: Query<&mut Text, With<CollectionPopupText>>,
+    mut labels: Query<&mut Text, (With<CollectionPopupText>, Without<CollectionPopupHold>)>,
+    mut holds: Query<&mut Text, With<CollectionPopupHold>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
+    let mut hold = "";
     let action = if screens.as_ref().is_some_and(|s| s.open.is_some()) {
         None
     } else if let Some(node) = target
@@ -286,6 +304,7 @@ fn update_collection_popup(
             .as_ref()
             .and_then(|catalog| catalog.0.resource(&node.resource))
             .map_or(node.resource.as_str(), |resource| resource.name.as_str());
+        hold = "hold for more";
         Some(format!("Collect {}", name.to_lowercase()))
     } else {
         machine
@@ -302,69 +321,41 @@ fn update_collection_popup(
     }
     if let Some(action) = action {
         for mut text in &mut labels {
-            let label = interaction_prompt(&action);
-            if text.0 != label {
-                text.0 = label;
+            if text.0 != action {
+                text.0.clone_from(&action);
+            }
+        }
+        for mut text in &mut holds {
+            if text.0 != hold {
+                text.0 = hold.to_owned();
             }
         }
     }
 }
-/// How every interaction prompt reads: the key, then the action.
-pub(crate) fn interaction_prompt(action: &str) -> String {
-    format!("[{}] {action}", key_label(stubby_core::INTERACT))
-}
-fn key_label(key: KeyCode) -> &'static str {
-    match key {
-        KeyCode::KeyE => "E",
-        _ => "?",
-    }
-}
+/// The recipe book panel (O): what the player has discovered and holds.
 fn update_hud(
     keys: Res<ButtonInput<KeyCode>>,
-    target: Res<stubby_core::InteractTarget>,
     mut view: ResMut<RecipeBookView>,
     player: Res<PlayerInventory>,
     catalog: Option<Res<RecipeCatalog>>,
-    mut hud: Query<&mut Text, With<InventoryHud>>,
-    machine: Option<Res<super::machine_config::MachineInteraction>>,
+    mut hud: Query<(&mut Text, &mut Visibility), With<InventoryHud>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
 ) {
-    let Ok(mut hud) = hud.single_mut() else {
+    let Ok((mut hud, mut visibility)) = hud.single_mut() else {
         return;
-    };
-    if screens
-        .as_ref()
-        .is_some_and(|screens| screens.open.is_some())
-    {
-        hud.0.clear();
-        return;
-    }
-    let nearby = target.pickup().is_some();
-    let prompt = if let Some(machine) = machine.as_ref().filter(|machine| machine.target.is_some())
-    {
-        interaction_prompt(&machine.prompt)
-    } else if nearby {
-        interaction_prompt("Collect (hold for nearby pickups)")
-    } else {
-        "Explore for resources | approach within 3 m".to_string()
-    };
-    let recipe_count = catalog
-        .as_ref()
-        .map_or(0, |catalog| catalog.0.recipes().count());
-    let recipes = if recipe_count == 0 {
-        "Production recipes: none".into()
-    } else {
-        format!("{recipe_count} recipes available")
     };
     if keys.just_pressed(stubby_core::RECIPE_BOOK) {
         view.open = !view.open;
     }
-    let mut text = format!(
-        "{prompt}\n{recipes} | Tab: Inventory | H: Recorder | O: Recipe book\n{}",
-        player.feedback
-    );
+    let shown = view.open && !screens.as_ref().is_some_and(|s| s.open.is_some());
+    visibility.set_if_neq(if shown {
+        Visibility::Inherited
+    } else {
+        Visibility::Hidden
+    });
+    let mut text = String::new();
     if view.open {
-        text.push_str("\n\nRECIPE BOOK\n");
+        text.push_str("RECIPE BOOK\n\n");
         if player.book.items().next().is_none() {
             text.push_str("Mine a lightning bug to discover Square wave.\n");
         }

@@ -11,6 +11,7 @@ use bevy::prelude::*;
 use bevy::world_serialization::WorldAssetRoot;
 use stubby_core::{GroundHeight, HudCamera, LookCapture, PlacedAsset, Screen, ScreenMode};
 use stubby_streams::{StreamBuild, StreamSystems};
+use stubby_ui::style::{AMBER, BACKDROP, EDGE, INK, MUTED, PANEL, TILE};
 
 use super::recipes_plugin::{PlayerInventory, RecipeCatalog};
 
@@ -19,14 +20,6 @@ const CAMPFIRE_MODEL: &str = "structures/campfire/campfire.glb";
 /// Where a campfire can be put down: this near and this far along the aim, in metres.
 const NEAREST: f32 = 2.0;
 const REACH: f32 = 10.0;
-
-const BACKDROP: Color = Color::srgba(0.0, 0.0, 0.0, 0.45);
-const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.94);
-const TILE: Color = Color::srgba(0.09, 0.085, 0.075, 1.0);
-const EDGE: Color = Color::srgb(0.42, 0.29, 0.13);
-const INK: Color = Color::srgb(0.95, 0.94, 0.89);
-const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
-const AMBER: Color = Color::srgb(1., 0.7, 0.31);
 
 pub struct BuildPlugin;
 impl Plugin for BuildPlugin {

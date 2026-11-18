@@ -6,15 +6,9 @@
 use bevy::picking::events::{PointerClick, PointerOut, PointerOver};
 use bevy::prelude::*;
 use stubby_core::{Screen, ScreenMode};
+use stubby_ui::style::{AMBER, BACKDROP, EDGE, INK, MUTED, PANEL};
 
-const BACKDROP: Color = Color::srgba(0.0, 0.0, 0.0, 0.6);
-const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.94);
 const BUTTON: Color = Color::srgba(0.09, 0.085, 0.075, 1.0);
-const EDGE: Color = Color::srgb(0.42, 0.29, 0.13);
-const INK: Color = Color::srgb(0.95, 0.94, 0.89);
-const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
-/// The signal amber (style guide): the button under the pointer.
-const AMBER: Color = Color::srgb(1., 0.7, 0.31);
 
 pub struct PauseMenuPlugin;
 impl Plugin for PauseMenuPlugin {

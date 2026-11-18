@@ -131,6 +131,27 @@ The accents belong to flora and the bloomed world. Keep them off modules: amber 
 the only signal colour. Build holograms are pale amber, kin to the port halos they snap
 to, and turn red where a plan cannot be laid.
 
+## HUD
+
+The HUD follows Satisfactory's layout, never its colours. It has one look, in code as
+`stubby_ui::style`: every screen and HUD element takes its colours and keycaps from there.
+
+- **Colours.** Dark warm panels (`PANEL`), or see-through bands over the world (`BAND`),
+  with a thin bronze edge (`EDGE`). Text is bone white (`INK`), secondary text muted grey
+  (`MUTED`), and the signal amber (`AMBER`) is the only accent: labels such as "Goal:", the
+  selected item, a changed setting. Red (`WARNING`) only for a refusal (INVENTORY FULL).
+- **Keys** are bone keycaps with dark letters, followed by the action: `[E] Configure
+  burbler`. Never write keys as bracketed text.
+- **Text over the world** has no box behind it: a soft shadow keeps it legible
+  (`world_label`).
+- **Places.** Compass top centre, the clock under it. The goals hub top right. The
+  interaction prompt under the reticle, and the latest notice under that, fading after a
+  few seconds. Key hints bottom right, a keycap over each tool's name. Screens are framed
+  windows with a title bar and the dimmed world behind. Every HUD element hides while a
+  screen is open.
+- **No status prose.** The HUD never narrates ("Explore for resources"): goals guide, and
+  the world shows the rest.
+
 ## Scale
 
 - Metres, +Y up in the game (+Z up in Blender; the exporter converts).

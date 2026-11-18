@@ -6,16 +6,10 @@
 //! none of stay listed, dimmed. Opening and closing go through `controls::ScreenMode`.
 use bevy::prelude::*;
 use stubby_core::{Screen, ScreenMode};
+use stubby_ui::style::{BACKDROP, EDGE, INK, MUTED, PANEL, TILE};
 pub use stubby_ui::{icon_slot, item_icon};
 
 use super::resources::{PlayerInventory, RecipeCatalog};
-
-const PANEL: Color = Color::srgba(0.035, 0.033, 0.03, 0.94);
-const BACKDROP: Color = Color::srgba(0.0, 0.0, 0.0, 0.45);
-const TILE: Color = Color::srgba(0.09, 0.085, 0.075, 1.0);
-const EDGE: Color = Color::srgb(0.42, 0.29, 0.13);
-const INK: Color = Color::srgb(0.95, 0.94, 0.89);
-const MUTED: Color = Color::srgb(0.55, 0.53, 0.49);
 
 pub struct InventoryScreenPlugin;
 impl Plugin for InventoryScreenPlugin {
