@@ -84,6 +84,15 @@ Open:
   each woken being takes its seat, empty seats show where kin are still to be found (a
   silhouette, a biome, a kind), and neighbouring seats suggest what to look for next, as
   Satisfactory's MAM research tree shows what a discovery opens.
+- **Amphitheatre decisions (user, 2026-11-18):** it stands **in the chaparral**. **Seats give
+  modules back**: waking a being and seating it yields a rack module. Players **may find it
+  early but not understand why it is there until later**: an empty, weathered bowl of stone
+  that only reads as a map once some seats are filled. It must **rhyme with sacred gathering
+  places**, the grounds where rain dances and other ceremonies are held, in form and spirit
+  only: a circle of dancing ground, a hearth or spring at the centre, seating rising around
+  it. Under the sharing rules it copies no real site, ceremony or sacred structure; the rhyme
+  comes from forms many peoples share. The chaparral fits: the Greek theatre grew from the
+  *orchestra*, the round dancing floor, with the chorus dancing and singing at its centre.
 - **Biome characters (art, 2026-11-18):** each biome leans into what its beings share:
   desert *the unseen*, chaparral *hybrids on the rocks*, grassland *under the open sky*,
   wetland *the drowning water*, broadleaf *faces in the grove*, conifer *the deep wood*,
