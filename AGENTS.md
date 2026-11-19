@@ -483,6 +483,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   Codex implemented `organize-model-owned-lod-assets` (2026-11-16), including
   exporter path updates and the asset-layout documentation; geometry and artistic
   settings are preserved.
+  **Claude (2026-11-18):** the amphitheatre's art and scene (`add-amphitheatre` 1–3), the being
+  atlas (`add-being-atlas`) and the mythology research; Codex owns its seat behaviour (4).
   Update this line when you claim work.
 - **Opening composition (2026-11-16):** spawn at x=0, z=6, bearing 75 degrees,
   so the eastward sunrise is 15 degrees to the right (about 20 degrees at the
