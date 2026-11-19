@@ -11,6 +11,7 @@ spatial-audio = ["stubby_audio/audionimbus"]
 omg-audio = ["stubby_audio/omg_audio"]
 
 [dependencies]
+hound = "~3.5"
 jackdaw_terrain.workspace = true
 stubby_recipes = { path = "../stubby_recipes" }
 bevy_stubby_recipes = { path = "../bevy_stubby_recipes" }

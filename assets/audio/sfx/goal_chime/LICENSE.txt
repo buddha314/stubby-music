@@ -1,0 +1,3 @@
+goal_chime.wav: made for this project by tools/audio/make_goal_chime.py (no third-party
+material). Dedicated to the public domain under CC0 1.0:
+https://creativecommons.org/publicdomain/zero/1.0/
