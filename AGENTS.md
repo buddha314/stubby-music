@@ -664,7 +664,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   streams, from the audio clock. Its voice is heard from the nearest point of the
   burbler or its streams, within `hearing_radius_metres`
   (`add-localized-machine-voices`). **F dismantles** the aimed segment
-  (`stubby_streams::dismantle`, 2026-11-17): refunds its reeds all or nothing and splits
+  (`stubby_streams::dismantle`, 2026-11-17): pressing F turns the segment in the crosshair
+  red, holding F (0.6 s, a bar under the reticle) removes it; a tap, Escape or Q leaves
+  (user, 2026-11-18). A stream aimed within 2.5 m of another **joins it**: it arrives along
+  that stream's flow (head on at a free end) and laying ends there (`snap_to_stream`).
+  Dismantling refunds its reeds all or nothing and splits
   the stream; the part cut off downstream, and anything laid on from it, lies quiet.
   Still to do: the staff's flow and notes on laid streams (2.7), bubbles (2.6), saving
   laid streams, collision checks.
