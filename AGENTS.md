@@ -99,7 +99,11 @@ it, then configures it (E): placed within 5 m of a stream it snaps beside it and
 its rack inherits the stream's voice (the burbler's VCO, fixed and patched; the player adds
 only the sequencer), a ghostly staff runs from the join to the fire and rises, and its 2
 and 4 notes (ember) ride the staff downstream of the join, where its voice is heard too.
-Anything downstream inherits every layer above it; splitting a stream comes later. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
+**A join updates the chain, it does not add to it** (user, 2026-11-18): while the campfire
+plays, the burbler's own voice is silent (`stubby_streams::ChainUpdated`) and the
+heartbeat's notes leave the staff at the join, drawn along the ghost staff into the fire and
+up; only the campfire's version plays downstream. Anything downstream inherits the latest
+version; splitting a stream comes later. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
 Escape or focus loss releases the cursor, and left click recaptures it; a second Escape opens the pause menu (Satisfactory's escape menu: Resume Game, Exit to Desktop; `stubby_game::pause_menu`), and Escape closes any open screen. E opens a machine's rack and E again closes it.
 
 ### The opening
