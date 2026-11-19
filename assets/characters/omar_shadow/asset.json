@@ -1,0 +1,20 @@
+{
+  "id": "omar_shadow",
+  "model": "characters/omar_shadow/omar_shadow.glb#Scene0",
+  "kind": "shadow_body",
+  "height_metres": 1.87,
+  "feet_at_origin": true,
+  "facing": "-Z (the player's forward)",
+  "pivots": {
+    "legs": [
+      "Omar_Hip_L",
+      "Omar_Hip_R"
+    ],
+    "arms": [
+      "Omar_Shoulder_L",
+      "Omar_Shoulder_R"
+    ]
+  },
+  "rendered": "never to a camera: shadow only (stubby_core::SHADOW_ONLY_LAYER)",
+  "reference": "docs/art/omar.md, silhouettes in docs/art/omar/turnaround-gloves-palette.png"
+}

@@ -15,6 +15,10 @@ pub struct Player {
     grounded: bool,
 }
 impl Player {
+    /// The height of the ground under the player's feet.
+    pub fn feet(&self) -> f32 {
+        self.feet
+    }
     /// A player standing at the spawn point on `ground`.
     pub fn on(ground: &GroundHeight) -> Self {
         Self {

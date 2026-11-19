@@ -28,7 +28,11 @@ Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 The story is `NARRATIVE.md` (the user's: from desolate mudflat to solarpunk city); design
 notes that serve it (mythic regions, the vardo base, styling) are `docs/design/design-guide.md`.
 The player character is **Omar** (`docs/art/omar.md`); for now only his gloves (the
-first-person hands) and his shadow are built (`add-omar-gloves-and-shadow`).
+first-person hands) and his shadow are built (`add-omar-gloves-and-shadow`): the gloves
+(`assets/characters/omar_gloves/`) are modelled in the held item's frame and mount with it
+(`stubby_player::hand`); the shadow body (`assets/characters/omar_shadow/`) follows the
+player on `stubby_core::SHADOW_ONLY_LAYER`, which the sun sees and no camera does
+(`stubby_player::shadow`). Changing the recorder's hold pose means regenerating the gloves.
 
 A 3D game that fuses **modular synthesis** (Eurorack-style patching: oscillators,
 clocks, sequencers, filters, VCAs, connected by patch cables) with a **factory

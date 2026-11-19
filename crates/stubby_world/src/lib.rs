@@ -192,5 +192,7 @@ fn setup_world(
         }
         .build(),
         Transform::from_xyz(-48., 7.5, -87.).looking_at(Vec3::ZERO, Vec3::Y),
+        // The sun also sees the shadow-only layer (Omar's body casts, no camera draws it).
+        bevy::camera::visibility::RenderLayers::from_layers(&[0, stubby_core::SHADOW_ONLY_LAYER]),
     ));
 }
