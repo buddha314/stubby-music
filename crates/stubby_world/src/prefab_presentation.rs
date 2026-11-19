@@ -88,27 +88,57 @@ impl Plugin for PrefabPresentationPlugin {
         );
     }
 }
+/// The name line of what the aim rests on.
+#[derive(Component)]
+struct HoverTitle;
+
+/// A placed asset's name for the player: its kind without a variant number, in sentence
+/// case (`boulder_3` is "Boulder", `mudpit_burbler` "Mudpit burbler").
+fn display_name(asset: &str) -> String {
+    let kind = asset
+        .rsplit_once('_')
+        .filter(|(_, n)| n.chars().all(|c| c.is_ascii_digit()))
+        .map_or(asset, |(kind, _)| kind)
+        .replace('_', " ");
+    let mut chars = kind.chars();
+    chars.next().map_or_else(String::new, |first| {
+        first.to_uppercase().chain(chars).collect()
+    })
+}
+
 fn setup_hover(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn((
-        HoverLabel,
-        Text::new(""),
-        TextLayout::justify(Justify::Center),
-        TextFont {
-            font_size: bevy::text::FontSize::Px(17.),
-            ..default()
-        },
-        Node {
-            position_type: PositionType::Absolute,
-            top: percent(66),
-            width: percent(100),
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-    ));
+    // What the aim rests on, as Satisfactory names it: the name in the HUD's face with a
+    // muted detail line under it, just above the E prompt (the game's `CollectionPopup`,
+    // at 55%), so name and action read as one block (user, 2026-11-18).
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                // Below the reticle, just above the prompt.
+                top: percent(51.8),
+                width: percent(100),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                row_gap: px(2),
+                ..default()
+            },
+            Pickable::IGNORE,
+        ))
+        .with_children(|block| {
+            block.spawn((
+                HoverLabel,
+                HoverTitle,
+                stubby_ui::style::world_label("", 18., stubby_ui::style::INK),
+            ));
+            block.spawn((
+                HoverLabel,
+                stubby_ui::style::world_label("", 13., stubby_ui::style::MUTED),
+            ));
+        });
     commands.spawn((
         HoverRing,
         Mesh3d(meshes.add(Torus::new(0.5, 0.52))),
@@ -559,7 +589,7 @@ fn update_hover(
     transforms: bevy::transform::helper::TransformHelper,
     mut events: MessageWriter<AssetHoverEvent>,
     mut uses: MessageWriter<AssetUsed>,
-    mut labels: Query<&mut Text, With<HoverLabel>>,
+    mut labels: Query<(&mut Text, Has<HoverTitle>), With<HoverLabel>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
     interact: Option<Res<stubby_core::InteractTarget>>,
 ) {
@@ -637,20 +667,23 @@ fn update_hover(
             .unwrap_or_default();
     }
     let selected = target.and_then(|target| roots.get(target).ok());
-    let text = selected.map_or_else(String::new, |(_, asset, _, clock, what)| {
-        if what == Some(&stubby_core::Interactable::Pickup) {
-            String::new()
-        } else if clock.is_some() {
-            String::new()
-        } else if asset.asset.starts_with("scrub_oak_") {
-            "Scrub oak | Infinite lightning-bug mine".into()
-        } else {
-            asset.asset.replace('_', " ")
-        }
-    });
-    for mut label in &mut labels {
-        if label.0 != text {
-            label.0 = text.clone();
+    let (title, detail) = selected.map_or_else(
+        || (String::new(), String::new()),
+        |(_, asset, _, _, what)| {
+            if what == Some(&stubby_core::Interactable::Pickup) {
+                // The E prompt names pickups ("Collect lightning bug").
+                (String::new(), String::new())
+            } else if asset.asset.starts_with("scrub_oak_") {
+                ("Scrub oak".into(), "Infinite lightning-bug mine".into())
+            } else {
+                (display_name(&asset.asset), String::new())
+            }
+        },
+    );
+    for (mut label, is_title) in &mut labels {
+        let text = if is_title { &title } else { &detail };
+        if &label.0 != text {
+            label.0.clone_from(text);
         }
     }
     if keys.just_pressed(stubby_core::INTERACT)

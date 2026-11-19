@@ -10,6 +10,7 @@ publish = false
 # terrain. Placed assets come alive through binders others register.
 [dependencies]
 stubby_core = { path = "../stubby_core" }
+stubby_ui = { path = "../stubby_ui" }
 bevy_stubby_audio = { path = "../bevy_stubby_audio" }
 stubby_audio = { path = "../stubby_audio" }
 jackdaw_terrain.workspace = true

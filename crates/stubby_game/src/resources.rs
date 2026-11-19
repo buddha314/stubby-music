@@ -291,6 +291,7 @@ fn update_collection_popup(
     mut labels: Query<&mut Text, (With<CollectionPopupText>, Without<CollectionPopupHold>)>,
     mut holds: Query<&mut Text, With<CollectionPopupHold>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
+    fires: Query<&super::campfire::Fire>,
 ) {
     let mut hold = "";
     let action = if screens.as_ref().is_some_and(|s| s.open.is_some()) {
@@ -310,7 +311,19 @@ fn update_collection_popup(
         machine
             .as_ref()
             .filter(|m| m.target.is_some() && !m.prompt.is_empty())
-            .map(|m| m.prompt.clone())
+            .map(|m| {
+                // A lit campfire is configured, not lit (user, 2026-11-18: the prompt still
+                // said to light it).
+                let burning = m
+                    .target
+                    .and_then(|t| fires.get(t).ok())
+                    .is_some_and(|f| *f == super::campfire::Fire::Burning);
+                if burning {
+                    "Configure the campfire".into()
+                } else {
+                    m.prompt.clone()
+                }
+            })
     };
     for mut visibility in &mut popups {
         visibility.set_if_neq(if action.is_some() {
