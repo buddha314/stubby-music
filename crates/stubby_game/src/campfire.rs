@@ -572,7 +572,8 @@ fn ghost_path(join: Vec3, fire: Vec3, t: f32) -> Vec<(Vec3, f32, f32)> {
         let u = i as f32 / ground as f32;
         // Drawn in faster near the fire, just above the ground.
         let pull = u * u * (3. - 2. * u);
-        let p = start.lerp(base, pull) + Vec3::Y * 0.03 * (std::f32::consts::PI * u).sin();
+        // Over the stream's bank (it stands proud of the water), then down into the fire.
+        let p = start.lerp(base, pull) + Vec3::Y * 0.45 * (std::f32::consts::PI * u).sin();
         points.push((p, 0.35 * u, 1. - 0.55 * u));
     }
     for i in 1..=rise {

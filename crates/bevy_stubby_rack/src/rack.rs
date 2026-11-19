@@ -216,6 +216,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .register_type::<RackTargets>()
             .init_resource::<PatchSelection>()
             .init_resource::<HoveredCable>()
+            .add_systems(Update, cancel_cable)
             .add_observer(cable_over)
             .add_observer(cable_out)
             .add_observer(drag_from_jack::<S>)
@@ -775,7 +776,12 @@ fn step_lights(
             (None, Some(led)) => playheads.get(&(machine, led.place.clone())) == Some(&led.step),
             (None, None) => false,
         };
-        let glow = if lit { own.on } else { LinearRgba::BLACK };
+        let glow = match (lit, led.is_some()) {
+            (false, _) => LinearRgba::BLACK,
+            // The playhead light is red, whatever its material held when copied.
+            (true, true) => PLAYHEAD_RED,
+            (true, false) => own.on,
+        };
         if let Some(mut cap) = materials.get_mut(&material.0)
             && cap.emissive != glow
         {
@@ -783,6 +789,9 @@ fn step_lights(
         }
     }
 }
+
+/// The step playhead light's glow when its step plays.
+const PLAYHEAD_RED: LinearRgba = LinearRgba::rgb(8., 0.9, 0.4);
 
 /// A step key's own material, and its glow when lit.
 #[derive(Component)]
@@ -1950,8 +1959,26 @@ fn snap_release<S: Stock>(
     on_rack(&screens, &profiles, &mut racks, |config, state| {
         if let Some((jack, _)) = snap_target(at, camera, eye, config, state, selection, &ports) {
             press_jack(&jack, config, state, selection, player);
+        } else {
+            // Let go over nothing it can go into: the cable is dropped, as in VCV Rack
+            // (user, 2026-11-18: a started cable could not be cancelled).
+            selection.0 = None;
         }
     });
+}
+
+/// Right click drops the cable in hand, too.
+fn cancel_cable(
+    buttons: Res<ButtonInput<MouseButton>>,
+    screens: Res<ScreenMode>,
+    mut selection: ResMut<PatchSelection>,
+) {
+    if open_rack(&screens).is_some()
+        && buttons.just_pressed(MouseButton::Right)
+        && selection.0.is_some()
+    {
+        selection.0 = None;
+    }
 }
 
 /// The cable in hand, drawn as VCV Rack draws a cable being patched, and alive: it is
