@@ -77,6 +77,13 @@ Open:
   map shows how they cluster. Each being's traits are data in the being atlas
   (`docs/research/beings/`, `add-being-atlas`), and `uv run tools/beings/cluster.py`
   clusters them and writes the seating layout.
+- **The amphitheatre is a guide and a skill tree (user, 2026-11-18):** the player finds it a
+  little way into the game, and its map of the beings reveals the patterns (the kinds of
+  being, what each biome's beings share) as a guide to the rest of the world. It acts
+  almost like a **skill tree** for building the new world. Draft, to settle in its change:
+  each woken being takes its seat, empty seats show where kin are still to be found (a
+  silhouette, a biome, a kind), and neighbouring seats suggest what to look for next, as
+  Satisfactory's MAM research tree shows what a discovery opens.
 - **Biome characters (art, 2026-11-18):** each biome leans into what its beings share:
   desert *the unseen*, chaparral *hybrids on the rocks*, grassland *under the open sky*,
   wetland *the drowning water*, broadleaf *faces in the grove*, conifer *the deep wood*,
