@@ -29,7 +29,7 @@ struct Profiles {
 impl Plugin for ModelPartBindingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Profiles>()
-            .add_systems(Update, (bind_parts, restore_sockets));
+            .add_systems(Update, (bind_parts, restore_sockets, solid_boulders));
     }
 }
 fn node_frame(
@@ -323,4 +323,108 @@ fn restore_sockets(
                 }
             });
     }
+}
+
+/// On a placed asset whose collision mesh is built.
+#[derive(Component)]
+struct CollisionBuilt;
+
+/// Boulders are solid (2026-11-18: the player walked through them): each placed boulder
+/// gets static triangle-mesh colliders from its own detailed level's meshes (`<id>_LOD0`),
+/// so the grotto's opening stays open, marked `Solid` for the player's movement.
+#[allow(clippy::type_complexity)]
+fn solid_boulders(
+    mut commands: Commands,
+    gltfs: Res<Assets<Gltf>>,
+    nodes: Option<Res<Assets<GltfNode>>>,
+    gltf_meshes: Option<Res<Assets<GltfMesh>>>,
+    meshes: Res<Assets<Mesh>>,
+    profiles: Res<Profiles>,
+    parts: Query<(&Mesh3d, &AssetPart), With<LodPart>>,
+    roots: Query<&PlacedAsset, Without<CollisionBuilt>>,
+) {
+    let (Some(nodes), Some(gltf_meshes)) = (nodes, gltf_meshes) else {
+        return;
+    };
+    for (mesh, part) in &parts {
+        let Ok(asset) = roots.get(part.root) else {
+            continue;
+        };
+        if !asset.asset.starts_with("boulder_") {
+            continue;
+        }
+        let Some(file) = mesh
+            .0
+            .path()
+            .map(|p| p.clone_owned().without_label().to_string())
+        else {
+            continue;
+        };
+        let Some(gltf) = profiles.models.get(&file).and_then(|h| gltfs.get(h)) else {
+            continue;
+        };
+        let Some(colliders) = level_colliders(gltf, &nodes, &gltf_meshes, &meshes, "_LOD0") else {
+            continue;
+        };
+        commands
+            .entity(part.root)
+            .insert(CollisionBuilt)
+            .with_children(|root| {
+                for (collider, frame) in colliders {
+                    root.spawn((
+                        Name::new("Collision mesh"),
+                        collider,
+                        avian3d::prelude::RigidBody::Static,
+                        stubby_core::Solid,
+                        frame,
+                    ));
+                }
+            });
+    }
+}
+
+/// Trimesh colliders for every mesh under the model's node ending in `level`, each with its
+/// frame in the model. `None` until every mesh is loaded.
+fn level_colliders(
+    gltf: &Gltf,
+    nodes: &Assets<GltfNode>,
+    gltf_meshes: &Assets<GltfMesh>,
+    meshes: &Assets<Mesh>,
+    level: &str,
+) -> Option<Vec<(avian3d::prelude::Collider, Transform)>> {
+    let all: Vec<_> = gltf
+        .nodes
+        .iter()
+        .map(|handle| nodes.get(handle).map(|node| (handle.id(), node)))
+        .collect::<Option<_>>()?;
+    let parents: HashMap<_, _> = all
+        .iter()
+        .flat_map(|(id, node)| node.children.iter().map(move |child| (child.id(), *id)))
+        .collect();
+    let under = |mut id: AssetId<GltfNode>| loop {
+        if nodes.get(id).is_some_and(|n| n.name.ends_with(level)) {
+            return true;
+        }
+        match parents.get(&id) {
+            Some(parent) => id = *parent,
+            None => return false,
+        }
+    };
+    let mut out = Vec::new();
+    for (id, node) in &all {
+        let Some(mesh) = node.mesh.as_ref() else {
+            continue;
+        };
+        if !under(*id) {
+            continue;
+        }
+        let frame = node_frame(*id, nodes, &parents);
+        for primitive in &gltf_meshes.get(mesh)?.primitives {
+            let mesh = meshes.get(&primitive.mesh)?;
+            if let Some(collider) = avian3d::prelude::Collider::trimesh_from_mesh(mesh) {
+                out.push((collider, frame));
+            }
+        }
+    }
+    (!out.is_empty()).then_some(out)
 }

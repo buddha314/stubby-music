@@ -118,6 +118,8 @@ fn move_player(
     mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
     mut players: Query<(&mut Transform, &mut Player)>,
     ground: Res<GroundHeight>,
+    spatial: Option<avian3d::prelude::SpatialQuery>,
+    solids: Query<(), With<stubby_core::Solid>>,
 ) {
     let delta: Vec2 = motion.read().map(|event| event.delta).sum();
     if !capture.0 {
@@ -125,6 +127,7 @@ fn move_player(
     }
     for (mut transform, mut player) in &mut players {
         look(&mut transform, delta);
+        let before = transform.translation;
         step(
             &mut transform,
             &mut player,
@@ -132,7 +135,75 @@ fn move_player(
             &ground,
             time.delta_secs().min(0.1),
         );
+        // Solid things (boulders) stop the body: the step's horizontal move slides along
+        // them instead of passing through (the interim stop-and-slide, add-prefab-colliders).
+        if let Some(spatial) = &spatial {
+            let wanted = Vec3::new(
+                transform.translation.x - before.x,
+                0.,
+                transform.translation.z - before.z,
+            );
+            let body = Vec3::new(before.x, player.feet + BODY_CENTRE_M, before.z);
+            let moved = slide(spatial, &|e| solids.contains(e), body, wanted);
+            transform.translation.x = before.x + moved.x;
+            transform.translation.z = before.z + moved.z;
+        }
     }
+}
+
+/// The body that collides: a capsule this wide, centred this high above the feet, so a
+/// pebble under its foot does not stop it.
+const BODY_RADIUS_M: f32 = 0.3;
+const BODY_LENGTH_M: f32 = 1.0;
+const BODY_CENTRE_M: f32 = 0.95;
+/// Stop this short of a surface, so the next cast starts clear of it.
+const SKIN_M: f32 = 0.02;
+
+/// Move the body from `body` by `wanted` (horizontal), sliding along any solid it meets.
+/// Returns how far it actually moved.
+fn slide(
+    spatial: &avian3d::prelude::SpatialQuery,
+    solid: &dyn Fn(Entity) -> bool,
+    body: Vec3,
+    wanted: Vec3,
+) -> Vec3 {
+    use avian3d::prelude::{Collider, ShapeCastConfig, SpatialQueryFilter};
+    let shape = Collider::capsule(BODY_RADIUS_M, BODY_LENGTH_M);
+    let mut at = body;
+    let mut remaining = wanted;
+    for _ in 0..3 {
+        let length = remaining.length();
+        let Ok(direction) = Dir3::new(remaining) else {
+            break;
+        };
+        let config = ShapeCastConfig {
+            max_distance: length + SKIN_M,
+            ignore_origin_penetration: true,
+            ..ShapeCastConfig::DEFAULT
+        };
+        let Some(hit) = spatial.cast_shape_predicate(
+            &shape,
+            at,
+            Quat::IDENTITY,
+            direction,
+            &config,
+            &SpatialQueryFilter::default(),
+            solid,
+        ) else {
+            at += remaining;
+            break;
+        };
+        let travel = (hit.distance - SKIN_M).clamp(0., length);
+        at += *direction * travel;
+        // What is left of the move, along the surface it met.
+        let rest = remaining * (1. - travel / length);
+        let normal = Vec3::new(hit.normal1.x, 0., hit.normal1.z).normalize_or_zero();
+        remaining = rest - normal * rest.dot(normal).min(0.);
+        if remaining.length() < 1e-4 {
+            break;
+        }
+    }
+    at - body
 }
 fn look(transform: &mut Transform, delta: Vec2) {
     let (yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);

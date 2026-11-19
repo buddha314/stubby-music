@@ -143,6 +143,11 @@ pub struct StreamInlet {
     pub snap_m: f32,
 }
 
+/// A static collider the player cannot walk through (a boulder's collision mesh). Movement
+/// slides along anything with it; other colliders (the interaction markers) are ignored.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct Solid;
+
 /// On a collectible the disco light reveals (`stubby_player`'s flashlight), while it is
 /// revealed. Its owner shows it steadily: a lightning bug holds its body lit between
 /// flashes, so a revealed bug never vanishes.

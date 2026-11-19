@@ -736,7 +736,9 @@ CI warns when the pin lags the fork.
 
 **Physics colliders on prefabs are planned in `add-prefab-colliders`:** Avian already runs on
 our fork, and `jackdaw_avian_integration` compiles once a one-line Jackdaw workspace bug is
-fixed. The player's movement still ignores physics, so colliders alone block nothing yet.
+fixed. Meanwhile **boulders are solid** (2026-11-18): each gets static trimesh colliders from
+its own LOD0 meshes (`model_part_bindings::solid_boulders`), marked `stubby_core::Solid`, and
+the player's movement slides along `Solid` colliders (`controls::slide`); nothing else blocks yet.
 
 **Crates without a Bevy-main release are generated forks** (`bevy_main_forks.json`,
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and

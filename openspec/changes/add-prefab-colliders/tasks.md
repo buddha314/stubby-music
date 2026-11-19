@@ -13,12 +13,13 @@
 
 ## 3. Player
 
-- [ ] 3.1 Stop-and-slide in `move_player` (`controls.rs`) against static colliders; existing `controls.rs` tests still pass
+- [x] 3.1 Stop-and-slide in `move_player` (`controls.rs`) against static colliders; existing `controls.rs` tests still pass (2026-11-18: a capsule cast against `stubby_core::Solid` colliders, sliding along the hit, up to three times a step)
 - [ ] 3.2 Confirm E targeting near an oak and walking through reeds, by hand, in a bounded 20-second Play
 
 ## 4. Other solid families
 
 - [ ] 4.1 The burbler's hot-mud pool (`assets/machines/mudpit_burbler/colliders.json`); its stream banks stay walkable
+- [x] 4.3 Boulders (user, 2026-11-18: "I can walk through the boulders"): each placed boulder gets static trimesh colliders from its own `<id>_LOD0` meshes, built in `stubby_jackdaw::model_part_bindings::solid_boulders` and marked `Solid`, not the coarse `colliders.json` boxes, so the grotto's opening stays open. Bounded check: walking straight at a boulder stops at its surface and slides along it
 - [ ] 4.2 Stumps (`assets/props/desert/colliders.json`) and any other families `colliders.json` lists as solid
 
 ## 5. Docs

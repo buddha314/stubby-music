@@ -35,6 +35,13 @@ Findings from 2026-11-06, on Jackdaw `706f2437` and Bevy `c9c397ba`:
 
 **Oaks first.** They prove the whole path before the other families.
 
+**Boulders first, by their own meshes (user, 2026-11-18).** The player walked through
+the grotto's boulders. Ahead of the Jackdaw integration, the game builds static trimesh
+colliders for each placed boulder from its detailed level's meshes and marks them
+`stubby_core::Solid`; `move_player` slides along `Solid` colliders only, so the
+interaction markers and other colliders never block. The coarse `colliders.json` boxes
+would have sealed the grotto. When `AvianCollider` prefabs land, boulders can move to them.
+
 ## Risks / Trade-offs
 
 - **Prefab loading is unproven.** The editor build does not include the Physics module; its log says scenes keep those components, and a saved prefab must still load in Play. Test early (task 2.3), and fall back to the private component if it fails.

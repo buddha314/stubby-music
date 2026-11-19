@@ -13,6 +13,7 @@ spatial-audio = ["stubby_game/spatial-audio"]
 omg-audio = ["stubby_game/omg-audio"]
 
 [dependencies]
+avian3d.workspace = true
 # The game itself, as an ordinary dependency (split-game-into-systems step 1); this
 # package adds only the editor bridge and Jackdaw's runtime.
 stubby_game = { path = "../stubby_game", default-features = false }
