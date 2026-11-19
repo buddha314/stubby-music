@@ -1,0 +1,139 @@
+{
+  "about": "The being atlas: every essence (spirit, creature, monster) the game may use, coded by traits for cluster analysis. Rows mirror the essence table in docs/research/music-mythologies.md; evidence and sharing checks live there. Run: uv run tools/beings/cluster.py. Coding is a first pass by Claude (2026-11-18); review as essences are chosen.",
+  "biomes": ["desert", "chaparral", "grassland", "wetland", "broadleaf", "conifer", "tropical", "mountain"],
+  "kinds": ["spirit", "creature", "monster"],
+  "statuses": ["candidate", "chosen", "set_aside", "consult"],
+  "facets": {
+    "form": ["human", "animal", "bird", "insect", "fish", "plant", "tree", "landform", "unseen"],
+    "sound": ["voice", "throat_song", "flute", "pipes", "strings", "harp", "drum", "horn", "birdsong", "call", "hum", "echo"],
+    "role": ["performer", "maker", "teacher", "giver", "answerer", "listener", "gatherer", "lure", "guardian", "mourner"],
+    "transformation": ["human_to_animal", "human_to_insect", "human_to_plant", "creature_to_instrument", "tree_to_instrument", "voice_to_stone"],
+    "place": ["sand", "rock", "cave", "cliff", "peak", "tree", "grove", "reeds", "lake", "river", "waterfall", "spring", "hill", "canopy", "open_grass", "wind"],
+    "time": ["day", "night", "any"],
+    "presence": ["seen", "sometimes_seen", "heard_only"],
+    "disposition": ["benevolent", "ambivalent", "dangerous"],
+    "gift": ["melody", "instrument", "skill", "comfort", "rain", "warning"],
+    "theme": ["death", "grief", "love", "courtship", "longing", "joy", "sleep", "rain", "fertility", "bargain", "trickery"]
+  },
+  "beings": [
+    {
+      "id": "humming_sand", "essence": "The humming sand, the land's own voice", "kind": "spirit",
+      "biomes": ["desert"], "status": "candidate", "found_in": ["Arabian and Saharan 'azif", "singing dunes"],
+      "form": ["landform", "unseen"], "sound": ["hum", "drum"], "role": ["performer"], "transformation": [],
+      "place": ["sand", "wind"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
+      "gift": ["warning"], "theme": ["longing"]
+    },
+    {
+      "id": "answering_place", "essence": "The place that answers a singer in kind", "kind": "spirit",
+      "biomes": ["desert"], "status": "candidate", "found_in": ["Mongolian and Tuvan spirits of place"],
+      "form": ["landform", "unseen"], "sound": ["throat_song", "echo", "call"], "role": ["answerer", "listener"], "transformation": [],
+      "place": ["rock", "wind", "spring"], "time": ["any"], "presence": ["heard_only"], "disposition": ["benevolent"],
+      "gift": ["rain"], "theme": ["rain"]
+    },
+    {
+      "id": "wandering_flute_player", "essence": "The wandering flute player", "kind": "spirit",
+      "biomes": ["desert"], "status": "consult", "found_in": ["the user's example; Southwest rock art is restricted, so the look is our own"],
+      "form": ["human"], "sound": ["flute"], "role": ["performer", "giver"], "transformation": [],
+      "place": ["sand", "rock"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["rain"], "theme": ["rain", "fertility"]
+    },
+    {
+      "id": "reed_voice", "essence": "The reed that was a voice", "kind": "spirit",
+      "biomes": ["chaparral", "wetland"], "status": "candidate", "found_in": ["Greek Syrinx", "Rumi's reed"],
+      "form": ["plant", "human"], "sound": ["pipes", "voice"], "role": ["maker"], "transformation": ["human_to_plant"],
+      "place": ["reeds", "river"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["instrument"], "theme": ["longing", "love"]
+    },
+    {
+      "id": "singing_insects", "essence": "Singers who became insects", "kind": "creature",
+      "biomes": ["chaparral"], "status": "candidate", "found_in": ["Greek cicadas of the Muses"],
+      "form": ["insect"], "sound": ["voice", "call"], "role": ["performer"], "transformation": ["human_to_insect"],
+      "place": ["tree", "open_grass"], "time": ["day"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": [], "theme": ["death", "joy"]
+    },
+    {
+      "id": "beloved_creature_instrument", "essence": "The instrument made from a beloved creature", "kind": "creature",
+      "biomes": ["grassland", "wetland"], "status": "candidate", "found_in": ["Mongol horse-head fiddle", "Kazakh kobyz", "Finnish pike-jaw kantele"],
+      "form": ["animal", "fish"], "sound": ["strings", "harp"], "role": ["maker", "gatherer"], "transformation": ["creature_to_instrument"],
+      "place": ["open_grass", "lake"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["instrument"], "theme": ["grief", "love"]
+    },
+    {
+      "id": "music_against_death", "essence": "Music that holds off death", "kind": "spirit",
+      "biomes": ["grassland"], "status": "candidate", "found_in": ["Kazakh Korkyt and the kobyz"],
+      "form": ["human"], "sound": ["strings"], "role": ["performer", "guardian"], "transformation": ["creature_to_instrument"],
+      "place": ["river", "open_grass"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["instrument"], "theme": ["death"]
+    },
+    {
+      "id": "courting_flute", "essence": "The courting flute on the wind", "kind": "spirit",
+      "biomes": ["grassland"], "status": "consult", "found_in": ["Lakota and Dakota elk, woodpecker and cedar"],
+      "form": ["animal", "bird", "tree"], "sound": ["flute", "call"], "role": ["maker", "teacher"], "transformation": ["tree_to_instrument"],
+      "place": ["open_grass", "tree", "wind"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["instrument"], "theme": ["courtship", "love"]
+    },
+    {
+      "id": "singers_on_the_lake", "essence": "Singers on the lake", "kind": "creature",
+      "biomes": ["wetland"], "status": "candidate", "found_in": ["Irish swans of Lough Derravaragh"],
+      "form": ["bird"], "sound": ["voice"], "role": ["performer", "mourner"], "transformation": ["human_to_animal"],
+      "place": ["lake"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["comfort"], "theme": ["grief", "longing"]
+    },
+    {
+      "id": "tree_harp", "essence": "The tree that is a harp", "kind": "spirit",
+      "biomes": ["broadleaf", "conifer"], "status": "candidate", "found_in": ["Irish oak harp of three musics", "Finnish birch kantele"],
+      "form": ["tree"], "sound": ["harp", "strings"], "role": ["performer", "maker"], "transformation": ["tree_to_instrument"],
+      "place": ["tree", "grove"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
+      "gift": ["comfort"], "theme": ["grief", "joy", "sleep"]
+    },
+    {
+      "id": "hidden_hill_music", "essence": "Music from the hidden hill", "kind": "spirit",
+      "biomes": ["broadleaf"], "status": "candidate", "found_in": ["Irish fairy music of the ringforts"],
+      "form": ["unseen", "human"], "sound": ["voice", "pipes", "strings"], "role": ["performer", "lure"], "transformation": [],
+      "place": ["hill"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
+      "gift": ["melody"], "theme": ["longing"]
+    },
+    {
+      "id": "waterfall_teacher", "essence": "The teacher under the waterfall", "kind": "spirit",
+      "biomes": ["conifer"], "status": "candidate", "found_in": ["Norwegian and Swedish fossegrim and näcken", "Andean spring spirits (consult)"],
+      "form": ["human"], "sound": ["strings"], "role": ["teacher", "lure"], "transformation": [],
+      "place": ["waterfall", "river"], "time": ["night"], "presence": ["sometimes_seen"], "disposition": ["ambivalent"],
+      "gift": ["skill"], "theme": ["bargain"]
+    },
+    {
+      "id": "empty_mountain_music", "essence": "Music from the empty mountain", "kind": "spirit",
+      "biomes": ["conifer"], "status": "candidate", "found_in": ["Japanese tengu-bayashi"],
+      "form": ["unseen"], "sound": ["flute", "drum"], "role": ["performer"], "transformation": [],
+      "place": ["peak", "grove"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
+      "gift": [], "theme": ["trickery"]
+    },
+    {
+      "id": "child_bird_call", "essence": "The child who became a bird's call", "kind": "creature",
+      "biomes": ["tropical"], "status": "candidate", "found_in": ["Kaluli muni bird"],
+      "form": ["bird", "human"], "sound": ["birdsong", "call", "voice"], "role": ["mourner"], "transformation": ["human_to_animal"],
+      "place": ["canopy"], "time": ["any"], "presence": ["sometimes_seen"], "disposition": ["benevolent"],
+      "gift": ["melody"], "theme": ["grief"]
+    },
+    {
+      "id": "canopy_musicians", "essence": "Musicians who became creatures of the canopy", "kind": "creature",
+      "biomes": ["tropical"], "status": "candidate", "found_in": ["K'iche' Maya howler-monkey musicians"],
+      "form": ["animal"], "sound": ["flute"], "role": ["performer"], "transformation": ["human_to_animal"],
+      "place": ["canopy", "tree"], "time": ["day"], "presence": ["seen"], "disposition": ["ambivalent"],
+      "gift": ["skill"], "theme": ["trickery", "joy"]
+    },
+    {
+      "id": "echo", "essence": "The echo", "kind": "spirit",
+      "biomes": ["mountain", "chaparral"], "status": "candidate", "found_in": ["Japanese yamabiko", "Greek Echo"],
+      "form": ["unseen", "landform"], "sound": ["echo", "voice"], "role": ["answerer"], "transformation": ["voice_to_stone"],
+      "place": ["cliff", "cave", "rock", "peak"], "time": ["any"], "presence": ["heard_only"], "disposition": ["ambivalent"],
+      "gift": [], "theme": ["longing"]
+    },
+    {
+      "id": "horn_gift", "essence": "The gift of the horn, chosen over riches", "kind": "spirit",
+      "biomes": ["mountain"], "status": "candidate", "found_in": ["Swiss alphorn spirits"],
+      "form": ["human"], "sound": ["horn"], "role": ["giver"], "transformation": [],
+      "place": ["peak", "open_grass"], "time": ["any"], "presence": ["sometimes_seen"], "disposition": ["benevolent"],
+      "gift": ["instrument"], "theme": ["joy", "bargain"]
+    }
+  ]
+}
