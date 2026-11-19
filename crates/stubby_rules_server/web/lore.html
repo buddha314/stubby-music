@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lore Guide</title>
+<style>
+  :root {
+    --bg: #f6f4f1; --panel: #ffffff; --ink: #24211e; --muted: #6f6a63; --line: #ddd7cf;
+    --accent: #b5651d; --accent-ink: #ffffff; --pick: #f1e3d3;
+    --b-desert: #c8963e; --b-chaparral: #a0522d; --b-grassland: #7a9a3a; --b-wetland: #3f7f8f;
+    --b-broadleaf: #4f8a4a; --b-conifer: #2f5d4a; --b-tropical: #b0477a; --b-mountain: #6d6a8f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #181614; --panel: #221f1c; --ink: #ece7e1; --muted: #a39b91; --line: #3a3530;
+      --accent: #e0914a; --accent-ink: #1b1714; --pick: #3a2e22;
+      --b-desert: #e0b45e; --b-chaparral: #d07a4f; --b-grassland: #a5c45c; --b-wetland: #6fb3c4;
+      --b-broadleaf: #7fbf77; --b-conifer: #5fa486; --b-tropical: #e07aaa; --b-mountain: #a5a2cf; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; gap: 6px; align-items: center; padding: 10px 16px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  header a { color: var(--muted); margin-left: auto; }
+  nav button { font: inherit; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--panel); color: var(--ink); cursor: pointer; }
+  nav button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  main { padding: 12px 16px; max-width: 1400px; margin: 0 auto; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    margin-bottom: 12px; min-width: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  .grid { display: grid; gap: 12px; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .card { border: 1px solid var(--line); border-left: 6px solid var(--c); border-radius: 8px; padding: 10px; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; text-transform: capitalize; }
+  .chip { display: inline-block; padding: 0 7px; border-radius: 10px; font-size: 12px; margin: 1px 2px 1px 0;
+    border: 1px solid var(--line); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 5px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  select, input[type=search] { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg); color: var(--ink); }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover, tbody tr.on { background: var(--pick); }
+  .split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 12px; align-items: start; }
+  #detail { position: sticky; top: 64px; }
+  #detail dl { display: grid; grid-template-columns: 110px 1fr; gap: 3px 10px; margin: 8px 0; }
+  #detail dt { color: var(--muted); }
+  #detail dd { margin: 0; }
+  .doc { max-width: 900px; overflow-wrap: anywhere; }
+  .doc img { max-width: 100%; border-radius: 6px; }
+  .doc table { margin: 8px 0; font-size: 13px; display: block; overflow-x: auto; }
+  .doc code { font-size: 12px; }
+  .doclist { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .gallery { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .gallery figure { margin: 0; }
+  .gallery img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; background: var(--bg); }
+  .gallery figcaption { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  svg text { fill: var(--ink); font-size: 9px; }
+  #mapwrap { position: relative; }
+  #tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 8px; font-size: 12px; display: none; max-width: 260px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 12px; }
+  @media (max-width: 900px) { .split { grid-template-columns: 1fr; } #detail { position: static; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lore Guide</h1>
+  <nav id="tabs"></nav>
+  <a href="/">Rules designer</a>
+</header>
+<main id="main"><p class="muted">Loading…</p></main>
+<script src="/marked.min.js"></script>
+<script>
+// The living guide: everything is read from the repository on each load
+// (docs/research/beings/beings.json, layout.json files, docs/design, docs/art and the research notes).
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const file = (path) => "/lore/file?path=" + encodeURIComponent(path);
+const colour = (biome) => `var(--b-${biome})`;
+const label = (s) => String(s).replaceAll("_", " ");
+let lore, atlas, beings, selected = null;
+const TABS = { Biomes: biomesTab, Beings: beingsTab, Map: mapTab, Documents: docsTab, References: refsTab };
+
+async function load() {
+  lore = await (await fetch("/api/lore")).json();
+  atlas = lore.atlas || { beings: [], biomes: [], facets: {} };
+  beings = atlas.beings;
+  $("tabs").innerHTML = "";
+  for (const name of Object.keys(TABS)) {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.onclick = () => show(name);
+    $("tabs").append(b);
+  }
+  show(location.hash.slice(1) || "Biomes");
+}
+function show(name, arg) {
+  if (!TABS[name]) name = "Biomes";
+  history.replaceState(null, "", "#" + name);
+  for (const b of $("tabs").children) b.classList.toggle("on", b.textContent === name);
+  $("main").innerHTML = "";
+  TABS[name](arg);
+  window.scrollTo(0, 0);
+}
+const count = (list, key) => list.reduce((m, b) => ((m[[].concat(b[key])[0]] = (m[[].concat(b[key])[0]] || 0) + 1), m), {});
+
+function biomesTab() {
+  const s = section(`Biomes <span class="muted">· ${beings.length} beings in the atlas</span>`);
+  const cards = el("div", "grid cards");
+  for (const biome of atlas.biomes) {
+    const here = beings.filter((b) => b.biomes.includes(biome));
+    const kinds = count(here, "kind"), music = count(here, "music");
+    const top = (facet) => {
+      const c = {};
+      here.forEach((b) => (b[facet] || []).forEach((v) => (c[v] = (c[v] || 0) + 1)));
+      return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 4)
+        .map(([v, n]) => `<span class="chip">${esc(label(v))} ${Math.round((100 * n) / here.length)}%</span>`).join("");
+    };
+    const card = el("div", "card");
+    card.style.setProperty("--c", colour(biome));
+    card.innerHTML = `<h3>${esc(biome)}</h3>
+      <div class="muted">${here.length} beings · ${kinds.monster || 0} monsters · ${kinds.spirit || 0} spirits ·
+        ${kinds.creature || 0} creatures · ${music.core || 0} with music at the core</div>
+      <div><small class="muted">form</small> ${top("form")}</div>
+      <div><small class="muted">place</small> ${top("place")}</div>
+      <div><small class="muted">role</small> ${top("role")}</div>
+      <div><small class="muted">theme</small> ${top("theme")}</div>`;
+    card.style.cursor = "pointer";
+    card.onclick = () => show("Beings", { biome });
+    cards.append(card);
+  }
+  s.append(cards);
+  const note = el("p", "muted");
+  note.innerHTML = `Each biome's character is in <a href="#" id="chars">Biome characters</a>; the analysis in <a href="#" id="findings">the atlas findings</a>.`;
+  s.append(note);
+  $("chars").onclick = (e) => { e.preventDefault(); show("Documents", "docs/art/biome-characters.md"); };
+  $("findings").onclick = (e) => { e.preventDefault(); show("Documents", "docs/research/beings/README.md"); };
+}
+
+function beingsTab(arg = {}) {
+  const s = section("Beings");
+  const f = el("div", "filters");
+  const pick = (name, values, init) => {
+    const sel = document.createElement("select");
+    sel.innerHTML = `<option value="">all ${name}</option>` + values.map((v) => `<option ${v === init ? "selected" : ""}>${esc(v)}</option>`).join("");
+    sel.onchange = render;
+    f.append(sel);
+    return sel;
+  };
+  const biome = pick("biomes", atlas.biomes, arg.biome), kind = pick("kinds", atlas.kinds || []),
+    music = pick("music", (atlas.facets.music || [])), sharing = pick("sharing", atlas.sharings || []),
+    status = pick("statuses", atlas.statuses || []);
+  const q = document.createElement("input");
+  q.type = "search"; q.placeholder = "Search essence, tradition, summary"; q.oninput = render;
+  f.append(q);
+  s.append(f);
+  const split = el("div", "split"), left = el("div"), detail = el("section");
+  detail.id = "detail";
+  split.append(left, detail);
+  s.append(split);
+  function render() {
+    const words = q.value.toLowerCase();
+    const rows = beings.filter((b) =>
+      (!biome.value || b.biomes.includes(biome.value)) && (!kind.value || b.kind === kind.value) &&
+      (!music.value || b.music.includes(music.value)) && (!sharing.value || b.sharing === sharing.value) &&
+      (!status.value || b.status === status.value) &&
+      (!words || [b.essence, b.summary, ...(b.found_in || [])].join(" ").toLowerCase().includes(words)));
+    left.innerHTML = `<p class="muted">${rows.length} of ${beings.length}</p>`;
+    const t = el("table");
+    t.innerHTML = `<thead><tr><th>Essence</th><th>Biomes</th><th>Kind</th><th>Music</th><th>Found in</th></tr></thead>`;
+    const body = document.createElement("tbody");
+    for (const b of rows) {
+      const tr = document.createElement("tr");
+      if (b.id === selected) tr.className = "on";
+      tr.innerHTML = `<td>${esc(b.essence)}</td>
+        <td>${b.biomes.map((x) => `<span class="dot" style="--c:${colour(x)}" title="${esc(x)}"></span>`).join("")}${esc(b.biomes.join(", "))}</td>
+        <td>${esc(b.kind)}</td><td>${esc(b.music[0])}</td><td class="muted">${esc((b.found_in || []).join("; "))}</td>`;
+      tr.onclick = () => { selected = b.id; render(); };
+      body.append(tr);
+    }
+    t.append(body);
+    left.append(t);
+    showDetail(detail, beings.find((b) => b.id === selected));
+  }
+  if (arg.id) selected = arg.id;
+  render();
+}
+function showDetail(box, b) {
+  if (!b) { box.innerHTML = `<h2>Being</h2><p class="muted">Pick a being.</p>`; return; }
+  const facets = Object.keys(atlas.facets).filter((f) => (b[f] || []).length)
+    .map((f) => `<dt>${esc(f)}</dt><dd>${b[f].map((v) => `<span class="chip">${esc(label(v))}</span>`).join("")}</dd>`).join("");
+  const sources = (b.sources || []).map((u) => /^https?:/.test(u)
+    ? `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 60))}</a></li>`
+    : `<li>${esc(u)}</li>`).join("");
+  box.innerHTML = `<h2>${esc(b.id)}</h2><h3 style="margin:0">${esc(b.essence)}</h3>
+    <p>${esc(b.summary)}</p>
+    <dl><dt>kind</dt><dd>${esc(b.kind)}</dd><dt>biomes</dt><dd>${esc(b.biomes.join(", "))}</dd>
+      <dt>status</dt><dd>${esc(label(b.status))}</dd><dt>sharing</dt><dd>${esc(b.sharing)}</dd>
+      <dt>found in</dt><dd>${esc((b.found_in || []).join("; "))}</dd>${facets}</dl>
+    <h2>Sources</h2><ul>${sources}</ul>
+    <p class="muted">Sharing checks and full entries: <a href="#" id="cat">catalogue</a>.</p>`;
+  box.querySelector("#cat").onclick = (e) => { e.preventDefault(); show("Documents", "docs/research/beings/catalogue.md"); };
+}
+
+function mapTab() {
+  const s = section("Atlas map");
+  const runs = lore.layouts || [];
+  if (!runs.length) { s.append(el("p", "muted", "No layout yet: run uv run tools/beings/cluster.py")); return; }
+  const f = el("div", "filters");
+  const sel = document.createElement("select");
+  sel.innerHTML = runs.map((r, i) => `<option value="${i}">${esc(r.path.replace("docs/research/beings/", "").replace("/layout.json", "").replace("layout.json", "all traits"))}</option>`).join("");
+  f.append(sel);
+  const colourBy = document.createElement("select");
+  colourBy.innerHTML = `<option value="biome">colour by biome</option><option value="cluster">colour by cluster</option>`;
+  f.append(colourBy);
+  s.append(f, el("p", "muted", "Alike beings sit close: the amphitheatre's seating plan. Click a being to open it."));
+  const wrap = el("div"); wrap.id = "mapwrap";
+  const tip = el("div"); tip.id = "tip";
+  s.append(wrap);
+  const legend = el("div", "legend");
+  s.append(legend);
+  const clusterColours = ["#c8963e", "#3f7f8f", "#b0477a", "#4f8a4a", "#6d6a8f", "#a0522d", "#7a9a3a", "#2f5d4a"];
+  function draw() {
+    const run = runs[sel.value].layout;
+    const byId = Object.fromEntries(beings.map((b) => [b.id, b]));
+    const W = 900, H = 640, pad = 40;
+    const pts = run.beings.map((p) => ({ ...p, x: pad + ((p.x + 1) / 2) * (W - 2 * pad - 140), y: pad + ((1 - p.y) / 2) * (H - 2 * pad) }));
+    const fill = (p) => colourBy.value === "biome" ? colour(p.biome) : clusterColours[(p.cluster - 1) % clusterColours.length];
+    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%">${pts.map((p) => {
+      const b = byId[p.id] || {};
+      const shape = b.kind === "monster"
+        ? `<rect x="${p.x - 5}" y="${p.y - 5}" width="10" height="10" transform="rotate(45 ${p.x} ${p.y})" style="fill:${fill(p)}"/>`
+        : `<circle cx="${p.x}" cy="${p.y}" r="${b.music && b.music[0] === "core" ? 7 : 5}" style="fill:${fill(p)}"/>`;
+      return `<g data-id="${esc(p.id)}" style="cursor:pointer">${shape}<text x="${p.x + 8}" y="${p.y + 3}">${esc(label(p.id))}</text></g>`;
+    }).join("")}</svg>`;
+    wrap.append(tip);
+    for (const g of wrap.querySelectorAll("g")) {
+      const b = byId[g.dataset.id] || {};
+      g.onmouseenter = (e) => { tip.style.display = "block"; tip.innerHTML = `<b>${esc(b.essence)}</b><br>${esc((b.biomes || []).join(", "))} · ${esc(b.kind)}`; };
+      g.onmousemove = (e) => { const r = wrap.getBoundingClientRect(); tip.style.left = e.clientX - r.left + 12 + "px"; tip.style.top = e.clientY - r.top + 12 + "px"; };
+      g.onmouseleave = () => (tip.style.display = "none");
+      g.onclick = () => show("Beings", { id: g.dataset.id });
+    }
+    legend.innerHTML = colourBy.value === "biome"
+      ? atlas.biomes.map((x) => `<span><span class="dot" style="--c:${colour(x)}"></span>${esc(x)}</span>`).join("")
+      : [...new Set(run.beings.map((p) => p.cluster))].sort().map((c) => `<span><span class="dot" style="--c:${clusterColours[(c - 1) % clusterColours.length]}"></span>cluster ${c}</span>`).join("");
+    legend.innerHTML += `<span class="muted">◆ monster · large dot: music at the core</span>`;
+  }
+  sel.onchange = draw; colourBy.onchange = draw;
+  draw();
+}
+
+async function docsTab(path) {
+  const s = section("Documents");
+  const list = el("div", "doclist");
+  path = path || lore.documents[0];
+  for (const d of lore.documents) {
+    const b = el("button", "", d.replace(/^docs\//, ""));
+    b.className = d === path ? "on" : "";
+    b.style.cssText = "font:inherit;padding:3px 10px;border:1px solid var(--line);border-radius:6px;cursor:pointer;" +
+      (d === path ? "background:var(--accent);color:var(--accent-ink);" : "background:var(--panel);color:var(--ink);");
+    b.onclick = () => show("Documents", d);
+    list.append(b);
+  }
+  s.append(list);
+  const doc = el("article", "doc");
+  s.append(doc);
+  if (!path) return;
+  const text = await (await fetch(file(path))).text();
+  doc.innerHTML = marked.parse(text);
+  const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
+  const resolve = (ref) => {
+    const parts = (dir + ref).split("/"), out = [];
+    for (const p of parts) p === ".." ? out.pop() : p !== "." && out.push(p);
+    return out.join("/");
+  };
+  for (const img of doc.querySelectorAll("img")) {
+    const src = img.getAttribute("src");
+    if (src && !/^(https?:|data:|\/)/.test(src)) img.src = file(resolve(src));
+  }
+  for (const a of doc.querySelectorAll("a")) {
+    const href = a.getAttribute("href") || "";
+    if (/^(https?:|mailto:)/.test(href)) { a.target = "_blank"; a.rel = "noopener"; continue; }
+    if (href.startsWith("#")) continue;
+    const target = resolve(href.split("#")[0]);
+    if (lore.documents.includes(target)) a.onclick = (e) => { e.preventDefault(); show("Documents", target); };
+    else if (/\.(png|jpe?g|webp|gif)$/i.test(target)) a.href = file(target);
+  }
+}
+
+function refsTab() {
+  const s = section("Reference images");
+  const groups = {};
+  for (const p of lore.images) (groups[p.slice(0, p.lastIndexOf("/"))] ||= []).push(p);
+  for (const [dir, paths] of Object.entries(groups)) {
+    s.append(el("h2", "", dir));
+    const g = el("div", "grid gallery");
+    for (const p of paths) {
+      const fig = document.createElement("figure");
+      fig.innerHTML = `<a href="${file(p)}" target="_blank"><img loading="lazy" src="${file(p)}" alt="${esc(p)}"></a><figcaption>${esc(p.slice(p.lastIndexOf("/") + 1))}</figcaption>`;
+      g.append(fig);
+    }
+    s.append(g);
+  }
+}
+
+function el(tag, cls = "", text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function section(title) {
+  const s = el("section");
+  s.innerHTML = `<h2>${title}</h2>`;
+  $("main").append(s);
+  return s;
+}
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+load();
+</script>
+</body>
+</html>
