@@ -21,7 +21,7 @@ use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 /// Profiles embedded at build time, as the lightning bug's is, so the game and the
 /// Jackdaw adapter read identical data.
-const PROFILES: [&str; 8] = [
+const PROFILES: [&str; 9] = [
     include_str!("../../../assets/modules/square_vco/asset.json"),
     include_str!("../../../assets/modules/saw_vco/asset.json"),
     include_str!("../../../assets/modules/triangle_vco/asset.json"),
@@ -30,6 +30,7 @@ const PROFILES: [&str; 8] = [
     include_str!("../../../assets/modules/burbler_clock/asset.json"),
     include_str!("../../../assets/modules/volume/asset.json"),
     include_str!("../../../assets/modules/snail_sequencer/asset.json"),
+    include_str!("../../../assets/modules/stream_blank/asset.json"),
 ];
 
 #[derive(Debug, Clone, Deserialize)]

@@ -46,6 +46,7 @@ pub fn shipped_sources() -> Vec<Source<'static>> {
         module!("sine_vco"),
         module!("square_vco"),
         module!("snail_sequencer"),
+        module!("stream_blank"),
         module!("volume"),
     ]
 }

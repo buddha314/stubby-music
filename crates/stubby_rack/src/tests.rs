@@ -24,7 +24,8 @@ fn load_with(id: &str, definition: &str) -> Result<Modules, RackErrors> {
 #[test]
 fn shipped_modules_load_and_match_their_panels() {
     let modules = shipped();
-    assert_eq!(modules.0.len(), 6);
+    // Every shipped module loads (the stream blank too: a panel with no parts or jacks).
+    assert_eq!(modules.0.len(), crate::shipped_sources().len());
     // The snail sequencer's step buttons bind like knobs, 0..1; its CV knobs 0..2 V.
     let gate = modules.knob("snail_sequencer", "gate_2").unwrap();
     assert_eq!((gate.min, gate.max, gate.param), (0., 1., "gate_2"));
