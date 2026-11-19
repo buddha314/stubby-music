@@ -292,6 +292,8 @@ fn run_direct_simulation_worker(
     let mut reflection_worker = reflection_pipeline
         .spawn_reflections_reverb(|error| eprintln!("AudioNimbus reflections simulation: {error}"))
         .map_err(|error| format!("start reflections simulation: {error}"))?;
+    reflection_worker.pause();
+    let mut reflection_running = false;
     let reflections = reflection_worker.output();
     ready
         .send(Ok(()))
@@ -471,6 +473,13 @@ fn run_direct_simulation_worker(
             irradiance_min_distance: 1.0,
         });
         reflection_worker.set_input(shared_inputs.clone());
+        if snapshot.emitters.is_empty() && reflection_running {
+            reflection_worker.pause();
+            reflection_running = false;
+        } else if !snapshot.emitters.is_empty() && !reflection_running {
+            reflection_worker.resume();
+            reflection_running = true;
+        }
         let reflection_snapshot = reflections.load();
         let matching_sources = snapshot
             .emitters
@@ -1089,6 +1098,78 @@ mod simulation_tests {
             std::thread::sleep(Duration::from_millis(20));
         }
         panic!("simulation did not publish occlusion within two seconds");
+    }
+
+    #[test]
+    fn rock_material_reduces_transmission_more_than_generic() {
+        fn wall(transmission: [f32; 3]) -> AcousticSceneGeometry {
+            AcousticSceneGeometry {
+                vertices: vec![
+                    [-10.0, -10.0, 1.0],
+                    [10.0, -10.0, 1.0],
+                    [10.0, 10.0, 1.0],
+                    [-10.0, 10.0, 1.0],
+                ],
+                triangles: vec![[0, 1, 2], [0, 2, 3]],
+                material_indices: vec![0, 0],
+                materials: vec![AcousticMaterial {
+                    absorption: [0.13, 0.20, 0.24],
+                    scattering: 0.05,
+                    transmission,
+                }],
+            }
+        }
+
+        fn wait_for_transmission(
+            params: &DirectEffectParamsShared,
+            previous: Option<[f32; 3]>,
+        ) -> [f32; 3] {
+            for _ in 0..100 {
+                let flags = params.flags.load(Ordering::Acquire);
+                if flags & (1 << 4) != 0 {
+                    let transmission = params.values[6..9]
+                        .iter()
+                        .map(|value| f32::from_bits(value.load(Ordering::Relaxed)))
+                        .collect::<Vec<_>>();
+                    let transmission = [transmission[0], transmission[1], transmission[2]];
+                    if previous.is_none_or(|previous| {
+                        transmission
+                            .iter()
+                            .zip(previous)
+                            .any(|(current, previous)| (current - previous).abs() > 1e-4)
+                    }) {
+                        return transmission;
+                    }
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            panic!("simulation did not publish updated transmission within two seconds");
+        }
+
+        let output = PortRef::new(crate::ModuleId(43), "out");
+        let params = Arc::new(DirectEffectParamsShared::default());
+        let (reflection_feed, _reflection_reader) = triple_buffer::TripleBuffer::new(&None).split();
+        let emitter = DirectEmitterInput {
+            output,
+            position: [0.0, 0.0, 3.0],
+            params: params.clone(),
+            reflections: Arc::new(Mutex::new(reflection_feed)),
+        };
+        let mut simulation = AudioNimbusDirectSimulation::new(48_000, 256).unwrap();
+        simulation.set_geometry(wall([0.100, 0.050, 0.030]));
+        simulation.publish(vec![emitter.clone()], ListenerPose::default());
+        let generic = wait_for_transmission(&params, None);
+
+        simulation.set_geometry(wall([0.015, 0.002, 0.001]));
+        simulation.publish(vec![emitter], ListenerPose::default());
+        let rock = wait_for_transmission(&params, Some(generic));
+        eprintln!("AudioNimbus wall transmission: generic={generic:?}, rock={rock:?}");
+        assert!(
+            rock.iter()
+                .zip(generic)
+                .all(|(rock, generic)| *rock < generic),
+            "rock should reduce simulated transmission in every band"
+        );
     }
 
     #[test]

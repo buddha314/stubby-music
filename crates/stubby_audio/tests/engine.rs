@@ -151,6 +151,109 @@ fn audionimbus_live_emitter_path_is_allocation_free_at_supported_rates() {
 
 #[cfg(feature = "audionimbus")]
 #[test]
+fn audionimbus_parametric_reflection_snapshot_is_allocation_free_while_replaced() {
+    use std::sync::{Arc, Mutex};
+    use stubby_audio::ListenerPose;
+    use stubby_audio::audionimbus_spatial::{
+        AudioNimbusDirectSimulation, AudioNimbusReflectionsSnapshot, AudioNimbusSpatialContext,
+        DirectEffectParamsShared, DirectEmitterInput,
+    };
+
+    let output = PortRef::new(ModuleId(90_004), "out");
+    let (feed, mut reflection_output) =
+        triple_buffer::TripleBuffer::<Option<AudioNimbusReflectionsSnapshot>>::new(&None).split();
+    let emitter = DirectEmitterInput {
+        output,
+        position: [1.0, 0.0, 0.0],
+        params: Arc::new(DirectEffectParamsShared::default()),
+        reflections: Arc::new(Mutex::new(feed)),
+    };
+    let mut simulation = AudioNimbusDirectSimulation::new(SR, BLOCK as u32).unwrap();
+    simulation.set_geometry(stubby_audio::AcousticSceneGeometry {
+        vertices: vec![
+            [-4.0, -4.0, -4.0],
+            [4.0, -4.0, -4.0],
+            [4.0, 4.0, -4.0],
+            [-4.0, 4.0, -4.0],
+            [-4.0, -4.0, 4.0],
+            [4.0, -4.0, 4.0],
+            [4.0, 4.0, 4.0],
+            [-4.0, 4.0, 4.0],
+        ],
+        triangles: vec![
+            [0, 2, 1],
+            [0, 3, 2],
+            [4, 5, 6],
+            [4, 6, 7],
+            [0, 1, 5],
+            [0, 5, 4],
+            [3, 7, 6],
+            [3, 6, 2],
+            [0, 4, 7],
+            [0, 7, 3],
+            [1, 2, 6],
+            [1, 6, 5],
+        ],
+        material_indices: vec![0; 12],
+        materials: vec![stubby_audio::AcousticMaterial {
+            absorption: [0.2; 3],
+            scattering: 0.1,
+            transmission: [0.0; 3],
+        }],
+    });
+    simulation.publish(vec![emitter.clone()], ListenerPose::default());
+
+    let spatial = AudioNimbusSpatialContext::new(SR, BLOCK as u32).unwrap();
+    let mut spatializer = spatial.create_binaural_spatializer().unwrap();
+    let input = vec![0.25; BLOCK];
+    let mut left = vec![0.0; BLOCK];
+    let mut right = vec![0.0; BLOCK];
+    let mut rendered_snapshots = 0;
+
+    for revision in 0..100 {
+        if revision > 0 {
+            let mut moved = emitter.clone();
+            moved.position[0] = 1.0 + revision as f32 * 0.01;
+            simulation.publish(vec![moved], ListenerPose::default());
+            std::thread::sleep(std::time::Duration::from_millis(55));
+        }
+
+        let before = violation_count();
+        let mut rendered = false;
+        assert_no_alloc(|| {
+            let latest = reflection_output.read();
+            if let Some(params) = latest
+                .as_ref()
+                .and_then(|snapshot| snapshot.sources.get(&output))
+            {
+                assert_eq!(
+                    params.algorithm(),
+                    audionimbus::dynamic::ReflectionAlgorithm::Parametric
+                );
+                spatializer
+                    .process(&input, &mut left, &mut right, Some(params))
+                    .unwrap();
+                rendered = true;
+            }
+        });
+        assert_eq!(violation_count(), before, "reflection callback allocated");
+        if rendered {
+            rendered_snapshots += 1;
+            assert!(left.iter().chain(&right).all(|sample| sample.is_finite()));
+            if rendered_snapshots >= 4 {
+                break;
+            }
+        }
+    }
+
+    assert_eq!(
+        rendered_snapshots, 4,
+        "did not render replaced reflection snapshots"
+    );
+}
+
+#[cfg(feature = "audionimbus")]
+#[test]
 fn audionimbus_static_wall_transmission_attenuates_live_emitter() {
     fn measure(through_wall: bool) -> f32 {
         let (mut engine, mut renderer) = Engine::offline(EngineConfig {

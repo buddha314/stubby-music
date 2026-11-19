@@ -124,7 +124,7 @@ cargo run -p stubby_jackdaw --features dev
 ```
 
 Open `http://127.0.0.1:7878/` and use Spatial Audio → Reflection wet gain. A value of
-0.0 is a dry comparison; 0.25 is the current default. The control is session-only and
+0.0 is a dry comparison; 0.75 is the current default. The control is session-only and
 does not tune the listener-centric reverb bus, which is not routed yet.
 
 **The crafting system is our own, not a community crate.** `crates/stubby_recipes`
