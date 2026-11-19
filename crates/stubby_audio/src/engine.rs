@@ -14,6 +14,8 @@ use crate::modules::{
     ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
     VcoConfig, VcoNode, Waveform,
 };
+#[cfg(feature = "omg_audio")]
+use crate::omg_spatial::{OmgSpatialNode, trace_snapshot};
 use crate::protocol::{
     AcousticSceneGeometry, Command, EngineError, Event, ListenerPose, ModuleId, ModuleKind,
     PortRef, SampleId,
@@ -87,6 +89,11 @@ enum EmitterParams {
     Basic(SpatialBasicNode),
     #[cfg(feature = "audionimbus")]
     AudioNimbus(AudioNimbusBinauralNode),
+    #[cfg(feature = "omg_audio")]
+    Omg {
+        position: [f32; 3],
+        listener: ListenerPose,
+    },
 }
 
 pub struct Engine {
@@ -107,6 +114,8 @@ pub struct Engine {
     audionimbus_simulation: Option<AudioNimbusDirectSimulation>,
     #[cfg(feature = "audionimbus")]
     reflection_wet_mix: f32,
+    #[cfg(feature = "omg_audio")]
+    omg_geometry: AcousticSceneGeometry,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
@@ -178,7 +187,9 @@ impl Engine {
             #[cfg(feature = "audionimbus")]
             audionimbus_simulation: None,
             #[cfg(feature = "audionimbus")]
-            reflection_wet_mix: 0.25,
+            reflection_wet_mix: 0.75,
+            #[cfg(feature = "omg_audio")]
+            omg_geometry: AcousticSceneGeometry::default(),
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
             event_rings: Vec::new(),
@@ -204,12 +215,15 @@ impl Engine {
         Ok(engine)
     }
 
-    /// Replace the acoustic geometry snapshot used by AudioNimbus. The scene is
-    /// rebuilt on its simulation worker, never on the realtime callback.
+    /// Replace the acoustic geometry snapshot used by the selected spatial backend.
     pub fn set_acoustic_geometry(&mut self, geometry: AcousticSceneGeometry) {
         #[cfg(feature = "audionimbus")]
         if let Some(simulation) = &mut self.audionimbus_simulation {
-            simulation.set_geometry(geometry);
+            simulation.set_geometry(geometry.clone());
+        }
+        #[cfg(feature = "omg_audio")]
+        {
+            self.omg_geometry = geometry.clone();
         }
         #[cfg(not(feature = "audionimbus"))]
         let _ = geometry;
@@ -337,6 +351,8 @@ impl Engine {
                         reflections: node.reflections(),
                     }),
                     EmitterParams::Basic(_) => None,
+                    #[cfg(feature = "omg_audio")]
+                    EmitterParams::Omg { .. } => None,
                 })
                 .collect();
             simulation.publish(inputs, self.listener_pose);
@@ -686,6 +702,10 @@ impl Engine {
         if !self.to_master.contains(&output) {
             return Ok(());
         }
+        #[cfg(feature = "omg_audio")]
+        if std::env::var_os("STUBBY_OMG_AUDIO_REVIEW").is_some() {
+            return self.set_omg_review_emitter(output, position_world, volume);
+        }
         let gain = volume.clamp(0., 1.);
         let volume = firewheel::Volume::Linear(gain);
         if let Some(emitter) = self.emitters.get_mut(&output) {
@@ -706,6 +726,8 @@ impl Engine {
                     node.set_direction(offset);
                     node.set_volume(gain);
                 }
+                #[cfg(feature = "omg_audio")]
+                EmitterParams::Omg { .. } => {}
             }
             return Ok(());
         }
@@ -766,6 +788,83 @@ impl Engine {
             .connect(node, out, &[(0, 0), (1, 1)], false)
             .map_err(graph)?;
         self.emitters.insert(output, Emitter { node, params });
+        Ok(())
+    }
+
+    #[cfg(feature = "omg_audio")]
+    fn set_omg_review_emitter(
+        &mut self,
+        output: PortRef,
+        position: [f32; 3],
+        volume: f32,
+    ) -> Result<(), EngineError> {
+        // The grotto review holds each camera for five seconds. Rebuild only when
+        // moving to another authored view; this experiment does not support smooth
+        // moving-source/listener updates.
+        if let Some(existing) = self.emitters.get(&output)
+            && let EmitterParams::Omg {
+                position: old_position,
+                listener: old_listener,
+            } = &existing.params
+        {
+            let moved_source = position
+                .iter()
+                .zip(old_position)
+                .map(|(a, b)| (a - b).powi(2))
+                .sum::<f32>()
+                > 0.25;
+            let moved_listener = self
+                .listener_pose
+                .position
+                .iter()
+                .zip(old_listener.position)
+                .map(|(a, b)| (a - b).powi(2))
+                .sum::<f32>()
+                > 0.25;
+            if !moved_source && !moved_listener {
+                return Ok(());
+            }
+        }
+        let (frame, source) = trace_snapshot(&self.omg_geometry, self.listener_pose, position)
+            .map_err(EngineError::Config)?;
+        if let Some(block) = frame.block(source) {
+            eprintln!(
+                "OMG review trace: {} triangles, {} direct taps {:?}, reverb levels {:?}",
+                self.omg_geometry.triangles.len(),
+                block.taps.len(),
+                block.taps.iter().map(|tap| tap.gains).collect::<Vec<_>>(),
+                block.reverb.level
+            );
+        }
+        let params = OmgSpatialNode::from_frame(&frame, source, volume)
+            .ok_or(EngineError::Config("OMG frame has no emitter parameters"))?;
+        let node = self
+            .cx
+            .add_node(params, None)
+            .map_err(|error| EngineError::Graph(error.to_string()))?;
+        let (src, src_port) = self.output_port(output)?;
+        if let Some(old) = self.emitters.remove(&output) {
+            let _ = self.cx.remove_node(old.node);
+        }
+        let out = self.world;
+        self.cx
+            .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
+        self.cx
+            .connect(src, node, &[(src_port, 0)], false)
+            .map_err(|error| EngineError::Graph(error.to_string()))?;
+        self.cx
+            .connect(node, out, &[(0, 0), (1, 1)], false)
+            .map_err(|error| EngineError::Graph(error.to_string()))?;
+        self.emitters.insert(
+            output,
+            Emitter {
+                node,
+                params: EmitterParams::Omg {
+                    position,
+                    listener: self.listener_pose,
+                },
+            },
+        );
         Ok(())
     }
 
@@ -912,5 +1011,77 @@ impl OfflineRenderer {
 
     pub fn frames_rendered(&self) -> u64 {
         self.frames_rendered
+    }
+}
+
+#[cfg(all(test, feature = "audionimbus"))]
+mod audionimbus_control_tests {
+    use super::*;
+
+    #[test]
+    fn reflection_wet_mix_rejects_non_finite_and_clamps_finite_values() {
+        let (mut engine, _renderer) = Engine::offline(EngineConfig::default()).unwrap();
+        assert!(
+            engine
+                .send(Command::SetReflectionWetMix { value: f32::NAN })
+                .is_err()
+        );
+        assert_eq!(engine.reflection_wet_mix, 0.75);
+
+        engine
+            .send(Command::SetReflectionWetMix { value: -2.0 })
+            .unwrap();
+        assert_eq!(engine.reflection_wet_mix, 0.0);
+        engine
+            .send(Command::SetReflectionWetMix { value: 1.5 })
+            .unwrap();
+        assert_eq!(engine.reflection_wet_mix, 1.0);
+    }
+}
+
+#[cfg(all(test, feature = "omg_audio"))]
+mod omg_review_tests {
+    use super::*;
+
+    #[test]
+    fn static_review_emitter_preserves_audible_signal() {
+        let (mut engine, mut renderer) = Engine::offline(EngineConfig::default()).unwrap();
+        let source = PortRef::new(ModuleId(99_001), "out");
+        engine
+            .send(Command::AddModule {
+                id: source.module,
+                kind: ModuleKind::SquareVco { freq_hz: 220.0 },
+            })
+            .unwrap();
+        engine
+            .send(Command::Connect {
+                from: source,
+                to: PortRef::output(),
+            })
+            .unwrap();
+        engine
+            .send(Command::SetListener {
+                pose: ListenerPose {
+                    position: [0.0, 1.6, 0.0],
+                    right: [1.0, 0.0, 0.0],
+                    up: [0.0, 1.0, 0.0],
+                    ahead: [0.0, 0.0, -1.0],
+                },
+            })
+            .unwrap();
+        engine
+            .set_omg_review_emitter(source, [0.0, 0.65, -5.0], 0.65)
+            .unwrap();
+        engine.flush().unwrap();
+
+        let mut output = vec![0.0; 48_000 * 2];
+        renderer.render(&mut output);
+        let peak = output
+            .iter()
+            .fold(0.0_f32, |peak, sample| peak.max(sample.abs()));
+        assert!(
+            peak > 1e-4,
+            "OMG review route returned silence (peak={peak})"
+        );
     }
 }

@@ -98,9 +98,9 @@ ignore = true
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-# Bevy main (the version Jackdaw locks), and our forks: the Jackdaw editor and the
-# generated Bevy-main forks of third-party crates (bevy_main_forks.json).
-allow-git = ["https://github.com/bevyengine/bevy"]
+# Bevy main, our buddha314 forks, and the exact OMG upstream used only by the
+# opt-in spatial-audio evaluation feature (pinned in crates/stubby_audio/Cargo.toml).
+allow-git = ["https://github.com/bevyengine/bevy", "https://github.com/JustGoscha/omg-audio"]
 
 [sources.allow-org]
 github = ["buddha314"]

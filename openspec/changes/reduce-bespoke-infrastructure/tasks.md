@@ -23,7 +23,7 @@ cross-platform artifacts, and performance remain unverified.
   Radeon Rays, and TrueAudio Next paths; CMake selects PFFFT and built-in vector math.
   The Linux x86_64 build and native HRTF initialization succeeded; details and caveats
   are in design.md.
-- [ ] 1.2 Build a feature matrix and isolated prototypes for AudioNimbus/Steam Audio's
+- [ ] 1.2 (claimed: Codex) Build a feature matrix and isolated prototypes for AudioNimbus/Steam Audio's
   useful documented capabilities: HRTF and custom SOFA, directivity/distance/air
   absorption, occlusion and material transmission, reflection algorithms and
   listener-centric reverb, Ambisonics, baked reflection probes, and pathing. Use open
@@ -32,11 +32,12 @@ cross-platform artifacts, and performance remain unverified.
   supported backend, dependencies/license, and project-specific gaps per feature.
   Candidate alternatives and the current integration decision are tracked in
   [spatial-audio-alternatives.md](../../../docs/research/spatial-audio-alternatives.md);
-  OMG Audio is the leading candidate for a measured spike, not an adopted replacement.
-- [ ] 1.3 Define and prototype scene integration: convert Bevy/Avian geometry and
+  OMG Audio is under a pinned low-level Firewheel prototype; adoption still depends on
+  changing-frame safety and multi-source routing; see task 3.3.
+- [ ] 1.3 (claimed: Codex) Define and prototype scene integration: convert Bevy/Avian geometry and
   acoustic materials; handle static, moving, and streamed geometry; establish scene
   lifecycle, probe placement/bake artifacts, invalidation, and designer workflows.
-- [ ] 1.4 Prototype bounded parameter/result transfer into Firewheel-hosted processors
+- [ ] 1.4 (claimed: Codex) Prototype bounded parameter/result transfer into Firewheel-hosted processors
   and buses, including direct path, HRTF, reflections/reverb, and Ambisonic mixing where
   applicable. Measure latency, CPU/memory, allocations, locks, and stale-result behavior
   for moving emitters/listeners and dynamic occluders.
@@ -69,8 +70,32 @@ cross-platform artifacts, and performance remain unverified.
   sampling against current sky, ridge, and foliage-air behavior. Candidate: `noise`
   0.9 provides seeded fBm and Worley, but tileable cloud output and generator stability
   still need a focused fixture before replacing existing functions.
-- [ ] 3.3 Prototype only candidates that cover current requirements; record measured
-  maintenance/code reduction and any output compatibility changes.
+- [ ] 3.3 (claimed: Codex) Prototype OMG Audio against current spatial requirements;
+  record measured maintenance/code reduction and output compatibility. Initial pinned
+  source review (`4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869`) found a useful live-signal
+  seam in `omg_dsp::Renderer::process_block`; the high-level Mixer is clip-oriented,
+  and its threaded host applies frames with allocations on the audio callback. Continue
+  with a low-level Firewheel adapter prototype, bounded parameter updates, shared
+  Ambisonic routing, and Bevy/Avian geometry/material conversion before adoption.
+  The two-source spike processes procedural Firewheel samples through separate OMG
+  renderers, sums them into one Ambisonic bus and decodes once, with finite output and
+  zero callback allocations at 48 kHz using a fixed preinstalled frame and speaker
+  fallback. With rock-room geometry, debug-profile 128-frame timing is p50 1.54 ms,
+  p95 1.95 ms, max 2.47 ms (256 callbacks), close to the 2.67 ms callback period.
+  An opt-in OMG grotto route now compiles in `stubby_jackdaw` and converts the game's
+  acoustic geometry for the existing static review positions. The live listen was
+  silent: the world bus remained at `-inf` despite nonzero traced direct/reverb values;
+  the same burbler is audible through the dry reference route. Diagnose or stop the
+  in-game adapter before considering OMG for adoption. Shared game-level routing, HRTF, smooth frame changes, production
+  performance and geometry lifecycle remain open. Upstream's focused mixer tests
+  passed locally (9/9); this is not full integration proof. `ParamBlock` owns a
+  variable-length tap vector and `set_params`
+  allocates scratch vectors; swapping owned blocks in the callback can also free
+  memory there. Solve both allocation and ownership before guarded live updates.
+  Firewheel caps nodes at 64 channels, so independent 11-channel OMG outputs fit
+  five sources; the bounded shared-bus node has now been prototyped for two sources.
+  The in-game experiment still uses one decode per emitter and only refreshes at
+  stationary review positions; production routing and moving-scene updates remain open.
 
 ## 4. Adopt verified replacements
 

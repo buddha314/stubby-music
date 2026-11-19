@@ -6,10 +6,15 @@ mix through the existing Rules Designer HTML page. The control SHALL read and up
 running game through Bevy Remote Protocol and SHALL apply without restarting the game.
 The control SHALL be session-only and SHALL identify that listener-centric reverb is not
 currently routed.
+The fresh-session default SHALL be a reflection wet gain of 0.75.
 
 #### Scenario: Compare dry and wet reflection output
 - **WHEN** a developer sets reflection wet mix to 0.0 and applies it in a running dev game
 - **THEN** per-emitter reflection output is absent while direct spatial audio remains
+
+#### Scenario: Start a listening session
+- **WHEN** a developer starts a fresh dev game
+- **THEN** the reflection wet gain is 0.75 in the audio engine and developer panel
 
 #### Scenario: Increase reflection audibility
 - **WHEN** a developer applies a reflection wet mix between 0.0 and 1.0

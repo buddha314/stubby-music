@@ -10,14 +10,14 @@ registered reflected resource through Bevy Remote Protocol's `world.get_resource
 
 The game's `dev` feature registers an `AudioDeveloperSettings` resource with reflection.
 The resource contains a session-only `reflection_wet_mix` value, defaulting to the
-current mix of 0.25. A game system forwards changes as an audio `Command`. The audio
+listening-review mix of 0.75. A game system forwards changes as an audio `Command`. The audio
 engine stores the value and updates existing and newly-created spatial emitters. The
 processor reads it from an atomic and applies it to the preallocated wet buffers.
 
 ## Behavior
 
-- The slider range is 0.0 to 1.0. Zero is a dry control; 0.25 preserves current output;
-  one is full wet contribution. It is a linear wet gain, not a percentage of a
+- The slider range is 0.0 to 1.0. Zero is a dry control; 0.75 is the current listening
+  default; one is full wet contribution. It is a linear wet gain, not a percentage of a
   normalized equal-power crossfade.
 - An explicit Apply action sends the value. Polling the game's state must not overwrite
   an in-progress slider edit.
@@ -43,5 +43,5 @@ processor reads it from an atomic and applies it to the preallocated wet buffers
   existing and future emitters.
 - Exercise the developer resource read/write request shape and verify release builds do
   not register developer controls.
-- Run the local game and page together, set wet mix to zero and back to 0.25, and confirm
+- Run the local game and page together, set wet mix to zero and back to 0.75, and confirm
   the page reports the running value. Listening remains a player review.

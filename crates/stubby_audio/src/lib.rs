@@ -9,11 +9,16 @@
 
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
+#[cfg(all(feature = "audionimbus", feature = "omg_audio"))]
+compile_error!("select only one spatial audio backend: audionimbus or omg_audio");
+
 #[cfg(feature = "audionimbus")]
 pub mod audionimbus_spatial;
 pub mod clock;
 mod engine;
 mod modules;
+#[cfg(feature = "omg_audio")]
+pub mod omg_spatial;
 mod protocol;
 mod random_clock;
 pub mod signal;

@@ -8,14 +8,14 @@ use stubby_audio::Command;
 #[derive(Resource, Reflect, Debug, Clone)]
 #[reflect(Resource)]
 pub struct AudioDeveloperSettings {
-    /// Linear reflection contribution. Zero is dry; 0.25 is the existing default.
+    /// Linear reflection contribution. Zero is dry; 0.75 is the listening-review default.
     pub reflection_wet_mix: f32,
 }
 
 impl Default for AudioDeveloperSettings {
     fn default() -> Self {
         Self {
-            reflection_wet_mix: 0.25,
+            reflection_wet_mix: 0.75,
         }
     }
 }

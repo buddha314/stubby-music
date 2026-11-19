@@ -29,13 +29,12 @@ fn main() {
             }),
             ..default()
         });
-    let grotto_audio_review = std::env::args().any(|arg| arg.starts_with("--grotto-audio-review="));
     App::new()
         .insert_resource(config)
         .add_plugins(default_plugins)
         .add_plugins(stubby_game::DesertPlugin { seed })
         .add_plugins(stubby_game::audio::SynthAudioPlugin {
-            demo: std::env::args().any(|a| a == "--audio-demo") || grotto_audio_review,
+            demo: std::env::args().any(|a| a == "--audio-demo"),
             ..default()
         })
         .run();

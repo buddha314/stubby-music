@@ -8,6 +8,7 @@ publish = false
 default = ["spatial-audio"]
 dev = ["bevy/dynamic_linking"]
 spatial-audio = ["stubby_audio/audionimbus"]
+omg-audio = ["stubby_audio/omg_audio"]
 
 [dependencies]
 jackdaw_terrain.workspace = true

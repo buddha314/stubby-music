@@ -611,7 +611,7 @@ impl AudioNimbusBinauralNode {
                 AtomicU32::new(0.0_f32.to_bits()),
             ]),
             volume: Arc::new(AtomicU32::new(1.0_f32.to_bits())),
-            reflection_wet_mix: Arc::new(AtomicU32::new(0.25_f32.to_bits())),
+            reflection_wet_mix: Arc::new(AtomicU32::new(0.75_f32.to_bits())),
             direct_params,
             reflections: Arc::new(Mutex::new(Some(reflections))),
             reflection_feed: Arc::new(Mutex::new(feed)),
@@ -896,7 +896,7 @@ impl AudioNimbusSpatialContext {
             wet_left: vec![0.0; self.audio_settings.frame_size as usize],
             wet_right: vec![0.0; self.audio_settings.frame_size as usize],
             params,
-            reflection_wet_mix: 0.25,
+            reflection_wet_mix: 0.75,
             frame_size: self.audio_settings.frame_size as usize,
         })
     }

@@ -5646,6 +5646,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "omg-audio"
+version = "0.1.0"
+source = "git+https://github.com/JustGoscha/omg-audio?rev=4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869#4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869"
+dependencies = [
+ "omg-core",
+ "omg-dsp",
+]
+
+[[package]]
+name = "omg-core"
+version = "0.1.0"
+source = "git+https://github.com/JustGoscha/omg-audio?rev=4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869#4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869"
+
+[[package]]
+name = "omg-dsp"
+version = "0.1.0"
+source = "git+https://github.com/JustGoscha/omg-audio?rev=4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869#4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869"
+dependencies = [
+ "omg-core",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6931,6 +6953,9 @@ dependencies = [
  "audionimbus",
  "firewheel",
  "fundsp",
+ "omg-audio",
+ "omg-core",
+ "omg-dsp",
  "rtrb",
  "thiserror 2.0.20",
  "triple_buffer",
