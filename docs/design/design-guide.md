@@ -93,6 +93,13 @@ Open:
   it. Under the sharing rules it copies no real site, ceremony or sacred structure; the rhyme
   comes from forms many peoples share. The chaparral fits: the Greek theatre grew from the
   *orchestra*, the round dancing floor, with the chorus dancing and singing at its centre.
+- **Amphitheatre look (user, 2026-11-18): echoes of Arches National Park and Greek
+  landscapes.** From Arches: red and salmon sandstone, natural arches and fins, and the
+  smooth slickrock bowl below Delicate Arch, a natural amphitheatre already. From Greece:
+  a theatre whose tiers follow the hillside (Epidaurus), pale limestone, maquis scrub,
+  cypress and olive against a hard blue sky. Together: a sandstone bowl worn into tiers,
+  framed by an arch, with chaparral scrub on its rim. Landforms only: no petroglyphs or rock
+  art (the park's Ute panels included), and no copy of a particular theatre.
 - **Biome characters (art, 2026-11-18):** each biome leans into what its beings share:
   desert *the unseen*, chaparral *hybrids on the rocks*, grassland *under the open sky*,
   wetland *the drowning water*, broadleaf *faces in the grove*, conifer *the deep wood*,
