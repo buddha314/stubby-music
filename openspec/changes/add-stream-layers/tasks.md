@@ -16,4 +16,5 @@
 
 ## 3. Review
 - [x] 3.1 Bounded review (2026-11-18): the scene campfire by a sounding stream, sequencer patched, no square wave: it sounds and burns; join 5.2 m down; heartbeat and ember notes downstream; the ghost staff runs from the stream to the fire and rises
-- [ ] 3.2 The user plays it: placing by a stream, the inherited rack, hearing the layer from the stream
+- [x] 3.3 A join updates the chain (D8): `stubby_streams::ChainUpdated` silences the burbler and diverts older notes at the join (`DivertedNote`); the campfire draws them along its ghost staff into the fire and up (`campfire::draw_in_notes`). Bounded review: no heartbeat note past the join; notes drawn in; ember notes downstream
+- [ ] 3.2 The user plays it: placing by a stream, the inherited rack, hearing only 2 and 4 at and below the fire

@@ -1113,6 +1113,23 @@ pub struct LayerNote {
     pub colour: Option<Color>,
 }
 
+/// On a burbler whose chain a joined machine updates (add-stream-layers D8: the stream
+/// plays its latest version, user 2026-11-18): from `at_m` down the chain the joined
+/// machine's version plays. The burbler's own voice is silent, and notes of older layers
+/// leave the staff there (`DivertedNote`), for the joined machine to take in.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct ChainUpdated {
+    pub at_m: f32,
+}
+
+/// A note that reached an update and left the staff there; whoever updated the chain
+/// moves it now (the campfire draws it in and up).
+#[derive(Component, Clone, Copy, Debug)]
+pub struct DivertedNote {
+    /// When it reached the update.
+    pub at: Instant,
+}
+
 /// A note riding a chain's staff.
 #[derive(Component)]
 pub struct StaffNote {
@@ -1217,8 +1234,9 @@ fn emit_notes(
 fn ride_notes(
     mut commands: Commands,
     staff: Res<StaffProfile>,
-    mut notes: Query<(Entity, &StaffNote, &mut Transform, &mut Visibility)>,
+    mut notes: Query<(Entity, &StaffNote, &mut Transform, &mut Visibility), Without<DivertedNote>>,
     streams: Query<&LaidStream>,
+    updated: Query<&ChainUpdated>,
 ) {
     let now = Instant::now();
     for (entity, note, mut transform, mut visibility) in &mut notes {
@@ -1227,6 +1245,14 @@ fn ride_notes(
         }
         let elapsed = now.duration_since(note.at).as_secs_f32();
         let distance = note_distance(note.join_m, elapsed, staff.flow_speed);
+        // An older layer's note reaching an update leaves the staff there.
+        if let Ok(update) = updated.get(note.source)
+            && note.join_m < update.at_m
+            && distance >= update.at_m
+        {
+            commands.entity(entity).insert(DivertedNote { at: now });
+            continue;
+        }
         let on = streams.iter().find(|s| {
             s.source == Some(note.source) && (s.start..s.start + s.length()).contains(&distance)
         });
@@ -1294,6 +1320,7 @@ fn place_voices(
         &MachineVoice,
         &GlobalTransform,
         Option<&HeardDownstream>,
+        Has<ChainUpdated>,
     )>,
     streams: Query<&LaidStream>,
 ) {
@@ -1309,7 +1336,7 @@ fn place_voices(
             ahead: camera.forward().to_array(),
         },
     });
-    for (machine, voice, transform, downstream) in &machines {
+    for (machine, voice, transform, downstream, superseded) in &machines {
         let Some(output) = voice.output else {
             continue;
         };
@@ -1320,7 +1347,12 @@ fn place_voices(
             output,
             offset: (ears.inverse() * (source - listener)).to_array(),
             position_world: source.to_array(),
-            volume: hearing_gain(source.distance(listener), voice.hearing_radius_metres),
+            // A chain plays its latest version: an updated burbler's own voice is silent.
+            volume: if superseded {
+                0.
+            } else {
+                hearing_gain(source.distance(listener), voice.hearing_radius_metres)
+            },
         });
     }
 }

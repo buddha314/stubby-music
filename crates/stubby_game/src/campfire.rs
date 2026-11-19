@@ -45,6 +45,8 @@ impl Plugin for CampfirePlugin {
                 show_fire,
                 fly_sparks,
                 ghost_staff,
+                update_chains,
+                draw_in_notes,
             )
                 .chain()
                 .after(stubby_core::MachineInteractionSet),
@@ -628,6 +630,96 @@ fn ghost_staff_mesh(join: Vec3, fire: Vec3, t: f32) -> Mesh {
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
     .with_inserted_attribute(Mesh::ATTRIBUTE_COLOR, colours)
     .with_inserted_indices(Indices::U32(indices))
+}
+
+// ------------------------------------------------------------------ the chain, updated
+
+/// How long a note takes from the join, along the ghost staff, into the fire and up.
+const DRAW_IN_S: f32 = 2.6;
+
+/// While a joined camp's layer plays, it updates its chain (add-stream-layers D8, user
+/// 2026-11-18: the campfire updates the stream rather than adding to it): from its join
+/// the chain plays the camp's version, the burbler's own voice falls silent, and the
+/// heartbeat's notes leave the staff there to be drawn into the fire.
+fn update_chains(
+    mut commands: Commands,
+    camps: Query<(&StreamJoin, &RackEngine), With<Fire>>,
+    burblers: Query<(Entity, Option<&stubby_streams::ChainUpdated>), With<MachineVoice>>,
+) {
+    let mut updates: Vec<(Entity, f32)> = Vec::new();
+    for (join, engine) in &camps {
+        if !engine.sounding {
+            continue;
+        }
+        match updates
+            .iter_mut()
+            .find(|(source, _)| *source == join.source)
+        {
+            // The first update down the chain wins.
+            Some((_, at)) => *at = at.min(join.join_m),
+            None => updates.push((join.source, join.join_m)),
+        }
+    }
+    for (burbler, current) in &burblers {
+        let wanted = updates
+            .iter()
+            .find(|(source, _)| *source == burbler)
+            .map(|(_, at_m)| stubby_streams::ChainUpdated { at_m: *at_m });
+        match (current, wanted) {
+            (Some(now), Some(next)) if *now == next => {}
+            (_, Some(next)) => {
+                commands.entity(burbler).insert(next);
+            }
+            (Some(_), None) => {
+                commands
+                    .entity(burbler)
+                    .remove::<stubby_streams::ChainUpdated>();
+            }
+            (None, None) => {}
+        }
+    }
+}
+
+/// A note that reached a camp's join follows the ghost staff, as air is drawn into the
+/// fire: over the bank, into the fire's base, then up with the heat, fading.
+#[allow(clippy::type_complexity)]
+fn draw_in_notes(
+    mut commands: Commands,
+    time: Res<Time>,
+    camps: Query<(&StreamJoin, &GlobalTransform), With<Fire>>,
+    mut notes: Query<(
+        Entity,
+        &stubby_streams::StaffNote,
+        &stubby_streams::DivertedNote,
+        &mut Transform,
+        &mut Visibility,
+    )>,
+) {
+    let now = Instant::now();
+    let t = time.elapsed_secs();
+    for (entity, note, diverted, mut transform, mut visibility) in &mut notes {
+        let u = now.duration_since(diverted.at).as_secs_f32() / DRAW_IN_S;
+        let camp = camps
+            .iter()
+            .filter(|(join, _)| join.source == note.source)
+            .min_by(|a, b| a.0.join_m.total_cmp(&b.0.join_m));
+        let (Some((join, fire)), true) = (camp, u < 1.) else {
+            commands.entity(entity).despawn();
+            continue;
+        };
+        let path = ghost_path(join.point, fire.translation(), t);
+        let at = path
+            .windows(2)
+            .find(|w| u <= w[1].1)
+            .map(|w| {
+                let span = (w[1].1 - w[0].1).max(1e-4);
+                w[0].0.lerp(w[1].0, ((u - w[0].1) / span).clamp(0., 1.))
+            })
+            .unwrap_or_else(|| path.last().map_or(fire.translation(), |p| p.0));
+        transform.translation = at;
+        transform.scale = Vec3::splat((1. - u).max(0.05).sqrt());
+        *visibility = Visibility::Visible;
+    }
 }
 
 #[cfg(test)]

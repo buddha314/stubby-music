@@ -45,6 +45,18 @@ never appear upstream of their join.
 - **Inheritance.** A machine's rack shows every layer upstream of its join, fixed: the
   burbler's voice, and any machine's layer between.
 
+### D8. A join updates the chain; it does not add to it (user, 2026-11-18)
+Additive layers made the burbler's heartbeat and the campfire's backbeat sound together,
+so the player heard every beat where the patch said 2 and 4 ("we want to update with the
+campfire"). Decided: a chain plays its latest version. While a joined machine's layer
+plays, the burbler is `ChainUpdated { at_m }`: its own voice falls silent, and from the
+join down only the joined machine's version sounds and shows. The heartbeat's notes ride
+to the join and leave the staff there (`DivertedNote`), drawn along the ghost staff into
+the fire and up with the heat; the camp's notes ride on downstream. When the camp stops,
+the heartbeat plays the whole chain again. A machine further down inherits the latest
+version and updates it again, so "layers" accumulate as transformations, not as voices.
+This replaces D6's "the stream sounds the layered composition".
+
 ### D7. How layers reach the staff
 `stubby_streams` owns the staff. A machine adds a note with a `LayerNote` message: the
 chain's burbler, the join's distance down the chain, the instant the note is heard (the
