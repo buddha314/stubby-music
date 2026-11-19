@@ -285,6 +285,10 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-18** — Vardo and cyber-cob art direction: practical Irish Traveller barrel-top
+  wagon with grown structural roof, paired with a piebald working cob with exactly one
+  near-side front prosthesis. Continuity decisions and curated concept references:
+  `docs/art/vardo-and-cyber-cob.md` and `docs/art/vardo-cyber-cob/`.
 - **2026-11-06** — Decided a third lighting stage, `clearing`, between bleak and bloomed
   (`add-clearing-air-stage`). Keys not yet authored. Nature assets from outside: see
   `docs/research/nature-asset-sourcing.md`.
