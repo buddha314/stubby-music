@@ -27,6 +27,8 @@ Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 
 The story is `NARRATIVE.md` (the user's: from desolate mudflat to solarpunk city); design
 notes that serve it (mythic regions, the vardo base, styling) are `docs/design/design-guide.md`.
+The player character is **Omar** (`docs/art/omar.md`); for now only his gloves (the
+first-person hands) and his shadow are built (`add-omar-gloves-and-shadow`).
 
 A 3D game that fuses **modular synthesis** (Eurorack-style patching: oscillators,
 clocks, sequencers, filters, VCAs, connected by patch cables) with a **factory

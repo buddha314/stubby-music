@@ -285,6 +285,11 @@ Before an asset ships:
 
 ## Changelog
 
+- **2026-11-18** — Omar, the protagonist: orange tagelmust, wraparound goggles, dark-mint
+  frog-fastened coat, midnight-navy gloves, sand trousers, heavy boots; restrained cyan,
+  magenta and amber accents; no plant. Only the first-person gloves and a shadow-only body
+  are in scope now (`add-omar-gloves-and-shadow`). Direction and references:
+  `docs/art/omar.md` and `docs/art/omar/`.
 - **2026-11-18** — Vardo and cyber-cob art direction: practical Irish Traveller barrel-top
   wagon with grown structural roof, paired with a piebald working cob with exactly one
   near-side front prosthesis. Continuity decisions and curated concept references:

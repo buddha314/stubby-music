@@ -74,6 +74,15 @@ Draft:
 - Treat the Traveller tradition with the same care as the myths: build from the
   references, not caricature.
 
+## Omar: the player character
+
+**Decided (user, 2026-11-18):** the protagonist is **Omar**, a well-travelled explorer:
+a bright orange tagelmust over the face, wraparound neon-trimmed goggles, a knee-length
+dark-mint double-breasted coat with frog fasteners, long midnight-navy gloves, sand
+trousers and heavy boots. The look, continuity rules and references are in
+`docs/art/omar.md` and `docs/art/omar/`. **For now the game needs only his gloves (the
+first-person hands) and his shadow**: `add-omar-gloves-and-shadow`.
+
 ## Styling
 
 **Decided (user, 2026-11-18):** players meet mythic and high-tech elements side by side,
