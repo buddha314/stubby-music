@@ -77,6 +77,10 @@ Open:
   map shows how they cluster. Each being's traits are data in the being atlas
   (`docs/research/beings/`, `add-being-atlas`), and `uv run tools/beings/cluster.py`
   clusters them and writes the seating layout.
+- **Biome characters (art, 2026-11-18):** each biome leans into what its beings share:
+  desert *the unseen*, chaparral *hybrids on the rocks*, grassland *under the open sky*,
+  wetland *the drowning water*, broadleaf *faces in the grove*, conifer *the deep wood*,
+  tropical *the mimic canopy*, mountain *giants and their gifts*. `docs/art/biome-characters.md`.
 
 ## The world map
 
