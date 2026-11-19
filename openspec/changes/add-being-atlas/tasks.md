@@ -9,4 +9,4 @@
 - [x] 2.2 Code them in the atlas and rerun: 103 beings; four kinds (givers, voices, devourers, bargainers) recur across biomes
 
 ## 3. Follow-through
-- [ ] 3.1 Propose the amphitheatre (its place on the map, and how `layout.json` becomes its seating)
+- [ ] 3.1 Propose the amphitheatre (its place on the map, and how `layout.json` becomes its seating). User, 2026-11-18: found a little way into the game, its map reveals the patterns and guides discovery, acting almost like a skill tree for building the new world
