@@ -186,6 +186,25 @@ class Campfire(Burbler):
                         "borrowed": True
                     },
                     {
+                        # The stream's voice as it arrives, fixed (add-stream-layers).
+                        "place": "voice",
+                        "kind": "vco",
+                        "hp": 8,
+                        "fixed": True,
+                        "module": "square_vco",
+                        "inherited": True
+                    },
+                    {
+                        # Where the burbler's part ends: the 2HP stream blank
+                        # (create_stream_blank.py); the camp's own modules follow.
+                        "place": "divider",
+                        "kind": "blank",
+                        "hp": 2,
+                        "fixed": True,
+                        "module": "stream_blank",
+                        "inherited": True
+                    },
+                    {
                         "place": "seq",
                         "kind": "sequencer",
                         "hp": 8,
@@ -196,15 +215,6 @@ class Campfire(Burbler):
                                 "module": "snail_sequencer"
                             }
                         ]
-                    },
-                    {
-                        # The stream's voice as it arrives, fixed (add-stream-layers).
-                        "place": "voice",
-                        "kind": "vco",
-                        "hp": 8,
-                        "fixed": True,
-                        "module": "square_vco",
-                        "inherited": True
                     },
                     {
                         "place": "volume",

@@ -1,0 +1,22 @@
+{
+  "id": "stream_blank",
+  "model": "modules/stream_blank/stream_blank.glb#Scene0",
+  "module_kind": "StreamBlank",
+  "scale": "eurorack_3u_2hp_x10",
+  "size_metres": {
+    "width": 0.1016,
+    "height": 1.285,
+    "depth": 0.32
+  },
+  "silhouette": "plain",
+  "reference": "Eurorack 2HP blank panels: 10.16 mm, two diagonal mounting screws; decorated blanks (Materia, Synthrotek)",
+  "role": "divider: between a machine's inherited modules (left) and its own (right)",
+  "ports": [],
+  "params": [],
+  "lights": [],
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  }
+}

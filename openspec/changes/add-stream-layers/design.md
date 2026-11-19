@@ -57,6 +57,15 @@ the heartbeat plays the whole chain again. A machine further down inherits the l
 version and updates it again, so "layers" accumulate as transformations, not as voices.
 This replaces D6's "the stream sounds the layered composition".
 
+### D9. The rack shows what was inherited (user, 2026-11-18)
+A joined machine's rack keeps the inherited modules, then a **stream blank**: a 2HP
+divider (`assets/modules/stream_blank/`, `create_stream_blank.py`; modelled on Eurorack 2HP
+blanks, 10.16 mm, two diagonal screws), dark anodised with the stream's staff running down
+it and a small burbler bubble glyph, so the player sees where the burbler's part ends. The
+machine's own modules follow it. The campfire: burbler clock and VCO | stream blank |
+snail sequencer and VCA (the VCA is the camp's, not inherited); the VCO's OUT to the VCA's
+IN stays made for the player.
+
 ### D7. How layers reach the staff
 `stubby_streams` owns the staff. A machine adds a note with a `LayerNote` message: the
 chain's burbler, the join's distance down the chain, the instant the note is heard (the

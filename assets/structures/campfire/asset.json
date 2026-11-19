@@ -34,6 +34,22 @@
         "borrowed": true
       },
       {
+        "place": "voice",
+        "kind": "vco",
+        "hp": 8,
+        "fixed": true,
+        "module": "square_vco",
+        "inherited": true
+      },
+      {
+        "place": "divider",
+        "kind": "blank",
+        "hp": 2,
+        "fixed": true,
+        "module": "stream_blank",
+        "inherited": true
+      },
+      {
         "place": "seq",
         "kind": "sequencer",
         "hp": 8,
@@ -44,14 +60,6 @@
             "module": "snail_sequencer"
           }
         ]
-      },
-      {
-        "place": "voice",
-        "kind": "vco",
-        "hp": 8,
-        "fixed": true,
-        "module": "square_vco",
-        "inherited": true
       },
       {
         "place": "volume",
