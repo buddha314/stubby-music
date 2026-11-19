@@ -61,6 +61,22 @@ and a design for one figure is not free for another). A figure looks similar to 
 particular work, panel or sacred object. Each entry records the
 imagery it suggests and that imagery's own sharing check.
 
+### D6. Essences, not gods; chosen as we go (user, 2026-11-18)
+The game does not portray specific gods. A figure is the **essence** of a kind of being,
+"Kokopelli before some humans called him Kokopelli": the wandering flute player, the echo,
+the singer on the lake. Often several traditions met the same essence (the echo is both
+Japanese yamabiko and Greek Echo; an instrument made from a beloved creature is Mongol,
+Kazakh and Finnish), and the game's figure is the essence, not any one of them. The
+research entries remain the evidence: where an essence was found, and the sharing check on
+the stories and imagery that inform it.
+
+An essence does not clear what its sources restrict. Its look still passes the imagery
+check, and it never reproduces a recognisable sacred image: the desert's wandering flute
+player would not be the humpbacked flute player of Southwest rock art.
+
+Which essences ship is **decided as we go**, region by region, not in one pass: the note's
+essence table records each one's status (candidate, chosen, set aside, needs consultation).
+
 ## Risks / Trade-offs
 
 - Desk research cannot speak for a community. Entries marked open are the best reading of

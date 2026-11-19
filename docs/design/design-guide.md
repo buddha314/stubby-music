@@ -63,6 +63,12 @@ Open:
 - **Figures: decided (user, 2026-11-18):** unnamed, as spirits of a place, with imagery
   similar to, not identical with, their cultural heritage. Imagery gets the same check as
   stories: only openly shared motifs and styles, never a copy of a particular work.
+- **Essences, not gods (user, 2026-11-18):** a figure is the essence of a kind of being,
+  not a specific god: "Kokopelli before some humans called him Kokopelli". The wandering
+  flute player, the echo, the teacher under the waterfall, the instrument made from a
+  beloved creature: beings many peoples met and named in their own ways. The research's
+  traditions are where an essence was found, not who it is. Which essences the game uses is
+  **decided as we go**; the pool is the table in `docs/research/music-mythologies.md`.
 - How waking a deity plays (a rack with targets, as the campfire's, is the obvious fit) and
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.

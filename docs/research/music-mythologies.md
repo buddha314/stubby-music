@@ -12,34 +12,37 @@ any community**: entries marked open are the best reading of public sources, and
 read as search excerpts rather than in full. Each part says which primary texts still need
 checking. Nothing here is cleared for shipping until task 0.4 (community review) is settled.
 
-## Summary: candidates by biome
+## The essences: the pool, decided as we go
 
-Two open candidates per biome, sixteen in all; the game needs about a dozen, so this is the
-pool to choose from. Where two passes found the same figure, it is placed once (noted).
+**The game portrays essences, not gods** (user, 2026-11-18; design D6): "Kokopelli before
+some humans called him Kokopelli". Each row is a kind of being; the traditions are where
+it was found, and the entries below are the evidence and the sharing checks. Status is
+updated as regions and shrines are designed: **candidate**, **chosen**, **set aside**, or
+**consult** (needs community consultation first). About a dozen will ship.
 
-| Biome | Candidate | People | Music tie | Notes |
+| Essence | Biome | Found in (entries below) | Music tie | Status |
 | --- | --- | --- | --- | --- |
-| Desert | The humming dunes (*'azīf*) | Arabian and Saharan | night hum and singing sand, taken for the jinn's voice | no figure at all; abstract imagery only (jinn belong to a living faith) |
-| Desert | Spirits of place answered in throat song | Mongolian and Tuvan steppe and Gobi | khöömei imitating wind, water, animals | general idea only; named spirits and shamanic rites unclear; generic cairns, not ovoo |
-| Chaparral | The reed bed that became pipes (Syrinx) | ancient Greek, Arcadia | the first panpipes | fits our reeds; show the reeds, not Pan's pursuit |
-| Chaparral | The cicadas of the Muses | ancient Greek (Plato, *Phaedrus*) | singers who sang until they died, reborn as cicadas | a creature resource in the scrub oak, like the lightning bug |
-| Grassland | The winged horse and the horse-head fiddle | Mongol steppe | the first morin khuur | national folk legend; UNESCO-listed music |
-| Grassland | The first kobyz, played to hold off death | Kazakh and Turkic steppe | a fiddle that imitates the wolf and the wind | communities nominated it to UNESCO themselves |
-| Wetland | The pike-jaw kantele | Finnish and Karelian lakes (Kalevala) | a harp from a giant pike's jaw; every creature gathers to listen | the game's premise almost exactly |
-| Wetland | Swans who sang on the lake | Irish, Lough Derravaragh | 300 years of song on one lake | a lake that is listened to |
-| Broadleaf | The oak harp of three musics | Irish, early medieval | a harp named for an oak; sorrow, joy, sleep | three strains map neatly to three modes |
-| Broadleaf | Fairy music of the ringforts | Irish, Schools' Collection (CC BY 4.0) | music heard from raths | told by families themselves in the 1930s |
-| Conifer | The fiddler under the waterfall (fossegrim) | Norwegian and Swedish | teaches fiddle for an offering | waterfall in mossy forest; fits streams |
-| Conifer | Music from the empty mountain (tengu-bayashi) | Japanese cedar forest | flute and drum with no one there | sound only; masks and ascetic dress are living worship |
-| Tropical | The boy who became the muni bird | Kaluli, Papua New Guinea | the dove's falling call is the model for song | via Feld's collaboration; no statement from Bosavi people found |
-| Tropical | The howler-monkey musicians | K'iche' Maya (Popol Vuh) | flute players turned monkeys, called down by a flute | K'iche'-authored text; avoid the day-sign and glyphs |
-| Mountain | The echo spirit | Japanese (yamabiko) and Greek (Echo) | the mountain answering | two traditions, one unnamed spirit; fits the echo grotto |
-| Mountain | The spirits who gave the alphorn | Swiss Alps, Haslital | a herdsman chooses the horn; "the mountains started to sing" | Swiss national broadcaster as source |
+| The humming sand, the land's own voice | Desert | Arabian and Saharan *'azīf*; singing dunes | night hum, singing sand | candidate |
+| The place that answers a singer in kind | Desert | Mongolian and Tuvan spirits of place | throat song imitating wind, water, animals | candidate |
+| The wandering flute player | Desert | the user's example; Southwest rock art is restricted, so the look is our own | flute, rain, fertility | consult (imagery) |
+| The reed that was a voice | Chaparral | Greek Syrinx; Rumi's reed (wetland) | the first pipes | candidate |
+| Singers who became insects | Chaparral | Greek cicadas of the Muses | song without end | candidate |
+| The instrument made from a beloved creature | Grassland, wetland | Mongol horse-head fiddle; Kazakh kobyz; Finnish pike-jaw kantele | fiddle, harp | candidate |
+| Music that holds off death | Grassland | Kazakh Korkyt and the kobyz | fiddle | candidate |
+| Singers on the lake | Wetland | Irish swans of Lough Derravaragh | song heard from the shore | candidate |
+| The tree that is a harp | Broadleaf | Irish oak harp of three musics; Finnish birch kantele | harp: sorrow, joy, sleep | candidate |
+| Music from the hidden hill | Broadleaf | Irish fairy music of the ringforts | music with no one seen | candidate |
+| The teacher under the waterfall | Conifer | Norwegian and Swedish fossegrim and näcken; Andean spring spirits (consult) | fiddle taught for an offering | candidate |
+| Music from the empty mountain | Conifer | Japanese tengu-bayashi | flute and drum, no players | candidate |
+| The child who became a bird's call | Tropical | Kaluli muni bird | the falling call that song follows | candidate |
+| Musicians who became creatures of the canopy | Tropical | K'iche' Maya howler-monkey musicians | flute | candidate |
+| The echo | Mountain | Japanese yamabiko; Greek Echo | the mountain answering | candidate |
+| The gift of the horn, chosen over riches | Mountain | Swiss alphorn spirits | horn; "the mountains started to sing" | candidate |
+| The courting flute on the wind | Grassland | Lakota and Dakota elk, woodpecker and cedar | flute | consult |
 
-Placed once where passes overlapped: Echo (chaparral and mountain) is in **mountain**;
-yamabiko (broadleaf and mountain) is in **mountain**; Syrinx (chaparral and wetland) is in
-**chaparral**; Väinämöinen's kantele (pike-jaw in wetland, birch in conifer) is in **wetland**,
-with the birch kantele a conifer reserve; the fossegrim (conifer and wetland) is in **conifer**.
+Where several passes found the same tradition it is filed once below: Echo and yamabiko under
+mountain, Syrinx under chaparral, the fossegrim under conifer, the pike-jaw kantele under
+wetland and the birch kantele under conifer.
 
 ## Findings that matter for design
 
