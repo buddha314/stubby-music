@@ -46,7 +46,8 @@ the song that moves stones, the midday panic, the fire-breathing hill beast.
 contest and has a price: the song that lures ships, the piper flayed for challenging a god,
 the panic at noon. Outcrops read as natural theatres and figures perch on them. **Danger is
 the song itself**: the most musical biome is the one where listening can kill. A natural
-home for the amphitheatre.
+home for the amphitheatre, which echoes Arches National Park's sandstone arches and slickrock
+bowls and the hillside theatres of Greece (design guide, *Mythic regions*).
 
 ## Grassland: under the open sky
 
