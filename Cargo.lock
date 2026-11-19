@@ -7106,6 +7106,7 @@ dependencies = [
  "serde_json",
  "stubby_audio",
  "stubby_core",
+ "stubby_ui",
  "tempfile",
 ]
 
