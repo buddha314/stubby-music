@@ -4,120 +4,722 @@
   "beings": [
     {
       "id": "humming_sand",
-      "x": 1.0,
-      "y": -0.0343,
+      "x": 0.3675,
+      "y": 0.9023,
       "cluster": 1,
       "biome": "desert"
     },
     {
       "id": "answering_place",
-      "x": 0.2593,
-      "y": -0.8086,
-      "cluster": 2,
+      "x": 0.8886,
+      "y": 0.2418,
+      "cluster": 1,
       "biome": "desert"
     },
     {
       "id": "wandering_flute_player",
-      "x": -0.0857,
-      "y": -0.2606,
-      "cluster": 2,
+      "x": 0.7098,
+      "y": -0.4649,
+      "cluster": 1,
       "biome": "desert"
     },
     {
       "id": "reed_voice",
-      "x": -0.7215,
-      "y": -0.2907,
-      "cluster": 2,
+      "x": 0.8141,
+      "y": -0.3162,
+      "cluster": 1,
       "biome": "chaparral"
     },
     {
       "id": "singing_insects",
-      "x": -0.2565,
-      "y": 0.8669,
-      "cluster": 2,
+      "x": 0.955,
+      "y": 0.1121,
+      "cluster": 1,
       "biome": "chaparral"
     },
     {
       "id": "beloved_creature_instrument",
-      "x": -0.8575,
-      "y": 0.0138,
-      "cluster": 2,
+      "x": 0.716,
+      "y": -0.5984,
+      "cluster": 1,
       "biome": "grassland"
     },
     {
       "id": "music_against_death",
-      "x": -0.5001,
-      "y": -0.0428,
-      "cluster": 2,
+      "x": 0.6332,
+      "y": -0.4144,
+      "cluster": 1,
       "biome": "grassland"
     },
     {
       "id": "courting_flute",
-      "x": -0.782,
-      "y": 0.2864,
-      "cluster": 2,
+      "x": 0.8164,
+      "y": -0.4015,
+      "cluster": 1,
       "biome": "grassland"
     },
     {
       "id": "singers_on_the_lake",
-      "x": -0.1697,
-      "y": 0.2606,
-      "cluster": 2,
+      "x": 0.801,
+      "y": -0.1125,
+      "cluster": 1,
       "biome": "wetland"
     },
     {
       "id": "tree_harp",
-      "x": -0.5612,
-      "y": 0.5229,
-      "cluster": 2,
+      "x": 0.8808,
+      "y": -0.2207,
+      "cluster": 1,
       "biome": "broadleaf"
     },
     {
       "id": "hidden_hill_music",
-      "x": 0.8689,
-      "y": -0.2029,
+      "x": 0.4856,
+      "y": 0.8297,
       "cluster": 1,
       "biome": "broadleaf"
     },
     {
       "id": "waterfall_teacher",
-      "x": 0.718,
-      "y": 0.6592,
+      "x": 0.1539,
+      "y": 0.8036,
       "cluster": 1,
       "biome": "conifer"
     },
     {
       "id": "empty_mountain_music",
-      "x": 0.9517,
-      "y": 0.2682,
+      "x": 0.3984,
+      "y": 0.8217,
       "cluster": 1,
       "biome": "conifer"
     },
     {
       "id": "child_bird_call",
-      "x": -0.2309,
-      "y": -0.8141,
-      "cluster": 2,
+      "x": 0.6557,
+      "y": -0.2294,
+      "cluster": 1,
       "biome": "tropical"
     },
     {
       "id": "canopy_musicians",
-      "x": 0.2424,
-      "y": 0.8803,
-      "cluster": 2,
+      "x": 0.8104,
+      "y": 0.3824,
+      "cluster": 1,
       "biome": "tropical"
     },
     {
       "id": "echo",
-      "x": 0.6843,
-      "y": -0.6324,
+      "x": 0.705,
+      "y": 0.5482,
       "cluster": 1,
       "biome": "mountain"
     },
     {
       "id": "horn_gift",
-      "x": -0.5595,
-      "y": -0.672,
+      "x": 0.5356,
+      "y": -0.5444,
+      "cluster": 1,
+      "biome": "mountain"
+    },
+    {
+      "id": "shapeshifting_desert_devourer",
+      "x": -0.6126,
+      "y": 0.2735,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "voices_that_lead_astray",
+      "x": -0.3251,
+      "y": 0.8803,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "half_bodied_hopper",
+      "x": -0.2693,
+      "y": -0.7426,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "sand_worm_that_kills",
+      "x": -0.8477,
+      "y": -0.3668,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "thirst_serpent",
+      "x": -0.6159,
+      "y": -0.5744,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "desert_making_serpent",
+      "x": -0.6075,
+      "y": -0.5214,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "famine_wind",
+      "x": -0.0375,
+      "y": -0.7388,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "whirlwind_rider",
+      "x": -0.4654,
+      "y": -0.8031,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "ore_eating_light_bird",
+      "x": -0.2494,
+      "y": 0.6326,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "rain_animal_of_the_waterhole",
+      "x": -0.1187,
+      "y": -0.8226,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "spirits_of_solitude",
+      "x": -0.4191,
+      "y": 0.7986,
+      "cluster": 2,
+      "biome": "desert"
+    },
+    {
+      "id": "singers_on_the_rocks",
+      "x": 0.4565,
+      "y": 0.3653,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "fire_breathing_hill_beast",
+      "x": -0.3383,
+      "y": -0.4373,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "roadside_shapeshifter",
+      "x": -0.6878,
+      "y": 0.3142,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "midday_panic",
+      "x": -0.0234,
+      "y": 0.9548,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "song_that_moves_stones",
+      "x": 0.6995,
+      "y": -0.0829,
+      "cluster": 1,
+      "biome": "chaparral"
+    },
+    {
+      "id": "instrument_that_is_a_god",
+      "x": 0.7928,
+      "y": 0.0948,
+      "cluster": 1,
+      "biome": "chaparral"
+    },
+    {
+      "id": "humble_bird_brings_songs",
+      "x": 0.7803,
+      "y": -0.5344,
+      "cluster": 1,
+      "biome": "chaparral"
+    },
+    {
+      "id": "piper_who_became_a_river",
+      "x": 0.638,
+      "y": 0.1164,
+      "cluster": 1,
+      "biome": "chaparral"
+    },
+    {
+      "id": "enchanted_spring_maiden",
+      "x": -0.0532,
+      "y": 0.7874,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "death_cry_flying_head",
+      "x": -0.7073,
+      "y": 0.5331,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "mountain_fire_spirit",
+      "x": -0.852,
+      "y": 0.0027,
+      "cluster": 2,
+      "biome": "chaparral"
+    },
+    {
+      "id": "noon_field_spirit",
+      "x": -0.8139,
+      "y": -0.238,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "many_headed_devourer",
+      "x": -0.3337,
+      "y": -0.229,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "one_eyed_shepherd_giant",
+      "x": -0.3295,
+      "y": -0.5885,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "pressing_birth_demon",
+      "x": -0.7923,
+      "y": 0.0629,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "wolf_mother",
+      "x": 0.2664,
+      "y": -0.7579,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "winged_steppe_horse",
+      "x": 0.3019,
+      "y": -0.6945,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "wandering_ghost_light",
+      "x": -0.028,
+      "y": 0.595,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "plains_werewolf",
+      "x": -0.7966,
+      "y": 0.1454,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "spider_trickster",
+      "x": 0.271,
+      "y": 0.4091,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "lightning_bird",
+      "x": -0.6532,
+      "y": -0.3951,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "egg_of_the_world_tree",
+      "x": 0.4365,
+      "y": -0.7776,
+      "cluster": 2,
+      "biome": "grassland"
+    },
+    {
+      "id": "water_horse",
+      "x": -0.2117,
+      "y": -0.1135,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "singing_water_maidens",
+      "x": 0.4431,
+      "y": 0.5503,
+      "cluster": 1,
+      "biome": "wetland"
+    },
+    {
+      "id": "drowning_river_imp",
+      "x": -0.2254,
+      "y": -0.5201,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "booming_billabong_beast",
+      "x": -0.7967,
+      "y": 0.3748,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "swamp_dragon",
+      "x": -0.5324,
+      "y": -0.5173,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "weed_covered_pond_hag",
+      "x": -0.4843,
+      "y": -0.386,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "regrowing_marsh_serpent",
+      "x": -0.3979,
+      "y": -0.555,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "mere_dwelling_mother",
+      "x": -0.7481,
+      "y": -0.0269,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "swan_maiden",
+      "x": 0.2754,
+      "y": -0.3097,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "crying_lake_water_dog",
+      "x": -0.5001,
+      "y": -0.1681,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "lake_otter_hound",
+      "x": -0.2635,
+      "y": -0.4082,
+      "cluster": 2,
+      "biome": "wetland"
+    },
+    {
+      "id": "forest_master",
+      "x": 0.1492,
+      "y": 0.4572,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "wild_hunt",
+      "x": -0.6439,
+      "y": 0.5767,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "forest_hag_who_devours",
+      "x": 0.1195,
+      "y": -0.1449,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "wolf_skinned_man",
+      "x": -0.7781,
+      "y": 0.2066,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "soul_in_the_tree",
+      "x": 0.0456,
+      "y": -0.0856,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "fox_spirit_shapeshifter",
+      "x": -0.3388,
+      "y": 0.395,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "moss_folk",
+      "x": 0.1502,
+      "y": -0.6778,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "wild_man_of_the_woods",
+      "x": 0.0606,
+      "y": -0.3882,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "goblins_who_buy_a_song",
+      "x": 0.5746,
+      "y": 0.5069,
+      "cluster": 1,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "stone_skinned_liver_eater",
+      "x": -0.0102,
+      "y": 0.2859,
+      "cluster": 2,
+      "biome": "broadleaf"
+    },
+    {
+      "id": "hollow_backed_forest_woman",
+      "x": 0.5241,
+      "y": 0.23,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "unburied_child_ghost",
+      "x": -0.5224,
+      "y": 0.5771,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "trolls_turned_to_stone",
+      "x": -0.692,
+      "y": 0.1697,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "maned_forest_serpent",
+      "x": -0.5575,
+      "y": -0.3059,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "honoured_bear",
+      "x": 0.4478,
+      "y": 0.0571,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "snow_woman",
+      "x": -0.4313,
+      "y": 0.3192,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "forest_that_hides",
+      "x": -0.2437,
+      "y": 0.1061,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "elk_of_bark_and_reeds",
+      "x": 0.2425,
+      "y": 0.1695,
+      "cluster": 2,
+      "biome": "conifer"
+    },
+    {
+      "id": "bird_all_others_hush_for",
+      "x": 1.0,
+      "y": 0.3366,
+      "cluster": 1,
+      "biome": "tropical"
+    },
+    {
+      "id": "tree_that_speaks_as_drum",
+      "x": 0.8641,
+      "y": -0.1929,
+      "cluster": 1,
+      "biome": "tropical"
+    },
+    {
+      "id": "forest_sung_awake",
+      "x": 0.684,
+      "y": 0.6833,
+      "cluster": 1,
+      "biome": "tropical"
+    },
+    {
+      "id": "backward_footed_forest_guardian",
+      "x": -0.3194,
+      "y": -0.1329,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "belly_mouthed_forest_giant",
+      "x": -0.6106,
+      "y": -0.2269,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "river_dolphin_suitor",
+      "x": -0.1804,
+      "y": 0.8352,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "river_lady_who_drowns",
+      "x": -0.5076,
+      "y": 0.7439,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "mismatched_foot_mimic",
+      "x": -0.0861,
+      "y": 0.087,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "hidden_people_heard_singing",
+      "x": 0.2644,
+      "y": 0.7698,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "tree_giant_smoking",
+      "x": -0.234,
+      "y": 0.5416,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "horse_headed_path_twister",
+      "x": -0.6296,
+      "y": 0.3867,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "frangipani_ghost_of_banana_grove",
+      "x": -0.5889,
+      "y": 0.1227,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "woman_beneath_the_ceiba",
+      "x": -0.3125,
+      "y": 0.276,
+      "cluster": 2,
+      "biome": "tropical"
+    },
+    {
+      "id": "spring_that_tunes_instruments",
+      "x": 0.4737,
+      "y": 0.762,
+      "cluster": 1,
+      "biome": "mountain"
+    },
+    {
+      "id": "birds_who_taught_the_modes",
+      "x": 0.9862,
+      "y": -0.0705,
+      "cluster": 1,
+      "biome": "mountain"
+    },
+    {
+      "id": "bird_human_mountain_singers",
+      "x": 0.6236,
+      "y": -0.3123,
+      "cluster": 1,
+      "biome": "mountain"
+    },
+    {
+      "id": "wild_man_of_the_snows",
+      "x": -0.0661,
+      "y": -0.6352,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "cat_faced_tunnel_worm",
+      "x": -0.6472,
+      "y": -0.332,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "dragon_that_left_a_healing_stone",
+      "x": 0.1532,
+      "y": -0.8908,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "lord_of_mountain_weather",
+      "x": -0.0075,
+      "y": -0.2601,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "great_healing_bird_of_the_peak",
+      "x": 0.3526,
+      "y": -0.7086,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "stranger_who_steals_fat",
+      "x": -0.7356,
+      "y": 0.0478,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "winter_hag_who_built_mountains",
+      "x": -0.1334,
+      "y": -0.7241,
+      "cluster": 2,
+      "biome": "mountain"
+    },
+    {
+      "id": "hooded_mine_spirit",
+      "x": 0.0103,
+      "y": -0.4827,
       "cluster": 2,
       "biome": "mountain"
     }

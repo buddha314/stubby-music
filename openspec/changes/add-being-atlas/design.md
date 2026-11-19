@@ -26,6 +26,11 @@ hierarchical clustering (scipy), k by silhouette (scikit-learn), metric MDS with
 seed for the 2D layout. No hand-written clustering. The script declares pinned
 dependencies inline and runs with `uv run`; nothing is added to the game's build.
 
+### D5. Scope widened to all beings; music is a trait (user, 2026-11-18)
+The atlas holds every mythic being found per biome, 10–20 each, spirits, creatures and
+monsters, whether or not music is part of it. `music` (core, incidental, none) is a facet,
+so analyses can restrict to music later (`--where music=core`) or leave it out (`--drop`).
+
 ### D4. The amphitheatre reads the layout, later
 `layout.json` holds each being's position in [-1, 1]², its cluster and primary biome. The
 amphitheatre change decides how that becomes seats, carvings or terraces. The layout is
@@ -33,9 +38,8 @@ deterministic: same atlas and pins, same layout.
 
 ## Risks / Trade-offs
 
-- Seventeen beings is too few for stable clusters: the first run finds k = 2 with a weak
-  silhouette (0.23). Results are a conversation piece until the atlas, monsters included,
-  is larger.
+- Clusters are weak (silhouettes 0.14–0.20 at 103 beings): tendencies, not categories.
+  Findings and runs are in `docs/research/beings/README.md`.
 - Trait coding carries the coder's reading of each tradition. Keep codes to what the
   research note's entries say.
 
