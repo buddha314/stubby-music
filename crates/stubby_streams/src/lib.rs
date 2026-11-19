@@ -39,7 +39,7 @@ use stubby_core::{
 };
 
 mod dismantle;
-pub use dismantle::{Dismantle, pick_segment};
+pub use dismantle::{Dismantle, DismantleMode, pick_segment};
 
 const SEGMENT_LENGTH: f32 = 4.0;
 /// How far from a port the aim may be to pick it.
@@ -106,12 +106,15 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                     .before(stubby_core::CursorCapture),
             )
             .add_message::<Dismantle>()
+            .init_resource::<dismantle::DismantleMode>()
+            .add_systems(Startup, dismantle::spawn_dismantle_ui)
             .add_message::<LayerNote>()
             .add_systems(
                 Update,
                 (
                     dismantle::dismantle_input,
                     dismantle::apply_dismantles::<S>,
+                    dismantle::show_dismantle,
                     resolve_sources,
                     emit_bars.run_if(resource_exists::<Messages<ClockTick>>),
                     ride_bars,
@@ -153,6 +156,8 @@ pub struct Plan {
     pub segments: u32,
     pub affordable: bool,
     pub valid: bool,
+    /// The stream this plan flows into, when its end snapped to one (`snap_to_stream`).
+    pub joins: Option<Entity>,
 }
 
 /// A laid stream: segments `first..=last` of its plan's path. Its far end is a port
@@ -626,7 +631,7 @@ fn bend(source: &Mesh, target: &mut Mesh, path: &Path, start: f32, span: f32, sh
 fn free_ports(
     burblers: &Query<(Entity, &PlacedAsset, &mut AssetState)>,
     outlets: &Query<(&AssetPart, &GlobalTransform)>,
-    streams: &Query<&mut LaidStream>,
+    streams: &Query<(Entity, &LaidStream)>,
 ) -> Vec<Port> {
     let mut ports: Vec<Port> = outlets
         .iter()
@@ -644,7 +649,12 @@ fn free_ports(
             })
         })
         .collect();
-    ports.extend(streams.iter().filter(|s| !s.end_used).map(|s| s.end));
+    ports.extend(
+        streams
+            .iter()
+            .filter(|(_, s)| !s.end_used)
+            .map(|(_, s)| s.end),
+    );
     ports
 }
 
@@ -677,6 +687,37 @@ pub fn snap_to_inlet(
         })
         .min_by(|a, b| a.0.total_cmp(&b.0))
         .map(|(_, at, along)| (at, along))
+}
+
+/// Aim this close to another stream and the stream being laid joins it.
+const STREAM_SNAP_M: f32 = 2.5;
+
+/// Snap a stream aimed at `aim` into the nearest other stream within `STREAM_SNAP_M` (user,
+/// 2026-11-18: streams snap to each other): the point on its centre line nearest the aim
+/// and the direction to arrive along, its flow there, so the two merge downstream. Near a
+/// stream's free end the new one meets it head on instead, continuing its bed.
+pub fn snap_to_stream<'a>(
+    aim: Vec3,
+    streams: impl IntoIterator<Item = (Entity, &'a LaidStream)>,
+) -> Option<(Vec3, Vec3, Entity)> {
+    streams
+        .into_iter()
+        .filter_map(|(entity, stream)| {
+            let (along, at) = stream.nearest_along(aim);
+            let gap = Vec2::new(at.x - aim.x, at.z - aim.z).length();
+            (gap <= STREAM_SNAP_M).then(|| {
+                let s = stream.start_s() + (along - stream.start);
+                let to_end = stream.end_s() - s;
+                let (at, dir) = if !stream.end_used && to_end < SEGMENT_LENGTH * 0.5 {
+                    (stream.end.at, -stream.end.dir)
+                } else {
+                    stream.path.at(s)
+                };
+                (gap, at, dir, entity)
+            })
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .map(|(_, at, dir, entity)| (at, dir, entity))
 }
 
 /// Where the camera's ray meets the horizontal plane at `height`, at most `MAX_PLAN`
@@ -733,7 +774,7 @@ fn plan<S: Stock>(
     cameras: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
     burblers: Query<(Entity, &PlacedAsset, &mut AssetState)>,
     outlets: Query<(&AssetPart, &GlobalTransform)>,
-    streams: Query<&mut LaidStream>,
+    streams: Query<(Entity, &LaidStream)>,
     inlets: Query<(&StreamInlet, &GlobalTransform)>,
     cost: Res<SegmentCost>,
     inventory: Option<Res<S>>,
@@ -764,9 +805,20 @@ fn plan<S: Stock>(
         target,
         inlets.iter().map(|(inlet, at)| (*inlet, at.translation())),
     );
-    let path = match snapped {
-        Some((at, along)) => Path::arriving(&anchor, at, Some(along)),
-        None => Path::new(&anchor, target),
+    // Otherwise into another stream (never the one it is laid from).
+    let joined = snapped.is_none().then(|| {
+        snap_to_stream(
+            target,
+            streams
+                .iter()
+                .filter(|(entity, _)| anchor.owner != PortOwner::Stream(*entity)),
+        )
+    });
+    let joins = joined.flatten().map(|(_, _, entity)| entity);
+    let path = match (snapped, joined.flatten()) {
+        (Some((at, along)), _) => Path::arriving(&anchor, at, Some(along)),
+        (None, Some((at, along, _))) => Path::arriving(&anchor, at, Some(along)),
+        (None, None) => Path::new(&anchor, target),
     };
     let length = path.length();
     let segments = ((length / SEGMENT_LENGTH).round() as u32).max(1);
@@ -779,6 +831,7 @@ fn plan<S: Stock>(
         segments,
         affordable,
         valid: affordable && shape_ok,
+        joins,
     });
 }
 
@@ -830,7 +883,8 @@ fn lay<S: Stock>(
             last: plan.segments - 1,
             upstream: Some(anchor.owner),
             start,
-            end_used: false,
+            // A stream that flows into another has no free end.
+            end_used: plan.joins.is_some(),
         },
     );
     match anchor.owner {
@@ -845,8 +899,9 @@ fn lay<S: Stock>(
             }
         }
     }
-    // Keep extending from the new end, like dragging on from a conveyor's end.
-    build.anchor = Some(end);
+    // Keep extending from the new end, like dragging on from a conveyor's end; a stream
+    // that joined another is finished, as a belt plugged into an input.
+    build.anchor = plan.joins.is_none().then_some(end);
 }
 
 /// A stream to spawn: segments `first..=last` of `path`.
@@ -897,6 +952,10 @@ fn spawn_stream(
                 .spawn((
                     Mesh3d(meshes.add(mesh)),
                     MeshMaterial3d(piece.material.clone()),
+                    dismantle::SegmentPiece {
+                        segment: k,
+                        material: piece.material.clone(),
+                    },
                     Transform::default(),
                     if halo {
                         Visibility::Hidden
@@ -1743,4 +1802,26 @@ mod tests {
 /// Tell the other systems (the player's outlines) whether build mode has the mouse.
 fn publish_build_mode(build: Res<StreamBuild>, mut mode: ResMut<stubby_core::BuildMode>) {
     mode.set_if_neq(stubby_core::BuildMode(build.active));
+}
+
+#[cfg(test)]
+mod snap_tests {
+    use super::*;
+
+    #[test]
+    fn a_stream_aimed_beside_another_joins_it_along_its_flow() {
+        let other = LaidStream::straight_segments(None, Vec3::ZERO, Vec3::X * 16., 4);
+        let e = Entity::PLACEHOLDER;
+        let (at, dir, joined) =
+            snap_to_stream(Vec3::new(6., 0., 1.5), [(e, &other)]).expect("snaps");
+        assert_eq!(joined, e);
+        assert!((at - Vec3::new(6., 0., 0.)).length() < 0.3, "{at}");
+        assert!(dir.dot(Vec3::X) > 0.99, "{dir}");
+        // At its free end, the new stream meets it head on.
+        let (at, dir, _) = snap_to_stream(Vec3::new(16.5, 0., 1.), [(e, &other)]).expect("snaps");
+        assert!((at - Vec3::new(16., 0., 0.)).length() < 0.3, "{at}");
+        assert!(dir.dot(-Vec3::X) > 0.99, "{dir}");
+        // Too far away, nothing.
+        assert!(snap_to_stream(Vec3::new(6., 0., 4.), [(e, &other)]).is_none());
+    }
 }

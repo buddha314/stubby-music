@@ -1,7 +1,8 @@
 //! F dismantles the aimed stream segment (sync-stream-growth-and-dismantling 2.1, the
 //! Godot game's `LaidStream.dismantle`, design D8 of `add-stream-building`).
 //!
-//! Outside build mode, F removes the segment in the crosshair within 8 m and refunds its
+//! Outside build mode, F highlights the segment in the crosshair within 8 m in red, and
+//! holding F removes it (`DismantleMode`) and refunds its
 //! cost (`SegmentCost`) all or nothing: with no room for the refund, nothing changes.
 //! The stream splits around the gap. The part upstream keeps its source and gets a free
 //! end at the gap; the part downstream is cut off, and it and every stream laid on from
@@ -50,30 +51,222 @@ pub fn pick_segment<'a>(
     best.map(|(_, entity, k)| (entity, k))
 }
 
+/// Satisfactory-style dismantling (user, 2026-11-18: "using F should highlight section to
+/// be deleted then hold F to delete"). Pressing F enters dismantle mode: the segment in the
+/// crosshair turns red. Holding F for `HOLD_S` dismantles it, with a filling bar under the
+/// reticle; a quick tap of F in the mode, Escape, or Q leaves it.
+#[derive(Resource, Default)]
+pub struct DismantleMode {
+    pub active: bool,
+    /// The segment in the crosshair while active.
+    pub target: Option<(Entity, u32)>,
+    /// How long F has been held this press, and whether this press already dismantled.
+    held: f32,
+    fired: bool,
+    /// Whether the mode was already on when this press began (a tap then leaves it).
+    was_active: bool,
+}
+impl DismantleMode {
+    /// How far the hold has come, 0 to 1.
+    pub fn progress(&self) -> f32 {
+        (self.held / HOLD_S).clamp(0., 1.)
+    }
+}
+
+/// How long F is held to dismantle, seconds.
+const HOLD_S: f32 = 0.6;
+
+/// Every mesh of a laid segment: its index, and its own material to restore after the
+/// dismantle highlight.
+#[derive(Component)]
+pub(crate) struct SegmentPiece {
+    pub(crate) segment: u32,
+    pub(crate) material: Handle<StandardMaterial>,
+}
+
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn dismantle_input(
+    time: Res<Time<Real>>,
     keys: Res<ButtonInput<KeyCode>>,
     capture: Res<LookCapture>,
     screens: Res<ScreenMode>,
     build: Res<StreamBuild>,
     camera: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
     streams: Query<(Entity, &LaidStream)>,
+    mut mode: ResMut<DismantleMode>,
     mut dismantles: MessageWriter<Dismantle>,
 ) {
-    if !keys.just_pressed(stubby_core::keys::DISMANTLE)
-        || build.active
+    let key = stubby_core::keys::DISMANTLE;
+    if build.active
         || screens.open.is_some()
-        || !capture.captured()
+        || keys.just_pressed(KeyCode::Escape)
+        || keys.just_pressed(stubby_core::keys::BUILD)
     {
+        *mode = DismantleMode::default();
         return;
     }
-    let Ok(camera) = camera.single() else { return };
-    if let Some((stream, segment)) = pick_segment(
-        streams,
-        camera.translation(),
-        camera.forward().as_vec3(),
-        DISMANTLE_REACH,
-    ) {
-        dismantles.write(Dismantle { stream, segment });
+    if !capture.captured() {
+        mode.held = 0.;
+        return;
+    }
+    if keys.just_pressed(key) {
+        mode.was_active = mode.active;
+        mode.active = true;
+        mode.held = 0.;
+        mode.fired = false;
+    }
+    if !mode.active {
+        return;
+    }
+    mode.target = camera.single().ok().and_then(|camera| {
+        pick_segment(
+            streams.iter(),
+            camera.translation(),
+            camera.forward().as_vec3(),
+            DISMANTLE_REACH,
+        )
+    });
+    if keys.pressed(key) && !mode.fired {
+        if mode.target.is_some() {
+            mode.held += time.delta_secs();
+        } else {
+            mode.held = 0.;
+        }
+        if mode.held >= HOLD_S
+            && let Some((stream, segment)) = mode.target
+        {
+            dismantles.write(Dismantle { stream, segment });
+            mode.fired = true;
+            mode.held = 0.;
+        }
+    }
+    if keys.just_released(key) {
+        // A quick tap in the mode, nothing dismantled, leaves it.
+        if mode.was_active && !mode.fired && mode.held < HOLD_S * 0.5 {
+            *mode = DismantleMode::default();
+            return;
+        }
+        mode.held = 0.;
+        mode.fired = false;
+    }
+}
+
+#[derive(Component)]
+pub(crate) struct DismantleUi;
+#[derive(Component)]
+pub(crate) struct DismantleFill;
+
+/// Under the reticle while dismantling: "[F] Hold to dismantle" and the hold's bar.
+pub(crate) fn spawn_dismantle_ui(mut commands: Commands) {
+    use stubby_ui::style::{self, INK, PANEL, WARNING};
+    commands
+        .spawn((
+            DismantleUi,
+            Name::new("Dismantle prompt"),
+            Visibility::Hidden,
+            Pickable::IGNORE,
+            Node {
+                position_type: PositionType::Absolute,
+                top: percent(55),
+                width: percent(100),
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+        ))
+        .with_children(|root| {
+            root.spawn((
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    row_gap: px(6),
+                    padding: UiRect::axes(px(12), px(8)),
+                    ..default()
+                },
+                BackgroundColor(PANEL.with_alpha(0.6)),
+                Pickable::IGNORE,
+            ))
+            .with_children(|panel| {
+                panel
+                    .spawn((
+                        Node {
+                            column_gap: px(8),
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        Pickable::IGNORE,
+                    ))
+                    .with_children(|row| {
+                        style::keycap(row, "F", 14.);
+                        row.spawn(style::world_label("Hold to dismantle", 16., INK));
+                    });
+                panel
+                    .spawn((
+                        Node {
+                            width: px(160),
+                            height: px(4),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(1., 1., 1., 0.15)),
+                        Pickable::IGNORE,
+                    ))
+                    .with_child((
+                        DismantleFill,
+                        Node {
+                            width: percent(0),
+                            height: percent(100),
+                            ..default()
+                        },
+                        BackgroundColor(WARNING),
+                        Pickable::IGNORE,
+                    ));
+            });
+        });
+}
+
+/// Turn the targeted segment red and show the prompt; restore every other segment.
+pub(crate) fn show_dismantle(
+    mode: Res<DismantleMode>,
+    mut red: Local<Option<Handle<StandardMaterial>>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut pieces: Query<(
+        &SegmentPiece,
+        &ChildOf,
+        &mut MeshMaterial3d<StandardMaterial>,
+    )>,
+    mut ui: Query<&mut Visibility, With<DismantleUi>>,
+    mut fill: Query<&mut Node, With<DismantleFill>>,
+) {
+    let red = red
+        .get_or_insert_with(|| {
+            materials.add(StandardMaterial {
+                base_color: Color::srgba(0.9, 0.15, 0.1, 0.55),
+                emissive: LinearRgba::rgb(1.2, 0.12, 0.06),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            })
+        })
+        .clone();
+    let target = mode.target.filter(|_| mode.active);
+    for (piece, parent, mut material) in &mut pieces {
+        let wanted = if target == Some((parent.parent(), piece.segment)) {
+            &red
+        } else {
+            &piece.material
+        };
+        if material.0 != *wanted {
+            material.0 = wanted.clone();
+        }
+    }
+    for mut visibility in &mut ui {
+        visibility.set_if_neq(if target.is_some() {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        });
+    }
+    for mut node in &mut fill {
+        node.width = percent(mode.progress() * 100.);
     }
 }
 
