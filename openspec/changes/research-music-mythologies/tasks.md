@@ -14,7 +14,8 @@
 - [x] 1.7 Tropical forest (done 2026-11-18, `docs/research/music-mythologies.md`; primary texts still to check)
 - [x] 1.8 Mountain (done 2026-11-18, `docs/research/music-mythologies.md`; primary texts still to check)
 - [x] 1.9 Summary: two open candidates per biome, sixteen in all (the note's summary table)
-- [ ] 1.10 The user picks about a dozen from the pool; decide whether to seek community consultation for a Mojave figure, the Lakota courting flute or the Andean sirinu
+- [x] 1.10 Figures are essences, not gods; recast the pool as essences (design D6, user 2026-11-18)
+- [ ] 1.11 Choose essences as we go (ongoing): update each one's status in the note's essence table as regions and shrines are designed; decide case by case whether to seek community consultation (a Mojave figure, the courting flute, the spring spirit who tunes instruments)
 
 ## 2. Follow-through
 - [ ] 2.1 Point `add-mythic-regions` and `add-deity-shrines` at the note when they open
