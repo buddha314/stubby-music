@@ -85,7 +85,9 @@ Never put a physics body on a visual whose scale animates (bugs flash from scale
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
 milestones and Space Elevator phases (`openspec/changes/add-inventory-and-goals-hud/`).
-Goals guide; they never end the game. The player starts with 25 reeds, one campfire's worth
+Goals guide; they never end the game. A goal done is announced as Satisfactory
+announces a milestone: a banner drops in at the top, STEP COMPLETE or GOAL COMPLETE over its
+name, with a short chime (`stubby_game::goal_banner`; chime from `tools/audio/make_goal_chime.py`). The player starts with 25 reeds, one campfire's worth
 (`start.json`), and the first chore is **Build a campfire** (Q; condition `built`); the
 opening scene has none placed. The first chores (short-term goals met by a condition, not items) go on with
 **Build a heartbeat** (configure the burbler so it sounds), then **Water the tree** (lead

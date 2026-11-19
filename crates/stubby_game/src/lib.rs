@@ -21,6 +21,7 @@ mod pause_menu;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
 pub mod glue;
+mod goal_banner;
 mod goals_hub;
 mod grotto_audio_review;
 mod prefab_review;
@@ -70,6 +71,7 @@ impl Plugin for DesertPlugin {
             stream_review::StreamReviewPlugin,
             sky_review::SkyReviewPlugin,
             goals_hub::GoalsHubPlugin,
+            goal_banner::GoalBannerPlugin,
             pause_menu::PauseMenuPlugin,
             build::BuildPlugin,
             campfire::CampfirePlugin,

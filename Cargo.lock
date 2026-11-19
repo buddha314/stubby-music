@@ -6981,6 +6981,7 @@ dependencies = [
  "bevy_stubby_recipes",
  "gltf",
  "half",
+ "hound",
  "jackdaw_terrain",
  "png",
  "serde",
