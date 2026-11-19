@@ -42,13 +42,24 @@ Open:
   initiates, to men or to women), no sacred objects or ceremonies, nothing whose sharing
   is unclear; carvings are our own designs, not copies of real rock art.
   `research-music-mythologies` holds the research and the check on each figure.
-- **Regions: decided (user, 2026-11-18):** similar biomes are grouped, because the
-  creatures are a product of their environment, with small regional differences:
-  **desert** (US Southwest and Mojave, Aboriginal Australia), **Mediterranean**,
-  **temperate forest** (Ireland and England, the Pacific Northwest) and **tropical**
-  (Africa, perhaps Southeast Asia). Everyone in this world lives together well and
-  intermingles, so a region's figures may come from any tradition in its group. The game
-  needs **about a dozen characters** in all.
+- **Regions are biomes, and figures are grouped by landscape, not culture (user,
+  2026-11-18, replacing the earlier four culture-based groups).** Eight game biomes, merged
+  from the WWF's 14 terrestrial biomes (Olson et al. 2001) and its freshwater types; a
+  region's figures come from any culture whose homeland is that kind of landscape. Mountain
+  and wetland are landforms: the map takes them from elevation and lake basins, not climate.
+  The game needs **about a dozen characters** in all.
+
+  | Game biome | WWF biomes | Landscape |
+  | --- | --- | --- |
+  | **Desert** (the start) | 13 deserts and xeric shrublands; endorheic basins | sand, salt and mud flats, dry lakebeds that refill |
+  | **Chaparral** | 12 Mediterranean forests, woodlands and scrub | shrubs, rocky sand, scrub oak |
+  | **Grassland and savanna** | 7, 8 grasslands, savannas and shrublands | open grass, scattered trees |
+  | **Broadleaf forest** | 4 temperate broadleaf and mixed; 2 tropical dry broadleaf | oak, ash, deciduous woods |
+  | **Conifer rainforest** | 5 temperate coniferous; 6 boreal | tall, wet, mossy conifers |
+  | **Tropical forest** | 1 tropical moist broadleaf | jungle |
+  | **Wetland** | 9 flooded grasslands; floodplain freshwaters | marsh, bog, reed beds around lakes |
+  | **Mountain** | 10 montane grasslands; 11 tundra (alpine); montane freshwaters | bare rock, alpine meadow, mountain lakes |
+
 - **Figures: decided (user, 2026-11-18):** unnamed, as spirits of a place, with imagery
   similar to, not identical with, their cultural heritage. Imagery gets the same check as
   stories: only openly shared motifs and styles, never a copy of a particular work.
@@ -70,8 +81,8 @@ the generation proposal: `docs/research/biome-map-generation.md`.
 - **Lakes and ponds refill as the story moves along**: they start dry or low, and the arc
   fills them.
 - **The edge of the world is a foggy wall** with club lights and vague figures dancing in it.
-- **Ground:** the desert is **sand, salt and mud flats**; the Mediterranean is **chaparral**,
-  shrubs and rocky sand. Temperate forest and tropical are still to define.
+- **Ground:** the desert is **sand, salt and mud flats**; the chaparral is shrubs and rocky
+  sand. The other biomes' ground is still to define.
 
 Open: how many regions per group; what the dangers are; whether streams must run downhill
 before pumps exist.

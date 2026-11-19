@@ -11,15 +11,16 @@ each source recorded.
 
 ## What Changes
 
-- Add `docs/research/music-mythologies.md`: for each region, the music deities, spirits
+- Add `docs/research/music-mythologies.md`: for each biome, the music deities, spirits
   and creatures; what each is tied to (landscape, instrument, sound, season); the source;
   and who shares the story and how freely.
 - A sharing check on every entry: openly shared by its community, restricted, or unclear.
   Only the first may be used in the game.
-- Regions are biome groups (user, 2026-11-18): desert (US Southwest and Mojave,
-  Aboriginal Australia), Mediterranean, temperate forest (Ireland and England, the
-  Pacific Northwest) and tropical (Africa, perhaps Southeast Asia). About a dozen
-  characters in all. The desert comes first.
+- Regions are biomes, and figures are grouped by the landscape they inhabit, not the
+  culture around them (user, 2026-11-18): eight game biomes (desert, chaparral, grassland
+  and savanna, broadleaf forest, conifer rainforest, tropical forest, wetland, mountain),
+  each drawing on any culture whose homeland is that landscape. About a dozen characters in
+  all. The desert comes first.
 - **No code, assets or rule changes.** Figures stay research until a region or shrine
   change adopts them.
 

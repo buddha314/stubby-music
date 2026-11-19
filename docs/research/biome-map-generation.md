@@ -14,10 +14,11 @@ Facts are cited. Anything under *For us* is a proposal.
 
 From the design guide and AGENTS.md, as of today:
 
-- **Four biome groups**: desert (Mojave and US Southwest, Aboriginal Australia),
-  Mediterranean, temperate forest (Ireland and England, Pacific Northwest), tropical (Africa,
-  perhaps Southeast Asia). Each region is the home of music deities and creatures from its
-  group; **about a dozen figures** in all.
+- **Eight biomes** (decided after this note was first written, 2026-11-18; the table is in
+  the design guide): desert, chaparral, grassland and savanna, broadleaf forest, conifer
+  rainforest, tropical forest, wetland, mountain. Each region is the home of music deities
+  and creatures from cultures of that landscape; **about a dozen figures** in all. Mountain
+  and wetland come from elevation and lake basins, the rest from climate.
 - **Interspersed**, not one biome per map and not concentric rings.
 - **A desert start**: the authored opening (spawn, burbler, grove, echo grotto) stays as it
   is, and the game opens silent, so spawn is out of hearing range of every sound.

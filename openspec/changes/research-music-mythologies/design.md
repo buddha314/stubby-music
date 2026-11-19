@@ -28,26 +28,32 @@ sharing check (open, restricted, unclear) and why; the imagery it suggests, with
 check; and game notes, kept apart from what
 the source says.
 
-### D4. Regions are biome groups (user, 2026-11-18)
-Similar biomes are grouped, because the creatures are a product of their environment,
-with small regional differences:
+### D4. Figures are grouped by landscape, not culture (user, 2026-11-18)
+This replaces the first D4 (four culture-based groups: desert, Mediterranean, temperate
+forest, tropical). The creatures are a product of their environment, so the research
+starts from the **biome** and looks for every culture whose homeland is that kind of
+landscape, anywhere in the world. Eight game biomes, merged from the WWF's 14 terrestrial
+biomes (Olson et al. 2001) and its freshwater types:
 
-| Group | Draws on |
-| --- | --- |
-| Desert | the US Southwest and Mojave; Aboriginal Australia |
-| Mediterranean | the Mediterranean lands |
-| Temperate forest | Ireland and England; the Pacific Northwest |
-| Tropical | Africa; perhaps Southeast Asia |
+| Game biome | WWF biomes | Landscape |
+| --- | --- | --- |
+| **Desert** (the start) | 13 deserts and xeric shrublands; endorheic basins | sand, salt and mud flats, dry lakebeds that refill |
+| **Chaparral** | 12 Mediterranean forests, woodlands and scrub | shrubs, rocky sand, scrub oak |
+| **Grassland and savanna** | 7, 8 grasslands, savannas and shrublands | open grass, scattered trees |
+| **Broadleaf forest** | 4 temperate broadleaf and mixed; 2 tropical dry broadleaf | oak, ash, deciduous woods |
+| **Conifer rainforest** | 5 temperate coniferous; 6 boreal | tall, wet, mossy conifers |
+| **Tropical forest** | 1 tropical moist broadleaf | jungle |
+| **Wetland** | 9 flooded grasslands; floodplain freshwaters | marsh, bog, reed beds around lakes |
+| **Mountain** | 10 montane grasslands; 11 tundra (alpine); montane freshwaters | bare rock, alpine meadow, mountain lakes |
 
-Peoples in this world live together well and intermingle, so a region's figures may come
-from any tradition in its group. The whole game needs **about a dozen characters**, so
-roughly three per group: the research looks wide, and the summary picks the strongest
-cleared candidates per group. How groups sit on the procedural map is
-`add-mythic-regions`'s design.
+Peoples in this world live together well and intermingle, so a biome's figures may come
+from any of its cultures. The whole game needs **about a dozen characters**: the research
+looks wide, and the summary picks about two strong cleared candidates per biome. How
+biomes sit on the map is `add-mythic-regions`'s design (`docs/research/biome-map-generation.md`).
 
 ### D5. Unnamed figures, imagery from their heritage (user, 2026-11-18)
 Figures appear unnamed, as spirits of a place, never as a named deity of a people. Their
-look draws on the visual heritage of the cultures their group comes from. The sharing
+look draws on the visual heritage of the cultures their biome draws on. The sharing
 check covers imagery as well as stories: a motif, style or pattern is used only when it is
 openly shared, and some are not (Aboriginal designs can belong to a clan or a Dreaming,
 and a design for one figure is not free for another). A figure looks similar to its heritage, not identical
