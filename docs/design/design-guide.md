@@ -72,6 +72,11 @@ Open:
 - How waking a deity plays (a rack with targets, as the campfire's, is the obvious fit) and
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.
+- **Monsters and the amphitheatre (user, 2026-11-18):** the beings include **monsters**,
+  still to research. Once the beings are sorted, a **natural amphitheatre** somewhere on the
+  map shows how they cluster. Each being's traits are data in the being atlas
+  (`docs/research/beings/`, `add-being-atlas`), and `uv run tools/beings/cluster.py`
+  clusters them and writes the seating layout.
 
 ## The world map
 

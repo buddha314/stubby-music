@@ -18,7 +18,8 @@ checking. Nothing here is cleared for shipping until task 0.4 (community review)
 some humans called him Kokopelli". Each row is a kind of being; the traditions are where
 it was found, and the entries below are the evidence and the sharing checks. Status is
 updated as regions and shrines are designed: **candidate**, **chosen**, **set aside**, or
-**consult** (needs community consultation first). About a dozen will ship.
+**consult** (needs community consultation first). About a dozen will ship. Each row is also coded by traits in the being atlas
+(`docs/research/beings/beings.json`, `add-being-atlas`); keep the two in step.
 
 | Essence | Biome | Found in (entries below) | Music tie | Status |
 | --- | --- | --- | --- | --- |
