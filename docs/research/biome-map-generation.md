@@ -215,22 +215,41 @@ settings, separate seeded streams per purpose (graph, fields, scatter, stamps) s
 decorative does not move a shrine, and fields sampled in global coordinates. Farthest
 Frontier's seed drift is the warning: bump the generator version whenever output changes.
 
-## Open questions for the user
+## Decisions (user, 2026-11-18) and what they mean for generation
 
-1. **Map size and shape.** Finite and bounded (Satisfactory 5.4 km square, Farthest Frontier
-   up to about 5 km²), or unbounded chunks (Factorio)? A finite map makes the guarantees
-   above simple; this note assumes finite, with chunked meshes for culling and streaming.
-2. **How many regions per group**, and does the start stay a single desert region, or can
-   the player start in another group as Satisfactory offers four starts?
-3. **Elevation and streams.** Real hills change stream laying: does mud flow downhill, and
-   may a stream climb? Today everything is flat.
-4. **Edges.** What bounds the world: mountains, sea, the windstorm thickening into a wall?
-5. **Bleak before bloom.** What tells a dead Mediterranean region from a dead desert: rock
-   colour, landforms, the shapes of dormant plants? `assets/lighting/lighting_keys.json`
-   would need keys per group.
-6. **Do regions change with progress?** Factorio's map is fixed once generated; ours
-   blooms. Does blooming only recolour and grow, or can it reshape terrain (water returning
-   to dry lakes)?
+The decisions themselves are recorded in `docs/design/design-guide.md`, *The world map*.
+Their consequences for the proposal above:
+
+1. **About Satisfactory's size, finite, and complicated.** A playable area of roughly
+   5.4 × 5.4 km (about 30 km²). At regions about 700 m across that is some 50–60 regions,
+   enough for each group to appear several times. "Complicated" argues for strong
+   elevation and ridge noise, canyons, caves and stamps, not open plains.
+2. **Danger rises toward the perimeter; the dangers are not defined yet.** Make danger a
+   field separate from biome: a function of distance from spawn, with noise so it is not a
+   ring, as Factorio raises enemy and resource settings with distance from the start. Biome
+   says *what* a place is; danger says *how hard*. Every group can then appear both near
+   and far.
+3. **The game starts in the desert.** A single start. The spawn region is desert by the
+   repair pass, and the starting-area cone keeps the authored mudflat flat.
+4. **Hills, yes; pumping water comes later; mountain lakes.** Elevation is real. Lake
+   basins are local minima of the elevation field, including high ones (mountain lakes),
+   found by a depression search over the height map, not by a sea level. Whether laid mud
+   must run downhill before pumps exist is still a stream-design question.
+5. **The edge is a foggy wall with club lights and vague figures dancing.** The map is
+   bounded by a fog band, not terrain: the windstorm's fog thickens toward the perimeter,
+   coloured club lights sweep inside it and silhouettes dance, half seen. Generation
+   reserves an edge band; the look is art (and fits the disco-ball scanner).
+6. **Desert: sand, salt and mud flats. Mediterranean: chaparral, shrubs, rocky sand.**
+   These are the groups' ground types, so they stay distinct while still bleak: the
+   desert's flats are flat and pale (salt) or cracked (mud), the Mediterranean is broken,
+   rocky and scrubby. Temperate and tropical ground types are still to define.
+7. **Lakes and ponds refill as the story moves along.** Basins are generated once, with
+   their full shorelines, and start **dry or low**; water level is game state that the arc
+   raises. The desert's salt flats are dry lakebeds (Mojave playas) waiting to refill. Save
+   the level, not the basin.
+
+Still open: how many regions per group; the dangers themselves; temperate and tropical
+ground types; whether streams must follow slope.
 
 ## Sources
 

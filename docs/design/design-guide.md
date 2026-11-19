@@ -56,6 +56,26 @@ Open:
   what it gives back (light quality around it, a region's power).
 - The echo grotto's boulders as the first carving site.
 
+## The world map
+
+**Decided (user, 2026-11-18):** the regions above lie on one procedural map. Research and
+the generation proposal: `docs/research/biome-map-generation.md`.
+
+- **Size:** about as big as Satisfactory's (roughly 5.4 × 5.4 km), **finite but
+  complicated**: hills, canyons, lakes, not open plains.
+- **Biome groups are interspersed**, and **the game starts in the desert**.
+- **Danger rises toward the perimeter.** The dangers are not defined yet.
+- **Hills and water:** the land has real elevation, including **mountain lakes**.
+  Technology later in the game pumps water.
+- **Lakes and ponds refill as the story moves along**: they start dry or low, and the arc
+  fills them.
+- **The edge of the world is a foggy wall** with club lights and vague figures dancing in it.
+- **Ground:** the desert is **sand, salt and mud flats**; the Mediterranean is **chaparral**,
+  shrubs and rocky sand. Temperate forest and tropical are still to define.
+
+Open: how many regions per group; what the dangers are; whether streams must run downhill
+before pumps exist.
+
 ## The vardo: the player's base
 
 **Decided (user, 2026-11-18):** the player's base, our equivalent of Satisfactory's HUB,
