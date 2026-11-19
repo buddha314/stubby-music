@@ -60,8 +60,9 @@ This replaces D6's "the stream sounds the layered composition".
 ### D9. The rack shows what was inherited (user, 2026-11-18)
 A joined machine's rack keeps the inherited modules, then a **stream blank**: a 2HP
 divider (`assets/modules/stream_blank/`, `create_stream_blank.py`; modelled on Eurorack 2HP
-blanks, 10.16 mm, two diagonal screws), dark anodised with the stream's staff running down
-it and a small burbler bubble glyph, so the player sees where the burbler's part ends. The
+blanks, 10.16 mm, two diagonal screws), dark anodised with a small burbler bubble glyph and
+"@bitlung_" running up it in blue neon (Mozilla Headline, OFL, baked to geometry; user,
+2026-11-18), so the player sees where the burbler's part ends. The
 machine's own modules follow it. The campfire: burbler clock and VCO | stream blank |
 snail sequencer and VCA (the VCA is the camp's, not inherited); the VCO's OUT to the VCA's
 IN stays made for the player.
