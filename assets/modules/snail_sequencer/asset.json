@@ -101,22 +101,10 @@
       "peak_strength": 6.0
     },
     {
-      "node": "Light_playhead_1",
-      "light": "playhead_1",
-      "rest_strength": 0.0,
-      "peak_strength": 8.0
-    },
-    {
       "node": "Button_gate_2",
       "light": "step_2",
       "rest_strength": 0.0,
       "peak_strength": 6.0
-    },
-    {
-      "node": "Light_playhead_2",
-      "light": "playhead_2",
-      "rest_strength": 0.0,
-      "peak_strength": 8.0
     },
     {
       "node": "Button_gate_3",
@@ -125,22 +113,10 @@
       "peak_strength": 6.0
     },
     {
-      "node": "Light_playhead_3",
-      "light": "playhead_3",
-      "rest_strength": 0.0,
-      "peak_strength": 8.0
-    },
-    {
       "node": "Button_gate_4",
       "light": "step_4",
       "rest_strength": 0.0,
       "peak_strength": 6.0
-    },
-    {
-      "node": "Light_playhead_4",
-      "light": "playhead_4",
-      "rest_strength": 0.0,
-      "peak_strength": 8.0
     }
   ],
   "placement": {

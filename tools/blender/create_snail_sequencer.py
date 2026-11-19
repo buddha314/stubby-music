@@ -61,7 +61,8 @@ def build():
                        "default": 0.0, "taper": "linear", "rotation_degrees": 300.0})
         buttons.append({"node": f"Button_gate_{n}", "param": f"gate_{n}", "light": f"step_{n}"})
         lights.append({"node": f"Button_gate_{n}", "light": f"step_{n}", "rest_strength": 0.0, "peak_strength": 6.0})
-        lights.append({"node": f"Light_playhead_{n}", "light": f"playhead_{n}", "rest_strength": 0.0, "peak_strength": 8.0})
+        # The playhead lights are the rack screen's (`step_lights`), not module lights: listed
+        # here, the module's light driver would hold them dark.
 
     kit.jack("clock", "in", 0.36, "CLOCK", x=-0.095)
     kit.jack("reset", "in", 0.36, "RESET", x=0.095)
