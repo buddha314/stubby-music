@@ -299,6 +299,7 @@ fn strike(
             if engine.sounding && gate(usize::from(tick.step)) {
                 let at = tick.at.unwrap_or_else(Instant::now);
                 pending.push((camp, at));
+                commands.entity(camp).insert(LayerPlaying(at));
                 // Its layer on the stream: a note at the join, riding downstream.
                 if let Some(join) = join {
                     layer.write(stubby_streams::LayerNote {
@@ -634,6 +635,15 @@ fn ghost_staff_mesh(join: Vec3, fire: Vec3, t: f32) -> Mesh {
 
 // ------------------------------------------------------------------ the chain, updated
 
+/// When a camp last played a gated step: its layer is playing, not just patched.
+#[derive(Component, Clone, Copy)]
+struct LayerPlaying(Instant);
+
+/// How long after its last gated step a camp still counts as playing (two bars at the
+/// slowest tempo, 24 BPM, would be 20 s; a few seconds keeps the heartbeat from going
+/// quiet for long when the camp stops).
+const PLAYING_FOR_S: f32 = 6.;
+
 /// How long a note takes from the join, along the ghost staff, into the fire and up.
 const DRAW_IN_S: f32 = 2.6;
 
@@ -643,12 +653,18 @@ const DRAW_IN_S: f32 = 2.6;
 /// heartbeat's notes leave the staff there to be drawn into the fire.
 fn update_chains(
     mut commands: Commands,
-    camps: Query<(&StreamJoin, &RackEngine), With<Fire>>,
+    camps: Query<(&StreamJoin, &RackEngine, Option<&LayerPlaying>), With<Fire>>,
     burblers: Query<(Entity, Option<&stubby_streams::ChainUpdated>), With<MachineVoice>>,
 ) {
     let mut updates: Vec<(Entity, f32)> = Vec::new();
-    for (join, engine) in &camps {
-        if !engine.sounding {
+    let now = Instant::now();
+    for (join, engine, playing) in &camps {
+        // Only a camp actually playing its steps updates the chain: a patched camp whose
+        // sequencer is not stepping must not silence the heartbeat (user, 2026-11-18:
+        // the stream went quiet).
+        let playing = playing
+            .is_some_and(|p| now.saturating_duration_since(p.0).as_secs_f32() < PLAYING_FOR_S);
+        if !engine.sounding || !playing {
             continue;
         }
         match updates
