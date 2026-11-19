@@ -1270,6 +1270,10 @@ fn ride_notes(
 }
 
 /// Where a voice is heard from: the machine, or the nearest point of its streams.
+/// A stream's voice sits this high above its bed: clear of its banks (0.36 m) and the
+/// mud's plates, so standing beside it the sound reaches you directly.
+const VOICE_ABOVE_BED_M: f32 = 0.6;
+
 /// Counting only the chain from `from_m` down: a joined machine's layer is heard
 /// downstream of its join, never upstream (a burbler's own voice from 0).
 fn nearest_source_from(
@@ -1287,7 +1291,10 @@ fn nearest_source_from(
             if stream.start + s < from_m {
                 continue;
             }
-            let point = stream.path.at(from + s).0;
+            // Heard from just above the banks, not from the bed: from the bed, the ground
+            // (an acoustic occluder) cut a stream's voice off for anyone beside it
+            // (user, 2026-11-18).
+            let point = stream.path.at(from + s).0 + Vec3::Y * VOICE_ABOVE_BED_M;
             if point.distance_squared(listener) < best.distance_squared(listener) {
                 best = point;
             }
@@ -1653,7 +1660,10 @@ mod tests {
         let heard = |listener, streams: &[&LaidStream], from_m| {
             nearest_source_from(listener, machine, streams, from_m)
         };
-        assert!(heard(far, &[path], 0.).distance(port().at + Vec3::X * 20.) < 0.6);
+        let end = port().at + Vec3::X * 20. + Vec3::Y * VOICE_ABOVE_BED_M;
+        assert!(heard(far, &[path], 0.).distance(end) < 0.6);
+        // Above the banks, so the ground beside the stream does not cut it off.
+        assert!(heard(far, &[path], 0.).y >= port().at.y + 0.36);
         // Standing behind the machine: heard from the machine.
         let behind = machine - Vec3::X * 5.;
         assert_eq!(heard(behind, &[path], 0.), machine);
