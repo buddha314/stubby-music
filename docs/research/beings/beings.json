@@ -1,139 +1,6034 @@
 {
-  "about": "The being atlas: every essence (spirit, creature, monster) the game may use, coded by traits for cluster analysis. Rows mirror the essence table in docs/research/music-mythologies.md; evidence and sharing checks live there. Run: uv run tools/beings/cluster.py. Coding is a first pass by Claude (2026-11-18); review as essences are chosen.",
-  "biomes": ["desert", "chaparral", "grassland", "wetland", "broadleaf", "conifer", "tropical", "mountain"],
-  "kinds": ["spirit", "creature", "monster"],
-  "statuses": ["candidate", "chosen", "set_aside", "consult"],
-  "facets": {
-    "form": ["human", "animal", "bird", "insect", "fish", "plant", "tree", "landform", "unseen"],
-    "sound": ["voice", "throat_song", "flute", "pipes", "strings", "harp", "drum", "horn", "birdsong", "call", "hum", "echo"],
-    "role": ["performer", "maker", "teacher", "giver", "answerer", "listener", "gatherer", "lure", "guardian", "mourner"],
-    "transformation": ["human_to_animal", "human_to_insect", "human_to_plant", "creature_to_instrument", "tree_to_instrument", "voice_to_stone"],
-    "place": ["sand", "rock", "cave", "cliff", "peak", "tree", "grove", "reeds", "lake", "river", "waterfall", "spring", "hill", "canopy", "open_grass", "wind"],
-    "time": ["day", "night", "any"],
-    "presence": ["seen", "sometimes_seen", "heard_only"],
-    "disposition": ["benevolent", "ambivalent", "dangerous"],
-    "gift": ["melody", "instrument", "skill", "comfort", "rain", "warning"],
-    "theme": ["death", "grief", "love", "courtship", "longing", "joy", "sleep", "rain", "fertility", "bargain", "trickery"]
-  },
-  "beings": [
-    {
-      "id": "humming_sand", "essence": "The humming sand, the land's own voice", "kind": "spirit",
-      "biomes": ["desert"], "status": "candidate", "found_in": ["Arabian and Saharan 'azif", "singing dunes"],
-      "form": ["landform", "unseen"], "sound": ["hum", "drum"], "role": ["performer"], "transformation": [],
-      "place": ["sand", "wind"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
-      "gift": ["warning"], "theme": ["longing"]
-    },
-    {
-      "id": "answering_place", "essence": "The place that answers a singer in kind", "kind": "spirit",
-      "biomes": ["desert"], "status": "candidate", "found_in": ["Mongolian and Tuvan spirits of place"],
-      "form": ["landform", "unseen"], "sound": ["throat_song", "echo", "call"], "role": ["answerer", "listener"], "transformation": [],
-      "place": ["rock", "wind", "spring"], "time": ["any"], "presence": ["heard_only"], "disposition": ["benevolent"],
-      "gift": ["rain"], "theme": ["rain"]
-    },
-    {
-      "id": "wandering_flute_player", "essence": "The wandering flute player", "kind": "spirit",
-      "biomes": ["desert"], "status": "consult", "found_in": ["the user's example; Southwest rock art is restricted, so the look is our own"],
-      "form": ["human"], "sound": ["flute"], "role": ["performer", "giver"], "transformation": [],
-      "place": ["sand", "rock"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["rain"], "theme": ["rain", "fertility"]
-    },
-    {
-      "id": "reed_voice", "essence": "The reed that was a voice", "kind": "spirit",
-      "biomes": ["chaparral", "wetland"], "status": "candidate", "found_in": ["Greek Syrinx", "Rumi's reed"],
-      "form": ["plant", "human"], "sound": ["pipes", "voice"], "role": ["maker"], "transformation": ["human_to_plant"],
-      "place": ["reeds", "river"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["instrument"], "theme": ["longing", "love"]
-    },
-    {
-      "id": "singing_insects", "essence": "Singers who became insects", "kind": "creature",
-      "biomes": ["chaparral"], "status": "candidate", "found_in": ["Greek cicadas of the Muses"],
-      "form": ["insect"], "sound": ["voice", "call"], "role": ["performer"], "transformation": ["human_to_insect"],
-      "place": ["tree", "open_grass"], "time": ["day"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": [], "theme": ["death", "joy"]
-    },
-    {
-      "id": "beloved_creature_instrument", "essence": "The instrument made from a beloved creature", "kind": "creature",
-      "biomes": ["grassland", "wetland"], "status": "candidate", "found_in": ["Mongol horse-head fiddle", "Kazakh kobyz", "Finnish pike-jaw kantele"],
-      "form": ["animal", "fish"], "sound": ["strings", "harp"], "role": ["maker", "gatherer"], "transformation": ["creature_to_instrument"],
-      "place": ["open_grass", "lake"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["instrument"], "theme": ["grief", "love"]
-    },
-    {
-      "id": "music_against_death", "essence": "Music that holds off death", "kind": "spirit",
-      "biomes": ["grassland"], "status": "candidate", "found_in": ["Kazakh Korkyt and the kobyz"],
-      "form": ["human"], "sound": ["strings"], "role": ["performer", "guardian"], "transformation": ["creature_to_instrument"],
-      "place": ["river", "open_grass"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["instrument"], "theme": ["death"]
-    },
-    {
-      "id": "courting_flute", "essence": "The courting flute on the wind", "kind": "spirit",
-      "biomes": ["grassland"], "status": "consult", "found_in": ["Lakota and Dakota elk, woodpecker and cedar"],
-      "form": ["animal", "bird", "tree"], "sound": ["flute", "call"], "role": ["maker", "teacher"], "transformation": ["tree_to_instrument"],
-      "place": ["open_grass", "tree", "wind"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["instrument"], "theme": ["courtship", "love"]
-    },
-    {
-      "id": "singers_on_the_lake", "essence": "Singers on the lake", "kind": "creature",
-      "biomes": ["wetland"], "status": "candidate", "found_in": ["Irish swans of Lough Derravaragh"],
-      "form": ["bird"], "sound": ["voice"], "role": ["performer", "mourner"], "transformation": ["human_to_animal"],
-      "place": ["lake"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["comfort"], "theme": ["grief", "longing"]
-    },
-    {
-      "id": "tree_harp", "essence": "The tree that is a harp", "kind": "spirit",
-      "biomes": ["broadleaf", "conifer"], "status": "candidate", "found_in": ["Irish oak harp of three musics", "Finnish birch kantele"],
-      "form": ["tree"], "sound": ["harp", "strings"], "role": ["performer", "maker"], "transformation": ["tree_to_instrument"],
-      "place": ["tree", "grove"], "time": ["any"], "presence": ["seen"], "disposition": ["benevolent"],
-      "gift": ["comfort"], "theme": ["grief", "joy", "sleep"]
-    },
-    {
-      "id": "hidden_hill_music", "essence": "Music from the hidden hill", "kind": "spirit",
-      "biomes": ["broadleaf"], "status": "candidate", "found_in": ["Irish fairy music of the ringforts"],
-      "form": ["unseen", "human"], "sound": ["voice", "pipes", "strings"], "role": ["performer", "lure"], "transformation": [],
-      "place": ["hill"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
-      "gift": ["melody"], "theme": ["longing"]
-    },
-    {
-      "id": "waterfall_teacher", "essence": "The teacher under the waterfall", "kind": "spirit",
-      "biomes": ["conifer"], "status": "candidate", "found_in": ["Norwegian and Swedish fossegrim and näcken", "Andean spring spirits (consult)"],
-      "form": ["human"], "sound": ["strings"], "role": ["teacher", "lure"], "transformation": [],
-      "place": ["waterfall", "river"], "time": ["night"], "presence": ["sometimes_seen"], "disposition": ["ambivalent"],
-      "gift": ["skill"], "theme": ["bargain"]
-    },
-    {
-      "id": "empty_mountain_music", "essence": "Music from the empty mountain", "kind": "spirit",
-      "biomes": ["conifer"], "status": "candidate", "found_in": ["Japanese tengu-bayashi"],
-      "form": ["unseen"], "sound": ["flute", "drum"], "role": ["performer"], "transformation": [],
-      "place": ["peak", "grove"], "time": ["night"], "presence": ["heard_only"], "disposition": ["ambivalent"],
-      "gift": [], "theme": ["trickery"]
-    },
-    {
-      "id": "child_bird_call", "essence": "The child who became a bird's call", "kind": "creature",
-      "biomes": ["tropical"], "status": "candidate", "found_in": ["Kaluli muni bird"],
-      "form": ["bird", "human"], "sound": ["birdsong", "call", "voice"], "role": ["mourner"], "transformation": ["human_to_animal"],
-      "place": ["canopy"], "time": ["any"], "presence": ["sometimes_seen"], "disposition": ["benevolent"],
-      "gift": ["melody"], "theme": ["grief"]
-    },
-    {
-      "id": "canopy_musicians", "essence": "Musicians who became creatures of the canopy", "kind": "creature",
-      "biomes": ["tropical"], "status": "candidate", "found_in": ["K'iche' Maya howler-monkey musicians"],
-      "form": ["animal"], "sound": ["flute"], "role": ["performer"], "transformation": ["human_to_animal"],
-      "place": ["canopy", "tree"], "time": ["day"], "presence": ["seen"], "disposition": ["ambivalent"],
-      "gift": ["skill"], "theme": ["trickery", "joy"]
-    },
-    {
-      "id": "echo", "essence": "The echo", "kind": "spirit",
-      "biomes": ["mountain", "chaparral"], "status": "candidate", "found_in": ["Japanese yamabiko", "Greek Echo"],
-      "form": ["unseen", "landform"], "sound": ["echo", "voice"], "role": ["answerer"], "transformation": ["voice_to_stone"],
-      "place": ["cliff", "cave", "rock", "peak"], "time": ["any"], "presence": ["heard_only"], "disposition": ["ambivalent"],
-      "gift": [], "theme": ["longing"]
-    },
-    {
-      "id": "horn_gift", "essence": "The gift of the horn, chosen over riches", "kind": "spirit",
-      "biomes": ["mountain"], "status": "candidate", "found_in": ["Swiss alphorn spirits"],
-      "form": ["human"], "sound": ["horn"], "role": ["giver"], "transformation": [],
-      "place": ["peak", "open_grass"], "time": ["any"], "presence": ["sometimes_seen"], "disposition": ["benevolent"],
-      "gift": ["instrument"], "theme": ["joy", "bargain"]
-    }
+ "about": "The being atlas: every mythic being (spirit, creature, monster) found per biome, as an essence, coded by traits for cluster analysis. Rows mirror the essence table in docs/research/music-mythologies.md; evidence and sharing checks live there. Run: uv run tools/beings/cluster.py. The catalogue (catalogue.md) gives each being's sources and sharing check; restricted beings are listed there and never coded. Coding is a first pass by Claude and four research passes (2026-11-18); review as beings are chosen.",
+ "biomes": [
+  "desert",
+  "chaparral",
+  "grassland",
+  "wetland",
+  "broadleaf",
+  "conifer",
+  "tropical",
+  "mountain"
+ ],
+ "kinds": [
+  "spirit",
+  "creature",
+  "monster"
+ ],
+ "statuses": [
+  "candidate",
+  "chosen",
+  "set_aside",
+  "consult"
+ ],
+ "facets": {
+  "form": [
+   "human",
+   "giant",
+   "small_folk",
+   "animal",
+   "bird",
+   "insect",
+   "reptile",
+   "fish",
+   "hybrid",
+   "plant",
+   "tree",
+   "landform",
+   "water",
+   "weather",
+   "fire",
+   "light",
+   "unseen",
+   "shapeshifter"
+  ],
+  "element": [
+   "earth",
+   "stone",
+   "sand",
+   "salt",
+   "mud",
+   "water",
+   "ice",
+   "air",
+   "fire",
+   "wood",
+   "plant"
+  ],
+  "sound": [
+   "voice",
+   "throat_song",
+   "flute",
+   "pipes",
+   "strings",
+   "harp",
+   "drum",
+   "horn",
+   "birdsong",
+   "call",
+   "hum",
+   "echo",
+   "whistle",
+   "laugh",
+   "scream",
+   "roar",
+   "silence"
+  ],
+  "music": [
+   "core",
+   "incidental",
+   "none"
+  ],
+  "role": [
+   "performer",
+   "maker",
+   "teacher",
+   "giver",
+   "answerer",
+   "listener",
+   "gatherer",
+   "lure",
+   "guardian",
+   "mourner",
+   "trickster",
+   "devourer",
+   "healer",
+   "guide",
+   "punisher",
+   "rainmaker",
+   "herder",
+   "builder"
+  ],
+  "transformation": [
+   "human_to_animal",
+   "human_to_insect",
+   "human_to_plant",
+   "human_to_stone",
+   "creature_to_instrument",
+   "tree_to_instrument",
+   "voice_to_stone",
+   "shapeshift"
+  ],
+  "place": [
+   "sand",
+   "salt_flat",
+   "mudflat",
+   "rock",
+   "cave",
+   "cliff",
+   "peak",
+   "scrub",
+   "tree",
+   "grove",
+   "reeds",
+   "marsh",
+   "lake",
+   "river",
+   "waterfall",
+   "spring",
+   "well",
+   "hill",
+   "canopy",
+   "open_grass",
+   "wind",
+   "sky",
+   "underground",
+   "mist"
+  ],
+  "time": [
+   "day",
+   "night",
+   "dusk",
+   "any"
+  ],
+  "presence": [
+   "seen",
+   "sometimes_seen",
+   "heard_only"
+  ],
+  "disposition": [
+   "benevolent",
+   "ambivalent",
+   "dangerous"
+  ],
+  "gift": [
+   "melody",
+   "instrument",
+   "skill",
+   "comfort",
+   "rain",
+   "warning",
+   "knowledge",
+   "luck",
+   "healing",
+   "fertility",
+   "wealth",
+   "protection"
+  ],
+  "theme": [
+   "death",
+   "grief",
+   "love",
+   "courtship",
+   "longing",
+   "joy",
+   "sleep",
+   "rain",
+   "drought",
+   "fertility",
+   "bargain",
+   "trickery",
+   "hunger",
+   "punishment",
+   "protection",
+   "journey",
+   "seasons",
+   "abundance",
+   "creation",
+   "water"
   ]
+ },
+ "beings": [
+  {
+   "id": "humming_sand",
+   "essence": "The humming sand, the land's own voice",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Arabian and Saharan 'azif",
+    "singing dunes"
+   ],
+   "summary": "A low hum or drumming heard at night in empty desert, and the sound of singing dunes, taken by desert peoples for the voice of unseen beings.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "landform",
+    "unseen"
+   ],
+   "element": [
+    "sand",
+    "air"
+   ],
+   "sound": [
+    "hum",
+    "drum"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [],
+   "place": [
+    "sand",
+    "wind"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "longing"
+   ]
+  },
+  {
+   "id": "answering_place",
+   "essence": "The place that answers a singer in kind",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Mongolian and Tuvan spirits of place"
+   ],
+   "summary": "Each place has a master-spirit; singers imitate wind, water and animals in throat song to please it, and rain rites at cairns include the singing.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "landform",
+    "unseen"
+   ],
+   "element": [
+    "stone",
+    "air"
+   ],
+   "sound": [
+    "throat_song",
+    "echo",
+    "call"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "answerer",
+    "listener"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "wind",
+    "spring"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "rain"
+   ],
+   "theme": [
+    "rain"
+   ]
+  },
+  {
+   "id": "wandering_flute_player",
+   "essence": "The wandering flute player",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "consult",
+   "sharing": "open",
+   "found_in": [
+    "the user's example; Southwest rock art is restricted, so the look is our own"
+   ],
+   "summary": "A travelling flute player whose music brings rain and fertility (the user's example; its look must be our own).",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "sand"
+   ],
+   "sound": [
+    "flute"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "sand",
+    "rock"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "rain"
+   ],
+   "theme": [
+    "rain",
+    "fertility"
+   ]
+  },
+  {
+   "id": "reed_voice",
+   "essence": "The reed that was a voice",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral",
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Syrinx",
+    "Rumi's reed"
+   ],
+   "summary": "A nymph fleeing pursuit becomes reeds, and the wind in them, cut and bound, becomes the first panpipes; a reed torn from its bed sings of longing.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "plant",
+    "human"
+   ],
+   "element": [
+    "plant",
+    "water"
+   ],
+   "sound": [
+    "pipes",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "maker"
+   ],
+   "transformation": [
+    "human_to_plant"
+   ],
+   "place": [
+    "reeds",
+    "river"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "longing",
+    "love"
+   ]
+  },
+  {
+   "id": "singing_insects",
+   "essence": "Singers who became insects",
+   "kind": "creature",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek cicadas of the Muses"
+   ],
+   "summary": "Men so absorbed in song that they forgot to eat and died became cicadas, singing without food from birth to death.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "insect"
+   ],
+   "element": [
+    "plant"
+   ],
+   "sound": [
+    "voice",
+    "call"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [
+    "human_to_insect"
+   ],
+   "place": [
+    "tree",
+    "open_grass"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "joy"
+   ]
+  },
+  {
+   "id": "beloved_creature_instrument",
+   "essence": "The instrument made from a beloved creature",
+   "kind": "creature",
+   "biomes": [
+    "grassland",
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Mongol horse-head fiddle",
+    "Kazakh kobyz",
+    "Finnish pike-jaw kantele"
+   ],
+   "summary": "A herder, bard or hero makes the first fiddle or harp from a beloved or giant creature, and its playing gathers every creature to listen.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "animal",
+    "fish"
+   ],
+   "element": [
+    "water",
+    "earth"
+   ],
+   "sound": [
+    "strings",
+    "harp"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "maker",
+    "gatherer"
+   ],
+   "transformation": [
+    "creature_to_instrument"
+   ],
+   "place": [
+    "open_grass",
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "grief",
+    "love"
+   ]
+  },
+  {
+   "id": "music_against_death",
+   "essence": "Music that holds off death",
+   "kind": "spirit",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kazakh Korkyt and the kobyz"
+   ],
+   "summary": "A bard makes the first kobyz from his camel and plays it to hold death away, as long as the music lasts.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "strings"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "guardian"
+   ],
+   "transformation": [
+    "creature_to_instrument"
+   ],
+   "place": [
+    "river",
+    "open_grass"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "death"
+   ]
+  },
+  {
+   "id": "courting_flute",
+   "essence": "The courting flute on the wind",
+   "kind": "spirit",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "consult",
+   "sharing": "open",
+   "found_in": [
+    "Lakota and Dakota elk, woodpecker and cedar"
+   ],
+   "summary": "The first courting flute, learned from the elk, the woodpecker and the wind in a cedar, carries a young man's song to the one he loves.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "animal",
+    "bird",
+    "tree"
+   ],
+   "element": [
+    "wood",
+    "air"
+   ],
+   "sound": [
+    "flute",
+    "call"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "maker",
+    "teacher"
+   ],
+   "transformation": [
+    "tree_to_instrument"
+   ],
+   "place": [
+    "open_grass",
+    "tree",
+    "wind"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "courtship",
+    "love"
+   ]
+  },
+  {
+   "id": "singers_on_the_lake",
+   "essence": "Singers on the lake",
+   "kind": "creature",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Irish swans of Lough Derravaragh"
+   ],
+   "summary": "Children turned to swans sing on one lake for centuries, and people camp on the shore to hear them.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "bird"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "mourner"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "comfort"
+   ],
+   "theme": [
+    "grief",
+    "longing"
+   ]
+  },
+  {
+   "id": "tree_harp",
+   "essence": "The tree that is a harp",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Irish oak harp of three musics",
+    "Finnish birch kantele"
+   ],
+   "summary": "A harp named for an oak, or made from a weeping birch, plays sorrow, joy and sleep.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "tree"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "harp",
+    "strings"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "maker"
+   ],
+   "transformation": [
+    "tree_to_instrument"
+   ],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "comfort"
+   ],
+   "theme": [
+    "grief",
+    "joy",
+    "sleep"
+   ]
+  },
+  {
+   "id": "hidden_hill_music",
+   "essence": "Music from the hidden hill",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Irish fairy music of the ringforts"
+   ],
+   "summary": "Music heard at night from inside raths and hills, from people unseen; some listeners are drawn in and lost.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "unseen",
+    "human"
+   ],
+   "element": [
+    "earth"
+   ],
+   "sound": [
+    "voice",
+    "pipes",
+    "strings"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "lure"
+   ],
+   "transformation": [],
+   "place": [
+    "hill"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "melody"
+   ],
+   "theme": [
+    "longing"
+   ]
+  },
+  {
+   "id": "waterfall_teacher",
+   "essence": "The teacher under the waterfall",
+   "kind": "spirit",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Norwegian and Swedish fossegrim and näcken",
+    "Andean spring spirits (consult)"
+   ],
+   "summary": "A fiddler under a waterfall or in a millrace teaches music in return for an offering, sometimes too well.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "strings"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "teacher",
+    "lure"
+   ],
+   "transformation": [],
+   "place": [
+    "waterfall",
+    "river"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "skill"
+   ],
+   "theme": [
+    "bargain"
+   ]
+  },
+  {
+   "id": "empty_mountain_music",
+   "essence": "Music from the empty mountain",
+   "kind": "spirit",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Japanese tengu-bayashi"
+   ],
+   "summary": "Flute and drum music heard from empty cedar mountains at night, with no player to be found.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "unseen"
+   ],
+   "element": [
+    "stone",
+    "wood"
+   ],
+   "sound": [
+    "flute",
+    "drum"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "trickery"
+   ]
+  },
+  {
+   "id": "child_bird_call",
+   "essence": "The child who became a bird's call",
+   "kind": "creature",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kaluli muni bird"
+   ],
+   "summary": "A boy refused food by his sister becomes a fruit-dove, and its falling call becomes the model for weeping song.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "bird",
+    "human"
+   ],
+   "element": [
+    "wood",
+    "air"
+   ],
+   "sound": [
+    "birdsong",
+    "call",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "mourner"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "canopy"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "melody"
+   ],
+   "theme": [
+    "grief"
+   ]
+  },
+  {
+   "id": "canopy_musicians",
+   "essence": "Musicians who became creatures of the canopy",
+   "kind": "creature",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "K'iche' Maya howler-monkey musicians"
+   ],
+   "summary": "Two brothers, flute players and artists, are turned into howler monkeys and called down from the canopy by a flute.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "flute"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "canopy",
+    "tree"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "skill"
+   ],
+   "theme": [
+    "trickery",
+    "joy"
+   ]
+  },
+  {
+   "id": "echo",
+   "essence": "The echo",
+   "kind": "spirit",
+   "biomes": [
+    "mountain",
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Japanese yamabiko",
+    "Greek Echo"
+   ],
+   "summary": "The mountain's answering voice: a spirit who can only repeat what she hears, her body scattered into rock.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "unseen",
+    "landform"
+   ],
+   "element": [
+    "stone"
+   ],
+   "sound": [
+    "echo",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "answerer"
+   ],
+   "transformation": [
+    "voice_to_stone"
+   ],
+   "place": [
+    "cliff",
+    "cave",
+    "rock",
+    "peak"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "longing"
+   ]
+  },
+  {
+   "id": "horn_gift",
+   "essence": "The gift of the horn, chosen over riches",
+   "kind": "spirit",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Swiss alphorn spirits"
+   ],
+   "summary": "Spirits offer a herdsman strength, riches or a horn; he chooses the horn, and the valley wonders whether the mountains have begun to sing.",
+   "sources": [
+    "docs/research/music-mythologies.md"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "stone",
+    "air"
+   ],
+   "sound": [
+    "horn"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "open_grass"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "joy",
+    "bargain"
+   ]
+  },
+  {
+   "id": "shapeshifting_desert_devourer",
+   "essence": "the shapeshifter of the empty waste that lures lone travellers and eats them",
+   "kind": "monster",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Arabian ghul (pre-Islamic and later folklore)",
+    "Persian and Levantine ghoul tales"
+   ],
+   "summary": "A desert being that takes animal or human shape, often a hyena or an alluring woman (in some accounts with hooves for feet), and leads solitary travellers away into the waste to kill and eat them. Some medieval scholars dismissed it as fear and hallucination born of desolate places.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ghoul",
+    "https://www.britannica.com/topic/ghoul",
+    "https://www.medievalists.net/2020/10/demons-djinns-devils/"
+   ],
+   "form": [
+    "shapeshifter",
+    "animal",
+    "human"
+   ],
+   "element": [
+    "sand"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer",
+    "trickster"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "sand"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "trickery",
+    "journey",
+    "death"
+   ]
+  },
+  {
+   "id": "voices_that_lead_astray",
+   "essence": "voices and drums in the night desert that call a straggler by name and lead him off for ever",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Marco Polo, desert of Lop (Taklamakan / Lop Nur)",
+    "early Silk Road travellers' lore noted by Henry Yule"
+   ],
+   "summary": "Travellers crossing the Lop desert who fell behind at night heard spirits talking like their companions and calling them by name, and followed them until lost. By day too the desert sounded with many instruments, and above all drums.",
+   "sources": [
+    "https://dsr.nii.ac.jp/toyobunko/VIII-5-B2-9/V-2/page/0026.html.en",
+    "https://classicsretold.blogspot.com/2025/02/marco-polo-in-central-asia-34-city.html",
+    "https://www.discovermagazine.com/planet-earth/how-singing-sand-dunes-produce-desert-music"
+   ],
+   "form": [
+    "unseen"
+   ],
+   "element": [
+    "sand",
+    "air"
+   ],
+   "sound": [
+    "voice",
+    "call",
+    "drum"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "lure",
+    "trickster"
+   ],
+   "transformation": [],
+   "place": [
+    "sand",
+    "wind"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "journey",
+    "trickery",
+    "death"
+   ]
+  },
+  {
+   "id": "half_bodied_hopper",
+   "essence": "a being of half a body, one arm and one leg, hopping fast across the waste",
+   "kind": "monster",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Arabian nasnas (Yemen, Hadramawt; Thousand and One Nights)"
+   ],
+   "summary": "The nasnas has half a head, half a body, one arm and one leg, and hops at great speed. Tradition makes it the offspring of a shiqq and a human, or the transformed people of lost Iram.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Nasnas",
+    "https://ithraeyat.ithra.com/editions/desert/denizens-of-the-desert-nasnas",
+    "https://pantheon.org/articles/n/nashas.html"
+   ],
+   "form": [
+    "hybrid",
+    "human"
+   ],
+   "element": [
+    "sand"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "sand"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "punishment"
+   ]
+  },
+  {
+   "id": "sand_worm_that_kills",
+   "essence": "a blood-red worm beneath the sand that kills at a distance",
+   "kind": "monster",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Mongolian olgoi-khorkhoi (Gobi)"
+   ],
+   "summary": "Gobi herders describe a thick red worm, like an intestine, that lives under the sand, surfaces in the hot months and kills with poison or a shock. Roy Chapman Andrews carried the story west in the 1920s; the Tartar sand boa is the likeliest real animal.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Mongolian_death_worm",
+    "https://www.livescience.com/46450-mongolian-death-worm.html",
+    "https://skeptoid.com/episodes/4344"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [
+    "sand"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "sand",
+    "underground"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "seasons"
+   ]
+  },
+  {
+   "id": "thirst_serpent",
+   "essence": "the desert snake whose bite brings a thirst no water can quench",
+   "kind": "monster",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Roman dipsas (Lucan, Pharsalia 9)",
+    "Greek seps",
+    "medieval bestiaries"
+   ],
+   "summary": "Among the serpents of the Libyan desert, born from the blood of Medusa, the dipsas bites and leaves an unquenchable thirst. Lucan's soldier Aulus drinks a river and still dies of thirst.",
+   "sources": [
+    "https://bestiary.ca/prisources/pstexts964.htm",
+    "https://openresearch-repository.anu.edu.au/items/9bef28bb-0d6c-4f7d-b133-8f51eeed8954"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "sand"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "sand"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "drought",
+    "water",
+    "death",
+    "journey"
+   ]
+  },
+  {
+   "id": "desert_making_serpent",
+   "essence": "a small crowned serpent whose breath withers the shrubs, scorches the grass and bursts the rocks",
+   "kind": "monster",
+   "biomes": [
+    "desert",
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Roman basilisk (Pliny, Natural History 8.33, Cyrenaica)",
+    "medieval bestiaries"
+   ],
+   "summary": "Pliny's basilisk of Cyrenaica is a hand-span long with a white diadem mark; it kills shrubs by touch and breath, burns up grass and breaks stones, leaving barren ground. Only the weasel can kill it.",
+   "sources": [
+    "https://www.theoi.com/Thaumasios/Basiliskoi.html",
+    "https://en.wikipedia.org/wiki/Basilisk"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "stone",
+    "plant"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "sand",
+    "scrub",
+    "rock"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "drought",
+    "death"
+   ]
+  },
+  {
+   "id": "famine_wind",
+   "essence": "the king of the wind demons, whose hot wind brings drought, famine and locusts, and whose image wards off worse",
+   "kind": "monster",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Assyrian and Babylonian Pazuzu"
+   ],
+   "summary": "Pazuzu, a winged hybrid demon, was the southwest wind that brought drought, famine and locusts. His fearsome image on amulets was also used to drive off other demons, notably Lamashtu.",
+   "sources": [
+    "https://artsandscience.usask.ca/antiquities/collections/items/near-eastern-items/assyrian-items/demon-pazuzu.php",
+    "https://www.worldhistory.org/Pazuzu",
+    "https://brewminate.com/meet-the-demons-of-ancient-mesopotamia/"
+   ],
+   "form": [
+    "hybrid",
+    "weather"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "wind",
+    "sky"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "protection"
+   ],
+   "theme": [
+    "drought",
+    "hunger",
+    "protection"
+   ]
+  },
+  {
+   "id": "whirlwind_rider",
+   "essence": "the column of whirling sand with a proud and rebellious spirit inside it",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Arabic zawba'a (dust whirlwind) folk belief, recorded by Lane"
+   ],
+   "summary": "Zawba'a is the Arabic word for a whirlwind that lifts dust into a column, and it was commonly said that a devil, insolent and rebellious, rides within it.",
+   "sources": [
+    "https://lexicon.quranic-research.net/data/11_z/012_zbE.html",
+    "https://www.middleeasteye.net/discover/jinn-islamic-arabian-tradition-supernatural-beings"
+   ],
+   "form": [
+    "weather",
+    "unseen"
+   ],
+   "element": [
+    "sand",
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "wind",
+    "sand"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": []
+  },
+  {
+   "id": "ore_eating_light_bird",
+   "essence": "a night bird that eats ore and glows with it, leading miners to riches or over a cliff",
+   "kind": "creature",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Chilean alicanto (Atacama mining folklore)"
+   ],
+   "summary": "The alicanto runs at night across the Atacama with wings shining gold or silver from the ore it eats. A miner who follows it may find a rich vein, but a greedy one is led over a cliff; it is said one led Juan Godoy to the Chañarcillo silver in 1832.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Alicanto",
+    "https://www.icarito.cl/?p=8966"
+   ],
+   "form": [
+    "bird",
+    "light"
+   ],
+   "element": [
+    "stone"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guide",
+    "lure",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "cliff",
+    "sand"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "wealth",
+    "luck"
+   ],
+   "theme": [
+    "abundance",
+    "punishment",
+    "hunger"
+   ]
+  },
+  {
+   "id": "rain_animal_of_the_waterhole",
+   "essence": "the rain as an animal that lives in the waterhole and walks the sky on legs of rain",
+   "kind": "creature",
+   "biomes": [
+    "desert",
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "|Xam San !Khwa (Karoo, Bleek and Lloyd archive)"
+   ],
+   "summary": "The rain is an animal that lives in, and is, the water of the waterhole, crossing the sky as a cloud like an eland bull with streams of rain for legs. There is a fierce rain-bull and a gentle rain-cow, and rain-makers led it out on a thong to bring rain.",
+   "sources": [
+    "https://digitalbleeklloyd.uct.ac.za/cgi-bin/view/Curations/curatorium.zip/curatorium/pages/rain-power.html",
+    "https://folkloristics.org/pdf/2019/rain-stories-interpreting-water-beings-in-the-folklore-of-the-southern-african-khoisan-and-their-descendants.pdf"
+   ],
+   "form": [
+    "animal",
+    "weather",
+    "water"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "rainmaker"
+   ],
+   "transformation": [],
+   "place": [
+    "well",
+    "sky"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "rain"
+   ],
+   "theme": [
+    "rain",
+    "water",
+    "drought"
+   ]
+  },
+  {
+   "id": "spirits_of_solitude",
+   "essence": "the people of the wild and of longing, met alone in empty places",
+   "kind": "spirit",
+   "biomes": [
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Tuareg Kel Essuf (Aïr, Acacus, Tadrart)"
+   ],
+   "summary": "Kel Essuf are spirits of essuf, the wild, solitude and nostalgia, met by travellers in dark or remote places and able to cause illness. The cure is a public rite with a drummer and a chorus of women singers.",
+   "sources": [
+    "https://www.culturalsurvival.org/node/3880",
+    "https://journal.oraltradition.org/wp-content/uploads/files/articles/13ii/2_rasmussen.pdf",
+    "https://roundheadsahara.com/rock-art/kel-essuf/"
+   ],
+   "form": [
+    "unseen"
+   ],
+   "element": [
+    "sand",
+    "stone"
+   ],
+   "sound": [
+    "drum",
+    "voice"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [],
+   "transformation": [],
+   "place": [
+    "sand",
+    "rock",
+    "cave"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "longing",
+    "journey"
+   ]
+  },
+  {
+   "id": "singers_on_the_rocks",
+   "essence": "bird-women on sea rocks whose song draws sailors to death",
+   "kind": "monster",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Seirenes (Homer, Odyssey 12; Apollonius)"
+   ],
+   "summary": "The Sirens sit on a rocky island amid the bones of men, singing a song that promises knowledge; sailors who listen steer in and never return. Odysseus hears them bound to the mast, and Orpheus outsings them.",
+   "sources": [
+    "https://www.theoi.com/Pontios/Seirenes.html",
+    "https://en.wikipedia.org/wiki/Siren_(mythology)"
+   ],
+   "form": [
+    "hybrid",
+    "bird",
+    "human"
+   ],
+   "element": [
+    "stone",
+    "water"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "lure",
+    "performer",
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "cliff"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "knowledge"
+   ],
+   "theme": [
+    "death",
+    "longing",
+    "journey"
+   ]
+  },
+  {
+   "id": "fire_breathing_hill_beast",
+   "essence": "the fire-breathing beast of the scrub hills, where the ground still burns",
+   "kind": "monster",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Khimaira of Lycia",
+    "the burning gas vents of Yanartaş (Mount Chimaera)"
+   ],
+   "summary": "The Chimera, part lion, goat and serpent, breathed fire and ravaged Lycia until Bellerophon killed it. Ancient writers placed it at Mount Chimaera, where natural gas vents still burn on the hillside.",
+   "sources": [
+    "https://www.theoi.com/Ther/Khimaira.html",
+    "https://en.wikipedia.org/wiki/Chimera_(mythology)",
+    "https://en.wikipedia.org/wiki/Yanarta%C5%9F"
+   ],
+   "form": [
+    "hybrid",
+    "animal",
+    "fire"
+   ],
+   "element": [
+    "fire",
+    "stone"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "hill",
+    "rock",
+    "scrub"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death"
+   ]
+  },
+  {
+   "id": "roadside_shapeshifter",
+   "essence": "a night phantom that changes shape on lonely roads and feeds on the living",
+   "kind": "monster",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Empousa (Aristophanes, Frogs; Philostratus)",
+    "Greek Lamia"
+   ],
+   "summary": "The Empousa, with fiery hair and one bronze leg, appears to travellers at night in shifting forms (beast, beautiful woman) and seduces or devours them; abuse and shouting drive it off.",
+   "sources": [
+    "https://www.theoi.com/Phasma/Empousai.html",
+    "https://en.wikipedia.org/wiki/Empusa"
+   ],
+   "form": [
+    "shapeshifter",
+    "hybrid"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "scrub"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "trickery",
+    "journey"
+   ]
+  },
+  {
+   "id": "midday_panic",
+   "essence": "the goat-footed spirit of rugged pasture whose shout throws herds and travellers into sudden panic",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Pan (Arcadia; Theocritus Idyll 1)",
+    "panikon deima, the 'panic fear'"
+   ],
+   "summary": "Pan haunts the wildest, rockiest country; disturbed in his midday rest he shouts, and flocks stampede and lone travellers are seized by groundless terror. Theocritus' herdsman will not pipe at noon for fear of him.",
+   "sources": [
+    "https://www.theoi.com/Cult/PanCult.html",
+    "https://www.ebsco.com/research-starters/social-sciences-and-humanities/pan-deity",
+    "https://www.gresham.ac.uk/sites/default/files/transcript/R_2025_09_04_0921_Hutton_T_FINAL.pdf"
+   ],
+   "form": [
+    "hybrid"
+   ],
+   "element": [
+    "stone"
+   ],
+   "sound": [
+    "call",
+    "pipes"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "herder",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "scrub",
+    "hill",
+    "cave"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "sleep",
+    "punishment"
+   ]
+  },
+  {
+   "id": "song_that_moves_stones",
+   "essence": "music so strong that trees gather, beasts follow and stones rise into walls",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral",
+    "broadleaf"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Orpheus (Ovid, Metamorphoses 10-11)",
+    "Greek Amphion (walls of Thebes)"
+   ],
+   "summary": "When Orpheus sang on a bare hill, trees came of their own accord to shade him, and beasts and stones followed his lyre; Amphion's lyre made the stones of Thebes set themselves into walls. Legendary singers rather than spirits, coded here as the essence of their song.",
+   "sources": [
+    "https://www.poetryintranslation.com/PITBR/Latin/Metamorph10.php",
+    "https://www.theoi.com/Text/OvidMetamorphoses11.html",
+    "https://www.britannica.com/topic/Amphion"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "stone",
+    "wood"
+   ],
+   "sound": [
+    "strings",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "builder"
+   ],
+   "transformation": [],
+   "place": [
+    "hill",
+    "grove",
+    "rock"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "melody"
+   ],
+   "theme": [
+    "creation",
+    "abundance",
+    "grief"
+   ]
+  },
+  {
+   "id": "instrument_that_is_a_god",
+   "essence": "the lyre itself, honoured as a being",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Ugaritic Kinnaru (Levantine coast, Bronze Age)",
+    "Cypriot Kinyras (debated link)"
+   ],
+   "summary": "Kinnaru appears in Ugarit's god lists and offering lists and was most likely the lyre made divine; no myth about it survives. Scholars connect it, with debate, to Kinyras, the musician king of Cyprus.",
+   "sources": [
+    "https://www-current.chs.harvard.edu/chapter/7-kinnaru-of-ugarit",
+    "https://en.wikipedia.org/wiki/Kinyras"
+   ],
+   "form": [],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "strings"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [],
+   "place": [],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": []
+  },
+  {
+   "id": "humble_bird_brings_songs",
+   "essence": "the small plain bird who carried the songs to the people when the proud one hoarded them",
+   "kind": "creature",
+   "biomes": [
+    "chaparral",
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kumeyaay Tu cuk (bird-song origin, as told publicly by Ron Christman)"
+   ],
+   "summary": "The Creator gave bird songs to the people; a bright, jealous bird tried to keep and sell them and was stripped of colour and voice, becoming the squawking crow. The humble little Tu cuk carried the songs to the people instead.",
+   "sources": [
+    "https://www.kumeyaay.com/traditional-origins-of-southern-ca-bird-songs.html",
+    "https://festival.si.edu/blog/2016/the-kumeyaay-communities-of-california/"
+   ],
+   "form": [
+    "bird"
+   ],
+   "element": [],
+   "sound": [
+    "birdsong"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "scrub"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "melody"
+   ],
+   "theme": [
+    "punishment",
+    "creation"
+   ]
+  },
+  {
+   "id": "piper_who_became_a_river",
+   "essence": "the wild piper who challenged the god of music and became a spring-fed river",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek and Phrygian Marsyas (Celaenae)"
+   ],
+   "summary": "The satyr Marsyas found the aulos Athena threw away, grew so skilled he challenged Apollo, lost, and was flayed in a cave; the river Marsyas sprang from his blood or from his mourners' tears.",
+   "sources": [
+    "https://www.theoi.com/Georgikos/SatyrosMarsyas.html",
+    "https://en.wikipedia.org/wiki/Marsyas"
+   ],
+   "form": [
+    "hybrid"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "pipes"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [],
+   "place": [
+    "spring",
+    "river",
+    "cave"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "punishment",
+    "grief",
+    "death"
+   ]
+  },
+  {
+   "id": "enchanted_spring_maiden",
+   "essence": "an enchanted woman bound to a spring, cave or old stone, guarding treasure and waiting to be freed",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Portuguese and Galician moura encantada"
+   ],
+   "summary": "A moura encantada lives under a spell at a spring, well, cave or ancient stone, combing her hair and singing, often as a serpent by day; she guards hidden treasure, and the spell may be broken on St John's Eve, while a failed attempt binds her tighter.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Enchanted_moura",
+    "https://algarvehistoryassociation.com/en/features/portuguese-culture/207-small-myths-in-portuguese-culture",
+    "https://www.theportugalnews.com/news/2026-02-20/portuguese-magic-in-ancient-times/969321"
+   ],
+   "form": [
+    "human",
+    "shapeshifter",
+    "reptile"
+   ],
+   "element": [
+    "water",
+    "stone"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "guardian"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "spring",
+    "well",
+    "cave",
+    "rock"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "wealth"
+   ],
+   "theme": [
+    "bargain",
+    "longing",
+    "love"
+   ]
+  },
+  {
+   "id": "death_cry_flying_head",
+   "essence": "a flying head with ears for wings whose night cry foretells a death",
+   "kind": "monster",
+   "biomes": [
+    "chaparral"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Chilean and Argentine chonchon / tue-tue (Mapuche origin)"
+   ],
+   "summary": "A sorcerer anoints his throat and becomes a human head with feathers, talons and great ears for wings, flying at night. Its cry, 'tue tue', is heard even by those who cannot see it and is taken as an omen of death.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Chonchon",
+    "https://ancientpages.com/2024/03/12/chonchon-tue-tue-bird-with-human-head-brought-bad-omens-to-places-it-haunted"
+   ],
+   "form": [
+    "hybrid",
+    "bird"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [
+    "call"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "sky"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death"
+   ]
+  },
+  {
+   "id": "mountain_fire_spirit",
+   "essence": "a powerful spirit banished to a canyon, seen as fireballs and heard as thunder on the mountain",
+   "kind": "spirit",
+   "biomes": [
+    "chaparral",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Cahuilla Tahquitz (San Jacinto Mountains, Tahquitz Canyon)"
+   ],
+   "summary": "Tahquitz, once guardian spirit of the shamans, turned his power to harm and was banished to Tahquitz Canyon; he appears as fireballs, lightning and meteors and is heard as thunderous rumbling, and people were warned not to walk the canyon alone or at night.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tahquitz_(spirit)",
+    "https://en.wikipedia.org/wiki/Tahquitz_Canyon",
+    "https://www.visitgreaterpalmsprings.com/blog/post/the-legend-of-tahquitz/"
+   ],
+   "form": [
+    "fire",
+    "light",
+    "unseen"
+   ],
+   "element": [
+    "fire",
+    "stone"
+   ],
+   "sound": [
+    "roar"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "cliff"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "punishment",
+    "death"
+   ]
+  },
+  {
+   "id": "noon_field_spirit",
+   "essence": "the noon heat that walks the open field and strikes down workers",
+   "kind": "spirit",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Slavic Poludnitsa (Lady Midday, Południca)",
+    "East Slavic Polevik (male field spirit)"
+   ],
+   "summary": "A woman in white who appears in the fields at the hottest hour of summer and strikes anyone still working with sunstroke or a twisted neck, or poses them riddles; resting in shade at noon keeps her away. The Polevik is the male field spirit of the same noon hours.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Lady_Midday",
+    "https://en.wikipedia.org/wiki/Polevik"
+   ],
+   "form": [
+    "human",
+    "weather"
+   ],
+   "element": [
+    "air",
+    "plant"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "punisher",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "open_grass"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "punishment",
+    "seasons",
+    "death"
+   ]
+  },
+  {
+   "id": "many_headed_devourer",
+   "essence": "the many-headed devourer the steppe hero must cut down",
+   "kind": "monster",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kazakh Zhalmauyz Kempir (seven-headed devouring crone)",
+    "Mongol epic mangus (mangas)"
+   ],
+   "summary": "In Kazakh tales Zhalmauyz Kempir is a devouring crone with seven heads or one eye, beaten only by cutting off every head or putting out the eye, and sometimes a grudging helper. The Mongol epic mangus is the hero's many-headed monstrous enemy, cut to pieces and burned so it cannot regrow.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Zhalmauyz_Kempir",
+    "https://nur.nu.edu.kz/items/b694afd0-64cf-4034-aa14-6eda0e517b11",
+    "https://journal.oraltradition.org/wp-content/uploads/files/articles/16ii/Rinchindorji.pdf",
+    "https://mongoltales.cceh.uni-koeln.de/index_characters.html"
+   ],
+   "form": [
+    "hybrid",
+    "shapeshifter"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "open_grass"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "death"
+   ]
+  },
+  {
+   "id": "one_eyed_shepherd_giant",
+   "essence": "the one-eyed giant born of a polluted spring who demands a daily toll of herd and people",
+   "kind": "monster",
+   "biomes": [
+    "grassland",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Oghuz Turkic Tepegöz (Book of Dede Korkut)"
+   ],
+   "summary": "Tepegöz, son of a shepherd and a fairy met at a spring, grows into a one-eyed man-eater whom no blade can cut; the elder bard Dede Korkut bargains him down to two men and five hundred sheep a day until the hero Basat blinds and kills him.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tepeg%C3%B6z",
+    "https://edblogs.columbia.edu/worldepics/project/the-book-of-dede-korkut"
+   ],
+   "form": [
+    "giant"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "open_grass",
+    "cave",
+    "spring"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "bargain",
+    "punishment"
+   ]
+  },
+  {
+   "id": "pressing_birth_demon",
+   "essence": "the pressing spirit that comes for mothers and newborns in the tent",
+   "kind": "monster",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kazakh and Kyrgyz albasty",
+    "Al of Armenian, Persian and Central Asian folklore"
+   ],
+   "summary": "Across the Eurasian steppe the albasty is a female spirit most feared at childbirth and the forty days after, when it harms mother and child; it also presses the breath out of sleepers. Iron, smoke and prayer drove it off, and Kazakhs and Kyrgyz told a dangerous black kind from a milder yellow one.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Al_Basty",
+    "https://real.mtak.hu/128220/1/article-p413.pdf"
+   ],
+   "form": [
+    "human",
+    "unseen"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "open_grass"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "sleep",
+    "fertility"
+   ]
+  },
+  {
+   "id": "wolf_mother",
+   "essence": "the grey she-wolf who nursed the last survivor and mothered a people",
+   "kind": "creature",
+   "biomes": [
+    "grassland",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Göktürk Asena / Ashina wolf tale (Chinese dynastic histories)",
+    "Turkic grey wolf (Bozkurt)"
+   ],
+   "summary": "After a massacre, a she-wolf finds a wounded boy, nurses him and later bears ten half-wolf sons in a mountain cave; one, Ashina, founds the ruling clan of the Göktürks. Later Turkic tellings have a grey wolf lead the people out of an enclosed valley.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Asena",
+    "https://en.wikipedia.org/wiki/Ashina_tribe"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "guide",
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "open_grass",
+    "cave"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "protection",
+    "fertility"
+   ],
+   "theme": [
+    "creation",
+    "protection",
+    "journey"
+   ]
+  },
+  {
+   "id": "winged_steppe_horse",
+   "essence": "the winged horse of the steppe, faster than wind",
+   "kind": "creature",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Turkic tulpar (Kazakh, Kyrgyz, Bashkir)",
+    "Kyrgyz Manas's Ak-Kula",
+    "Kazakh epic Taiburyl"
+   ],
+   "summary": "The tulpar is the winged or sky horse of Turkic epic, less a single animal than the type of the hero's marvellous horse; the wings may mark speed rather than flight. Kazakh and Kyrgyz heroes ride such horses, and the tulpar sits on Kazakh and Bashkir emblems.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tulpar"
+   ],
+   "form": [
+    "animal",
+    "bird"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guide",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "open_grass",
+    "sky",
+    "wind"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "protection"
+   ],
+   "theme": [
+    "journey"
+   ]
+  },
+  {
+   "id": "wandering_ghost_light",
+   "essence": "the light over open ground at night that follows or misleads the traveller",
+   "kind": "spirit",
+   "biomes": [
+    "wetland",
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "English and Scottish will-o'-the-wisp / jack-o'-lantern",
+    "German Irrlicht",
+    "Swedish lyktgubbe/irrbloss (unbaptised souls)",
+    "Argentine and Uruguayan luz mala (pampas)",
+    "Queensland Min Min light (Channel Country plains)"
+   ],
+   "summary": "Lights that hang over bogs and marshes and lead walkers off the path, said to be fairies or restless souls. On the pampas the luz mala rises over a dead person's bones or buried treasure, and on the Queensland plains the Min Min light follows riders and vanishes when approached; some Aboriginal peoples told of these lights before colonisation.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Will-o%27-the-wisp",
+    "https://folklorescotland.com/will-o-the-wisp/",
+    "https://billiken.lat/interesante/como-y-por-que-aparece-la-luz-mala-uno-de-los-mitos-argentinos-mas-famosos/",
+    "https://en.wikipedia.org/wiki/Min_Min_light"
+   ],
+   "form": [
+    "light"
+   ],
+   "element": [
+    "fire",
+    "air"
+   ],
+   "sound": [
+    "silence"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "trickster",
+    "guide"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "open_grass",
+    "mist"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "wealth"
+   ],
+   "theme": [
+    "death",
+    "journey",
+    "trickery"
+   ]
+  },
+  {
+   "id": "plains_werewolf",
+   "essence": "the seventh son who turns beast under the full moon on the open plain",
+   "kind": "monster",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Argentine and Uruguayan lobizón (pampas)",
+    "Guaraní luisón",
+    "Portuguese and Brazilian lobisomem"
+   ],
+   "summary": "On the pampas the seventh son in a line of sons was said to become a lobizón on full-moon nights, roaming the plain as a beast that haunts graveyards and farmyards. Its roots are disputed: Guaraní luisón, Iberian werewolf lore brought via Brazil, or gaucho invention.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Luison",
+    "https://buenosairesherald.com/culture-ideas/heralds-halloween-special-argentinas-mythological-creatures"
+   ],
+   "form": [
+    "animal",
+    "human",
+    "shapeshifter"
+   ],
+   "element": [],
+   "sound": [
+    "roar"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [
+    "human_to_animal",
+    "shapeshift"
+   ],
+   "place": [
+    "open_grass"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "punishment",
+    "death"
+   ]
+  },
+  {
+   "id": "spider_trickster",
+   "essence": "the shape-changing spider who tricks the creatures of the plain, often with a song",
+   "kind": "spirit",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Lakota and Dakota Iktomi (Oceti Sakowin)"
+   ],
+   "summary": "Iktomi is a spider who can take any shape, a trickster whose schemes usually backfire. In Zitkála-Šá's published Dakota tellings he sings a song for ducks to dance to with their eyes shut so he can catch them.",
+   "sources": [
+    "https://www.gutenberg.org/ebooks/338",
+    "https://en.wikipedia.org/wiki/Old_Indian_Legends"
+   ],
+   "form": [
+    "insect",
+    "shapeshifter",
+    "human"
+   ],
+   "element": [],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "trickster",
+    "lure"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "open_grass"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "trickery",
+    "hunger"
+   ]
+  },
+  {
+   "id": "lightning_bird",
+   "essence": "the bird whose wings strike lightning over the grassland",
+   "kind": "monster",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Zulu and Xhosa impundulu / inyoni yezulu",
+    "linked to the hamerkop (Scopus umbretta)"
+   ],
+   "summary": "A great black-and-white bird that calls thunder and lightning with its wings and talons and strikes where it lands; in much telling it is a witch's familiar passed from mother to daughter. Some identify it with the hamerkop.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Lightning_bird",
+    "https://dsae.co.za/entry/impundulu/e03242"
+   ],
+   "form": [
+    "bird",
+    "weather"
+   ],
+   "element": [
+    "fire",
+    "air"
+   ],
+   "sound": [
+    "roar"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "sky",
+    "open_grass"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "rain",
+    "death"
+   ]
+  },
+  {
+   "id": "egg_of_the_world_tree",
+   "essence": "the great bird that lays the sun-egg in the tree of life, and the dragon at its roots",
+   "kind": "creature",
+   "biomes": [
+    "grassland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Kazakh Samruk (Samuryk) and the Baiterek tree, with the dragon Aydakhar"
+   ],
+   "summary": "Each year the bird Samruk lays a golden egg, the sun and the coming year, at the top of the tree of life that stands on the steppe; a dragon, Aydakhar, coils at the roots waiting to eat it.",
+   "sources": [
+    "https://www.inform.kz/en/how-giant-tree-legend-turned-into-reality-in-astana_a3286232",
+    "https://www.advantour.com/kazakhstan/astana/bayterek.htm"
+   ],
+   "form": [
+    "bird",
+    "tree"
+   ],
+   "element": [
+    "wood",
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "giver",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "open_grass",
+    "sky"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "luck"
+   ],
+   "theme": [
+    "seasons",
+    "creation",
+    "abundance"
+   ]
+  },
+  {
+   "id": "water_horse",
+   "essence": "the beautiful horse at the water's edge that carries its riders under",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Scottish kelpie (rivers) and each-uisge (lochs)",
+    "Irish aughisky",
+    "Swedish bäckahäst (brook horse)"
+   ],
+   "summary": "A fine horse waits by a loch, river or brook; whoever mounts it sticks fast, and it plunges into the water and drowns them, the Swedish brook horse stretching longer for each child who climbs on. Steel or a bridle masters it, and a bridled water horse can be made to plough.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kelpie",
+    "https://en.wikipedia.org/wiki/Each-uisge",
+    "https://dasg.ac.uk/blog/357/en"
+   ],
+   "form": [
+    "animal",
+    "shapeshifter"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "lake",
+    "river"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "trickery",
+    "water"
+   ]
+  },
+  {
+   "id": "singing_water_maidens",
+   "essence": "the maidens who leave the water in early summer to sing and dance on the banks",
+   "kind": "spirit",
+   "biomes": [
+    "wetland",
+    "broadleaf"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "East Slavic rusalki (Ukrainian, Russian, Belarusian)",
+    "East Slavic rusalki (Belarusian forest rusalki; Rusalka Week)"
+   ],
+   "summary": "In Rusalia week the rusalki come out of rivers and lakes, swing in the trees and sing and dance in rings on the banks all night. Older belief ties them to the water that makes fields grow; later accounts make them lure young men to drown. Villagers sang rusalka songs to see them off. Spirits of drowned young women live in rivers and, in early summer, climb into the trees and roam the forest and fields; they lure men with laughter, then tickle them to death or dance them into exhaustion.",
+   "sources": [
+    "https://www.encyclopediaofukraine.com/pages%5CR%5CU%5CRusalkaIT.htm",
+    "https://www.encyclopediaofukraine.com/pages%5CR%5CU%5CRusalkasongsIT.htm",
+    "https://en.wikipedia.org/wiki/Slavic_water_spirits",
+    "https://en.wikipedia.org/wiki/Rusalka",
+    "https://en.wikipedia.org/wiki/Rusalka_Week"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "water",
+    "plant"
+   ],
+   "sound": [
+    "voice",
+    "laugh"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "lure",
+    "rainmaker",
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "river",
+    "lake",
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "fertility",
+    "rain"
+   ],
+   "theme": [
+    "seasons",
+    "fertility",
+    "death",
+    "courtship"
+   ]
+  },
+  {
+   "id": "drowning_river_imp",
+   "essence": "the small water-dweller of ponds and rivers who drags children and horses under",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Japanese kappa (kawatarō and regional kin)"
+   ],
+   "summary": "The kappa lives in rivers, ponds and marshes and pulls swimmers, children and livestock into the water; it loves cucumbers, can be bargained with, and families floated a cucumber bearing their names to ward it off. Folklorists such as Yanagita read it as a fallen water god.",
+   "sources": [
+    "https://yokai.jp/en/yokai/kappa",
+    "https://www.worldhistory.org/kappa/"
+   ],
+   "form": [
+    "small_folk",
+    "reptile",
+    "hybrid"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "trickster"
+   ],
+   "transformation": [],
+   "place": [
+    "river",
+    "marsh",
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "skill"
+   ],
+   "theme": [
+    "death",
+    "bargain",
+    "water"
+   ]
+  },
+  {
+   "id": "booming_billabong_beast",
+   "essence": "the beast of the swamp and billabong known by its booming cry",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Wemba-Wemba / Wergaia and other south-eastern Aboriginal water beings, generalised as the bunyip",
+    "colonial Australian folklore"
+   ],
+   "summary": "A creature of swamps, billabongs, creeks and waterholes in south-eastern Australia, heard at night as a deep booming and said to take people who come to the water. From the 1840s the bunyip passed into settler folklore; the booming is often matched to the Australasian bittern.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bunyip",
+    "https://australiangeographic.com.au/?p=152416"
+   ],
+   "form": [
+    "animal",
+    "unseen"
+   ],
+   "element": [
+    "water",
+    "mud"
+   ],
+   "sound": [
+    "roar",
+    "call"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "lake",
+    "river"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death",
+    "water"
+   ]
+  },
+  {
+   "id": "swamp_dragon",
+   "essence": "the dragon of the river swamps whom to see is to die",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Mandinka and other Gambian and Senegambian peoples' ninki nanka"
+   ],
+   "summary": "A long-bodied dragon of the Gambia's mangrove swamps and creeks, described with a horse-like head, a crest and mirror-like scales; to see it brings sickness and death, and parents warn children away from the swamp with it.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ninki_Nanka",
+    "https://news.mongabay.com/2012/06/traditional-belief-in-mythical-beasts-help-protect-forests"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "water",
+    "mud"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "river"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death",
+    "protection"
+   ]
+  },
+  {
+   "id": "weed_covered_pond_hag",
+   "essence": "the green-toothed hag under the duckweed who drags in children",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "English Jenny (Jinny) Greenteeth (Lancashire, Cheshire, Shropshire)",
+    "Peg Powler (River Tees)",
+    "Peg o' Nell"
+   ],
+   "summary": "A green-skinned, sharp-toothed hag who lurks at the bottom of ponds and pits, her surface hidden under a mat of weed that looks like ground, and reaches up with long arms to drown children who come too close.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Folklore_of_Lancashire",
+    "https://fairyist.com/fairy-types/jenny-greenteeth",
+    "https://manchestermill.co.uk/p/owd-jinny-greenteeths-comin-with"
+   ],
+   "form": [
+    "human",
+    "plant"
+   ],
+   "element": [
+    "water",
+    "plant"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death",
+    "protection"
+   ]
+  },
+  {
+   "id": "regrowing_marsh_serpent",
+   "essence": "the many-headed serpent of the marsh whose heads grow back",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek Lernaean Hydra (marshes of Lerna)"
+   ],
+   "summary": "A water serpent with nine heads (or many more) living in the marshes of Lerna by a spring; cut off one head and two grow back, its breath and blood are poison, and only fire sealing each neck stops the regrowth.",
+   "sources": [
+    "https://theoi.com/Ther/DrakonHydra.html",
+    "https://static.perseus.tufts.edu/Herakles/hydra.html"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "water",
+    "mud"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "spring"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death"
+   ]
+  },
+  {
+   "id": "mere_dwelling_mother",
+   "essence": "the mother in the mere beneath the fens who avenges her child",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Old English Grendel's mother and Grendel (Beowulf)",
+    "English place names grendles mere, grendeles pytt"
+   ],
+   "summary": "Grendel and his mother live in the fens, under a dark mere that even a hunted stag will not enter; when Grendel is killed his mother rises to avenge him and is fought in a hall beneath the water.",
+   "sources": [
+    "https://books.openbookpublishers.com/10.11647/obp.0190/ch14.xhtml",
+    "https://en.wikipedia.org/wiki/Grendel%27s_mother"
+   ],
+   "form": [
+    "giant",
+    "human"
+   ],
+   "element": [
+    "water",
+    "mud"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "marsh",
+    "lake",
+    "cave",
+    "mist"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "grief",
+    "death",
+    "punishment"
+   ]
+  },
+  {
+   "id": "swan_maiden",
+   "essence": "the bird-woman who bathes in the lake with her feather robe laid aside",
+   "kind": "spirit",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Norse swan-maidens (Völundarkviða)",
+    "Japanese hagoromo tales",
+    "Irish, Welsh and many other ATU 400 tales"
+   ],
+   "summary": "Bird-women come down to a lake and take off their feather robes to bathe; a man who hides a robe keeps its owner as his wife until she finds it again and flies away. In the Norse lay three such women are found spinning on a lake shore.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Swan_maiden",
+    "https://sites.pitt.edu/~dash/swan.html",
+    "https://vikingr.org/old-norse-texts/lay-of-volund"
+   ],
+   "form": [
+    "bird",
+    "human",
+    "shapeshifter"
+   ],
+   "element": [
+    "water",
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "giver"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "luck"
+   ],
+   "theme": [
+    "love",
+    "longing",
+    "trickery"
+   ]
+  },
+  {
+   "id": "crying_lake_water_dog",
+   "essence": "the water dog of the lake that cries like a child to draw people in",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Nahua (Aztec) ahuizotl, Florentine Codex Book 11"
+   ],
+   "summary": "A small dog-like creature of the lakes, dark and slick, with a hand at the end of its tail; it cries like a baby or makes fish and frogs leap to bring people to the edge, drags them under and takes their eyes, nails and teeth.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ahuizotl_(mythology)",
+    "https://www.ancient-origins.net/myths-legends-americas/ahuizotl-aztec-mythical-creature-or-real-fisherman-s-foe-009941"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "scream",
+    "call"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "hunger",
+    "trickery"
+   ]
+  },
+  {
+   "id": "lake_otter_hound",
+   "essence": "the giant otter-hound of the lough that kills by the shore and whose mate comes after",
+   "kind": "monster",
+   "biomes": [
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Irish dobhar-chú (King Otter), Glenade Lough, Co. Leitrim"
+   ],
+   "summary": "A huge otter-like water hound of Irish loughs. In the Glenade story it kills a woman washing at the shore in 1722; her husband kills it and then has to fight off its mate, and a carved gravestone at Conwall cemetery shows the beast.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Dobhar-ch%C3%BA",
+    "https://www.leitrimobserver.ie/news/features/334274/the-tale-of-leitrim-s-own-loch-ness-monster-the-dobhar-chu.html",
+    "https://www.sligoheritage.com/archdabharchu.htm"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "lake"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "grief"
+   ]
+  },
+  {
+   "id": "forest_master",
+   "essence": "the master of the forest who keeps its game and leads travellers astray",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "East Slavic leshy",
+    "Finnish Tapio and Mielikki"
+   ],
+   "summary": "The forest has a master who owns its animals and is rarely seen but often heard laughing, whistling or calling among the trees; he misleads people who offend him. Finnish hunters sang to the forest king and his wife for game, and the herding charm asks the forest for a horn and honey-flute so it will spare the herd.",
+   "sources": [
+    "https://www.britannica.com/print/article/337093",
+    "https://en.wikipedia.org/wiki/Tapio_(spirit)",
+    "https://standardebooks.org/ebooks/elias-lonnrot/the-kalevala/john-martin-crawford/text/chapter-32"
+   ],
+   "form": [
+    "giant",
+    "shapeshifter"
+   ],
+   "element": [
+    "wood",
+    "plant"
+   ],
+   "sound": [
+    "laugh",
+    "whistle",
+    "call",
+    "horn",
+    "echo"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "guardian",
+    "herder",
+    "trickster",
+    "giver"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "grove",
+    "tree"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "luck",
+    "protection"
+   ],
+   "theme": [
+    "bargain",
+    "trickery",
+    "abundance",
+    "journey"
+   ]
+  },
+  {
+   "id": "wild_hunt",
+   "essence": "the ghostly hunt that storms over the forest at night",
+   "kind": "monster",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "German Wilde Jagd and Wütendes Heer",
+    "Scandinavian Odin's hunt",
+    "English Herne the Hunter and the Gabriel Hounds"
+   ],
+   "summary": "On stormy winter nights a host of riders and baying hounds passes over the woods with horns blowing; meeting it brings death, abduction or war. Leaders vary by region, from Wodan to Herne of Windsor Forest.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Wild_Hunt",
+    "https://norse-mythology.org/the-wild-hunt/",
+    "https://mythopedia.com/topics/herne-the-hunter/"
+   ],
+   "form": [
+    "human",
+    "animal",
+    "weather"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [
+    "horn",
+    "call",
+    "roar"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "devourer",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "sky",
+    "wind",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death",
+    "seasons",
+    "punishment"
+   ]
+  },
+  {
+   "id": "forest_hag_who_devours",
+   "essence": "the old woman alone in the woods who feeds travellers or eats them",
+   "kind": "monster",
+   "biomes": [
+    "broadleaf",
+    "conifer",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Slavic Baba Yaga",
+    "Japanese yamauba",
+    "Japanese yamauba / yamamba"
+   ],
+   "summary": "Deep in the forest or mountain woods lives a lone old woman who offers shelter; she eats travellers and children, yet rewards those who pass her tests or treat her kindly. A wild old woman alone in a mountain hut who offers travellers shelter and then devours them; in other tales she guides the lost, and she fostered the strong child Kintaro. Scholars read devouring and helping as two sides of one being.",
+   "sources": [
+    "https://www.britannica.com/print/article/47337",
+    "https://www.worldhistory.org/Baba_Yaga/",
+    "https://en.wikipedia.org/wiki/Yamauba",
+    "https://bakemono.lib.byu.edu/yokai/yamamba/",
+    "https://en.wikipedia.org/wiki/Yama-uba",
+    "https://asianethnology.org/articles/2223"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "wood",
+    "stone"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "giver",
+    "teacher",
+    "guide"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "tree",
+    "peak",
+    "mist"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "knowledge",
+    "wealth",
+    "protection"
+   ],
+   "theme": [
+    "hunger",
+    "bargain",
+    "journey"
+   ]
+  },
+  {
+   "id": "wolf_skinned_man",
+   "essence": "the person who becomes a wolf at night in the forest",
+   "kind": "monster",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "European werewolf",
+    "French loup-garou",
+    "Slavic vukodlak and wilkołak"
+   ],
+   "summary": "A man or woman turns into a wolf at night, kills livestock and people in the woods, and returns to human shape by day. The figure carried the danger of the untamed forest when wolves still roamed it.",
+   "sources": [
+    "https://www.britannica.com/art/werewolf",
+    "https://en.wikipedia.org/wiki/Werewolf"
+   ],
+   "form": [
+    "shapeshifter",
+    "animal",
+    "human"
+   ],
+   "element": [],
+   "sound": [
+    "roar",
+    "call"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "punishment"
+   ]
+  },
+  {
+   "id": "soul_in_the_tree",
+   "essence": "the spirit whose life is one old tree",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Greek hamadryads (Erysichthon's oak)",
+    "Japanese kodama"
+   ],
+   "summary": "An old tree has a spirit living in it, and cutting it down wounds or kills that spirit. Erysichthon felled such a tree, it bled and its nymph cried out, and Demeter cursed him with endless hunger; in Japan cutting a kodama's tree brings misfortune.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kodama_(spirit)",
+    "https://standardebooks.org/ebooks/thomas-bulfinch/bulfinchs-mythology/text/chapter-1-22",
+    "https://mythopedia.com/topics/dryads-and-hamadryads/"
+   ],
+   "form": [
+    "tree",
+    "human"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "voice",
+    "echo",
+    "scream"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "death",
+    "punishment",
+    "hunger",
+    "protection"
+   ]
+  },
+  {
+   "id": "fox_spirit_shapeshifter",
+   "essence": "the old fox that takes human shape to feed on people",
+   "kind": "monster",
+   "biomes": [
+    "broadleaf"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Korean gumiho",
+    "Chinese huli jing (Shan Hai Jing; Pu Songling's Liaozhai)"
+   ],
+   "summary": "A fox that lives a thousand years grows nine tails and can become a beautiful woman; the Korean gumiho drains men's life or eats livers, while Chinese fox spirits may be lovers or menaces.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kumiho",
+    "https://en.wikipedia.org/wiki/Huli_jing",
+    "https://en.wikipedia.org/wiki/Nine-tailed_fox"
+   ],
+   "form": [
+    "animal",
+    "shapeshifter"
+   ],
+   "element": [],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer",
+    "trickster"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "grove",
+    "hill"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "love",
+    "hunger",
+    "trickery"
+   ]
+  },
+  {
+   "id": "moss_folk",
+   "essence": "small wood people of the moss who teach healing herbs",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "German Moosleute, Holzfräulein and Moosweibchen"
+   ],
+   "summary": "Little forest folk tied to trees and moss, hunted by the Wild Hunt; they help people who are kind to them, and in epidemics wood women came out to show which herbs cure the plague.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Moss_people",
+    "https://projekt-gutenberg.org/authors/ludwig-bechstein/books/deutsches-sagenbuch/chapter/548"
+   ],
+   "form": [
+    "small_folk"
+   ],
+   "element": [
+    "plant",
+    "wood"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "healer",
+    "giver",
+    "teacher"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "healing",
+    "knowledge"
+   ],
+   "theme": [
+    "protection",
+    "bargain"
+   ]
+  },
+  {
+   "id": "wild_man_of_the_woods",
+   "essence": "the hairy wild man who guards the flocks and warns of storms",
+   "kind": "creature",
+   "biomes": [
+    "broadleaf",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "medieval European woodwose",
+    "Basque Basajaun"
+   ],
+   "summary": "A tall man covered in hair lives in caves and high woods, stronger and faster than beasts. The Basajaun guards sheep from wolves and cries out across the mountains before a storm so shepherds bring the flocks in; the woodwose was a stock figure of medieval art and masque.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Wild_man",
+    "https://en.wikipedia.org/wiki/Basajaun",
+    "https://buber.net/Basque/2021/03/28/basque-fact-of-the-week-the-basajaunak-the-wild-lords-of-the-forest/"
+   ],
+   "form": [
+    "giant",
+    "human"
+   ],
+   "element": [
+    "wood",
+    "stone"
+   ],
+   "sound": [
+    "call",
+    "roar"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "herder",
+    "teacher"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "cave",
+    "peak"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "warning",
+    "protection",
+    "skill"
+   ],
+   "theme": [
+    "protection"
+   ]
+  },
+  {
+   "id": "goblins_who_buy_a_song",
+   "essence": "night revellers in the woods who reward a good song or dance",
+   "kind": "spirit",
+   "biomes": [
+    "broadleaf",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Korean dokkaebi (Hokbu-ri yeonggam)",
+    "Japanese oni of Kobutori Jiisan (Uji Shūi Monogatari)"
+   ],
+   "summary": "An old man with a lump sheltering in the forest at night meets goblins feasting; he sings or dances so well that they take his lump as a pledge, or buy it believing it holds his voice. A greedy neighbour who copies him badly gets a second lump.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kobutori_Jiisan",
+    "https://pages.stolaf.edu/crepepaperbooks/?p=2180",
+    "https://en.wikipedia.org/wiki/Dokkaebi"
+   ],
+   "form": [
+    "small_folk",
+    "giant"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "voice",
+    "drum",
+    "laugh"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "listener",
+    "giver",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "healing",
+    "wealth"
+   ],
+   "theme": [
+    "joy",
+    "bargain",
+    "punishment"
+   ]
+  },
+  {
+   "id": "stone_skinned_liver_eater",
+   "essence": "the stone-skinned old woman of the mountain woods who steals livers",
+   "kind": "monster",
+   "biomes": [
+    "broadleaf",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Cherokee U'tlun'ta (Spearfinger)"
+   ],
+   "summary": "A being with skin like stone and a forefinger like an awl takes the shape of an old woman, lures children in the forest and stabs out their livers; she sings as she goes. Hunters finally kill her by striking the hidden heart in her hand.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Spearfinger",
+    "https://www.worldhistory.org/article/2585/utlunta-the-spear-finger/"
+   ],
+   "form": [
+    "human",
+    "shapeshifter"
+   ],
+   "element": [
+    "stone"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "devourer",
+    "lure"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "rock",
+    "hill",
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "death",
+    "trickery"
+   ]
+  },
+  {
+   "id": "hollow_backed_forest_woman",
+   "essence": "the beautiful forest woman whose back is hollow as a rotten trunk",
+   "kind": "spirit",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Norwegian huldra",
+    "Swedish skogsrå (Tallemaja)"
+   ],
+   "summary": "A lovely woman meets charcoal burners and hunters in the woods; from behind she is a hollow trunk or has a cow's or fox's tail. She can bring luck in the hunt, but a man who falls for her loses himself.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Hulder",
+    "https://en.wikipedia.org/wiki/Skogsr%C3%A5",
+    "https://folklorethursday.com/?p=10462",
+    "https://folklife.si.edu/magazine/kulning-swedish-herding-calls"
+   ],
+   "form": [
+    "human",
+    "tree",
+    "hybrid"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "voice",
+    "call"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "lure",
+    "herder",
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "tree"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "luck"
+   ],
+   "theme": [
+    "courtship",
+    "longing",
+    "bargain"
+   ]
+  },
+  {
+   "id": "unburied_child_ghost",
+   "essence": "the ghost of an abandoned child that cries in the woods until it is buried",
+   "kind": "monster",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Swedish myling",
+    "Norwegian utburd",
+    "Icelandic útburður",
+    "Finnish liekkiö"
+   ],
+   "summary": "A child left to die in the forest returns as a wailing ghost that chases lone walkers at night and leaps onto their backs, demanding to be carried to consecrated ground; burial or naming is the only release.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Myling",
+    "https://www.scandinavianarchaeology.com/children-of-the-night/"
+   ],
+   "form": [
+    "unseen",
+    "human"
+   ],
+   "element": [],
+   "sound": [
+    "scream",
+    "voice"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "mourner",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "mist"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "grief",
+    "journey"
+   ]
+  },
+  {
+   "id": "trolls_turned_to_stone",
+   "essence": "the huge forest and mountain giants who turn to stone in daylight",
+   "kind": "monster",
+   "biomes": [
+    "conifer",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Norwegian and Swedish trolls (Asbjørnsen and Moe)"
+   ],
+   "summary": "Huge, slow-witted beings live in forests and mountains, eat people, hate church bells and throw rocks at steeples; caught by the sun they become stone, and many boulders and crags are said to be trolls.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Troll",
+    "https://www.visitnorway.com/things-to-do/art-culture/the-mythical-norwegian-trolls",
+    "https://www.sofn.com/wp-content/uploads/2018/11/MiniPres301.pdf"
+   ],
+   "form": [
+    "giant",
+    "landform"
+   ],
+   "element": [
+    "stone",
+    "earth"
+   ],
+   "sound": [
+    "roar",
+    "silence"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "grove",
+    "peak",
+    "cave"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "wealth"
+   ],
+   "theme": [
+    "hunger",
+    "trickery"
+   ]
+  },
+  {
+   "id": "maned_forest_serpent",
+   "essence": "the giant limbless serpent among the stones deep in the forest",
+   "kind": "monster",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Swedish lindorm (Småland accounts gathered by Hyltén-Cavallius)",
+    "Scandinavian lindworm tales"
+   ],
+   "summary": "A huge dark serpent with a horse's mane lives between rocks deep in the woods, hatched from eggs laid under linden bark; it spits a blinding venom. Nineteenth-century Småland farmers reported dozens of sightings.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Lindworm",
+    "https://www.ungafakta.se/kunskapsbanken/svenska-oknytt/material/Svenska%20oknytt,%20Lindormar.pdf"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "stone",
+    "wood"
+   ],
+   "sound": [
+    "roar"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger"
+   ]
+  },
+  {
+   "id": "honoured_bear",
+   "essence": "the bear, kin to people, born in the sky and sung home after the hunt",
+   "kind": "creature",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Finnish Otso (Kalevala Rune 46; peijaiset bear-feast songs)"
+   ],
+   "summary": "The bear is the honey-pawed forest kinsman, born from wool cast in the sea or from the Great Bear; when one is killed it is feasted as a guest with songs telling it its death was an accident, and its skull is returned to a sacred tree.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Otso",
+    "https://standardebooks.org/ebooks/elias-lonnrot/the-kalevala/john-martin-crawford/text/chapter-46",
+    "https://en.wikipedia.org/wiki/Bear_worship"
+   ],
+   "form": [
+    "animal"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "voice",
+    "roar"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "giver",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "tree",
+    "sky"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "wealth"
+   ],
+   "theme": [
+    "death",
+    "creation",
+    "abundance"
+   ]
+  },
+  {
+   "id": "snow_woman",
+   "essence": "the pale woman of the blizzard who freezes travellers in the snowbound woods",
+   "kind": "monster",
+   "biomes": [
+    "mountain",
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Japanese yuki-onna (Lafcadio Hearn, Kwaidan)",
+    "Japanese yuki-onna (Muromachi records; Hearn's Kwaidan, 1904)"
+   ],
+   "summary": "In a blizzard a white woman breathes frost on two woodcutters and kills the elder; she spares the younger if he never tells, later marries him unrecognised, and leaves when he breaks the promise. A beautiful, deathly pale woman who floats over the snow without footprints and freezes travellers lost in the mountains; in Hearn's tale she spares a young woodcutter on a promise of silence, marries him, and leaves when he breaks it.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Yuki-onna",
+    "https://storyoftheweek.loa.org/2019/10/yuki-onna.html",
+    "https://matthewmeyer.net/blog/2009/10/15/",
+    "https://samurai-archives.com/wiki/Yuki-Onna",
+    "https://uncannyjapan.com/podcast/yuki-onna-by-lafcadio-hearn/"
+   ],
+   "form": [
+    "human",
+    "weather"
+   ],
+   "element": [
+    "ice",
+    "air"
+   ],
+   "sound": [
+    "silence"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "punisher"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "wind",
+    "grove",
+    "peak",
+    "mist"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "love",
+    "bargain",
+    "seasons"
+   ]
+  },
+  {
+   "id": "forest_that_hides",
+   "essence": "the forest that closes over a person and keeps them",
+   "kind": "spirit",
+   "biomes": [
+    "conifer",
+    "broadleaf"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Finnish metsänpeitto (Finland-Swedish 'skogen håller')",
+    "Japanese kamikakushi"
+   ],
+   "summary": "People and cattle vanish in familiar woods: the land turns strange, nature falls silent, and searchers walk past them unseen. Turning a coat inside out or looking between one's legs might break it; some were never found.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Mets%C3%A4npeitto",
+    "https://en.wikipedia.org/wiki/Kamikakushi",
+    "https://www.silvafennica.fi/article/5336"
+   ],
+   "form": [
+    "unseen"
+   ],
+   "element": [
+    "wood",
+    "plant"
+   ],
+   "sound": [
+    "silence"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "trickster",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "mist"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "journey",
+    "trickery",
+    "death"
+   ]
+  },
+  {
+   "id": "elk_of_bark_and_reeds",
+   "essence": "the elk built from wood, bark and reeds that cannot be caught",
+   "kind": "creature",
+   "biomes": [
+    "conifer"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Finnish Hiisi's elk (Kalevala Runes 13-14)"
+   ],
+   "summary": "At Hiisi's call a forest elk is made from punk-wood, willow, reeds, grass, flowers and fir bark; it smashes through the farms of the North and outruns the hunter on snowshoes until the forest's rulers are sung to for help.",
+   "sources": [
+    "https://standardebooks.org/ebooks/elias-lonnrot/the-kalevala/john-martin-crawford/text/chapter-13",
+    "https://standardebooks.org/ebooks/elias-lonnrot/the-kalevala/john-martin-crawford/text/chapter-14"
+   ],
+   "form": [
+    "animal",
+    "plant"
+   ],
+   "element": [
+    "wood",
+    "plant"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "trickster"
+   ],
+   "transformation": [],
+   "place": [
+    "grove"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "creation",
+    "journey",
+    "trickery"
+   ]
+  },
+  {
+   "id": "bird_all_others_hush_for",
+   "essence": "The bird all others fall silent to hear",
+   "kind": "creature",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Brazilian Amazon uirapuru (Tupi-derived popular folklore; Villa-Lobos's Uirapuru)"
+   ],
+   "summary": "When this small forest bird sings, every other bird stops to listen; its song or body is said to bring love and luck. The real musician wren sings in consonant intervals.",
+   "sources": [
+    "https://interlude.hk/the-legends-and-sounds-of-amazonia-heitor-villa-lobos-and-philip-glass/",
+    "https://ebird.org/species/muswre2"
+   ],
+   "form": [
+    "bird"
+   ],
+   "element": [],
+   "sound": [
+    "birdsong",
+    "silence"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer"
+   ],
+   "transformation": [],
+   "place": [
+    "canopy",
+    "tree"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "luck",
+    "melody"
+   ],
+   "theme": [
+    "love",
+    "joy"
+   ]
+  },
+  {
+   "id": "tree_that_speaks_as_drum",
+   "essence": "The forest tree whose voice speaks through the drum",
+   "kind": "spirit",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Akan (Asante) atumpan talking drums, as taught by J. H. K. Nketia"
+   ],
+   "summary": "The talking drum is carved from a forest tree, and before felling an offering was made to it; in performance the drummer first addresses the spirits of the tree and each material, so the drum speaks with the tree's voice. General idea only; the court invocations are not used.",
+   "sources": [
+    "https://music.africamuseum.be/instruments/english/ghana/ashanti/atumpan.html",
+    "https://gna.org.gh/2023/03/talking-drums-in-contemporary-ghana-the-atumpan-in-focus/",
+    "https://journal.ru.ac.za/index.php/africanmusic/article/view/225/164"
+   ],
+   "form": [
+    "tree"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [
+    "drum",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "giver"
+   ],
+   "transformation": [
+    "tree_to_instrument"
+   ],
+   "place": [
+    "tree",
+    "canopy"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "instrument"
+   ],
+   "theme": [
+    "creation"
+   ]
+  },
+  {
+   "id": "forest_sung_awake",
+   "essence": "The forest that sleeps and is sung awake",
+   "kind": "spirit",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Mbuti (Ituri) as published by Turnbull; Aka polyphony (UNESCO)"
+   ],
+   "summary": "The forest is a caring parent; when misfortune comes it is said to have fallen asleep, and nightly interlocking song wakes it. Only the published general idea, never the ceremony or its instrument.",
+   "sources": [
+    "https://www.encyclopedia.com/international/encyclopedias-almanacs-transcripts-and-maps/efe-and-mbuti",
+    "https://ehrafworldcultures.yale.edu/cultures/fo04/summary",
+    "https://ich.unesco.org/en/RL/polyphonic-singing-of-the-aka-pygmies-of-central-africa-00082?RL=00082"
+   ],
+   "form": [
+    "landform",
+    "unseen"
+   ],
+   "element": [
+    "plant",
+    "wood"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "listener"
+   ],
+   "transformation": [],
+   "place": [
+    "canopy",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "protection",
+    "comfort"
+   ],
+   "theme": [
+    "sleep",
+    "protection"
+   ]
+  },
+  {
+   "id": "backward_footed_forest_guardian",
+   "essence": "The backward-footed guardian who whistles hunters astray",
+   "kind": "spirit",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Brazilian curupira (recorded by Anchieta, 1560)"
+   ],
+   "summary": "A small red-haired forest being whose feet point backwards, so its tracks lead the wrong way; with whistles and mimicked voices it loses and maddens hunters and woodcutters who take more than they need, guarding game and great trees.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Curupira",
+    "https://blog.languagelizard.com/2014/09/10/international-folktale-character-curupira/"
+   ],
+   "form": [
+    "small_folk"
+   ],
+   "element": [
+    "plant"
+   ],
+   "sound": [
+    "whistle",
+    "voice"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "trickster",
+    "punisher"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "tree"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [
+    "protection"
+   ],
+   "theme": [
+    "protection",
+    "punishment",
+    "trickery"
+   ]
+  },
+  {
+   "id": "belly_mouthed_forest_giant",
+   "essence": "The one-eyed forest giant with a mouth in its belly",
+   "kind": "monster",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Brazilian Amazon mapinguari (Mura and other Amazonian tellings)"
+   ],
+   "summary": "A huge, shaggy, foul-smelling beast of the deep forest, often one-eyed with backward feet and a gaping mouth on its belly; some older tellings make it a shaman turned into a beast. Hunters fear it as a protector of the forest.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Mapinguari",
+    "https://www.pbs.org/video/mapinguari-fearsome-beast-and-protector-of-the-amazon-xnse9d"
+   ],
+   "form": [
+    "giant",
+    "animal"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "guardian"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "protection"
+   ]
+  },
+  {
+   "id": "river_dolphin_suitor",
+   "essence": "The river dolphin who comes ashore as a dancing stranger",
+   "kind": "creature",
+   "biomes": [
+    "tropical",
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Amazonian boto / encantado (ribeirinho folklore; Slater, Dance of the Dolphin)"
+   ],
+   "summary": "The pink river dolphin takes the shape of a charming man in white, a hat hiding his blowhole, and comes to riverside festivals to dance and seduce women before returning to the water.",
+   "sources": [
+    "https://www.nationalgeographic.com/magazine/article/dolphins-1",
+    "https://chicagoreference.com/ucp/books/book/chicago/D/bo3632345.html"
+   ],
+   "form": [
+    "animal",
+    "shapeshifter"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "lure",
+    "trickster"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "river"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "courtship",
+    "love",
+    "trickery"
+   ]
+  },
+  {
+   "id": "river_lady_who_drowns",
+   "essence": "The lady of the river whose voice draws men under",
+   "kind": "monster",
+   "biomes": [
+    "tropical",
+    "wetland"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Brazilian Iara / Uiara",
+    "older Tupi ipupiara, a man-eating water being"
+   ],
+   "summary": "A beautiful woman of the Amazon's rivers whose enchanting voice lures men into the water to drown; scholars trace her to the older ipupiara, a fish-man who devoured fishers, reshaped into a siren by the 19th century.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Iara_(mythology)"
+   ],
+   "form": [
+    "hybrid",
+    "fish",
+    "human"
+   ],
+   "element": [
+    "water"
+   ],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "lure",
+    "devourer"
+   ],
+   "transformation": [
+    "human_to_animal"
+   ],
+   "place": [
+    "river"
+   ],
+   "time": [
+    "dusk"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "water",
+    "longing"
+   ]
+  },
+  {
+   "id": "mismatched_foot_mimic",
+   "essence": "The forest double with one mismatched foot",
+   "kind": "monster",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Peruvian and Brazilian Amazon chullachaqui (Quechua: 'odd foot')"
+   ],
+   "summary": "A forest spirit that takes the face and voice of a loved one to lead people deeper into the forest until they are lost; only its unmatched foot gives it away. It is also a guardian that punishes those who misuse the forest.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Chullachaki",
+    "https://www.kuodatravel.com/blog/spooky-peru-the-myth-of-the-chullachaqui-in-the-amazon/"
+   ],
+   "form": [
+    "shapeshifter",
+    "human"
+   ],
+   "element": [],
+   "sound": [
+    "voice"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "guardian",
+    "trickster"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "grove"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "trickery",
+    "punishment"
+   ]
+  },
+  {
+   "id": "hidden_people_heard_singing",
+   "essence": "The hidden people heard but never seen",
+   "kind": "spirit",
+   "biomes": [
+    "tropical",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Malay, Minangkabau and Indonesian orang bunian"
+   ],
+   "summary": "An unseen people of deep forest and high hills, known from voices, singing, laughter or music in the woods with no one there; they may take lost children or marry humans across an invisible boundary.",
+   "sources": [
+    "https://malaysia.news.yahoo.com/blogs/yahoo-malaysia-newsroom/orang-bunian-neighbours-supernatural-world-072037643.html",
+    "https://ancientpages.com/2016/07/15/orang-bunian-mysterious-invisible-whistle-people-living-forests-malay-folklore"
+   ],
+   "form": [
+    "unseen",
+    "human"
+   ],
+   "element": [],
+   "sound": [
+    "voice",
+    "whistle",
+    "laugh"
+   ],
+   "music": [
+    "incidental"
+   ],
+   "role": [
+    "lure"
+   ],
+   "transformation": [],
+   "place": [
+    "grove",
+    "hill"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "longing",
+    "journey"
+   ]
+  },
+  {
+   "id": "tree_giant_smoking",
+   "essence": "The giant who sits smoking in the great fig tree",
+   "kind": "spirit",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Philippine kapre (balete tree)"
+   ],
+   "summary": "A tall, dark, hairy giant who lives high in balete and other big trees, given away by the glow of his cigar (fireflies around a big tree are said to be its embers); mostly watchful, sometimes a prankster with travellers.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kapre",
+    "https://pantheon.org/articles/k/kapre.html"
+   ],
+   "form": [
+    "giant"
+   ],
+   "element": [
+    "wood",
+    "fire"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "trickster"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "canopy"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "trickery"
+   ]
+  },
+  {
+   "id": "horse_headed_path_twister",
+   "essence": "The horse-headed one who walks travellers in circles",
+   "kind": "monster",
+   "biomes": [
+    "tropical",
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Philippine tikbalang"
+   ],
+   "summary": "A tall, bony being with a horse's head and hooves and limbs so long its knees rise above its head; in mountain forests it leads lone travellers astray until they keep returning to the same spot.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tikbalang"
+   ],
+   "form": [
+    "hybrid",
+    "shapeshifter"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "trickster"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "grove",
+    "hill"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "trickery",
+    "journey"
+   ]
+  },
+  {
+   "id": "frangipani_ghost_of_banana_grove",
+   "essence": "The ghost woman announced by the scent of frangipani",
+   "kind": "monster",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Malay pontianak",
+    "Indonesian kuntilanak"
+   ],
+   "summary": "The vengeful ghost of a woman who died in childbirth (or, earliest, of a stillborn child) who rests in banana trees by day and hunts by night, announced by a sudden smell of frangipani.",
+   "sources": [
+    "https://folklore.usc.edu/?p=42727",
+    "https://malaysia.news.yahoo.com/legend-of-the-pontianak-a-look-into-her-history-legacy-233046685.html"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [
+    "plant"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer",
+    "lure"
+   ],
+   "transformation": [],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "death",
+    "grief",
+    "hunger"
+   ]
+  },
+  {
+   "id": "woman_beneath_the_ceiba",
+   "essence": "The woman waiting under the ceiba who leads men into the forest",
+   "kind": "monster",
+   "biomes": [
+    "tropical"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Yucatec Maya Xtabay"
+   ],
+   "summary": "A beautiful woman who waits by a ceiba tree combing her hair and draws men into the forest, where they lose their way; in some tellings she becomes a serpent and devours them. Scholars read the danger of the ceiba as a colonial overlay on a sacred tree.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Xtabay",
+    "https://yucatantoday.com/en/the-legend-of-xtabay/"
+   ],
+   "form": [
+    "human",
+    "shapeshifter"
+   ],
+   "element": [
+    "wood"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "lure",
+    "devourer"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "tree",
+    "grove"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "courtship",
+    "death",
+    "punishment"
+   ]
+  },
+  {
+   "id": "spring_that_tunes_instruments",
+   "essence": "The spirit of the spring that tunes instruments and gives new tunes",
+   "kind": "spirit",
+   "biomes": [
+    "mountain",
+    "desert"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Quechua and Aymara sirinu / sirena, Northern Potosí, Bolivia",
+    "Aymara and Quechua Sereno / sirinu / serena (northern Potosí, Bolivian altiplano)"
+   ],
+   "summary": "Water beings of springs, waterfalls and rocks said to be the source of music: musicians leave new instruments there overnight to be tuned and receive each year's melodies by the river, in the wet season. Ambiguous, also blamed for excess and abduction. A lower-world spirit living in springs and on cliffs: instruments and offerings left at its place overnight are found sounding with new melodies, which the community plays that festival season. The bond must be renewed with offerings.",
+   "sources": [
+    "https://correodelsur.com/ecos/20200301/chuturkurikasqani-trance-el-encantamiento-de-las-sirinus.html",
+    "https://pure.royalholloway.ac.uk/files/56130162/Stobart_2023_Beyond_Pulsating_Dissonance_-_prepublication_version.pdf",
+    "https://www.ugr.es/~pwlac/G20_13LuisFernando_Botero_Villegas.html",
+    "https://portalrecerca.uab.cat/ca/publications/the-dark-world-and-the-music-in-the-andean-myths/"
+   ],
+   "form": [
+    "unseen",
+    "water",
+    "human"
+   ],
+   "element": [
+    "water",
+    "stone"
+   ],
+   "sound": [
+    "flute",
+    "strings",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "teacher",
+    "giver",
+    "lure"
+   ],
+   "transformation": [],
+   "place": [
+    "spring",
+    "waterfall",
+    "rock",
+    "cliff"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "heard_only"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "melody",
+    "skill"
+   ],
+   "theme": [
+    "seasons",
+    "bargain"
+   ]
+  },
+  {
+   "id": "birds_who_taught_the_modes",
+   "essence": "Three mountain birds who taught the song's modes",
+   "kind": "creature",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "unclear",
+   "found_in": [
+    "Ethiopian highlands, the tradition of Yared's chant (motif only)"
+   ],
+   "summary": "Three birds sent from paradise taught a highland singer the three modes of chant, and some tellings say even birdsong falls into those modes. Motif only: the saint and liturgy belong to a living church.",
+   "sources": [
+    "https://eotcmk.org/e/feast-of-saint-yared/",
+    "https://en.wikipedia.org/wiki/Yared"
+   ],
+   "form": [
+    "bird"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [
+    "birdsong",
+    "voice"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "teacher"
+   ],
+   "transformation": [],
+   "place": [
+    "cliff",
+    "peak"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "melody",
+    "knowledge"
+   ],
+   "theme": [
+    "creation",
+    "joy"
+   ]
+  },
+  {
+   "id": "bird_human_mountain_singers",
+   "essence": "The bird-bodied singers of the high mountains",
+   "kind": "creature",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Hindu and Buddhist kinnara and kinnari (Jatakas, Kalidasa)"
+   ],
+   "summary": "Half-human, half-bird celestial musicians who dwell in the Himalaya, known for song, flute and devoted pairs; in the Canda-kinnara Jataka a kinnari's grief for her wounded mate brings healing.",
+   "sources": [
+    "https://projecthimalayanart.rubinmuseum.org/glossary/kinnara/",
+    "https://en.wikipedia.org/wiki/Kinnara"
+   ],
+   "form": [
+    "hybrid",
+    "bird"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [
+    "voice",
+    "flute"
+   ],
+   "music": [
+    "core"
+   ],
+   "role": [
+    "performer",
+    "mourner"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "cliff"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "melody"
+   ],
+   "theme": [
+    "love",
+    "grief"
+   ]
+  },
+  {
+   "id": "wild_man_of_the_snows",
+   "essence": "The wild man of the snows, best avoided",
+   "kind": "monster",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Sherpa yeti / metoh-kangmi",
+    "Bhutanese migoi"
+   ],
+   "summary": "A large hairy wild man of the high Himalaya, neither evil nor kind but a wild thing to avoid; in one Khumbu tale it carries off yaks and returns them after villagers leave gifts at its cave.",
+   "sources": [
+    "https://geographical.co.uk/culture/tracking-down-the-yeti-in-the-himalaya",
+    "https://www.nepaltraveller.com/sidetrack/legends-of-the-yeti-thursday-tales"
+   ],
+   "form": [
+    "giant",
+    "animal"
+   ],
+   "element": [
+    "ice",
+    "stone"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "cave"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "warning"
+   ],
+   "theme": [
+    "bargain"
+   ]
+  },
+  {
+   "id": "cat_faced_tunnel_worm",
+   "essence": "The cat-faced worm of the stony slopes and tunnels",
+   "kind": "monster",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Alpine Tatzelwurm",
+    "Swiss Stollenwurm"
+   ],
+   "summary": "A short, lizard- or serpent-bodied beast with a cat's face that lives among high stony ground, crevices and mine tunnels; it shrieks or hisses, is said to be venomous, and has been 'sighted' across the Alps since at least the 18th century.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tatzelwurm",
+    "https://theculturetrip.com/europe/switzerland/articles/meet-the-tatzelwurm-switzerlands-nightmarish-7-foot-lizard"
+   ],
+   "form": [
+    "reptile",
+    "hybrid"
+   ],
+   "element": [
+    "stone"
+   ],
+   "sound": [
+    "scream"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "rock",
+    "cave",
+    "underground"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger"
+   ]
+  },
+  {
+   "id": "dragon_that_left_a_healing_stone",
+   "essence": "The mountain dragon that dropped a healing stone",
+   "kind": "creature",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Swiss legends of Mount Pilatus, Lucerne (1421 dragon stone)"
+   ],
+   "summary": "Dragons were said to live in the caves of Pilatus; one flying over in 1421 left a stone that was later credited with curing illness and kept in Lucerne (tested in 2006 as burnt clay).",
+   "sources": [
+    "https://publications.americanalpineclub.org/articles/12194928200/Legends-of-Mount-Pilatus",
+    "https://ausflug.blog/en/nature-landscape/1777-pilatus-the-dragon-mountain"
+   ],
+   "form": [
+    "reptile"
+   ],
+   "element": [
+    "stone",
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "giver",
+    "healer"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "cave",
+    "sky"
+   ],
+   "time": [
+    "day"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "healing"
+   ],
+   "theme": [
+    "abundance"
+   ]
+  },
+  {
+   "id": "lord_of_mountain_weather",
+   "essence": "The capricious lord of the mountain and its weather",
+   "kind": "spirit",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Rübezahl / Krakonoš, Giant Mountains (Krkonoše), German, Czech and Polish legend"
+   ],
+   "summary": "A shape-changing mountain spirit, giant or gnome, who sends fog, rain and snow out of a clear sky; kind to the poor and honest, teaching medicine and giving gifts, but merciless to anyone who mocks him.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/R%C3%BCbezahl",
+    "https://english.radio.cz/node/8566039",
+    "https://link.springer.com/article/10.1007/s12371-025-01110-8"
+   ],
+   "form": [
+    "giant",
+    "shapeshifter",
+    "weather"
+   ],
+   "element": [
+    "stone",
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "trickster",
+    "giver",
+    "punisher",
+    "guardian"
+   ],
+   "transformation": [
+    "shapeshift"
+   ],
+   "place": [
+    "peak",
+    "mist"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "healing",
+    "wealth"
+   ],
+   "theme": [
+    "trickery",
+    "punishment"
+   ]
+  },
+  {
+   "id": "great_healing_bird_of_the_peak",
+   "essence": "The great bird of the far peak who raises and heals",
+   "kind": "creature",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Persian Simurgh (Ferdowsi's Shahnameh, Mount Alborz / Qaf)"
+   ],
+   "summary": "A vast bird nesting on a remote mountain who rears the abandoned child Zal, gives him feathers to burn when he needs her, and later teaches how to save his wife in childbirth and heals Rostam's wounds.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Simurgh",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC4154908",
+    "https://www.worldhistory.org/article/1484/twelve-ancient-persian-mythological-creatures/"
+   ],
+   "form": [
+    "bird"
+   ],
+   "element": [
+    "air"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "healer",
+    "teacher",
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "sky"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "seen"
+   ],
+   "disposition": [
+    "benevolent"
+   ],
+   "gift": [
+    "healing",
+    "protection",
+    "knowledge"
+   ],
+   "theme": [
+    "protection",
+    "fertility"
+   ]
+  },
+  {
+   "id": "stranger_who_steals_fat",
+   "essence": "The stranger on the high road who takes people's fat",
+   "kind": "monster",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Peruvian and Bolivian Andean pishtaco / kharisiri / ñakaq"
+   ],
+   "summary": "An outsider, often pictured as a white man or foreigner, who waylays Andean people on lonely paths to drain their body fat; since the conquest anthropologists have read it as a figure of colonial and economic violence.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Pishtaco",
+    "https://revista.drclas.harvard.edu/peruvian-pishtacos",
+    "https://folklorethursday.com/halloween/the-pishtaco-fat-stealing-ghoul-of-the-andes/"
+   ],
+   "form": [
+    "human"
+   ],
+   "element": [],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "devourer"
+   ],
+   "transformation": [],
+   "place": [
+    "hill",
+    "peak"
+   ],
+   "time": [
+    "night"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "dangerous"
+   ],
+   "gift": [],
+   "theme": [
+    "hunger",
+    "death"
+   ]
+  },
+  {
+   "id": "winter_hag_who_built_mountains",
+   "essence": "The winter hag who dropped the mountains from her apron",
+   "kind": "spirit",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "Scottish Gaelic Cailleach Bheur / Beira (Ben Nevis, Schiehallion)",
+    "Irish and Manx cailleach tales"
+   ],
+   "summary": "An old woman of winter and storm, seated on Ben Nevis, who built hills by dropping rocks from her apron and holds the spring captive in the mountain until her season ends.",
+   "sources": [
+    "https://www.johnmuirtrust.org/whats-new/news/1574-schiehallion-and-the-queen-of-winter",
+    "https://inverness-courier.co.uk/news/myth-explains-the-story-of-winter-and-spring-s-rebirth-261587"
+   ],
+   "form": [
+    "giant",
+    "weather"
+   ],
+   "element": [
+    "stone",
+    "ice"
+   ],
+   "sound": [],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "builder",
+    "guardian"
+   ],
+   "transformation": [],
+   "place": [
+    "peak",
+    "rock"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [],
+   "theme": [
+    "seasons",
+    "creation"
+   ]
+  },
+  {
+   "id": "hooded_mine_spirit",
+   "essence": "The hooded spirit of the mine who demands silence and honesty",
+   "kind": "spirit",
+   "biomes": [
+    "mountain"
+   ],
+   "status": "candidate",
+   "sharing": "open",
+   "found_in": [
+    "German Bergmönch / Meister Hämmerling (Harz, Erzgebirge; Grimm's Deutsche Sagen)",
+    "Cornish and Welsh knockers (related)"
+   ],
+   "summary": "A giant hooded 'mountain monk' with fiery eyes who walks the mine workings, rewarding good miners with ore and lamp oil and punishing whistling, cursing, idleness and greed, sometimes fatally.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bergm%C3%B6nch",
+    "https://www.encyclopedia.com/science/encyclopedias-almanacs-transcripts-and-maps/mines-haunted"
+   ],
+   "form": [
+    "giant",
+    "human"
+   ],
+   "element": [
+    "stone",
+    "earth"
+   ],
+   "sound": [
+    "silence"
+   ],
+   "music": [
+    "none"
+   ],
+   "role": [
+    "guardian",
+    "punisher",
+    "giver"
+   ],
+   "transformation": [],
+   "place": [
+    "underground",
+    "cave"
+   ],
+   "time": [
+    "any"
+   ],
+   "presence": [
+    "sometimes_seen"
+   ],
+   "disposition": [
+    "ambivalent"
+   ],
+   "gift": [
+    "wealth",
+    "warning"
+   ],
+   "theme": [
+    "punishment",
+    "protection"
+   ]
+  }
+ ],
+ "sharings": [
+  "open",
+  "unclear"
+ ]
 }
