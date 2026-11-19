@@ -19,16 +19,9 @@ pub struct GluePlugin;
 impl Plugin for GluePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, segment_cost);
-        app.insert_resource(bevy_stubby_rack::rack::KnobDefaults(
-            // A Square VCO is made from a lightning bug's square wave: it starts at the
-            // bug's pitch.
-            [(
-                ("SquareVco".to_owned(), "freq".to_owned()),
-                stubby_life::bug_click().freq_hz,
-            )]
-            .into(),
-        ))
-        .add_systems(
+        // A VCO starts with its knob straight up (its module data's default, C#3), not at
+        // the bug's pitch, which was shrill (user, 2026-11-18).
+        app.add_systems(
             Update,
             (
                 interact_points

@@ -2483,6 +2483,27 @@ mod tests {
     }
 
     #[test]
+    fn vcos_start_straight_up_on_a_note() {
+        // User, 2026-11-18: VCOs are quantized and start with the knob straight up.
+        let catalog = ModuleCatalog::default();
+        for vco in ["square_vco", "sine_vco"] {
+            let knob = RACK_MODULES.knob(vco, "freq").expect("a frequency knob");
+            assert!(knob.quantize.is_some(), "{vco} is quantized");
+            let start = initial_knob(vco, "freq", None, &KnobDefaults::default()).unwrap();
+            assert!(
+                knob.readout(start).starts_with("C#3"),
+                "{vco}: {}",
+                knob.readout(start)
+            );
+            let p = &catalog.0[vco].params[0];
+            assert!(
+                (knob_norm(start, p) - 0.5).abs() < 0.01,
+                "{vco} points straight up"
+            );
+        }
+    }
+
+    #[test]
     fn a_bugs_pitch_starts_the_vco_on_its_nearest_note() {
         // A square VCO's frequency knob is quantized to semitones (add-reed-water-purifier):
         // a bug's 300 Hz becomes D4, so the engine, the knob and its readout agree.

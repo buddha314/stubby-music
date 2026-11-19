@@ -589,8 +589,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   open machine window), fading after about 2 s; nothing is taken or lost.
 - **Knobs can click to a grid** (`add-reed-water-purifier`): `step` (the 24 BPM grid) or
   `quantize: "semitone"` in a module's knob data (equal-tempered notes; the square VCO's
-  frequency). Such knobs turn by whole clicks, start on the grid (a bug's pitch lands on
-  its nearest note), and the knob's readout beside the pointer names the note (`C4`).
+  frequency). Such knobs turn by whole clicks, start on the grid, and the knob's readout
+  beside the pointer names the note (`C4`). **VCOs start straight up** (user, 2026-11-18):
+  their frequency knob's default is the middle of its log travel, snapped to C#3, not the
+  bug's pitch.
 - **Machines can require settings**: a machine's `targets` (knobs at a `note` or a
   `value`; the campfire: gates on 2 and 4 only) and its `clock_reach_m` are **rules**, rows
   in `assets/recipes/machines.json` (`add-machine-rules`), not profile data. The glue copies
