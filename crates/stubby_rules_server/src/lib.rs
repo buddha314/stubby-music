@@ -8,6 +8,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+mod lore;
+
 use stubby_recipes::rules::{
     FILES, Registry,
     edit::{Edit, EditError, RulesDocument},
@@ -21,14 +23,14 @@ const JSON_EDITOR: &str = include_str!("../web/vendor/jsoneditor.min.js");
 pub struct Reply {
     pub status: u16,
     pub content_type: &'static str,
-    pub body: String,
+    pub body: Vec<u8>,
 }
 impl Reply {
     fn json(status: u16, value: &Value) -> Self {
         Self {
             status,
             content_type: "application/json",
-            body: value.to_string(),
+            body: value.to_string().into(),
         }
     }
     fn error(status: u16, message: impl std::fmt::Display) -> Self {
@@ -39,6 +41,8 @@ impl Reply {
 /// The rules being designed, and when their files last changed on disk.
 pub struct Designer {
     dir: PathBuf,
+    /// The repository root, for the lore guide (`/lore`).
+    root: PathBuf,
     doc: RulesDocument,
     seen: Option<SystemTime>,
 }
@@ -56,9 +60,16 @@ impl Designer {
     pub fn open(dir: &Path) -> Result<Self, EditError> {
         Ok(Self {
             dir: dir.to_owned(),
+            root: dir.join("../.."),
             doc: RulesDocument::open(dir)?,
             seen: newest(dir),
         })
+    }
+
+    /// The repository the lore guide reads (default: two folders above the rules).
+    pub fn with_root(mut self, root: &Path) -> Self {
+        self.root = root.to_owned();
+        self
     }
 
     /// Answer one request. `path` may carry a query (`/api/rows?registry=items`).
@@ -82,6 +93,21 @@ impl Designer {
                 status: 200,
                 content_type: "text/javascript; charset=utf-8",
                 body: JSON_EDITOR.into(),
+            },
+            ("GET", "/lore") => Reply {
+                status: 200,
+                content_type: "text/html; charset=utf-8",
+                body: lore::PAGE.into(),
+            },
+            ("GET", "/marked.min.js") => Reply {
+                status: 200,
+                content_type: "text/javascript; charset=utf-8",
+                body: lore::MARKED.into(),
+            },
+            ("GET", "/api/lore") => lore::index(&self.root),
+            ("GET", "/lore/file") => match param("path") {
+                Some(path) => lore::file(&self.root, &lore::decode(&path)),
+                None => Reply::error(400, "missing ?path="),
             },
             ("GET", "/api/state") => Reply::json(200, &self.state()),
             ("GET", "/api/rows") => match param("registry").as_deref().map(registry) {
@@ -290,13 +316,13 @@ mod tests {
         dir
     }
     fn body(reply: &Reply) -> Value {
-        serde_json::from_str(&reply.body).unwrap()
+        serde_json::from_slice(&reply.body).unwrap()
     }
 
     #[test]
     fn serves_the_page_rows_and_form_schemas() {
         let mut designer = Designer::open(&scratch()).unwrap();
-        assert!(designer.handle("GET", "/", "").body.contains("<html"));
+        assert!(String::from_utf8_lossy(&designer.handle("GET", "/", "").body).contains("<html"));
         let reply = designer.handle("GET", "/api/rows?registry=air", "");
         assert_eq!(reply.status, 200);
         let rows = body(&reply);
@@ -336,7 +362,12 @@ mod tests {
         assert_eq!(designer.handle("POST", "/api/save", "").status, 409);
         designer.handle("POST", "/api/undo", "");
         let saved = designer.handle("POST", "/api/save", "");
-        assert_eq!(saved.status, 200, "{}", saved.body);
+        assert_eq!(
+            saved.status,
+            200,
+            "{}",
+            String::from_utf8_lossy(&saved.body)
+        );
         let text = std::fs::read_to_string(dir.join("air.json")).unwrap();
         assert!(text.contains("24.0"));
         let used = body(&designer.handle("GET", "/api/where-used?id=square_wave", ""));

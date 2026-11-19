@@ -322,6 +322,9 @@ stubby_rules_server`, then http://127.0.0.1:7878/; `add-crafting-designer`): sch
 model, live problems, undo, canonical save, and a live panel reading the running game over
 Bevy's remote protocol (dev builds serve it on 127.0.0.1:15702). Dev builds of the game
 reload `assets/recipes/` within a second of a save.
+The designer also serves the **lore guide** at http://127.0.0.1:7878/lore: the biomes, the being
+atlas (filter, map), the design and research documents and the reference images under
+`docs/art/`, read from the repository on every load, so it stays current as files change.
 
 How to add or change a rule by hand (designer or agent, same steps):
 

@@ -1,11 +1,12 @@
-//! `cargo run -p stubby_rules_server [-- --port 7878 --dir assets/recipes]`: serve the
-//! rules designer on 127.0.0.1 only. Open the printed address in a browser.
+//! `cargo run -p stubby_rules_server [-- --port 7878 --dir assets/recipes --root .]`: serve the
+//! rules designer (and its lore guide, `/lore`) on 127.0.0.1 only. Open the printed address in a browser.
 use std::path::PathBuf;
 use stubby_rules_server::Designer;
 
 fn main() -> std::process::ExitCode {
     let mut port: u16 = 7878;
-    let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/recipes");
+    let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut dir = root.join("assets/recipes");
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match (arg.as_str(), args.next()) {
@@ -14,11 +15,16 @@ fn main() -> std::process::ExitCode {
                 Err(_) => return fail(&format!("--port {value} is not a port")),
             },
             ("--dir", Some(value)) => dir = PathBuf::from(value),
-            _ => return fail("usage: stubby_rules_server [--port N] [--dir RULES_DIR]"),
+            ("--root", Some(value)) => root = PathBuf::from(value),
+            _ => {
+                return fail(
+                    "usage: stubby_rules_server [--port N] [--dir RULES_DIR] [--root REPO]",
+                );
+            }
         }
     }
     let mut designer = match Designer::open(&dir) {
-        Ok(designer) => designer,
+        Ok(designer) => designer.with_root(&root),
         Err(error) => return fail(&format!("{}: {error}", dir.display())),
     };
     // Loopback only: the designer writes the rules directory.
@@ -37,7 +43,7 @@ fn main() -> std::process::ExitCode {
             continue;
         }
         let reply = designer.handle(request.method().as_str(), request.url(), &body);
-        let response = tiny_http::Response::from_string(reply.body)
+        let response = tiny_http::Response::from_data(reply.body)
             .with_status_code(reply.status)
             .with_header(
                 tiny_http::Header::from_bytes("Content-Type", reply.content_type)
