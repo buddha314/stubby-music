@@ -59,13 +59,16 @@ Open:
 ## The vardo: the player's base
 
 **Decided (user, 2026-11-18):** the player's base, our equivalent of Satisfactory's HUB,
-is a **barrel-top vardo drawn by a donkey**, from Irish Traveller culture. The user will
-provide reference images (to be kept beside this guide).
+is a **barrel-top vardo drawn by the cyber-cob**, from Irish Traveller culture: a sturdy
+piebald Irish cob with exactly one prosthetic leg (near-side front) and faint fibre-optic
+strands in its mane and tail. **Not a donkey** (the art direction rules it out). The look,
+continuity rules and reference images are in `docs/art/vardo-and-cyber-cob.md` and
+`docs/art/vardo-cyber-cob/`; the models are `add-vardo-and-cyber-cob-assets`.
 
 Draft:
 - It holds what Satisfactory's HUB holds: the goals terminal and storage. The campfire
   stays the craft bench, beside it.
-- Open: whether it moves. Satisfactory's HUB is fixed; a donkey-drawn one can travel,
+- Open: whether it moves. Satisfactory's HUB is fixed; a horse-drawn one can travel,
   which suits a journey from one mythic region to the next. Where it stands at the start
   (spawn) and what moving it costs.
 - Treat the Traveller tradition with the same care as the myths: build from the
@@ -82,7 +85,8 @@ To do: add this as a pillar in `docs/art/style-guide.md` (`add-art-direction`).
 ## Planned changes
 
 Opened: `research-music-mythologies` (2026-11-18; regions and shrines need it). Proposed,
-not yet opened: `add-narrative-arc`, `add-vardo-hub` (waits for the reference images),
+not yet opened: `add-narrative-arc`, `add-vardo-hub` (the base's gameplay; the art is
+`add-vardo-and-cyber-cob-assets`),
 `add-mythic-regions`, `add-deity-shrines`. Existing changes to amend: `add-art-direction`
 (the styling pillar), `add-opening-region` (region one of the Mojave; the vardo at spawn),
 `sync-major-minor-milestones` (major goals as arc stages), `add-campfire-craft-bench` (the
