@@ -18,6 +18,8 @@ struct HandItemDef {
     item: HandItem,
     key: KeyCode,
     model: &'static str,
+    /// Omar's gloves holding it, modelled in the item's frame (`add-omar-gloves-and-shadow`).
+    gloves: Option<&'static str>,
     pose: fn() -> Transform,
 }
 
@@ -25,9 +27,10 @@ const HAND_ITEMS: &[HandItemDef] = &[HandItemDef {
     item: HandItem::FieldRecorder,
     key: RECORDER,
     model: "equipment/field_recorder/field_recorder.glb#Scene0",
+    gloves: Some("characters/omar_gloves/omar_gloves.glb#Scene0"),
     // About a forearm's length out, windguard leaning forward to where it listens.
     pose: || {
-        Transform::from_xyz(0.17, -0.165, -0.42).with_rotation(
+        Transform::from_xyz(0.16, -0.13, -0.42).with_rotation(
             Quat::from_rotation_y(0.35) * Quat::from_rotation_x(-0.7) * Quat::from_rotation_z(0.12),
         )
     },
@@ -52,6 +55,7 @@ impl Plugin for HandPlugin {
     fn build(&self, app: &mut App) {
         crate::flashlight::add(app);
         crate::recorder::add(app);
+        crate::shadow::add(app);
         app.init_resource::<Hand>()
             .add_systems(Update, (attach, choose, show, fur_casts_no_shadow).chain());
     }
@@ -68,14 +72,25 @@ fn attach(
     }
     for player in &players {
         for def in HAND_ITEMS {
-            commands.spawn((
-                Held(def.item),
-                Name::new(format!("Hand: {:?}", def.item)),
-                WorldAssetRoot(assets.load(def.model)),
-                (def.pose)(),
-                Visibility::Hidden,
-                ChildOf(player),
-            ));
+            let held = commands
+                .spawn((
+                    Held(def.item),
+                    Name::new(format!("Hand: {:?}", def.item)),
+                    WorldAssetRoot(assets.load(def.model)),
+                    (def.pose)(),
+                    Visibility::Hidden,
+                    ChildOf(player),
+                ))
+                .id();
+            if let Some(gloves) = def.gloves {
+                commands.spawn((
+                    Name::new("Omar's gloves"),
+                    WorldAssetRoot(assets.load(gloves)),
+                    Transform::default(),
+                    Visibility::Inherited,
+                    ChildOf(held),
+                ));
+            }
         }
     }
 }
@@ -114,7 +129,10 @@ fn fur_casts_no_shadow(
     meshes: Query<(Entity, Option<&Name>, Option<&ChildOf>), Added<Mesh3d>>,
     names: Query<&Name>,
 ) {
-    let shell = |n: &Name| n.as_str().starts_with("FieldRecorder_FurShell");
+    // The gloves cast none either: the shadow body's arm casts the hand's shadow.
+    let shell = |n: &Name| {
+        n.as_str().starts_with("FieldRecorder_FurShell") || n.as_str().starts_with("OmarGloves_")
+    };
     for (entity, name, parent) in &meshes {
         let parent_shell = parent
             .and_then(|p| names.get(p.parent()).ok())

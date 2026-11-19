@@ -1,0 +1,14 @@
+{
+  "id": "omar_gloves",
+  "model": "characters/omar_gloves/omar_gloves.glb#Scene0",
+  "kind": "first_person_hands",
+  "holds": "field_recorder",
+  "frame": "the field recorder's: origin at its Grip; mount with the held item",
+  "palette": {
+    "glove": "midnight navy",
+    "sleeve": "dark mint coat",
+    "edge": "aged brass"
+  },
+  "shadow": "cast none: the shadow body's arm casts the hand's shadow",
+  "reference": "docs/art/omar.md, docs/art/omar/turnaround-gloves-palette.png"
+}

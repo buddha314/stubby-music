@@ -7,6 +7,9 @@ use bevy::prelude::*;
 pub const OPENING_HEADING_DEGREES: f32 = 75.;
 /// Ground-plane pivot shared by player spawn and the decorative mountain rings.
 pub const OPENING_SPAWN_XZ: Vec2 = Vec2::new(0., 6.);
+/// The render layer of what casts a shadow but is never drawn: the sun lights it, no
+/// camera sees it (Omar's shadow body, `add-omar-gloves-and-shadow`). The rack HUD uses 31.
+pub const SHADOW_ONLY_LAYER: usize = 1;
 
 /// Key bindings, following Satisfactory's conventions where they apply (AGENTS.md).
 pub mod keys {
