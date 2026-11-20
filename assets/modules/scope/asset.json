@@ -1,0 +1,80 @@
+{
+  "id": "scope",
+  "model": "modules/scope/scope.glb#Scene0",
+  "module_kind": "Scope",
+  "scale": "eurorack_3u_10hp_x10",
+  "size_metres": {
+    "width": 0.508,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  },
+  "silhouette": "ripple_crown",
+  "ports": [
+    {
+      "node": "Port_in",
+      "port": "in",
+      "direction": "in"
+    },
+    {
+      "node": "Port_out",
+      "port": "out",
+      "direction": "out",
+      "note": "IN passed through unchanged"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_time",
+      "param": "time",
+      "min": 0.002,
+      "max": 2.0,
+      "taper": "log",
+      "unit": "seconds across the screen",
+      "rotation_degrees": 300.0
+    },
+    {
+      "node": "Knob_scale",
+      "param": "scale",
+      "min": 0.1,
+      "max": 4.0,
+      "taper": "log",
+      "unit": "screen heights per volt",
+      "rotation_degrees": 300.0
+    }
+  ],
+  "lights": [
+    {
+      "node": "Light_out",
+      "light": "out",
+      "rest_strength": 0.0,
+      "peak_strength": 8.0
+    }
+  ],
+  "screen": {
+    "node": "Screen",
+    "display": "waveform",
+    "width_metres": 0.39999999999999997,
+    "height_metres": 0.32,
+    "samples": 256,
+    "trace_material": "Scope_Trace",
+    "colour_linear": [
+      0.6239603916750761,
+      0.7912979403326302,
+      0.7605245046752924
+    ],
+    "graticule": [
+      8,
+      6
+    ],
+    "draw": "the recent samples of IN as a line across the screen, centred on 0 V"
+  },
+  "hud": {
+    "place": "scope",
+    "fixed": true
+  }
+}

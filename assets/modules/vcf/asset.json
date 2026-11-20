@@ -1,0 +1,74 @@
+{
+  "id": "vcf",
+  "model": "modules/vcf/vcf.glb#Scene0",
+  "module_kind": "Vcf",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  },
+  "silhouette": "resonant_crown",
+  "ports": [
+    {
+      "node": "Port_in",
+      "port": "in",
+      "direction": "in"
+    },
+    {
+      "node": "Port_lpf",
+      "port": "lpf",
+      "direction": "out",
+      "note": "low-pass: solids and nutrients (later filters)"
+    },
+    {
+      "node": "Port_hpf",
+      "port": "hpf",
+      "direction": "out",
+      "note": "high-pass: pure liquid; the purifier's patch uses it"
+    }
+  ],
+  "params": [
+    {
+      "node": "Knob_cutoff",
+      "param": "cutoff",
+      "min": 32.7,
+      "max": 8372.0,
+      "taper": "log",
+      "unit": "Hz",
+      "note": "C1 to C9; its module data quantizes it to semitones",
+      "rotation_degrees": 300.0
+    },
+    {
+      "node": "Knob_res",
+      "param": "res",
+      "min": 0.0,
+      "max": 1.0,
+      "taper": "linear",
+      "rotation_degrees": 300.0
+    }
+  ],
+  "lights": [
+    {
+      "node": "Light_lpf",
+      "light": "lpf",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    },
+    {
+      "node": "Light_hpf",
+      "light": "hpf",
+      "rest_strength": 0.0,
+      "peak_strength": 6.0
+    }
+  ],
+  "hud": {
+    "place": "vcf",
+    "fixed": true
+  }
+}

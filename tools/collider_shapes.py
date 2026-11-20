@@ -209,7 +209,7 @@ FAMILIES = {
 
 
 def modules(glb):
-    if glb.stem in ("burbler_clock", "volume"):
+    if glb.stem in ("burbler_clock", "volume", "mixer", "vcf", "scope"):
         return "a rack (HUD) module only, never placed in the world"
     return module(glb)
 
