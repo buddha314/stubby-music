@@ -8,11 +8,11 @@
 - [x] 1.3 (claimed: claude; done 2026-11-19) Item icon `assets/ui/icons/high_pass_filter.png`
 
 ## 2. Rules (data)
-- [ ] 2.1 `high_pass_filter` item; `rock_opening` and `hollow_trunk` resources yielding one, `replenishment: after 1800`; `rules-fmt`
+- [x] 2.1 (claimed: claude; done 2026-11-20) `high_pass_filter` item; `rock_opening` and `hollow_trunk` resources yielding one, `replenishment: after 1800`; `rules-fmt`
 
 ## 3. Game (Codex)
-- [ ] 3.1 Binders: formation and hollow oak sockets become pickups with stable instance IDs (`model_part_bindings`)
-- [ ] 3.2 Collect with E through the existing pickup path; the recorder records it
+- [x] 3.1 (claimed: claude; done 2026-11-20) Binders: formation and hollow oak sockets become pickups with stable instance IDs (`model_part_bindings`). Done generically (user: "collection should be an abstract effort, not written for each object"): any leaf socket of a placed model whose glTF extras name a `resource` the rules define is a pickup of it (`stubby_game::collectibles`), instance `<placement>/<socket>`; restored sockets now carry their extras, and are restored once per model (they were doubled per flattened mesh). A hollow oak needs only its `Hollow` socket tagged `resource: hollow_trunk`
+- [x] 3.2 (claimed: claude; done 2026-11-20) Collect with E through the existing pickup path; the recorder records it
 - [ ] 3.3 (audio stream) Sound near an opening or hollow is heard high-passed (D3)
-- [ ] 3.4 Seeded placement: formations and hollow oaks (`add-hybrid-world-placement` 2b.4, 2b.5)
+- [ ] 3.4 Seeded placement: formations and hollow oaks (`add-hybrid-world-placement` 2b.4, 2b.5). Formations done (#255); hollow oaks wait for their art (1.2)
 - [ ] 3.5 Bounded watchdog review: find an opening, collect its filter

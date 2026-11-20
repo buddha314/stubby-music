@@ -395,6 +395,12 @@ fn pose_parts(
         let Ok((asset, state, resource, clock)) = roots.get(part.root) else {
             continue;
         };
+        // A part tagged `shown_while: beat` shows only while its placement keeps a clock (a
+        // ripple pool's rings, while its stream sounds); otherwise it is still and hidden.
+        if part.extras["shown_while"] == "beat" {
+            transform.scale = full_scale(part.rest.scale) * f32::from(u8::from(clock.is_some()));
+            continue;
+        }
         // A stream port's halo (burbler outlet, stream ends) ships hidden and appears
         // only while the player is trying to connect a stream there.
         if part.extras["role"] == "port_highlight" {
@@ -516,7 +522,11 @@ fn prepare_animations(
         let mut named: Vec<_> = gltf
             .named_animations
             .iter()
-            .filter(|(name, _)| name.starts_with("Bubble_") && name.ends_with("_Burble"))
+            // One-beat clips, played on the placement's clock: the burbler's `Bubble_<n>_Burble`
+            // and any model's `<name>_Beat` (a ripple pool's rings).
+            .filter(|(name, _)| {
+                (name.starts_with("Bubble_") && name.ends_with("_Burble")) || name.ends_with("_Beat")
+            })
             .collect();
         named.sort_by_key(|(name, _)| *name);
         if named.is_empty() {
@@ -528,7 +538,7 @@ fn prepare_animations(
             .into_iter()
             .zip(indices)
             .map(|((name, handle), index)| {
-                let node = name.trim_end_matches("_Burble");
+                let node = name.trim_end_matches("_Burble").trim_end_matches("_Beat");
                 let division = parts
                     .iter()
                     .find(|part| part.root == root && part.name == node)

@@ -23,6 +23,20 @@
       ]
     },
     {
+      "id": "hollow_trunk",
+      "name": "Hollow trunk",
+      "yields": [
+        {
+          "item": "high_pass_filter",
+          "quantity": 1
+        }
+      ],
+      "replenishment": {
+        "kind": "after",
+        "seconds": 1800
+      }
+    },
+    {
       "id": "lightning_bug",
       "name": "Lightning bug",
       "yields": [
@@ -47,6 +61,34 @@
       "replenishment": {
         "kind": "after",
         "seconds": 60
+      }
+    },
+    {
+      "id": "ripple_pool",
+      "name": "Ripple pool",
+      "yields": [
+        {
+          "item": "oscilloscope",
+          "quantity": 1
+        }
+      ],
+      "replenishment": {
+        "kind": "after",
+        "seconds": 1800
+      }
+    },
+    {
+      "id": "rock_opening",
+      "name": "Rock opening",
+      "yields": [
+        {
+          "item": "high_pass_filter",
+          "quantity": 1
+        }
+      ],
+      "replenishment": {
+        "kind": "after",
+        "seconds": 1800
       }
     }
   ]

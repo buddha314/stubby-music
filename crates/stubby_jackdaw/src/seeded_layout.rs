@@ -19,6 +19,7 @@ impl Plugin for SeededLayoutPlugin {
         if !std::env::args().any(|arg| arg == "--no-seeded-layout") {
             app.add_observer(spawn_seeded_layout);
         }
+        app.add_systems(Update, (place_stream_features, clear_stream_features));
         if let Some(path) =
             std::env::args().find_map(|arg| arg.strip_prefix("--layout-review=").map(str::to_owned))
         {
@@ -164,5 +165,88 @@ fn review_layout(
                 review.0.join(name),
             ));
         *step += 1;
+    }
+}
+
+/// Stream features (ripple pools) along each newly laid stream, at the places the world's
+/// rules give each of its segments (`stream_feature_places`), turned to the flow there.
+/// They come alive like any placed model; collecting from them is the generic socket rule
+/// (`stubby_game::collectibles`), and they keep their stream's time (`OnStream`). A
+/// dismantled stream takes its features with it, and the pieces left get theirs again, the
+/// same ones, since each segment's places come from its own path and index.
+fn place_stream_features(
+    mut commands: Commands,
+    config: Res<WorldConfig>,
+    streams: Query<
+        (Entity, &stubby_jackdaw::streams::LaidStream),
+        Added<stubby_jackdaw::streams::LaidStream>,
+    >,
+) {
+    if config.stream_features.is_empty() {
+        return;
+    }
+    let Ok(seed) = config.seed_value() else {
+        return;
+    };
+    for (entity, stream) in &streams {
+        // A segment's key: its path's control points and its index along that path.
+        let path_key = stream
+            .path
+            .points
+            .iter()
+            .flat_map(|p| p.to_array())
+            .fold(0xcbf29ce484222325_u64, |h, v| {
+                (h ^ u64::from(v.to_bits())).wrapping_mul(0x100000001b3)
+            });
+        let mut spawned = 0;
+        for k in stream.first..=stream.last {
+            let segment = path_key ^ u64::from(k).wrapping_mul(0x9e3779b97f4a7c15);
+            for feature in &config.stream_features {
+                let places = stubby_jackdaw::world_generation::stream_feature_places(
+                    seed,
+                    feature,
+                    segment,
+                    stream.span,
+                );
+                for (i, (offset, far_bank)) in places.into_iter().enumerate() {
+                    let (at, flow) = stream.path.at(k as f32 * stream.span + offset);
+                    // The model's +X runs along the flow; half a turn puts it on the far bank.
+                    let yaw =
+                        (-flow.z).atan2(flow.x) + if far_bank { std::f32::consts::PI } else { 0. };
+                    commands.spawn((
+                        Name::new(format!(
+                            "{} · {} {segment:016x} {i}",
+                            model_stem(&feature.asset),
+                            feature.id
+                        )),
+                        Transform::from_translation(at).with_rotation(Quat::from_rotation_y(yaw)),
+                        Visibility::default(),
+                        GltfSource {
+                            path: feature.asset.clone(),
+                            scene_index: 0,
+                        },
+                        stubby_jackdaw::stream_features::OnStream(entity),
+                    ));
+                    spawned += 1;
+                }
+            }
+        }
+        debug!(
+            "stream features: {spawned} along segments {}..={}",
+            stream.first, stream.last
+        );
+    }
+}
+
+/// Features whose stream is gone (dismantled, or replaced by its pieces) go with it.
+fn clear_stream_features(
+    mut commands: Commands,
+    features: Query<(Entity, &stubby_jackdaw::stream_features::OnStream)>,
+    streams: Query<(), With<stubby_jackdaw::streams::LaidStream>>,
+) {
+    for (entity, on) in &features {
+        if !streams.contains(on.0) {
+            commands.entity(entity).despawn();
+        }
     }
 }

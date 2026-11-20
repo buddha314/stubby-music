@@ -499,6 +499,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   settings are preserved.
   **Claude (2026-11-18):** the amphitheatre's art and scene (`add-amphitheatre` 1–3), the being
   atlas (`add-being-atlas`) and the mythology research; Codex owns its seat behaviour (4).
+  **Claude (2026-11-20, by the user's request):** collecting filter sources (`add-high-pass-sources`
+  2-3, `add-ripple-pool` 2-3).
   **Claude (2026-11-20, by the user's request):** seeded placement (`add-hybrid-world-placement`
   2.2, 2.4, 2b, 3.1).
   **Claude (2026-11-19):** the filter sources' art (`add-high-pass-sources` 1.x, `add-ripple-pool`
@@ -673,7 +675,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   user, 2026-11-19). **Water has
   four levels: muddy, silty, cloudy, clear**; the first filter, the reed water purifier,
   is a small check dam across a laid stream and lifts the water below it one level, so
-  dams in sequence reach clear
+  dams in sequence reach clear. **Collection is generic** (user, 2026-11-20): a leaf socket of
+  any placed model whose glTF extras name a `resource` from the rules is a pickup of it
+  (`stubby_game::collectibles`); a new collectible is art and a rules row, never code.
+  Things that form along laid streams are data too (`stream_features` in
+  `assets/world/opening.json`), and a `*_Beat` clip plays on the placement's clock
   (`add-reed-water-purifier` D4, D6). Until it exists every stream stays mud
   (`LaidStream.clarity` 0).
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds

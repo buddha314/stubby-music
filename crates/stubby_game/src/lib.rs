@@ -14,6 +14,7 @@ pub use stubby_player::{controls, hand, interaction};
 mod audio_developer;
 mod build;
 mod campfire;
+mod collectibles;
 pub mod designer;
 mod hud;
 mod inventory_screen;
@@ -37,6 +38,7 @@ mod review;
 // Stream laying (stubby_streams), under its old module name.
 pub use stubby_streams as streams;
 mod sky_review;
+pub mod stream_features;
 mod stream_review;
 mod watering;
 mod waveform_audio;
@@ -54,7 +56,11 @@ impl Plugin for DesertPlugin {
             inventory_screen::InventoryScreenPlugin,
             hand::HandPlugin,
             rack::RackPlugin::<resources::PlayerInventory>::default(),
-            glue::GluePlugin,
+            (
+                glue::GluePlugin,
+                collectibles::CollectiblesPlugin,
+                stream_features::StreamFeaturesPlugin,
+            ),
             interaction::InteractionPlugin,
             stubby_world::DesertWorldPlugin { seed: self.seed },
             prefabs::PrefabGluePlugin,
