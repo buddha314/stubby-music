@@ -30,8 +30,9 @@ running, the region keeps changing, and the world goes on past the region's edge
   connects them.
 - Reed clumps within 40 m of the burbler hold at least enough reeds for that stream
   (6 per segment), with room to spare.
-- At least one rock formation opening or hollow trunk (a high-pass filter) and one ripple
-  pool (an oscilloscope) lie in the region, so the reed water purifier can be made.
+- At least one rock formation opening or hollow trunk (a high-pass filter) lies in the
+  region. Ripple pools (oscilloscopes) form along laid streams (`add-ripple-pool`), so the
+  first stream brings them; together the reed water purifier can be made.
 - All of it is reachable on foot over flat mudflat.
 
 ## Layout: prefabs in Jackdaw (decided)

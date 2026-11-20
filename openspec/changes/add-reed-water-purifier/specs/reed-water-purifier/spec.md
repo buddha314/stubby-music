@@ -57,6 +57,14 @@ and SHALL let the clarity ease back when it stops.
 - **WHEN** a purifier stands in a muddy stream, sounds, and meets its targets
 - **THEN** the stream below it rises to silty, and a tree it waters may grow past budding
 
+#### Scenario: Filters in sequence
+- **WHEN** three working purifiers stand one below another on a muddy stream
+- **THEN** the water is silty below the first, cloudy below the second and clear below the third
+
+#### Scenario: Already clear
+- **WHEN** a working purifier is fed clear water
+- **THEN** the water below it stays clear
+
 #### Scenario: Targets not met
 - **WHEN** the purifier sounds but a VCO is not on its note
 - **THEN** the water is not cleaned

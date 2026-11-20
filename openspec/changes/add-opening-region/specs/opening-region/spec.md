@@ -20,7 +20,7 @@ every scrub oak in the region dormant.
 ### Requirement: Region contents
 The opening region SHALL contain mudpit burblers, a grove of dormant scrub oaks (some
 with hollow trunks), loose lightning bugs near the grove, reed beds on wet ground, rock
-formations (some with openings), ripple pools and scattered desert props, placed as
+formations (some with openings) and scattered desert props, placed as
 Jackdaw prefabs by seeded scatter rules, with hand placement only as an overlay.
 
 #### Scenario: Same seed, same region
@@ -43,7 +43,7 @@ them.
 
 #### Scenario: The first filter can be made
 - **WHEN** the opening is generated from seed 17
-- **THEN** the region holds at least one high-pass filter source and one ripple pool
+- **THEN** the region holds at least one high-pass filter source
 
 ### Requirement: The region's loop
 The region SHALL let the player close this loop: bugs give square waves, a square wave

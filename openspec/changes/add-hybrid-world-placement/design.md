@@ -29,7 +29,8 @@ is not proof that stored groups preserve deletions on regeneration.
 
 ## Scope and first deliverable
 **Seed first (user, 2026-11-19).** The opening is generated from the seed: burblers,
-reed beds, rock formations, the oak grove, ripple pools and props are all scatter rules.
+reed beds, rock formations, the oak grove and props are all scatter rules. (Ripple pools
+are not: they form along laid streams, `add-ripple-pool`.)
 Hand placement comes back only as an **overlay**, if the seeded layout fails the opening's
 placement constraints (`add-opening-region`) or reads badly; the authored-priority and
 override machinery below is that overlay. Today's hand-placed opening objects in
@@ -39,7 +40,7 @@ The rules depend on each other, which one-candidate-per-cell scatter alone does 
 express: resolve them **in order**, each reading the placements before it.
 1. **Burblers**, spaced apart, each with a seeded tempo and a unique instance ID.
 2. **Wetness**: a channel from distance to burbler pools and low ground; **reed beds**
-   cluster where it is high (several clumps per bed), and **ripple pools** sit in it.
+   cluster where it is high (several clumps per bed).
 3. **Oak grove** near a burbler (20–40 m), some trunks seeded hollow.
 4. **Rock formations**: clusters of boulders from the existing variants, some
    formations with an opening.

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: The opening is generated from the seed
-The opening's burblers, reed beds, rock formations, oak grove, ripple pools and props SHALL
+The opening's burblers, reed beds, rock formations, oak grove and props SHALL
 be placed by seeded scatter rules resolved in order, each rule able to read the placements
 of the rules before it. Hand-placed objects SHALL be an overlay over that layout.
 

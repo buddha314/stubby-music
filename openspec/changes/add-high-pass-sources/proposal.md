@@ -7,15 +7,16 @@ sound through a narrow duct. This change makes them collectable (user, 2026-11-1
 
 ## What Changes
 
-- **Two resource kinds yield a high-pass filter**, one each, collected once with E and
-  never replenished (as the empty snail shell):
+- **Two resource kinds yield a high-pass filter**, one each, collected with E and
+  **back half a day later** (user, 2026-11-19: "we need a lot of these"):
   - **a rock opening**: a gap through a rock formation (an arch, a hole, a slot between
     boulders). Each opening gives one.
   - **a hollow trunk**: some scrub oaks have a hollow in their trunk. Each hollow gives one.
     Not every oak is hollow; which ones are is seeded.
 - **They are heard before they are seen**: the world's sound passing through an opening or
   hollow is high-passed (thin and bright), so the player can find one by ear, as the bug's
-  square is found. Silent world, silent opening: it sounds only once something sounds near it.
+  square is found. Silent world, silent opening: it sounds only once something sounds near it,
+  and it falls quiet once collected, until its filter is back.
 - **Art**: rock formations built from the boulder kit, some with an opening; a hollow
   variant of the scrub oak trunk; each opening and hollow carries an `Interact` socket.
 - **Rules data**: the `high_pass_filter` item, `rock_opening` and `hollow_trunk` resources,
