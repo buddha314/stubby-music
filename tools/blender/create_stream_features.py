@@ -10,8 +10,9 @@ Ripple pool (`streams/ripple_pool/`)
   seeps through the bank and settles: still and clear beside the moving mud, so it reads
   from a distance. It is symmetric along the flow, so turning it half a turn puts it on
   the right bank. Built up from the ground (the terrain covers anything below it).
-  Ripples          shipped at scale 0 (`start_scale: 0`); the game shows it while the
-                   stream sounds and plays `Ripple_Beat` looping at BPM / 60
+  Ripples          shipped at scale 0 (`start_scale: 0`), extras `shown_while: beat`: the
+                   game shows it while the pool keeps its stream's clock (the stream
+                   sounds) and plays `Ripple_Beat` on that clock
   Ripple_<n>       pale luminous rings; `Ripple_Beat` (one beat, 24 frames at 24 fps)
                    sends a new ring out from the centre on the beat while last beat's ring
                    reaches the rim, so one ring leaves per beat and none pops
@@ -188,7 +189,7 @@ class RipplePool(Feature):
             stone.scale = (self.rng.uniform(1.0, 1.5), 1.0, 0.45)
 
     def ripples(self):
-        ripples = self.node("Ripples", (0, POOL_Y, POOL_WATER_Z + 0.004))
+        ripples = self.node("Ripples", (0, POOL_Y, POOL_WATER_Z + 0.004), shown_while="beat")
         action = bpy.data.actions.new("Ripple_Beat")
 
         def ring_mesh(bm):

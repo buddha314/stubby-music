@@ -233,5 +233,13 @@
     "boulder_2": 5.0,
     "boulder_3": 5.0,
     "boulder_4": 5.0
-  }
+  },
+  "stream_features": [
+    {
+      "id": "ripple_pools",
+      "asset": "streams/ripple_pool/ripple_pool.glb",
+      "mean_spacing_m": 12.0,
+      "end_margin_m": 0.6
+    }
+  ]
 }
