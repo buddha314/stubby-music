@@ -9,6 +9,14 @@ use std::{error::Error, path::Path};
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
+/// v2: rules resolve in configuration order, each with its own seed, and may keep
+/// distances from what is already placed (add-hybrid-world-placement 2b).
+pub const GENERATOR_REVISION: &str = "mudflat-v2";
+
+/// The seeded opening: its rules, protected areas and authored footprints
+/// (`assets/world/opening.json`, a whole world configuration).
+const SHIPPED: &str = include_str!("../../../assets/world/opening.json");
+
 #[derive(Clone, Debug, PartialEq, Resource, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorldConfig {
@@ -35,7 +43,7 @@ impl Default for WorldConfig {
     fn default() -> Self {
         Self {
             schema_version: 1,
-            generator_revision: "mudflat-v1".into(),
+            generator_revision: GENERATOR_REVISION.into(),
             seed: "42".into(),
             scene: "scene.bsn".into(),
             content_revision: "development".into(),
@@ -48,6 +56,16 @@ impl Default for WorldConfig {
 }
 
 impl WorldConfig {
+    /// The game's own configuration: the seeded opening's rules. Both entry points start
+    /// from it unless `--world-config` names another.
+    pub fn shipped() -> Self {
+        let config: Self = serde_json::from_str(SHIPPED).expect("assets/world/opening.json parses");
+        config
+            .validate()
+            .expect("assets/world/opening.json is valid");
+        config
+    }
+
     pub fn seed_value(&self) -> Result<u64> {
         if self.seed.is_empty() || !self.seed.bytes().all(|b| b.is_ascii_digit()) {
             return Err("world seed must be a decimal u64".into());
@@ -56,7 +74,7 @@ impl WorldConfig {
     }
 
     pub fn validate(&self) -> Result<()> {
-        if self.schema_version != 1 || self.generator_revision != "mudflat-v1" {
+        if self.schema_version != 1 || self.generator_revision != GENERATOR_REVISION {
             return Err("unsupported world schema or generator revision".into());
         }
         self.seed_value()?;
@@ -88,7 +106,7 @@ impl WorldConfig {
         let mut config = if let Some(path) = &config_path {
             serde_json::from_slice::<Self>(&std::fs::read(path)?)?
         } else {
-            Self::default()
+            Self::shipped()
         };
         if let Some(seed) = seed {
             if config_path.is_some() && config.seed != seed {
@@ -190,8 +208,11 @@ mod tests {
     #[test]
     fn seed_17_native_scatter_and_saved_placement_edits() {
         let map = ground_heightmap(9, Vec2::splat(8.), Vec2::splat(-4.)).unwrap();
-        let native = ground_scatter(17, &map, 1.).unwrap();
         let mut config = WorldConfig::from_args(["--seed=17".into()]).unwrap();
+        // A bare layout: none of the shipped opening's rules, areas or footprints.
+        config.scatter.clear();
+        config.protected_areas.clear();
+        config.authored_footprints.clear();
         config.scatter.push(ScatterRule {
             id: "desert-decoration".into(),
             revision: 1,
@@ -203,7 +224,13 @@ mod tests {
             density: 1.,
             clearance: 0.,
             blocked_cells: vec![],
+            variants: vec![],
+            min_spacing: 0.,
+            scale: [1., 1.],
+            distances: vec![],
         });
+        let native =
+            ground_scatter(config.rule_seed(&config.scatter[0]).unwrap(), &map, 1.).unwrap();
         let original = config.resolve_layout(&[]).unwrap();
         assert_eq!(original.placements.len(), native.len());
         assert!(original.placements.len() > 4);
@@ -263,6 +290,10 @@ mod tests {
     #[test]
     fn authored_footprints_clear_scatter_around_authored_objects() {
         let mut config = WorldConfig::from_args(["--seed=17".into()]).unwrap();
+        // A bare layout: none of the shipped opening's rules, areas or footprints.
+        config.scatter.clear();
+        config.protected_areas.clear();
+        config.authored_footprints.clear();
         config.scatter.push(ScatterRule {
             id: "desert-decoration".into(),
             revision: 1,
@@ -274,6 +305,10 @@ mod tests {
             density: 1.,
             clearance: 0.,
             blocked_cells: vec![],
+            variants: vec![],
+            min_spacing: 0.,
+            scale: [1., 1.],
+            distances: vec![],
         });
         let all = config.resolve_layout(&[]).unwrap().placements;
         // An authored burbler one metre from a candidate.
@@ -304,5 +339,97 @@ mod tests {
             .authored_footprints
             .insert("mudpit_burbler".into(), f32::NAN);
         assert!(config.resolve_layout(&area).is_err());
+    }
+
+    /// The shipped opening on seed 17, around the opening scene's authored burblers and
+    /// the grotto (add-opening-region "Playable placement", add-hybrid-world-placement 3.1).
+    #[test]
+    fn seed_17_opening_meets_its_placement_constraints() {
+        let mut config = WorldConfig::shipped();
+        config.seed = "17".into();
+        let authored: Vec<(String, Vec3)> = [
+            ("mudpit_burbler", Vec3::new(39.33, 0., -6.05)),
+            ("mudpit_burbler", Vec3::new(69.44, 0., -59.2)),
+            ("boulder_0", Vec3::new(70.5, 0., -60.3)),
+        ]
+        .into_iter()
+        .map(|(s, p)| (s.to_owned(), p))
+        .collect();
+        let layout = config.resolve_opening(&authored).unwrap();
+        assert_eq!(
+            layout,
+            config.resolve_opening(&authored).unwrap(),
+            "same seed, same layout"
+        );
+        assert!(layout.diagnostics.is_empty(), "{:?}", layout.diagnostics);
+        let of = |rule: &str| -> Vec<Vec2> {
+            layout
+                .placements
+                .iter()
+                .filter(|p| p.key.rule == rule)
+                .map(|p| Vec3::from_array(p.pose.position).xz())
+                .collect()
+        };
+        let (burblers, reeds, oaks, rocks, props) = (
+            of("burblers"),
+            of("reed_beds"),
+            of("oak_groves"),
+            of("rock_formations"),
+            of("desert_props"),
+        );
+        eprintln!(
+            "seed 17: {} burblers, {} reed clumps, {} oaks, {} rock formations, {} props",
+            burblers.len(),
+            reeds.len(),
+            oaks.len(),
+            rocks.len(),
+            props.len()
+        );
+        assert!(burblers.len() >= 2 && !oaks.is_empty() && !rocks.is_empty() && !props.is_empty());
+        let all_burblers: Vec<Vec2> = burblers
+            .iter()
+            .copied()
+            .chain(
+                authored
+                    .iter()
+                    .filter(|(s, _)| s == "mudpit_burbler")
+                    .map(|(_, p)| p.xz()),
+            )
+            .collect();
+        let nearest = |at: Vec2, to: &[Vec2]| {
+            to.iter()
+                .map(|p| p.distance(at))
+                .fold(f32::INFINITY, f32::min)
+        };
+        for (i, b) in burblers.iter().enumerate() {
+            let others: Vec<Vec2> = all_burblers.iter().copied().filter(|p| p != b).collect();
+            assert!(nearest(*b, &others) >= 65., "burbler {i} crowds another");
+            // A first stream to an oak (at most 40 m, 10 segments of 6 reeds) is affordable.
+            let near = reeds.iter().filter(|r| r.distance(*b) <= 40.).count();
+            assert!(
+                near >= 10,
+                "burbler {i} has only {near} reed clumps within 40 m"
+            );
+        }
+        for oak in &oaks {
+            let d = nearest(*oak, &all_burblers);
+            assert!(
+                (20.0..=40.5).contains(&d),
+                "an oak {d} m from its nearest burbler"
+            );
+        }
+        // The first filter can be made: a formation with an opening (variants 2 to 5).
+        assert!(layout.placements.iter().any(|p| {
+            p.key.rule == "rock_formations"
+                && ["2", "3", "4", "5"]
+                    .iter()
+                    .any(|k| p.asset.ends_with(&format!("rock_formation_{k}.glb")))
+        }));
+        let spawn = &config.protected_areas[0];
+        assert!(layout.placements.iter().all(|p| {
+            let at = Vec3::from_array(p.pose.position).xz();
+            !(at.cmpge(Vec2::from_array(spawn.min)).all()
+                && at.cmple(Vec2::from_array(spawn.max)).all())
+        }));
     }
 }

@@ -7,7 +7,7 @@
 - [x] 2.1a (claimed: claude; done in `add-stream-building` as the `buildables` rule `stream_segment`) Catalog recipe: 6 `reed` → 1 stream segment; laying a planned stream spends it per segment, and the hologram's `invalid` state covers an unaffordable plan
 - [x] 2.2 (user played it, 2026-11-06) E harvest of reed clumps through the existing pickup path; silent on stubble
 - [ ] 2.3 Show the clump's state from the harvest ledger: `Standing` vs `Stubble`; optional regrowth scale
-- [ ] 2.4 (six hand-placed in `scene.bsn` for now, 2026-11-06) Place clumps on wet ground from the world seed; variant and per-instance variation as in `assets/flora/reeds/asset.json`
+- [x] 2.4 (claimed: claude; done 2026-11-20, `reed_beds` in `assets/world/opening.json`: 2.8-14 m from each burbler, densest at the pool; four variants, scale 0.85-1.15. The six hand-placed clumps remain as authored) Place clumps on wet ground from the world seed; variant and per-instance variation as in `assets/flora/reeds/asset.json`
 - [ ] 2.5 Greenness from local water or light quality; sway `Sway_<n>` with the wind
 
 ## 3. Prefabs carry their resource (found 2026-11-01)
