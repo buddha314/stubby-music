@@ -163,6 +163,7 @@ fn bind_parts(
             || asset.asset.starts_with("reed_clump_")
             || asset.asset.starts_with("desert_")
             || asset.asset.starts_with("boulder_")
+            || asset.asset.starts_with("rock_formation_")
             || asset.asset == "campfire")
         {
             continue;
@@ -329,9 +330,10 @@ fn restore_sockets(
 #[derive(Component)]
 struct CollisionBuilt;
 
-/// Boulders are solid (2026-11-18: the player walked through them): each placed boulder
-/// gets static triangle-mesh colliders from its own detailed level's meshes (`<id>_LOD0`),
-/// so the grotto's opening stays open, marked `Solid` for the player's movement.
+/// Boulders and rock formations are solid (2026-11-18: the player walked through them):
+/// each placed one gets static triangle-mesh colliders from its own detailed level's meshes
+/// (`<id>_LOD0`), so the grotto's opening and the formations' openings stay open, marked
+/// `Solid` for the player's movement.
 #[allow(clippy::type_complexity)]
 fn solid_boulders(
     mut commands: Commands,
@@ -350,7 +352,7 @@ fn solid_boulders(
         let Ok(asset) = roots.get(part.root) else {
             continue;
         };
-        if !asset.asset.starts_with("boulder_") {
+        if !(asset.asset.starts_with("boulder_") || asset.asset.starts_with("rock_formation_")) {
             continue;
         }
         let Some(file) = mesh

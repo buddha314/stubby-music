@@ -1,0 +1,11 @@
+#"Rock formation 2"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+stubby_core::AcousticOccluder {
+    absorption: [0.13, 0.20, 0.24],
+    scattering: 0.05,
+    transmission: [0.015, 0.002, 0.001],
+}
+jackdaw_scene_types::types::GltfSource { path: "props/rocks/rock_formation_2/rock_formation_2.glb", scene_index: 0 }

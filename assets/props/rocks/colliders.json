@@ -80,6 +80,289 @@
         }
       ],
       "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_0/rock_formation_0.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 4.264,
+          "y_length": 3.233,
+          "z_length": 3.695,
+          "translation": [
+            0.042,
+            1.444,
+            0.095
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 3.086,
+          "y_length": 2.212,
+          "z_length": 2.499,
+          "translation": [
+            3.388,
+            0.989,
+            -0.956
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.793,
+          "y_length": 1.368,
+          "z_length": 1.799,
+          "translation": [
+            -2.96,
+            0.607,
+            1.644
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_1/rock_formation_1.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 2.209,
+          "y_length": 1.533,
+          "z_length": 1.87,
+          "translation": [
+            0.001,
+            0.684,
+            0.0
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.371,
+          "y_length": 0.94,
+          "z_length": 1.202,
+          "translation": [
+            3.517,
+            0.419,
+            -2.228
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.655,
+          "y_length": 1.193,
+          "z_length": 1.617,
+          "translation": [
+            -4.222,
+            0.533,
+            -1.438
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 0.858,
+          "y_length": 0.679,
+          "z_length": 1.027,
+          "translation": [
+            1.762,
+            0.304,
+            3.398
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.204,
+          "y_length": 0.853,
+          "z_length": 1.188,
+          "translation": [
+            -2.032,
+            0.38,
+            4.074
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_2/rock_formation_2.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 3.3,
+          "y_length": 5.732,
+          "z_length": 4.305,
+          "translation": [
+            -2.851,
+            2.416,
+            -0.1
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 3.288,
+          "y_length": 5.074,
+          "z_length": 3.791,
+          "translation": [
+            2.855,
+            1.818,
+            0.034
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 7.369,
+          "y_length": 2.181,
+          "z_length": 3.888,
+          "translation": [
+            -0.765,
+            4.191,
+            -0.05
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.75,
+          "y_length": 1.195,
+          "z_length": 1.484,
+          "translation": [
+            5.505,
+            0.535,
+            2.473
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_3/rock_formation_3.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 2.9,
+          "y_length": 5.976,
+          "z_length": 4.326,
+          "translation": [
+            -2.221,
+            2.665,
+            -0.09
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 2.816,
+          "y_length": 5.106,
+          "z_length": 3.769,
+          "translation": [
+            1.968,
+            2.298,
+            -0.304
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.532,
+          "y_length": 1.022,
+          "z_length": 1.362,
+          "translation": [
+            -4.6,
+            0.456,
+            2.6
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_4/rock_formation_4.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 3.477,
+          "y_length": 2.972,
+          "z_length": 3.329,
+          "translation": [
+            -2.841,
+            1.328,
+            0.039
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 3.043,
+          "y_length": 2.723,
+          "z_length": 3.458,
+          "translation": [
+            2.632,
+            1.216,
+            -0.168
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 6.784,
+          "y_length": 2.071,
+          "z_length": 3.375,
+          "translation": [
+            -0.103,
+            3.669,
+            -0.082
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/rocks/rock_formation_5/rock_formation_5.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 2.091,
+          "y_length": 5.487,
+          "z_length": 5.669,
+          "translation": [
+            -3.953,
+            2.476,
+            -0.165
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 5.101,
+          "y_length": 5.998,
+          "z_length": 5.433,
+          "translation": [
+            2.451,
+            2.28,
+            0.144
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 9.771,
+          "y_length": 1.878,
+          "z_length": 5.492,
+          "translation": [
+            -0.113,
+            4.34,
+            -0.121
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 3.36,
+          "y_length": 4.307,
+          "z_length": 3.445,
+          "translation": [
+            7.753,
+            1.88,
+            -0.47
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.703,
+          "y_length": 1.278,
+          "z_length": 1.698,
+          "translation": [
+            -6.201,
+            0.57,
+            3.397
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
     }
   }
 }

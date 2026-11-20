@@ -1,6 +1,6 @@
 {
   "family": "boulder",
-  "about": "Weathered granite boulders after the Mojave's (Joshua Tree), from Blender's Rock Generator (tools/blender/create_boulders.py); the echo grotto (add-echo-grotto) is a cluster of them in the opening scene. Near meshes are acoustic rock by glTF extras {\"acoustic\": \"rock\"}.",
+  "about": "Weathered granite boulders after the Mojave's (Joshua Tree), from Blender's Rock Generator (tools/blender/create_boulders.py); the echo grotto (add-echo-grotto) is a cluster of them in the opening scene. Near meshes are acoustic rock by glTF extras {\"acoustic\": \"rock\"}. Rock formations (tools/blender/create_rock_formations.py) are whole clusters placed as one, for the seeded opening (add-high-pass-sources D2); their `Opening_<k>` sockets are high-pass filter sources.",
   "licence": "CC0-1.0 (generated geometry; the Rock Generator add-on is a GPL tool, its output is ours)",
   "roles": {
     "boulder_0": "back wall",
@@ -63,6 +63,86 @@
       "width": 3.0,
       "depth": 2.5,
       "height": 2.0
+    }
+  },
+  "formations": {
+    "rock_formation_0": {
+      "role": "a pile of three boulders, no opening",
+      "openings": 0,
+      "size_metres": {
+        "width": 9.97,
+        "depth": 6.15,
+        "height": 3.35
+      },
+      "triangles": {
+        "near": 5350,
+        "far": 720
+      }
+    },
+    "rock_formation_1": {
+      "role": "a scatter of five rocks over about 12 m, no opening",
+      "openings": 0,
+      "size_metres": {
+        "width": 10.14,
+        "depth": 8.17,
+        "height": 1.59
+      },
+      "triangles": {
+        "near": 4698,
+        "far": 1200
+      }
+    },
+    "rock_formation_2": {
+      "role": "a window rock: a slab bored through near the ground",
+      "openings": 1,
+      "size_metres": {
+        "width": 11.42,
+        "depth": 5.94,
+        "height": 5.28
+      },
+      "triangles": {
+        "near": 5000,
+        "far": 840
+      }
+    },
+    "rock_formation_3": {
+      "role": "a slot: two leaning fins with a narrow gap between",
+      "openings": 1,
+      "size_metres": {
+        "width": 9.53,
+        "depth": 6.22,
+        "height": 6.25
+      },
+      "triangles": {
+        "near": 7400,
+        "far": 720
+      }
+    },
+    "rock_formation_4": {
+      "role": "a bridge: a capstone across two supports, a passage under it",
+      "openings": 1,
+      "size_metres": {
+        "width": 9.69,
+        "depth": 4.64,
+        "height": 5.07
+      },
+      "triangles": {
+        "near": 7998,
+        "far": 720
+      }
+    },
+    "rock_formation_5": {
+      "role": "a tor: a great boulder bored through, and a slot beside it",
+      "openings": 2,
+      "size_metres": {
+        "width": 17.6,
+        "depth": 7.4,
+        "height": 5.28
+      },
+      "triangles": {
+        "near": 7500,
+        "far": 1080
+      }
     }
   }
 }

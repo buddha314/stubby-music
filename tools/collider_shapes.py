@@ -157,6 +157,35 @@ def boulder(glb):
     return [box]
 
 
+def rock_formation(glb):
+    """A cuboid per rock of a formation (85%, as a boulder), so the gaps between rocks stay
+    open. A bored rock (a window) gets three boxes instead, beside and above its opening,
+    from `openings` in the formation's asset.json, so the window stays open too."""
+    if not glb.stem.startswith("rock_formation_"):
+        return boulder(glb)
+    profile = json.loads((glb.parent / "asset.json").read_text())
+    parts = world_meshes(glb)
+    shapes = []
+    for rock in profile["rocks"]:
+        near = parts[rock["mesh"]]
+        if not rock["bored"]:
+            box = cuboid_around(near)
+            for axis in ("x_length", "y_length", "z_length"):
+                box[axis] = r4(box[axis] * 0.85)
+            shapes.append(box)
+            continue
+        # Blender (x, y, z) is glTF (x, z, -y): an opening at Blender (x, 0, z) is Bevy (x, z).
+        ox, _, oz = next(o["at"] for o in profile["openings"]
+                         if abs(o["at"][0]) < 1e9 and near[:, 0].min() < o["at"][0] < near[:, 0].max())
+        width, height = next((o["width_metres"], o["height_metres"]) for o in profile["openings"]
+                             if o["at"][0] == ox)
+        for piece in (near[near[:, 0] < ox - width / 2], near[near[:, 0] > ox + width / 2],
+                      near[near[:, 1] > oz + height / 2]):
+            if len(piece):
+                shapes.append(cuboid_around(piece))
+    return shapes
+
+
 def campfire(glb):
     """A cylinder around the bundle of sticks: the player walks around the fire."""
     parts = world_meshes(glb)
@@ -169,7 +198,7 @@ FAMILIES = {
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
     "flora/reeds": ("flora/reeds/*/*.glb", "thin reeds: the player walks through, like grass"),
     "props/desert": ("props/desert/*/*.glb", None),
-    "props/rocks": ("props/rocks/*/*.glb", boulder),
+    "props/rocks": ("props/rocks/*/*.glb", rock_formation),
     "structures/campfire": ("structures/campfire/campfire.glb", campfire),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),

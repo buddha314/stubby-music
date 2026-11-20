@@ -494,6 +494,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   settings are preserved.
   **Claude (2026-11-18):** the amphitheatre's art and scene (`add-amphitheatre` 1–3), the being
   atlas (`add-being-atlas`) and the mythology research; Codex owns its seat behaviour (4).
+  **Claude (2026-11-19):** the filter sources' art (`add-high-pass-sources` 1.x, `add-ripple-pool`
+  1.x) and the purifier's check dam (`add-reed-water-purifier` 3.x).
   Update this line when you claim work.
 - **Opening composition (2026-11-16):** spawn at x=0, z=6, bearing 75 degrees,
   so the eastward sunrise is 15 degrees to the right (about 20 degrees at the
@@ -504,7 +506,10 @@ Several agents work in this repo at once. To avoid stepping on each other:
   Rock Generator add-on, so run it without `--factory-startup`) with a small grotto at its
   base, placed in the opening scene at world (70.5, −64.5), 95 m from spawn, with a second
   burbler at its mouth. It is the first authored acoustic space: its boulders' near meshes
-  are acoustic rock through glTF extras `"acoustic": "rock"`. Reflections, reverb and the
+  are acoustic rock through glTF extras `"acoustic": "rock"`. **Rock formations**
+  (`rock_formation_<k>`, `tools/blender/create_rock_formations.py`, 2026-11-19) are the same
+  granite as whole clusters for seeded placement; their `Opening_<k>` sockets are the
+  high-pass filter sources (`add-high-pass-sources`). Reflections, reverb and the
   listening review there belong to the audio work stream (`add-rack-and-spatial-audio`
   4.6/4.8).
 - **The game opens at 06:30**, just after astronomical sunrise, so the low sun
