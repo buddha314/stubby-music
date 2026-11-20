@@ -9,8 +9,15 @@
     "flora/scrub_oak/scrub_oak_2/scrub_oak_2.glb#Scene0",
     "flora/scrub_oak/scrub_oak_3/scrub_oak_3.glb#Scene0",
     "flora/scrub_oak/scrub_oak_4/scrub_oak_4.glb#Scene0",
-    "flora/scrub_oak/scrub_oak_5/scrub_oak_5.glb#Scene0"
+    "flora/scrub_oak/scrub_oak_5/scrub_oak_5.glb#Scene0",
+    "flora/scrub_oak/scrub_oak_6/scrub_oak_6.glb#Scene0",
+    "flora/scrub_oak/scrub_oak_7/scrub_oak_7.glb#Scene0"
   ],
+  "hollow_variants": [
+    "flora/scrub_oak/scrub_oak_6/scrub_oak_6.glb#Scene0",
+    "flora/scrub_oak/scrub_oak_7/scrub_oak_7.glb#Scene0"
+  ],
+  "hollow": "Hollow variants have a bole with a hollow whose mouth is the `Hollow` socket (extras resource: hollow_trunk): collected with E for a high-pass filter, back half a day later, whatever the tree's growth (add-high-pass-sources)",
   "per_instance": {
     "variant": "hash(world_seed, instance_id) % variant count",
     "yaw_deg": [
@@ -110,6 +117,11 @@
     "phase": "per_instance.sway_phase, plus the limb index"
   },
   "bug_spawn": "BugSpawn_<k>, one per bloom; only open blooms spawn, so a dormant tree makes no bugs",
+  "stream_inlet": {
+    "radius_m": 2.2,
+    "snap_m": 2.0,
+    "note": "a ring round the trunk that a stream being laid snaps onto, ending along its tangent so it runs alongside the tree (add-tree-inlets); inside water_reach_m (mines.json) so a flowing stream there waters it"
+  },
   "far_lod": {
     "distance_m": 45.0,
     "levels": "nodes scrub_oak_<k>_LOD0 and scrub_oak_<k>_LOD1 inside the model",
@@ -148,11 +160,14 @@
     "scrub_oak_5": {
       "near": 11012,
       "far": 767
+    },
+    "scrub_oak_6": {
+      "near": 19280,
+      "far": 1585
+    },
+    "scrub_oak_7": {
+      "near": 16734,
+      "far": 1345
     }
-  },
-  "stream_inlet": {
-    "radius_m": 2.2,
-    "snap_m": 2.0,
-    "note": "a ring round the trunk that a stream being laid snaps onto, ending along its tangent so it runs alongside the tree (add-tree-inlets); inside water_reach_m (mines.json) so a flowing stream there waters it"
   }
 }

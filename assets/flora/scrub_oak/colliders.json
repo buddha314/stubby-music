@@ -90,6 +90,36 @@
         }
       ],
       "rigid_body": "none (static)"
+    },
+    "flora/scrub_oak/scrub_oak_6/scrub_oak_6.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 0.976,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "flora/scrub_oak/scrub_oak_7/scrub_oak_7.glb": {
+      "colliders": [
+        {
+          "shape": "Cylinder",
+          "radius": 1.113,
+          "height": 2.2,
+          "translation": [
+            0,
+            1.1,
+            0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
     }
   }
 }

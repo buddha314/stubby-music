@@ -70,7 +70,7 @@
     },
     {
       "id": "oak_groves",
-      "revision": 1,
+      "revision": 2,
       "region": "opening",
       "origin": [
         -104.0,
@@ -90,7 +90,9 @@
         "flora/scrub_oak/scrub_oak_2/scrub_oak_2.glb",
         "flora/scrub_oak/scrub_oak_3/scrub_oak_3.glb",
         "flora/scrub_oak/scrub_oak_4/scrub_oak_4.glb",
-        "flora/scrub_oak/scrub_oak_5/scrub_oak_5.glb"
+        "flora/scrub_oak/scrub_oak_5/scrub_oak_5.glb",
+        "flora/scrub_oak/scrub_oak_6/scrub_oak_6.glb",
+        "flora/scrub_oak/scrub_oak_7/scrub_oak_7.glb"
       ],
       "min_spacing": 7.0,
       "scale": [

@@ -90,3 +90,13 @@ Triangles: 11.0k–14.7k near, 0.8k–1.1k far LOD.
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_scrub_oak.py -- 3    # one variant
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_scrub_oak.py -- montage
 ```
+
+## Hollow scrub oaks
+
+Variants 6 and 7 are hollow (`HOLLOW` in `tools/blender/create_scrub_oak.py`): their stems
+rise from a squat, gnarled bole with a weathered hollow bored into one side, dark inside.
+The hollow's mouth is the `Hollow` socket, extras `resource: hollow_trunk`, so E there gives
+a high-pass filter, back half a day later, whatever the tree's growth
+(`add-high-pass-sources`). The seeded oak groves pick among all eight variants, so about one
+oak in four is hollow; a hollow faces a seeded way, so walk round a tree to find it.
+

@@ -93,6 +93,6 @@ Rock openings and hollow trunks each yield a `high_pass_filter`, and ripple pool
 `oscilloscope`, all returning after 1800 s (half a game day). **A resource's pickups are
 its model's sockets**: any leaf node whose glTF extras name the resource ID (`"resource":
 "rock_opening"`) is collectable, one source per socket (`stubby_game/src/collectibles.rs`),
-so adding a collectible is a tagged socket and a row, no code. No model tags
-`hollow_trunk` yet (the hollow oak is still to be drawn). The purifier is crafted at a
+so adding a collectible is a tagged socket and a row, no code. Hollow scrub oaks
+(variants 6 and 7) tag their `Hollow` socket `hollow_trunk`. The purifier is crafted at a
 campfire as a kit and built from it across a laid stream.

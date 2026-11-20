@@ -19,7 +19,7 @@
 - [x] 2b.1 (claimed: claude; done 2026-11-20) Ordered rule resolution: a rule may read earlier rules' placements (distance, clearance)
 - [x] 2b.2 (claimed: claude; done 2026-11-20) Burblers: spacing, seeded tempo on the 24 BPM grid, unique instance and module IDs
 - [x] 2b.3 (claimed: claude; done 2026-11-20) Wetness channel (burbler pools, low ground); reed beds clustered on it
-- [ ] 2b.4 Oak grove 20-40 m from a burbler; some trunks hollow (`add-high-pass-sources`). Groves done (claude, 2026-11-20); hollow trunks wait for the hollow oak art (`add-high-pass-sources` 1.2)
+- [x] 2b.4 (claimed: claude; done 2026-11-20) Oak grove 20-40 m from a burbler; some trunks hollow (`add-high-pass-sources`): two of the rule's eight variants are hollow
 - [x] 2b.5 (claimed: claude; done 2026-11-20) Rock formations: boulder clusters, some with an opening (art: `add-high-pass-sources`)
 - [x] 2b.6 (claimed: claude; done 2026-11-20) Desert props as decoration (`add-desert-opening` 2.6)
 - [ ] 2b.7 Remove the hand-placed opening objects from `scene.bsn` once their kinds are seeded; keep the grotto authored only if the seeded layout cannot place it well. Not yet (2026-11-20): the authored opening (spawn composition toward the oak and burbler, the bugs, which cannot be seeded yet, the grotto) stays as the overlay, and seeded rules keep clear of it and read its burblers as anchors
