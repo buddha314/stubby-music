@@ -99,13 +99,19 @@ mod tests {
             world
                 .spawn((
                     Name::new(name.to_owned()),
-                    GltfExtras { value: extras.into() },
+                    GltfExtras {
+                        value: extras.into(),
+                    },
                     ChildOf(root),
                 ))
                 .id()
         };
         let a = socket(world, "Opening_0", r#"{"resource":"rock_opening"}"#);
-        let b = socket(world, "Opening_1", r#"{"resource":"rock_opening","opening":1}"#);
+        let b = socket(
+            world,
+            "Opening_1",
+            r#"{"resource":"rock_opening","opening":1}"#,
+        );
         // An item, not a resource (the reeds' `Interact` names `reed`): not a pickup here.
         let item = socket(world, "Interact", r#"{"resource":"reed"}"#);
         // A node with children (a model's root names its resource too): not a socket.

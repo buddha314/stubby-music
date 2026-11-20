@@ -119,6 +119,31 @@ pub struct BuildableDefinition {
     pub name: String,
     /// Items taken from the inventory for each one built.
     pub cost: Vec<Stack>,
+    /// The model built and shown as the hologram, under `assets/` (none: laid by its own
+    /// system, as streams are).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// How its hologram finds its place.
+    #[serde(default)]
+    pub placement: Placement,
+    /// A line shown once it is built (Satisfactory's hints are the baseline).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub built_hint: Option<String>,
+}
+
+/// How a buildable's hologram finds its place (add-reed-water-purifier D6).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Placement {
+    /// On the ground at the aim.
+    #[default]
+    Ground,
+    /// At the aim, or beside the nearest stream within its machine rule's `clock_reach_m`.
+    BesideStream,
+    /// Across the aimed laid stream segment, square to its flow; nowhere else.
+    AcrossSegment,
+    /// Laid by its own system (streams).
+    Laid,
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

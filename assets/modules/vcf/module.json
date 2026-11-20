@@ -14,7 +14,7 @@
   "knobs": {
     "cutoff": {
       "param": "filter.cutoff",
-      "default": 1000.0,
+      "default": 1046.5,
       "quantize": "semitone"
     },
     "res": {

@@ -189,18 +189,9 @@ fn place_stream_features(
         return;
     };
     for (entity, stream) in &streams {
-        // A segment's key: its path's control points and its index along that path.
-        let path_key = stream
-            .path
-            .points
-            .iter()
-            .flat_map(|p| p.to_array())
-            .fold(0xcbf29ce484222325_u64, |h, v| {
-                (h ^ u64::from(v.to_bits())).wrapping_mul(0x100000001b3)
-            });
         let mut spawned = 0;
         for k in stream.first..=stream.last {
-            let segment = path_key ^ u64::from(k).wrapping_mul(0x9e3779b97f4a7c15);
+            let segment = stream.segment_key(k);
             for feature in &config.stream_features {
                 let places = stubby_jackdaw::world_generation::stream_feature_places(
                     seed,

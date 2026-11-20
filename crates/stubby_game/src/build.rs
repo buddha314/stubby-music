@@ -1,10 +1,10 @@
 //! Building, as in Satisfactory: Q opens the build menu, a tile per buildable (from the
 //! rules' `buildables.json`, with its icon and cost), and picking one starts placing it.
-//! Streams are laid by `stubby_streams`; a campfire (add-campfire-craft-bench) is placed
-//! here: its hologram follows the aim on the ground, pale amber when you hold its cost
-//! and red when you don't, and a click builds an unlit campfire there for that cost. Q or
-//! Escape leaves building. Campfire sticks will be their own item later; for now a
-//! campfire costs reeds.
+//! Streams are laid by `stubby_streams`; everything else with a `model` is placed here,
+//! the same way for every buildable: its hologram finds its place by the row's
+//! `placement` (on the ground; beside a stream, as a campfire; across a laid segment, as a
+//! purifier's dam), pale amber when it can be built there with the cost in hand and red
+//! when not, and a click builds it there for that cost. Q or Escape leaves building.
 use bevy::light::NotShadowCaster;
 use bevy::picking::events::{PointerClick, PointerOut, PointerOver};
 use bevy::prelude::*;
@@ -15,34 +15,36 @@ use stubby_ui::style::{AMBER, BACKDROP, EDGE, INK, MUTED, PANEL, TILE};
 
 use super::recipes_plugin::{PlayerInventory, RecipeCatalog};
 
-const CAMPFIRE: &str = "campfire";
-const CAMPFIRE_MODEL: &str = "structures/campfire/campfire.glb";
-/// Where a campfire can be put down: this near and this far along the aim, in metres.
+use crate::stream_features::OnSegment;
+use stubby_recipes::Placement;
+
+/// Where a buildable can be put down: this near and this far along the aim, in metres.
 const NEAREST: f32 = 2.0;
 const REACH: f32 = 10.0;
 
 pub struct BuildPlugin;
 impl Plugin for BuildPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CampfireBuild>()
+        app.init_resource::<Placing>()
             .add_systems(Startup, spawn_menu)
             .add_systems(
                 Update,
                 (
                     open_menu.before(StreamSystems::Input),
                     show_menu,
-                    place_campfire.after(StreamSystems::Input),
+                    place.after(StreamSystems::Input),
                     tint_hologram,
                 ),
             );
     }
 }
 
-/// Placing a campfire: on while the player has picked it from the build menu.
+/// Placing a buildable: the one picked from the build menu, while it is being placed.
 #[derive(Resource, Default)]
-pub struct CampfireBuild {
-    pub active: bool,
-    ghost: Option<Entity>,
+pub struct Placing {
+    pub active: Option<String>,
+    /// The hologram, and which buildable it shows.
+    ghost: Option<(Entity, String)>,
     valid: bool,
     built: u32,
 }
@@ -178,13 +180,13 @@ fn open_menu(
     keys: Res<ButtonInput<KeyCode>>,
     mut screens: ResMut<ScreenMode>,
     stream: Option<Res<StreamBuild>>,
-    mut camp: ResMut<CampfireBuild>,
+    mut placing: ResMut<Placing>,
 ) {
     if !keys.just_pressed(stubby_core::keys::BUILD) {
         return;
     }
-    if camp.active {
-        camp.active = false;
+    if placing.active.is_some() {
+        placing.active = None;
         return;
     }
     if stream.is_some_and(|stream| stream.active) {
@@ -226,7 +228,8 @@ fn choose(
     tiles: Query<&BuildTile>,
     mut screens: ResMut<ScreenMode>,
     stream: Option<ResMut<StreamBuild>>,
-    mut camp: ResMut<CampfireBuild>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut placing: ResMut<Placing>,
 ) {
     let Ok(BuildTile(id)) = tiles.get(click.entity) else {
         return;
@@ -235,14 +238,17 @@ fn choose(
         return;
     }
     screens.close();
-    match id.as_str() {
-        "stream_segment" => {
+    let Some(buildable) = catalog.as_ref().and_then(|c| c.0.buildable(id)) else {
+        return;
+    };
+    match (buildable.placement, &buildable.model) {
+        (Placement::Laid, _) => {
             if let Some(mut stream) = stream {
                 stream.active = true;
             }
         }
-        CAMPFIRE => camp.active = true,
-        _ => {}
+        (_, Some(_)) => placing.active = Some(id.clone()),
+        (_, None) => {}
     }
 }
 
@@ -263,7 +269,7 @@ fn aim_on_ground(eye: Vec3, dir: Vec3, ground: &GroundHeight) -> Vec3 {
     Vec3::new(flat.x, height(flat), flat.z)
 }
 
-/// A campfire aimed within its reach of a stream snaps beside the stream's bank
+/// A buildable placed beside a stream, aimed within its reach of one, snaps beside the stream's bank
 /// (add-stream-layers): this far from the stream's centre line, its half width with banks
 /// (1.58 m) and the fire's ash bed.
 const BESIDE_STREAM_M: f32 = 2.2;
@@ -287,8 +293,36 @@ fn beside_stream(at: Vec3, eye: Vec3, streams: &[(f32, Vec3)], reach_m: f32) -> 
     Some(point + side * BESIDE_STREAM_M)
 }
 
+/// Where a buildable placed across a segment goes: the aimed laid stream within this
+/// many metres of the aim, at the point nearest the aim, turned to the flow there.
+const SEGMENT_AIM_M: f32 = 2.5;
+
+/// The place across the nearest laid stream: its centre line at the aim, the model's +X
+/// along the flow (the stream segment's frame), and the segment it stands on.
+fn across_segment(
+    at: Vec3,
+    streams: &[(Entity, &stubby_streams::LaidStream)],
+) -> Option<(Transform, OnSegment)> {
+    let (entity, stream, point) = streams
+        .iter()
+        .map(|(entity, stream)| (*entity, *stream, stream.nearest_point(at)))
+        .filter(|(.., p)| Vec2::new(p.x - at.x, p.z - at.z).length() <= SEGMENT_AIM_M)
+        .min_by(|a, b| {
+            let d = |p: Vec3| Vec2::new(p.x - at.x, p.z - at.z).length_squared();
+            d(a.2).total_cmp(&d(b.2))
+        })?;
+    let on = OnSegment::of(entity, stream, point);
+    let (along, _) = stream.nearest_along(point);
+    let (_, flow) = stream.path.at(along - stream.start + stream.start_s());
+    let yaw = (-flow.z).atan2(flow.x);
+    Some((
+        Transform::from_translation(point).with_rotation(Quat::from_rotation_y(yaw)),
+        on,
+    ))
+}
+
 #[allow(clippy::too_many_arguments)] // Placing spans input, the world, the rules and stock.
-fn place_campfire(
+fn place(
     mut commands: Commands,
     server: Option<Res<AssetServer>>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -299,104 +333,140 @@ fn place_campfire(
     catalog: Option<Res<RecipeCatalog>>,
     camera: Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
     mut player: ResMut<PlayerInventory>,
-    mut camp: ResMut<CampfireBuild>,
+    mut placing: ResMut<Placing>,
     mut ghosts: Query<&mut Transform, With<Ghost>>,
-    streams: Query<&stubby_streams::LaidStream>,
+    streams: Query<(Entity, &stubby_streams::LaidStream)>,
     rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
     mut goals: MessageWriter<bevy_stubby_recipes::GoalRequest>,
 ) {
     if screens.open.is_some() || keys.just_pressed(KeyCode::Escape) {
-        camp.active = false;
+        placing.active = None;
     }
-    if !camp.active {
-        if let Some(ghost) = camp.ghost.take() {
-            commands.entity(ghost).despawn();
-        }
-        return;
+    let buildable = placing
+        .active
+        .as_ref()
+        .and_then(|id| catalog.as_ref()?.0.buildable(id).cloned());
+    // A hologram of something else (or nothing to place) goes.
+    if let Some((ghost, shown)) = placing.ghost.clone()
+        && buildable.as_ref().is_none_or(|b| b.id != shown)
+    {
+        commands.entity(ghost).despawn();
+        placing.ghost = None;
     }
-    let (Some(server), Ok(camera)) = (server, camera.single()) else {
+    let (Some(buildable), Some(server), Ok(camera)) = (buildable, server, camera.single()) else {
         return;
     };
-    let ghost = *camp.ghost.get_or_insert_with(|| {
-        commands
-            .spawn((
-                Ghost,
-                Name::new("Campfire hologram"),
-                WorldAssetRoot(server.load(format!("{CAMPFIRE_MODEL}#Scene0"))),
-                Transform::default(),
-                Visibility::default(),
-            ))
-            .id()
-    });
+    let Some(model) = buildable.model.clone() else {
+        return;
+    };
+    let ghost = placing
+        .ghost
+        .get_or_insert_with(|| {
+            let ghost = commands
+                .spawn((
+                    Ghost,
+                    Name::new(format!("{} hologram", buildable.name)),
+                    WorldAssetRoot(server.load(format!("{model}#Scene0"))),
+                    Transform::default(),
+                    Visibility::default(),
+                ))
+                .id();
+            (ghost, buildable.id.clone())
+        })
+        .0;
     let eye = camera.translation();
     let mut at = aim_on_ground(eye, camera.forward().as_vec3(), &ground);
-    let reach_m = rules
-        .as_ref()
-        .and_then(|rules| rules.of(CAMPFIRE)?.clock_reach_m)
-        .unwrap_or(0.);
-    let near: Vec<(f32, Vec3)> = streams
-        .iter()
-        .filter(|s| s.source.is_some())
-        .map(|s| {
-            let point = s.nearest_point(at);
-            (Vec2::new(point.x - at.x, point.z - at.z).length(), point)
-        })
-        .collect();
-    if let Some(snapped) = beside_stream(at, eye, &near, reach_m) {
-        at = Vec3::new(snapped.x, ground.at(snapped.x, snapped.z), snapped.z);
-    }
-    let facing = Transform::from_translation(at).looking_at(Vec3::new(eye.x, at.y, eye.z), Vec3::Y);
+    let facing = |at: Vec3| {
+        Transform::from_translation(at).looking_at(Vec3::new(eye.x, at.y, eye.z), Vec3::Y)
+    };
+    let laid: Vec<(Entity, &stubby_streams::LaidStream)> = streams.iter().collect();
+    // Where it goes, and whether this place will do.
+    let (place, on, placeable) = match buildable.placement {
+        Placement::BesideStream => {
+            let reach_m = rules
+                .as_ref()
+                .and_then(|rules| rules.of(&buildable.id)?.clock_reach_m)
+                .unwrap_or(0.);
+            let near: Vec<(f32, Vec3)> = laid
+                .iter()
+                .filter(|(_, s)| s.source.is_some())
+                .map(|(_, s)| {
+                    let point = s.nearest_point(at);
+                    (Vec2::new(point.x - at.x, point.z - at.z).length(), point)
+                })
+                .collect();
+            if let Some(snapped) = beside_stream(at, eye, &near, reach_m) {
+                at = Vec3::new(snapped.x, ground.at(snapped.x, snapped.z), snapped.z);
+            }
+            (facing(at), None, true)
+        }
+        Placement::AcrossSegment => match across_segment(at, &laid) {
+            Some((place, on)) => (place, Some(on), true),
+            None => (facing(at), None, false),
+        },
+        Placement::Ground | Placement::Laid => (facing(at), None, true),
+    };
     if let Ok(mut transform) = ghosts.get_mut(ghost) {
-        *transform = facing;
+        *transform = place;
     }
     let cost = catalog
-        .and_then(|catalog| catalog.0.build_cost(CAMPFIRE, 1).ok())
+        .as_ref()
+        .and_then(|catalog| catalog.0.build_cost(&buildable.id, 1).ok())
         .unwrap_or_default();
-    camp.valid = cost
+    let affordable = cost
         .iter()
         .all(|stack| player.items.quantity(&stack.item) >= stack.quantity);
+    let valid = affordable && placeable;
+    if placing.valid != valid {
+        placing.valid = valid;
+    }
     // The click that recaptures the cursor is not a build click.
     if !(capture.captured() && buttons.just_pressed(MouseButton::Left)) {
         return;
     }
-    if !camp.valid {
-        player.feedback = cost
+    if !affordable {
+        let needs = cost
             .iter()
             .map(|stack| format!("{} {}", stack.quantity, stack.item.replace('_', " ")))
             .collect::<Vec<_>>()
             .join(", ");
-        player.feedback = format!("A campfire needs {}.", player.feedback);
+        player.feedback = format!("A {} needs {needs}.", buildable.name.to_lowercase());
         return;
     }
-    if player.items.take_stacks(&cost).is_err() {
+    if !placeable || player.items.take_stacks(&cost).is_err() {
         return;
     }
-    camp.built += 1;
-    // The opening's first step (user, 2026-11-18): build a campfire.
+    placing.built += 1;
+    // Every buildable built meets its `built` goal condition (the opening's campfire).
     goals.write(bevy_stubby_recipes::GoalRequest(
         stubby_recipes::GoalEvent::ConditionMet(stubby_recipes::Condition::Built {
-            buildable: CAMPFIRE.into(),
+            buildable: buildable.id.clone(),
         }),
     ));
-    commands.spawn((
-        Name::new("Campfire"),
-        facing,
+    let mut built = commands.spawn((
+        Name::new(buildable.name.clone()),
+        place,
         Visibility::default(),
-        WorldAssetRoot(server.load(format!("{CAMPFIRE_MODEL}#Scene0"))),
+        WorldAssetRoot(server.load(format!("{model}#Scene0"))),
         PlacedAsset {
-            asset: CAMPFIRE.into(),
-            model: CAMPFIRE_MODEL.into(),
-            instance: format!("campfire-built-{}", camp.built),
+            asset: buildable.id.clone(),
+            model,
+            instance: format!("{}-built-{}", buildable.id, placing.built),
         },
     ));
-    player.feedback = "Built a campfire. Light it with a backbeat: a spark on 2 and 4.".into();
+    if let Some(on) = on {
+        built.insert(on);
+    }
+    if let Some(hint) = &buildable.built_hint {
+        player.feedback = hint.clone();
+    }
 }
 
 /// The hologram's parts take the hologram material, amber when it can be built and red
 /// when it can't, and cast no shadow.
 fn tint_hologram(
     mut commands: Commands,
-    camp: Res<CampfireBuild>,
+    placing: Res<Placing>,
     hologram: Option<Res<Hologram>>,
     mut materials: Option<ResMut<Assets<StandardMaterial>>>,
     parts: Query<
@@ -419,10 +489,10 @@ fn tint_hologram(
                 .insert((MeshMaterial3d(hologram.0.clone()), NotShadowCaster));
         }
     }
-    if camp.is_changed()
+    if placing.is_changed()
         && let Some(mut material) = materials.get_mut(&hologram.0)
     {
-        material.base_color = if camp.valid {
+        material.base_color = if placing.valid {
             Color::srgba(1., 0.83, 0.6, 0.35)
         } else {
             Color::srgba(1., 0.35, 0.27, 0.35)
@@ -459,5 +529,26 @@ mod tests {
         // Looking at the horizon: the farthest reach, on the ground.
         let level = aim_on_ground(eye, Vec3::NEG_Z, &flat);
         assert!((level.z + REACH).abs() < 1e-4 && level.y == 0., "{level}");
+    }
+
+    /// A purifier's dam snaps across the aimed laid stream, square to its flow, and has no
+    /// place away from one (add-reed-water-purifier D6).
+    #[test]
+    fn a_dam_snaps_across_the_aimed_segment() {
+        let laid = stubby_streams::LaidStream::straight_segments(
+            None,
+            Vec3::ZERO,
+            Vec3::new(0., 0., -12.),
+            3,
+        );
+        let stream = Entity::from_raw_u32(7).unwrap();
+        let streams = [(stream, &laid)];
+        let (place, on) = across_segment(Vec3::new(1.2, 0., -6.), &streams).expect("a place");
+        assert!(place.translation.x.abs() < 0.05 && (place.translation.z + 6.).abs() < 0.3);
+        // The model's +X runs downstream (-Z here).
+        assert!(place.rotation.mul_vec3(Vec3::X).distance(Vec3::NEG_Z) < 0.01);
+        assert_eq!(on.stream, stream);
+        assert_eq!(on.segment, laid.segment_key(1));
+        assert!(across_segment(Vec3::new(5., 0., -6.), &streams).is_none());
     }
 }

@@ -164,7 +164,7 @@ def build_scope():
     kit.socket("Screen", (0, PANEL_FRONT - 0.008, sz), display="waveform", width_m=sw - 0.02,
                height_m=sh - 0.02, samples=256, trace_material="Scope_Trace", channel="in")
 
-    kit.knob("time", 0.64, "TIME", x=-0.1, radius=0.055, label_dz=-0.1, param_min=0.002, param_max=2.0,
+    kit.knob("time", 0.64, "TIME", x=-0.1, radius=0.055, label_dz=-0.1, param_min=0.002, param_max=0.25,
              taper="log", **KNOB)
     kit.knob("scale", 0.64, "SCALE", x=0.1, radius=0.055, label_dz=-0.1, param_min=0.1, param_max=4.0,
              taper="log", **KNOB)
@@ -188,7 +188,7 @@ def build_scope():
     profile = kit.profile({
         "silhouette": "ripple_crown",
         "ports": ports(("in", "in", None), ("out", "out", "IN passed through unchanged")),
-        "params": [{"node": "Knob_time", "param": "time", "min": 0.002, "max": 2.0, "taper": "log",
+        "params": [{"node": "Knob_time", "param": "time", "min": 0.002, "max": 0.25, "taper": "log",
                     "unit": "seconds across the screen", **KNOB},
                    {"node": "Knob_scale", "param": "scale", "min": 0.1, "max": 4.0, "taper": "log",
                     "unit": "screen heights per volt", **KNOB}],

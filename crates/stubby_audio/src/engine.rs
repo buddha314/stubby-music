@@ -835,7 +835,10 @@ impl Engine {
                 if let Ok(mut scopes) = self.scopes.0.lock() {
                     scopes.remove(&id);
                 }
-                false
+                // The scope is often a voice's last stage (the purifier's outlet): its
+                // pass-through and outputs stay until the modules before it have faded
+                // out, or their fades never reach the speakers and the voice clicks off.
+                true
             }
             NodeState::Clock(_)
             | NodeState::RandomClock

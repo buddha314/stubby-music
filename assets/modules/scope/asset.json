@@ -32,7 +32,7 @@
       "node": "Knob_time",
       "param": "time",
       "min": 0.002,
-      "max": 2.0,
+      "max": 0.25,
       "taper": "log",
       "unit": "seconds across the screen",
       "rotation_degrees": 300.0

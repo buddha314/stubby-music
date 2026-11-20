@@ -13,7 +13,7 @@
   "knobs": {
     "freq": {
       "param": "vco.freq",
-      "default": 261.63,
+      "default": 141.42,
       "quantize": "semitone"
     }
   }

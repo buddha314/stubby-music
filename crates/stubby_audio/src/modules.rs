@@ -127,7 +127,7 @@ pub(crate) const SCOPE_PARAMS: &[ParamSpec] = &[
     ParamSpec {
         name: "time",
         min: 0.002,
-        max: 2.0,
+        max: 0.25,
         default: 0.02,
         quantum: 0.0,
     },
@@ -145,7 +145,7 @@ const VCF_PARAMS: &[ParamSpec] = &[
         name: "cutoff",
         min: 32.7,
         max: 8372.0,
-        default: 1000.0,
+        default: 1046.5, // C6: on the semitone grid, an octave above the purifier's C5
         quantum: 0.0,
     },
     ParamSpec {
