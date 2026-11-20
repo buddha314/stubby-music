@@ -8,7 +8,7 @@ the staff glows brighter. Requirements: `openspec/changes/add-mudpit-burbler/`.
 
 ## Stream segment (`tools/blender/create_stream.py`)
 
-![muddy, silty, clear](../../previews/streams/stream_segment/preview_stages.png)
+![muddy, silty, cloudy, clear](../../previews/streams/stream_segment/preview_stages.png)
 
 A straight 4 m length of the burbler's own channel: 1 m of water between banked
 sides, built up from the ground. Its bank profile and water height are imported from
@@ -20,7 +20,8 @@ sides, built up from the ground. Its bank profile and water height are imported 
   are square and noise fades out toward them, so segments tile.
 - **Bending:** 24 subdivisions along the length, for the game to bend it along a path.
 - **Clarity:** one water material, `Stream_Water`, over a pebbled bed. `asset.json`
-  lists its look at each stage (`muddy` 0, `silty` 0.5, `clear` 1: sRGB colour,
+  lists its look at each of the four levels (`muddy` 0, `silty` 0.33, `cloudy` 0.67, `clear` 1;
+  each working filter lifts the water one level: sRGB colour,
   roughness, alpha) for the game to blend. It ships muddy (alpha 0.98, so it exports
   alpha-blended). Each stage also sets the staff's glow (`staff_strength`, halo from silty).
 - **Staff:** five luminous lines (`Staff`, material `Stream_Staff`) float just above

@@ -86,14 +86,24 @@
         "reed_greenness": 0.0
       },
       {
-        "at": 0.5,
+        "at": 0.33,
         "name": "silty",
         "base_color": "#5a4630",
         "roughness": 0.22,
-        "alpha": 0.72,
-        "staff_strength": 5.0,
+        "alpha": 0.76,
+        "staff_strength": 4.0,
         "staff_halo": true,
-        "reed_greenness": 0.5
+        "reed_greenness": 0.33
+      },
+      {
+        "at": 0.67,
+        "name": "cloudy",
+        "base_color": "#6d6852",
+        "roughness": 0.1,
+        "alpha": 0.5,
+        "staff_strength": 6.0,
+        "staff_halo": true,
+        "reed_greenness": 0.67
       },
       {
         "at": 1.0,

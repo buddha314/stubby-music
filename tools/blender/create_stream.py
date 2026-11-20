@@ -67,14 +67,18 @@ STAFF_Z = WATER_Z + 0.012  # floats just above the surface's ripple
 BEATS_PER_BAR = 4          # the default; becomes a clock setting later
 FLOW_FPS = 24              # frames of the baked Staff_Flow clip per second
 PREVIEW_BPM = 90
-# The water's look at each stage of clarity (sRGB, for the game to blend between).
+# The water's look at each of its four levels of clarity (add-reed-water-purifier D4; sRGB,
+# for the game to blend between). Each working filter lifts the water one level; `at` is
+# the level's clarity, the value `mines.json` growth caps read (leafed from silty).
 # Muddy is 0.98, not 1, so the material exports alpha-blended and can fade to clear.
 # `staff_strength` is the staff lines' emission; their halo shows from silty on.
 CLARITY = [
     {"at": 0.0, "name": "muddy", "base_color": "#2a1d13", "roughness": 0.5, "alpha": 0.98,
      "staff_strength": 2.5, "staff_halo": False, "reed_greenness": 0.0},
-    {"at": 0.5, "name": "silty", "base_color": "#5a4630", "roughness": 0.22, "alpha": 0.72,
-     "staff_strength": 5.0, "staff_halo": True, "reed_greenness": 0.5},
+    {"at": 0.33, "name": "silty", "base_color": "#5a4630", "roughness": 0.22, "alpha": 0.76,
+     "staff_strength": 4.0, "staff_halo": True, "reed_greenness": 0.33},
+    {"at": 0.67, "name": "cloudy", "base_color": "#6d6852", "roughness": 0.1, "alpha": 0.5,
+     "staff_strength": 6.0, "staff_halo": True, "reed_greenness": 0.67},
     {"at": 1.0, "name": "clear", "base_color": "#6f8a88", "roughness": 0.04, "alpha": 0.22,
      "staff_strength": 8.0, "staff_halo": True, "reed_greenness": 1.0},
 ]
