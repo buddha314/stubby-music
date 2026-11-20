@@ -18,9 +18,10 @@ every scrub oak in the region dormant.
 - **THEN** no sound is audible at spawn, every oak is dormant and props show their bleak look
 
 ### Requirement: Region contents
-The opening region SHALL contain one mudpit burbler, a grove of dormant scrub oaks,
-loose lightning bugs near the grove, reed beds on wet ground, and scattered desert
-props, laid out by placing Jackdaw prefabs in the opening scene.
+The opening region SHALL contain mudpit burblers, a grove of dormant scrub oaks (some
+with hollow trunks), loose lightning bugs near the grove, reed beds on wet ground, rock
+formations (some with openings), ripple pools and scattered desert props, placed as
+Jackdaw prefabs by seeded scatter rules, with hand placement only as an overlay.
 
 #### Scenario: Same seed, same region
 - **WHEN** the same world is generated twice from one seed
@@ -39,6 +40,10 @@ them.
 #### Scenario: First stream is affordable
 - **WHEN** a world is generated with any seed
 - **THEN** reeds within 40 m of the burbler cover 6 reeds per segment of a stream to the nearest oak
+
+#### Scenario: The first filter can be made
+- **WHEN** the opening is generated from seed 17
+- **THEN** the region holds at least one high-pass filter source and one ripple pool
 
 ### Requirement: The region's loop
 The region SHALL let the player close this loop: bugs give square waves, a square wave

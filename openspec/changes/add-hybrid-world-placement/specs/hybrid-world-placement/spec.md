@@ -1,9 +1,21 @@
 ## ADDED Requirements
 
+### Requirement: The opening is generated from the seed
+The opening's burblers, reed beds, rock formations, oak grove, ripple pools and props SHALL
+be placed by seeded scatter rules resolved in order, each rule able to read the placements
+of the rules before it. Hand-placed objects SHALL be an overlay over that layout.
+
+#### Scenario: Reeds follow water
+- **WHEN** seed 17 is resolved
+- **THEN** every reed bed lies on ground the wetness channel marks wet, near a burbler pool or low ground
+
+#### Scenario: Same order, same layout
+- **WHEN** seed 17 is resolved twice
+- **THEN** each rule sees the same earlier placements and produces the same keys and transforms
+
 ### Requirement: Authored layout takes priority
 The game SHALL preserve saved authored prefab transforms and native placement IDs
-when optional procedural scatter is resolved. The opening's essential resources
-SHALL remain authored in the first implementation.
+when procedural scatter is resolved.
 
 #### Scenario: Scatter near an authored machine
 - **WHEN** scatter proposes a decoration inside an authored burbler's clearance

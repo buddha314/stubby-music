@@ -6,7 +6,7 @@
 ## 1. Layout (Claude, art and scene)
 - [ ] 1.1 Region layout sketch: spawn, grove, burbler, reed beds, prop scatter, with distances; top-down plan in `docs/art/`
 - [x] 1.0 Prefabs for every placeable world asset, model-owned `_LOD0`/`_LOD1` nodes, models posed by node scale; `crates/stubby_jackdaw/tests/prefabs.rs` (claimed: claude)
-- [ ] 1.2 Lay out the region in the Jackdaw opening scene from the prefabs
+- [ ] 1.2 Lay out the region: seeded rules first (`add-hybrid-world-placement` 2b); hand-placed overlay in the Jackdaw opening scene only where the seeded layout fails (user, 2026-11-19)
 - [ ] 1.3 Lighting pass on the region at dusk and night with the bleak keys
 
 ## 2. Game (Codex)
@@ -23,7 +23,7 @@
     - **The lightning bug prefab now has a ground pivot (2026-11-01):** the prefab root (what the designer drags, and what Jackdaw snaps to the floor) sits at ground level, and the bug is its child `Lightning bug hover`, 1.8 m up. `GltfSource`, `ResourceNode` and `PulseFollower` are on that **child**. Bind the flash, light, click voice, hearing range and E reach to the entity carrying `ResourceNode` (the child), using its world `GlobalTransform`. Put the ground shadow at the terrain under it. Designers set a bug's hover height on the child. The model's origin stays at the body centre, because the flash scales around it.
     - **The standalone game and LOD:** see `add-desert-opening` 1.5. Jackdaw `.glb.meta` files now sit beside 17 models, and they name Jackdaw's `ModelLoader`.
 
-- [ ] 2.1 Hybrid authored/seeded placement: preserve authored anchors and essential resources; optional scatter, exclusions and overrides are tracked in `add-hybrid-world-placement` (tasks 1–2). Do not independently implement another generator here.
+- [ ] 2.1 Seeded placement of the whole opening, authored overlay only on failure (user, 2026-11-19); tracked in `add-hybrid-world-placement` (tasks 1–2b). Do not independently implement another generator here.
 - [ ] 2.2 Check opening placement constraints using seed **17 only** (silent spawn, oak distance, affordable first stream); share the focused hybrid-placement fixture where applicable. No 1,000-seed sweep.
 - [ ] 2.3 Starting conditions: winter, dormant oaks, light quality 0
 - [ ] 2.4 Wire the loop end to end once its parts land: bug → burbler voice → stream → oak growth → bug production

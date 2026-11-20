@@ -71,17 +71,31 @@ only while the rack sounds and every target is met. Quantized knobs make a targe
 exact match, so there is no tolerance to tune. The campfire's `light_pattern` is the same
 idea for step gates. Both should move to `targets` once this lands.
 
-### D4. Cleaning
-While the purifier works, the stream it stands in carries clearer water downstream: its
-clarity rises toward a cap (draft: silty, 0.5), easing back when it stops. The trees
-downstream then grow past budding (`mines.json` growth caps by clarity). Upstream water is
-unchanged.
+### D4. Cleaning: four levels of clear (user, 2026-11-19)
+Water has **four levels of clarity: muddy, silty, cloudy, clear** (`LaidStream.clarity`
+0, 1/3, 2/3, 1). Every stream leaves its burbler muddy. **The first filter lifts the water
+one level**: while the purifier works, the stream below it rises from muddy toward silty,
+easing back when it stops. Upstream water is unchanged. Later filters (low-pass,
+band-pass; sources not decided) take it the rest of the way.
+
+Today's growth caps (`mines.json`) put `leafed` at clarity 0.5, which silty (1/3) does not
+reach, so the first purifier would grow nothing new. Lower `leafed` to silty in the same
+change (a Data PR: budding at muddy, leafed at silty, full bloom at clear), so the first
+filter pays off visibly.
+
+### D6. The purifier is a check dam in the stream (user, 2026-11-19)
+The purifier **stands in the course of the stream**: a small beaver dam, or check dam, of
+reeds and sticks across the bed, the water pooling behind it and spilling over. It is
+placed **onto a laid stream segment**, as a stream joins a port: the hologram snaps across
+the aimed segment's bed, square to its flow, and is red anywhere else. It splits nothing:
+the segment keeps flowing through it, and the clarity changes at the dam. Dismantling the
+dam (F) returns the stream to the clarity it had above it.
 
 ### D5. Where the modules come from
 - Square VCO: from a lightning bug's square wave (exists).
-- High-pass filter: from openings in rock formations and hollow tree trunks (user,
-  2026-11-17). The grotto's boulders are the first. Mechanism undecided.
-- Oscilloscope: collected from rippling water (user, 2026-11-17).
+- High-pass filter: one per opening in a rock formation, and one per hollow tree trunk
+  (only some trunks are hollow) (user, 2026-11-19; `add-high-pass-sources`).
+- Oscilloscope: from a new ripple pool (user, 2026-11-19; `add-ripple-pool`).
 - Triangle and saw waves: **no source decided**. AGENTS.md says not to invent one, so
   their VCOs are fixed in the purifier's rack for now (user, 2026-11-18).
 - The recipe needs a high-pass filter and an oscilloscope, whose collection does not exist
@@ -102,9 +116,8 @@ unchanged.
 
 1. **Reed count** (draft 20).
 2. **Triangle and saw sources**, later; their VCOs are fixed until then.
-3. **Collecting a high-pass filter** (from a rock opening or a hollow trunk) and **an
-   oscilloscope** (from rippling water): the mechanics, each its own change.
-4. **What clean means.** How far a working purifier clears the stream (to silty, or to
-   clear), and whether two in a row clear it further.
-5. **Placement.** On a laid stream segment (snaps in like a port), or anywhere within
-   reach of a stream?
+3. ~~Collecting a high-pass filter and an oscilloscope~~: their own changes,
+   `add-high-pass-sources` and `add-ripple-pool` (2026-11-19).
+4. ~~What clean means~~: four levels; the first filter lifts one (D4). Still open: does a
+   second reed purifier below the first lift it again, or only a different filter?
+5. ~~Placement~~: a check dam on a laid stream segment (D6).
