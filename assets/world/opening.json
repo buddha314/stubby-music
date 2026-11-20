@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "generator_revision": "mudflat-v2",
+  "seed": "42",
+  "scene": "scene.bsn",
+  "content_revision": "opening-2026-11-20",
+  "scatter": [
+    {
+      "id": "burblers",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -88.0,
+        -88.0
+      ],
+      "size": [
+        176.0,
+        176.0
+      ],
+      "asset": "machines/mudpit_burbler/mudpit_burbler.glb",
+      "resolution": 48,
+      "density": 0.0003,
+      "clearance": 4.0,
+      "min_spacing": 65.0,
+      "distances": [
+        {
+          "stems": [
+            "mudpit_burbler"
+          ],
+          "min_m": 65.0
+        }
+      ]
+    },
+    {
+      "id": "reed_beds",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -104.0,
+        -104.0
+      ],
+      "size": [
+        208.0,
+        208.0
+      ],
+      "asset": "flora/reeds/reed_clump_0/reed_clump_0.glb",
+      "resolution": 384,
+      "density": 0.13,
+      "clearance": 0.5,
+      "variants": [
+        "flora/reeds/reed_clump_0/reed_clump_0.glb",
+        "flora/reeds/reed_clump_1/reed_clump_1.glb",
+        "flora/reeds/reed_clump_2/reed_clump_2.glb",
+        "flora/reeds/reed_clump_3/reed_clump_3.glb"
+      ],
+      "scale": [
+        0.85,
+        1.15
+      ],
+      "distances": [
+        {
+          "stems": [
+            "mudpit_burbler"
+          ],
+          "min_m": 2.8,
+          "max_m": 14.0,
+          "denser_nearer": true
+        }
+      ]
+    },
+    {
+      "id": "oak_groves",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -104.0,
+        -104.0
+      ],
+      "size": [
+        208.0,
+        208.0
+      ],
+      "asset": "flora/scrub_oak/scrub_oak_0/scrub_oak_0.glb",
+      "resolution": 96,
+      "density": 0.0015,
+      "clearance": 1.5,
+      "variants": [
+        "flora/scrub_oak/scrub_oak_0/scrub_oak_0.glb",
+        "flora/scrub_oak/scrub_oak_1/scrub_oak_1.glb",
+        "flora/scrub_oak/scrub_oak_2/scrub_oak_2.glb",
+        "flora/scrub_oak/scrub_oak_3/scrub_oak_3.glb",
+        "flora/scrub_oak/scrub_oak_4/scrub_oak_4.glb",
+        "flora/scrub_oak/scrub_oak_5/scrub_oak_5.glb"
+      ],
+      "min_spacing": 7.0,
+      "scale": [
+        0.85,
+        1.15
+      ],
+      "distances": [
+        {
+          "stems": [
+            "mudpit_burbler"
+          ],
+          "min_m": 20.0,
+          "max_m": 40.0
+        },
+        {
+          "stems": [
+            "scrub_oak_"
+          ],
+          "min_m": 7.0
+        }
+      ]
+    },
+    {
+      "id": "rock_formations",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -104.0,
+        -104.0
+      ],
+      "size": [
+        208.0,
+        208.0
+      ],
+      "asset": "props/rocks/rock_formation_0/rock_formation_0.glb",
+      "resolution": 48,
+      "density": 0.0004,
+      "clearance": 7.0,
+      "variants": [
+        "props/rocks/rock_formation_0/rock_formation_0.glb",
+        "props/rocks/rock_formation_1/rock_formation_1.glb",
+        "props/rocks/rock_formation_2/rock_formation_2.glb",
+        "props/rocks/rock_formation_3/rock_formation_3.glb",
+        "props/rocks/rock_formation_4/rock_formation_4.glb",
+        "props/rocks/rock_formation_5/rock_formation_5.glb"
+      ],
+      "min_spacing": 30.0,
+      "scale": [
+        0.9,
+        1.1
+      ],
+      "distances": [
+        {
+          "stems": [
+            "mudpit_burbler"
+          ],
+          "min_m": 25.0
+        },
+        {
+          "stems": [
+            "boulder_"
+          ],
+          "min_m": 30.0
+        }
+      ]
+    },
+    {
+      "id": "desert_props",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -104.0,
+        -104.0
+      ],
+      "size": [
+        208.0,
+        208.0
+      ],
+      "asset": "props/desert/desert_brush_0/desert_brush_0.glb",
+      "resolution": 96,
+      "density": 0.0012,
+      "clearance": 0.8,
+      "variants": [
+        "props/desert/desert_brush_0/desert_brush_0.glb",
+        "props/desert/desert_brush_1/desert_brush_1.glb",
+        "props/desert/desert_brush_2/desert_brush_2.glb",
+        "props/desert/desert_stump_0/desert_stump_0.glb",
+        "props/desert/desert_stump_1/desert_stump_1.glb",
+        "props/desert/desert_stump_2/desert_stump_2.glb",
+        "props/desert/desert_debris_0/desert_debris_0.glb",
+        "props/desert/desert_debris_1/desert_debris_1.glb",
+        "props/desert/desert_debris_2/desert_debris_2.glb"
+      ],
+      "min_spacing": 4.0,
+      "scale": [
+        0.85,
+        1.2
+      ],
+      "distances": [
+        {
+          "stems": [
+            "mudpit_burbler"
+          ],
+          "min_m": 5.0
+        }
+      ]
+    }
+  ],
+  "protected_areas": [
+    {
+      "min": [
+        -15.0,
+        -9.0
+      ],
+      "max": [
+        15.0,
+        21.0
+      ]
+    },
+    {
+      "min": [
+        -5.0,
+        -14.0
+      ],
+      "max": [
+        48.0,
+        20.0
+      ]
+    }
+  ],
+  "authored_footprints": {
+    "mudpit_burbler": 4.0,
+    "scrub_oak_0": 2.0,
+    "reed_clump_0": 0.6,
+    "lightning_bug": 0.5,
+    "snail_shell": 0.3,
+    "campfire": 1.5,
+    "boulder_0": 5.0,
+    "boulder_1": 5.0,
+    "boulder_2": 5.0,
+    "boulder_3": 5.0,
+    "boulder_4": 5.0
+  }
+}

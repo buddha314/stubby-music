@@ -24,6 +24,89 @@ pub struct ScatterRule {
     /// Native row-major cell IDs. Zero-valued cells reject placement.
     #[serde(default)]
     pub blocked_cells: Vec<u32>,
+    /// The palette native scatter picks from (model paths under `assets/`); empty means
+    /// `asset` alone.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub variants: Vec<String>,
+    /// Closest two of this rule's placements may sit (native scatter), metres.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub min_spacing: f32,
+    /// Uniform scale range (native scatter); default no variance.
+    #[serde(default = "unit_scale", skip_serializing_if = "is_unit_scale")]
+    pub scale: [f32; 2],
+    /// Where this rule may place, relative to what is already there: authored objects
+    /// and the placements of the rules before it (add-hybrid-world-placement 2b).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub distances: Vec<DistanceRule>,
+}
+
+fn is_zero(v: &f32) -> bool {
+    *v == 0.
+}
+fn unit_scale() -> [f32; 2] {
+    [1., 1.]
+}
+fn is_unit_scale(v: &[f32; 2]) -> bool {
+    *v == [1., 1.]
+}
+
+/// A distance a rule's placements keep from the nearest anchor: an authored object or an
+/// earlier placement whose model's file stem starts with one of `stems`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DistanceRule {
+    pub stems: Vec<String>,
+    /// At least this far from the nearest anchor (no anchor: always met).
+    #[serde(default)]
+    pub min_m: f32,
+    /// At most this far from the nearest anchor (no anchor: never met).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_m: Option<f32>,
+    /// Denser nearer the anchor, falling to none at `max_m` (native weight channel): reeds
+    /// thick at a burbler's pool, thinning out as the ground dries.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub denser_nearer: bool,
+}
+
+impl DistanceRule {
+    fn nearest(&self, anchors: &[(String, Vec2)], at: Vec2) -> Option<f32> {
+        anchors
+            .iter()
+            .filter(|(stem, _)| self.stems.iter().any(|s| stem.starts_with(s.as_str())))
+            .map(|(_, p)| p.distance(at))
+            .min_by(f32::total_cmp)
+    }
+    /// Whether `at` meets this rule, and its density weight there (0..=1).
+    fn weigh(&self, anchors: &[(String, Vec2)], at: Vec2) -> Option<f32> {
+        let Some(d) = self.nearest(anchors, at) else {
+            return self.max_m.is_none().then_some(1.);
+        };
+        if d < self.min_m || self.max_m.is_some_and(|max| d > max) {
+            return None;
+        }
+        Some(match (self.denser_nearer, self.max_m) {
+            (true, Some(max)) if max > self.min_m => 1. - (d - self.min_m) / (max - self.min_m),
+            _ => 1.,
+        })
+    }
+    fn valid(&self) -> bool {
+        !self.stems.is_empty()
+            && self.stems.iter().all(|s| !s.trim().is_empty())
+            && self.min_m.is_finite()
+            && self.min_m >= 0.
+            && self
+                .max_m
+                .is_none_or(|max| max.is_finite() && max >= self.min_m)
+            && (!self.denser_nearer || self.max_m.is_some())
+    }
+}
+
+/// A model path's file stem, the name rules and authored objects are matched by.
+pub fn model_stem(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(path)
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -105,6 +188,9 @@ pub struct PlacementRecord {
     pub key: PlacementKey,
     pub asset: String,
     pub pose: PlacementPose,
+    /// The rule's clearance at this placement's scale: what later rules keep clear of.
+    #[serde(default)]
+    pub clearance: f32,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -128,6 +214,13 @@ impl WorldConfig {
                 || !rules.insert((&rule.id, &rule.region))
                 || !rule.clearance.is_finite()
                 || rule.clearance < 0.
+                || !rule.min_spacing.is_finite()
+                || rule.min_spacing < 0.
+                || !(rule.scale[0].is_finite()
+                    && rule.scale[0] > 0.
+                    && rule.scale[1] >= rule.scale[0])
+                || rule.variants.iter().any(|v| v.trim().is_empty())
+                || !rule.distances.iter().all(DistanceRule::valid)
             {
                 return Err("invalid or duplicate scatter rule identity/clearance".into());
             }
@@ -200,6 +293,33 @@ impl WorldConfig {
     /// Resolve data only. `authored_clearance` comes from the caller's saved scene
     /// world bounds; this function never edits its entities or resource ledger.
     pub fn resolve_layout(&self, authored_clearance: &[ProtectedArea]) -> Result<ResolvedLayout> {
+        self.resolve(authored_clearance, &[])
+    }
+
+    /// The seeded opening around a saved scene: `authored` is each authored object's
+    /// model stem and world position. They are kept clear by their footprints, and rules'
+    /// `distances` measure from them as from earlier placements. Never moves them.
+    pub fn resolve_opening(&self, authored: &[(String, Vec3)]) -> Result<ResolvedLayout> {
+        let clearance = self.authored_clearance(authored.iter().map(|(s, p)| (s.as_str(), *p)));
+        self.resolve(&clearance, authored)
+    }
+
+    /// A rule's own sampling seed: the world seed mixed with the rule's ID (FNV-1a), so
+    /// rules sharing a grid do not draw the same numbers in the same cells.
+    pub fn rule_seed(&self, rule: &ScatterRule) -> Result<u64> {
+        Ok(rule
+            .id
+            .bytes()
+            .fold(self.seed_value()? ^ 0xcbf29ce484222325, |h, b| {
+                (h ^ u64::from(b)).wrapping_mul(0x100000001b3)
+            }))
+    }
+
+    fn resolve(
+        &self,
+        authored_clearance: &[ProtectedArea],
+        authored: &[(String, Vec3)],
+    ) -> Result<ResolvedLayout> {
         self.validate()?;
         if authored_clearance.iter().any(|a| !a.valid()) {
             return Err("invalid authored clearance bounds".into());
@@ -207,31 +327,62 @@ impl WorldConfig {
         let edits: BTreeMap<_, _> = self.edits.iter().map(|e| (e.key(), e)).collect();
         let mut seen = BTreeSet::new();
         let mut output = ResolvedLayout::default();
-        // Stable rule order without coupling independent rules' RNG streams.
-        let mut rules: Vec<_> = self.scatter.iter().collect();
-        rules.sort_by_key(|r| (&r.id, &r.region));
-        for rule in rules {
+        // Anchors for `distances`: authored objects, then each rule's placements in turn.
+        let mut anchors: Vec<(String, Vec2)> = authored
+            .iter()
+            .filter(|(_, p)| p.is_finite())
+            .map(|(s, p)| (s.clone(), p.xz()))
+            .collect();
+        // In configuration order: a rule reads the placements of the rules before it.
+        for rule in &self.scatter {
             let map = ground_heightmap(rule.resolution, rule.size.into(), rule.origin.into())?;
-            let mut channel = ChannelData::new("eligible", ChannelElement::U8, rule.resolution);
-            channel.values.fill(1);
-            for cell in &rule.blocked_cells {
-                channel.values[*cell as usize] = 0;
+            let cells = (rule.resolution * rule.resolution) as usize;
+            let mut eligible = ChannelData::new("eligible", ChannelElement::U8, rule.resolution);
+            let mut weight = ChannelData::new("weight", ChannelElement::U8, rule.resolution);
+            let step = map.cell_size();
+            for cell in 0..cells {
+                let grid = Vec2::new(
+                    (cell as u32 % rule.resolution) as f32,
+                    (cell as u32 / rule.resolution) as f32,
+                );
+                let at = map.origin + grid * step;
+                let w = rule
+                    .distances
+                    .iter()
+                    .try_fold(1f32, |w, d| d.weigh(&anchors, at).map(|x| w * x));
+                if let Some(w) = w.filter(|w| *w > 0.) {
+                    eligible.values[cell] = 1;
+                    weight.values[cell] = (w * 1000.).round().clamp(1., 1000.) as u16;
+                }
             }
+            for cell in &rule.blocked_cells {
+                eligible.values[*cell as usize] = 0;
+            }
+            let palette: Vec<&str> = if rule.variants.is_empty() {
+                vec![rule.asset.as_str()]
+            } else {
+                rule.variants.iter().map(String::as_str).collect()
+            };
+            let weighted = rule.distances.iter().any(|d| d.denser_nearer);
             let candidates = jackdaw_terrain::scatter(
                 &map,
-                &[channel],
+                &[eligible, weight],
                 &ScatterParams {
-                    seed: self.seed_value()?,
+                    seed: self.rule_seed(rule)?,
                     density: rule.density,
                     mask: Some(ScatterMask {
                         channel: 0,
                         accept: vec![1],
                     }),
-                    min_spacing: 0.,
-                    asset_count: 1,
+                    weight_channel: weighted.then_some(1),
+                    min_spacing: rule.min_spacing,
+                    scale_min: rule.scale[0],
+                    scale_max: rule.scale[1],
+                    asset_count: palette.len(),
                     ..Default::default()
                 },
             );
+            let mut placed: Vec<(String, Vec2)> = Vec::new();
             for candidate in candidates {
                 let key = PlacementKey {
                     generator_revision: self.generator_revision.clone(),
@@ -280,7 +431,17 @@ impl WorldConfig {
                     .iter()
                     .chain(authored_clearance)
                     .any(|a| a.bounds(rule.clearance * pose.scale).closest_point(point) == point);
-                if masked || protected {
+                // The exact position, not just its cell, meets the distances, and keeps
+                // clear of every earlier placement (both clearances).
+                let reach = rule.clearance * pose.scale;
+                let crowded = !rule
+                    .distances
+                    .iter()
+                    .all(|d| d.weigh(&anchors, point).is_some())
+                    || output.placements.iter().any(|p| {
+                        Vec3::from_array(p.pose.position).xz().distance(point) < p.clearance + reach
+                    });
+                if masked || protected || crowded {
                     if edits.contains_key(&key) {
                         output
                             .diagnostics
@@ -288,12 +449,16 @@ impl WorldConfig {
                     }
                     continue;
                 }
+                let asset = palette[candidate.asset_index.min(palette.len() - 1)].to_owned();
+                placed.push((model_stem(&asset).to_owned(), point));
                 output.placements.push(PlacementRecord {
                     key,
-                    asset: rule.asset.clone(),
+                    asset,
                     pose,
+                    clearance: reach,
                 });
             }
+            anchors.extend(placed);
         }
         for key in edits.keys().filter(|key| !seen.contains(**key)) {
             output

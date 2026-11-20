@@ -150,6 +150,11 @@ Escape or focus loss releases the cursor, and left click recaptures it; a second
   produces the same world. **The opening too** (user, 2026-11-19): burblers, reed beds,
   rock formations, the oak grove and props come from ordered seeded rules
   (`add-hybrid-world-placement` 2b); hand placement is an overlay only where that fails.
+  The rules are `assets/world/opening.json`; `stubby_jackdaw/src/seeded_layout.rs` spawns them
+  when the scene spawns (Play or file), as model sources the prefab bridge and binders bring
+  alive, around the authored objects (kept for now: spawn composition, bugs, grotto). Only
+  Play shows them, not the editor's edit view. `--no-seeded-layout` skips it;
+  `--layout-review=<dir>` saves an overhead and a reed-bed view. The ground is ±108 m.
 
 ## Repo map (target layout — create as the work lands)
 
@@ -494,6 +499,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   settings are preserved.
   **Claude (2026-11-18):** the amphitheatre's art and scene (`add-amphitheatre` 1–3), the being
   atlas (`add-being-atlas`) and the mythology research; Codex owns its seat behaviour (4).
+  **Claude (2026-11-20, by the user's request):** seeded placement (`add-hybrid-world-placement`
+  2.2, 2.4, 2b, 3.1).
   **Claude (2026-11-19):** the filter sources' art (`add-high-pass-sources` 1.x, `add-ripple-pool`
   1.x) and the purifier's check dam (`add-reed-water-purifier` 3.x).
   Update this line when you claim work.
