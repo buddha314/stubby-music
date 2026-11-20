@@ -141,6 +141,8 @@ def main():
                         help='Start by an unpatched purifier on a running stream (standalone only)')
     parser.add_argument('--purifier-e2e', action='store_true',
                         help='Play the purifier loop itself: tempo, craft, build, patch, tune, clear (standalone only)')
+    parser.add_argument('--phase-review', choices=('camp', 'grove', 'village', 'city'),
+                        help='Review a settlement phase scene (standalone only)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
     parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
@@ -154,6 +156,11 @@ def main():
         parser.error('--seconds must be greater than zero and no more than 20')
     if args.lods:
         args.standalone = True
+    if args.phase_review and not args.standalone:
+        parser.error('--phase-review requires --standalone')
+    if args.phase_review and (args.lods or args.prefabs or args.audio_demo or args.grotto_audio_review
+                              or args.purifier_review or args.purifier_e2e):
+        parser.error('--phase-review selects its own standalone scene')
     if args.lods and args.prefabs:
         parser.error('--lods and --prefabs are separate reviews')
     if args.audio_demo and not args.standalone:
@@ -182,7 +189,10 @@ def main():
     command = args.command or ['/home/buddha/src/jackdaw/target/debug/jackdaw']
     if args.standalone:
         command = [str(ROOT / 'target/debug/stubby_jackdaw'), '--seed=42']
-        if args.lods:
+        if args.phase_review:
+            command += [f'--scene=world/phase_reviews/{args.phase_review}.bsn',
+                        f'--screenshot=/tmp/stubby-phase-{args.name}.png']
+        elif args.lods:
             command += [f'--lod-review=/tmp/stubby-lod-{args.name}', f'--lod-review-set={args.lods}']
         elif not args.prefabs:
             command += [f'--screenshot=/tmp/stubby-opening-{args.name}.png']
