@@ -15,3 +15,6 @@ previews in `previews/`. Shared `audio/`, `hud/`, `lighting/`, `recipes/` (the r
 `shaders/`, `ui/` and `world/` (the seeded layout's rules, `world/README.md`) stay shared;
 `rack-recipies/` holds the user's VCV Rack patches that machines copy. The desert
 generates its meshes and mud textures at startup, and the sky is Bevy's atmosphere.
+
+The [settlement phase scene index](world/phase_reviews/README.md) maps Camp,
+Grove, Village and City to their shared prefabs and future building families.

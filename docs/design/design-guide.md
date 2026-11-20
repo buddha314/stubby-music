@@ -14,21 +14,20 @@ OpenSpec; a note here is direction, not a requirement.
 the future, in the spirit of *Tomorrowland* and *Big Hero 6*'s San Fransokyo. Music and
 water rebuild civilization: small villages, then towns, then whole cities.
 
-Draft stages, to be settled in `add-narrative-arc`:
+**Decided (user, 2026-11-20):** organize the first phase reviews as Camp →
+Grove → Village → City. The silent mudflat is the opening before Camp.
 
-| Stage | What the player sees | Ties to |
+| Phase | What the player sees | Ties to |
 | --- | --- | --- |
-| Mudflat | silent windstorm, bleak haze, no one around | the opening (`add-desert-opening`) |
-| Camp | the vardo, a campfire, the first burblers and streams | `add-campfire-craft-bench` |
-| Village | the first deities woken; the air clears | lighting stage `clearing` |
-| Town | regions bloom; people return | lighting stage `bloomed` |
-| City | the solarpunk city | not designed yet |
+| Camp | The vardo, a campfire, the first burblers and streams | `add-campfire-craft-bench` |
+| Grove | Clearer water reaches the first grove and the trees begin to change the local air | `add-reed-water-purifier`, `clean-air-by-foliage` |
+| Village | Buildings and a commons grow around the water route as people return | `add-settlement-phase-reviews` |
+| City | A solarpunk city grows along the same route | `add-settlement-phase-reviews` |
 
-Open: what triggers each stage (light quality, deities woken, goals met), and how the
-stages map onto the long-term goals (`sync-major-minor-milestones`).
-
-For scenes that let us inspect how this arc might feel after a long play session, see
-[Long-session design previews](long-session-previews.md).
+**Open.** How the phases map onto long-term goals and how light quality,
+deities woken, and goals met affect the transition. The Jackdaw examples are
+review scenes. The [long-session design previews](long-session-previews.md)
+describe the experience to compare at each stop.
 
 ## Mythic regions
 

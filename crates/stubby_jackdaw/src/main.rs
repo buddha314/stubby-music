@@ -16,6 +16,7 @@ fn main() -> AppExit {
             return AppExit::error();
         }
     };
+    let phase_review = config.scene.starts_with("world/phase_reviews/");
     let seed = config.seed_value().expect("validated world seed");
     // Dev builds bring up the rules designer beside the game (add-machine-rules D4).
     stubby_jackdaw::designer::launch();
@@ -23,6 +24,9 @@ fn main() -> AppExit {
     let mut app = App::new();
     if !legacy_review {
         app.insert_resource(stubby_jackdaw::prefabs::AuthoredLevel);
+    }
+    if phase_review {
+        app.add_systems(Startup, phase_review_daylight);
     }
     app.insert_resource(config)
         .add_plugins(plugins)
@@ -50,4 +54,9 @@ fn load_authored_scene(
     commands.spawn(jackdaw_runtime::JackdawSceneRoot(
         assets.load(config.scene.clone()),
     ));
+}
+
+fn phase_review_daylight(mut calendar: ResMut<stubby_jackdaw::calendar::Calendar>) {
+    let seconds = stubby_jackdaw::calendar::seconds_at_solar_hour(12.0);
+    calendar.elapsed = std::time::Duration::from_secs_f32(seconds);
 }

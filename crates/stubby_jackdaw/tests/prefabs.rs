@@ -143,6 +143,76 @@ fn multi_prefab_review_scene_resolves_seven_separate_instances() {
     );
 }
 
+#[test]
+fn settlement_review_scenes_resolve_and_preserve_the_shared_site() {
+    use jackdaw_scene_types::Brush;
+
+    let root = assets();
+    let mut files = Vec::new();
+    prefab_files(&root, &mut files);
+    let library: std::collections::HashMap<_, _> = files
+        .into_iter()
+        .map(|file| {
+            (
+                file.strip_prefix(&root).unwrap().to_path_buf(),
+                parse_bsn_text(&std::fs::read_to_string(&file).unwrap()).unwrap(),
+            )
+        })
+        .collect();
+    let landmarks = [
+        ("mudpit_burbler.glb", Vec3::new(7., 0., 4.)),
+        ("campfire.glb", Vec3::new(11., 0., 1.4)),
+        ("stream_segment.glb", Vec3::new(9.6, 0., 4.)),
+        ("rock_formation_2.glb", Vec3::new(12., 0., 10.4)),
+    ];
+    for (phase, brush_count, tree_count) in [
+        ("camp", 0, 0),
+        ("grove", 1, 3),
+        ("village", 8, 3),
+        ("city", 17, 4),
+    ] {
+        let path = root.join(format!("world/phase_reviews/{phase}.bsn"));
+        let scene = parse_bsn_text(&std::fs::read_to_string(path).unwrap())
+            .unwrap_or_else(|err| panic!("{phase}: {err:?}"));
+        let resolved = resolve_scene(&scene, &|path: &Path| library.get(path))
+            .unwrap_or_else(|err| panic!("{phase}: {err:?}"));
+        let mut app = editor_world();
+        app.register_type::<Brush>()
+            .register_type::<StandardMaterial>()
+            .register_type::<stubby_core::AssetState>();
+        let world = app.world_mut();
+        load_bsn_document(world, resolved);
+        assert!(
+            world.resource::<UnresolvedTypes>().types().is_empty(),
+            "{phase}: {:?}",
+            world.resource::<UnresolvedTypes>().types()
+        );
+
+        let mut models = world.query::<(&GltfSource, &Transform)>();
+        for (model, position) in landmarks {
+            assert!(
+                models.iter(world).any(|(source, transform)| {
+                    source.path.ends_with(model) && transform.translation == position
+                }),
+                "{phase}: missing or moved landmark {model}"
+            );
+        }
+        let mut brushes = world.query::<&Brush>();
+        assert_eq!(brushes.iter(world).count(), brush_count, "{phase}");
+        assert!(brushes.iter(world).all(|brush| brush.faces.len() == 6));
+        let mut trees = world.query::<(&MineNode, &stubby_core::AssetState)>();
+        assert_eq!(trees.iter(world).count(), tree_count, "{phase}");
+        let mut ids = std::collections::HashSet::new();
+        for (mine, state) in trees.iter(world) {
+            assert!(
+                ids.insert(&mine.instance),
+                "{phase}: duplicate tree instance"
+            );
+            assert!(state.growth >= 0.6, "{phase}: oak lacks authored growth");
+        }
+    }
+}
+
 /// Validate our authored references using Jackdaw's actual metadata schema.
 fn validate_model_lods(
     model: &Path,
