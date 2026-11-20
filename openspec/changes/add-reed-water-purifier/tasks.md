@@ -32,6 +32,6 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [ ] 4.2 Binder and borrowed clock (reuse the campfire's lending)
 - [ ] 4.1a Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6)
 - [ ] 4.3 Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
-- [ ] 4.3a Data: `mines.json` growth caps by level (leafed at silty) (D4)
+- [x] 4.3a Data: `mines.json` leafed at silty, `min_clarity` 0.33 (user, 2026-11-19) (D4)
 - [ ] 4.4 Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
 - [ ] 4.5 Bounded watchdog review: craft, place, patch, tune, see the water clear

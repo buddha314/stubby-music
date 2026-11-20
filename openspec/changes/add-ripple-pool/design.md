@@ -8,8 +8,8 @@ the beat, refreshing semi-daily, because the game needs many oscilloscopes.
 
 ### D1. Poisson along the stream
 Pool positions along a stream are a Poisson process in arc length: gaps are drawn from an
-exponential distribution with a mean spacing set in data (draft: one pool per 12 m, three
-segments). The RNG is seeded from the world seed and the segment's stable ID, per segment,
+exponential distribution with a mean spacing set in data: **one pool per 12 m**, three
+segments (user, 2026-11-19). The RNG is seeded from the world seed and the segment's stable ID, per segment,
 so pools do not move when the stream is extended or another stream is laid, and
 dismantling a segment takes its pools with it (re-laying it brings the same ones back).
 A pool keeps clear of a segment's ends and of anything placed in the stream (a check dam).
@@ -30,5 +30,5 @@ pools as it shows other pickups.
 
 ## Open Questions
 
-1. Mean spacing (draft 12 m).
+1. ~~Mean spacing~~: 12 m (user, 2026-11-19).
 2. Do pools also form on wild water (burbler pools, wet ground), or only on laid streams?

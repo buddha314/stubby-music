@@ -50,6 +50,7 @@ fn bridge(
             || asset.starts_with("reed_clump_")
             || asset.starts_with("desert_")
             || asset.starts_with("boulder_")
+            || asset.starts_with("rock_formation_")
             || asset.ends_with("_vco")
             || matches!(
                 asset,

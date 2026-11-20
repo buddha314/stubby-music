@@ -16,7 +16,8 @@ LAYOUT is the cluster: where each boulder sits (Blender metres, Z up, the grotto
 facing -Y) so that the leaning top boulder roofs a small alcove at the base. The scene
 placement and the cluster preview both read it (`-- layout` prints it as JSON).
 
-Reproduce (the add-on is a user extension, so not --factory-startup):
+Reproduce (the add-on is a user extension, so not --factory-startup; install it once per
+Blender version with `blender -c extension install -s extra_mesh_objects`):
   blender -b -P tools/blender/create_boulders.py            all five boulders
   blender -b -P tools/blender/create_boulders.py -- 2       one boulder
   blender -b -P tools/blender/create_boulders.py -- cluster the cluster preview
@@ -99,33 +100,38 @@ class Boulder(ModuleKit):
         self.granite = self.material("Granite", linear(GRANITE), roughness=0.9)
 
     def rock(self):
-        """One Rock Generator rock, baked and fitted to this boulder's size."""
-        work = bpy.context.scene
-        bpy.ops.mesh.add_mesh_rock(num_of_rocks=1, use_random_seed=False, user_seed=self.seed,
-                                   use_generate=True, detail=3, display_detail=3,
-                                   smooth_fac=2.0, **self.shape)
-        rock = bpy.context.view_layer.objects.active
-        for mod in list(rock.modifiers):
-            bpy.ops.object.modifier_apply(modifier=mod.name)
-        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        # Fit the size, then sit it on the ground with a little of it buried.
-        dims = rock.dimensions
-        scale = Vector([t / max(d, 1e-6) for t, d in zip(self.size, dims)])
-        bm = bmesh.new()
-        bm.from_mesh(rock.data)
-        lo = Vector([min(v.co[i] for v in bm.verts) for i in range(3)])
-        hi = Vector([max(v.co[i] for v in bm.verts) for i in range(3)])
-        centre = (lo + hi) / 2
-        for v in bm.verts:
-            v.co = Vector(((v.co.x - centre.x) * scale.x, (v.co.y - centre.y) * scale.y,
-                           (v.co.z - lo.z) * scale.z - SUNK * self.size[2]))
-        bm.to_mesh(rock.data)
-        bm.free()
-        rock.data.materials.clear()
-        for coll in list(rock.users_collection):
-            coll.objects.unlink(rock)
-        work.view_layers[0].update()
-        return rock
+        return make_rock(self.seed, self.size, self.shape)
+
+
+def make_rock(seed, size, shape):
+    """One Rock Generator rock, baked, fitted to `size` (x, y, z metres) and sat on the
+    ground with SUNK of its height buried; its origin is at ground level."""
+    work = bpy.context.scene
+    bpy.ops.mesh.add_mesh_rock(num_of_rocks=1, use_random_seed=False, user_seed=seed,
+                               use_generate=True, detail=3, display_detail=3,
+                               smooth_fac=2.0, **shape)
+    rock = bpy.context.view_layer.objects.active
+    for mod in list(rock.modifiers):
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # Fit the size, then sit it on the ground with a little of it buried.
+    dims = rock.dimensions
+    scale = Vector([t / max(d, 1e-6) for t, d in zip(size, dims)])
+    bm = bmesh.new()
+    bm.from_mesh(rock.data)
+    lo = Vector([min(v.co[i] for v in bm.verts) for i in range(3)])
+    hi = Vector([max(v.co[i] for v in bm.verts) for i in range(3)])
+    centre = (lo + hi) / 2
+    for v in bm.verts:
+        v.co = Vector(((v.co.x - centre.x) * scale.x, (v.co.y - centre.y) * scale.y,
+                       (v.co.z - lo.z) * scale.z - SUNK * size[2]))
+    bm.to_mesh(rock.data)
+    bm.free()
+    rock.data.materials.clear()
+    for coll in list(rock.users_collection):
+        coll.objects.unlink(rock)
+    work.view_layers[0].update()
+    return rock
 
     def build(self):
         enable_rock_generator()
@@ -233,4 +239,5 @@ def main():
         print(json.dumps(Boulder(index).build()))
 
 
-main()
+if __name__ == "__main__":   # importable by create_rock_formations.py
+    main()
