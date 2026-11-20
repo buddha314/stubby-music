@@ -37,7 +37,7 @@ impl Plugin for CampfirePlugin {
         app.add_systems(Startup, spark_assets).add_systems(
             Update,
             (
-                lend_clocks,
+                (init_fires, lend_clocks).chain(),
                 join_streams,
                 inherit_voice,
                 strike,
@@ -182,42 +182,40 @@ impl Backbeat {
     }
 }
 
-/// The nearest running clock to each camp, lent as its `AssetClock`. A changed lender
-/// re-plans the camp's rack.
-#[allow(clippy::type_complexity)]
-fn lend_clocks(
+fn init_fires(
     mut commands: Commands,
-    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
     new: Query<(Entity, &PlacedAsset), (With<RackState>, Without<Fire>)>,
-    mut camps: Query<
-        (
-            Entity,
-            &PlacedAsset,
-            &GlobalTransform,
-            Option<&AssetClock>,
-            &mut RackState,
-        ),
-        With<Fire>,
-    >,
-    burblers: Query<(Entity, &GlobalTransform, &AssetClock, &MachineVoice)>,
-    names: Query<&PlacedAsset>,
-    streams: Query<&LaidStream>,
 ) {
-    // How far a camp reaches for a clock is a rule (add-machine-rules); with no row, none.
-    let reach_m = rules
-        .as_ref()
-        .and_then(|rules| rules.of(CAMPFIRE)?.clock_reach_m)
-        .unwrap_or(0.);
-    // New camps get a fire to keep.
     for (camp, asset) in &new {
         if asset.asset == CAMPFIRE {
             commands.entity(camp).insert((Fire::Unlit, Bar::default()));
         }
     }
-    for (camp, asset, at, current, mut state) in &mut camps {
-        if asset.asset != CAMPFIRE {
+}
+
+/// Lend the nearest running burbler clock, counting both its mouth and its streams.
+#[allow(clippy::type_complexity)]
+fn lend_clocks(
+    mut commands: Commands,
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
+    mut borrowers: Query<(
+        Entity,
+        &PlacedAsset,
+        &GlobalTransform,
+        Option<&AssetClock>,
+        &mut RackState,
+    )>,
+    sources: Query<(&PlacedAsset, &GlobalTransform, &AssetClock, &MachineVoice)>,
+    streams: Query<&LaidStream>,
+) {
+    for (borrower, asset, at, current, mut state) in &mut borrowers {
+        if !matches!(asset.asset.as_str(), CAMPFIRE | crate::purifier::PURIFIER) {
             continue;
         }
+        let reach_m = rules
+            .as_ref()
+            .and_then(|rules| rules.of(&asset.asset)?.clock_reach_m)
+            .unwrap_or(0.);
         let at = at.translation();
         let flat = |p: Vec3| Vec2::new(p.x - at.x, p.z - at.z).length();
         let mut best: Option<(f32, AssetClock)> = None;
@@ -226,9 +224,8 @@ fn lend_clocks(
                 best = Some((distance, clock));
             }
         };
-        for (burbler, place, clock, voice) in &burblers {
-            let is_camp = names.get(burbler).is_ok_and(|a| a.asset == CAMPFIRE);
-            if burbler != camp && !is_camp && voice.sounding {
+        for (asset, place, clock, voice) in &sources {
+            if asset.asset == "mudpit_burbler" && voice.sounding {
                 consider(flat(place.translation()), *clock);
             }
         }
@@ -236,7 +233,8 @@ fn lend_clocks(
             let Some(source) = stream.source else {
                 continue;
             };
-            if let Ok((_, _, clock, voice)) = burblers.get(source)
+            if let Ok((asset, _, clock, voice)) = sources.get(source)
+                && asset.asset == "mudpit_burbler"
                 && voice.sounding
             {
                 consider(stream.horizontal_distance(at), *clock);
@@ -246,17 +244,17 @@ fn lend_clocks(
         match (current, lent) {
             (Some(now), Some(next)) if now.engine == next.engine => {
                 if now.bpm != next.bpm {
-                    commands.entity(camp).insert(next);
+                    commands.entity(borrower).insert(next);
                 }
             }
             (None, None) => {}
             (_, Some(next)) => {
-                commands.entity(camp).insert(next);
-                state.set_changed();
+                commands.entity(borrower).insert(next);
+                state.version = state.version.wrapping_add(1);
             }
             (Some(_), None) => {
-                commands.entity(camp).remove::<AssetClock>();
-                state.set_changed();
+                commands.entity(borrower).remove::<AssetClock>();
+                state.version = state.version.wrapping_add(1);
             }
         }
     }

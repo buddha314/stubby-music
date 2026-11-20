@@ -382,6 +382,7 @@ impl Plugin for PrefabGluePlugin {
                     asset.starts_with("boulder_")
                         || asset.starts_with("rock_formation_")
                         || asset == "campfire"
+                        || asset == crate::purifier::PURIFIER
                 },
                 install: |_, _, _, _| Ok(()),
                 retire: |_, _| {},

@@ -18,7 +18,11 @@ use crate::{
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
 use bevy::{
-    asset::RenderAssetUsages, mesh::Indices, picking::events::PointerClick, prelude::*,
+    asset::RenderAssetUsages,
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
+    mesh::Indices,
+    picking::events::PointerClick,
+    prelude::*,
     render::render_resource::PrimitiveTopology,
 };
 use bevy_stubby_audio::{Synth, module_ids::ModuleIds};
@@ -140,6 +144,7 @@ impl RackState {
 
 /// Engine modules this rack owns (not the machine's clock), and whether it has sounded.
 #[derive(Component, Default)]
+#[component(on_remove = retire_rack)]
 pub struct RackEngine {
     owned: Vec<ModuleId>,
     /// The voice's normalled output, which the streams place in the world.
@@ -157,6 +162,18 @@ impl RackEngine {
             .iter()
             .find(|(_, id)| **id == module)
             .map(|((place, _), _)| place.as_str())
+    }
+}
+
+fn retire_rack(world: DeferredWorld, context: HookContext) {
+    let Some(rack) = world.get::<RackEngine>(context.entity) else {
+        return;
+    };
+    let Some(synth) = world.get_resource::<Synth>() else {
+        return;
+    };
+    for &id in &rack.owned {
+        synth.send(Command::RemoveModule { id });
     }
 }
 

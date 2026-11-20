@@ -231,6 +231,12 @@ impl LaidStream {
         self.end_s() - self.start_s()
     }
 
+    /// Centre and flow direction at a distance from the start of this laid section.
+    pub fn centre_at(&self, distance: f32) -> (Vec3, Vec3) {
+        self.path
+            .at(self.start_s() + distance.clamp(0.0, self.length()))
+    }
+
     /// Points along this stream's own part of the path, about `step` metres apart.
     fn samples(&self, step: f32) -> impl Iterator<Item = Vec3> + '_ {
         let (from, length) = (self.start_s(), self.length());
@@ -277,6 +283,7 @@ impl LaidStream {
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Role {
     Body,
+    Water,
     HaloOut,
     RingIn,
     RingOut,
@@ -399,6 +406,8 @@ fn harvest_template(
             Role::RingIn
         } else if under("Port_out_Ring") {
             Role::RingOut
+        } else if under("Stream_Water") {
+            Role::Water
         } else if under("Flow") {
             Role::Chevron(centre_x(&baked))
         } else {
@@ -904,6 +913,10 @@ fn lay<S: Stock>(
     build.anchor = plan.joins.is_none().then_some(end);
 }
 
+/// Arc positions of the water mesh's vertices, measured along the whole stream chain.
+#[derive(Component)]
+pub struct WaterSurface(pub Vec<f32>);
+
 /// A stream to spawn: segments `first..=last` of `path`.
 struct StreamPart {
     path: Path,
@@ -965,6 +978,17 @@ fn spawn_stream(
                     ChildOf(stream),
                 ))
                 .id();
+            if piece.role == Role::Water
+                && let Some(vertices) = positions(&piece.mesh)
+            {
+                let offset = start + (k - first) as f32 * span;
+                commands.entity(entity).insert(WaterSurface(
+                    vertices
+                        .iter()
+                        .map(|vertex| offset + vertex[0] * span / SEGMENT_LENGTH)
+                        .collect(),
+                ));
+            }
             if halo {
                 end_halo.push(entity);
             }

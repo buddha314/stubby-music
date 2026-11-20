@@ -164,7 +164,7 @@ fn bind_parts(
             || asset.asset.starts_with("desert_")
             || asset.asset.starts_with("boulder_")
             || asset.asset.starts_with("rock_formation_")
-            || asset.asset == "campfire")
+            || matches!(asset.asset.as_str(), "campfire" | "reed_water_purifier"))
         {
             continue;
         }

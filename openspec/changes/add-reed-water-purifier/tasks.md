@@ -31,9 +31,11 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 
 ## 4. Game
 - [ ] 4.1 Recipe row with its BPM range; purifier item; placement (Open Question 5)
-- [ ] 4.2 Binder and borrowed clock (reuse the campfire's lending)
+- [x] 4.2 (claimed: Codex) Binder and borrowed clock (reuse the campfire's lending)
 - [ ] 4.1a Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6)
-- [ ] 4.3 Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
+- [x] 4.3 (claimed: Codex) Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
 - [x] 4.3a Data: `mines.json` leafed at silty, `min_clarity` 0.33 (user, 2026-11-19) (D4)
 - [ ] 4.4 Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
 - [ ] 4.5 Bounded watchdog review: craft, place, patch, tune, see the water clear
+- [x] 4.5a (claimed: Codex) Seed-42 review setup with a patched burbler, laid stream, unpatched purifier, and six available cables. Launch from the feature worktree with `python3 tools/jackdaw_timed_test.py --standalone --purifier-review --name purifier`.
+- [ ] 4.5b Live review of E targeting, cable guidance, tuning, scope controls and the upstream/downstream water boundary.

@@ -495,14 +495,15 @@ fn setup(mut commands: Commands) {
                 },
                 Pickable::IGNORE,
             ));
-            // The guidance line stays (empty: the screen shows, it does not tell).
             panel.spawn((
                 RackHint,
                 Text::new(""),
+                text(16., Color::srgb(0.92, 0.84, 0.66)),
                 Node {
                     display: Display::None,
-                    ..default()
+                    ..at((layout::CENTRE.0, 0.825, layout::CENTRE.2, 0.035))
                 },
+                Pickable::IGNORE,
             ));
             // Key prompts under the window, as Satisfactory shows them.
             panel
@@ -570,11 +571,13 @@ fn sync_view(
         &PlacedAsset,
         Option<&AssetClock>,
         Option<&crate::rack::RackState>,
+        Option<&crate::rack::RackTargets>,
     )>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut cameras: Query<(&mut Camera, &mut Projection, &mut Transform), With<HudCamera>>,
     mut panels: Query<&mut Visibility, With<Panel>>,
-    mut headers: Query<&mut Text, With<Header>>,
+    mut headers: Query<&mut Text, (With<Header>, Without<RackHint>)>,
+    mut hints: Query<(&mut Text, &mut Node), With<RackHint>>,
 ) {
     let machine = match screens.open {
         Some(Screen::MachineConfiguration(e)) if machines.contains(e) => Some(e),
@@ -598,10 +601,20 @@ fn sync_view(
             camera.viewport = Some(rack_viewport(size));
         }
     }
+    let mut hint = "";
     if let Some(entity) = machine
-        && let Ok((asset, clock, _)) = machines.get(entity)
+        && let Ok((asset, clock, _, targets)) = machines.get(entity)
         && let Some(config) = profiles.0.get(&asset.asset)
     {
+        if !config.patched_hint.is_empty() && !config.targets.is_empty() {
+            hint = if clock.is_none() && config.places.iter().any(|place| place.borrowed) {
+                "No running clock in reach."
+            } else if targets.is_some_and(|targets| targets.sounding && !targets.met) {
+                &config.patched_hint
+            } else {
+                ""
+            };
+        }
         for mut header in &mut headers {
             header.0 = clock.map_or_else(
                 || config.title.clone(),
@@ -609,9 +622,19 @@ fn sync_view(
             );
         }
     }
+    for (mut text, mut node) in &mut hints {
+        if text.0 != hint {
+            text.0 = hint.into();
+            node.display = if hint.is_empty() {
+                Display::None
+            } else {
+                Display::Flex
+            };
+        }
+    }
     let version = machine
         .and_then(|e| machines.get(e).ok())
-        .and_then(|(_, _, rack)| rack.map(|r| r.version))
+        .and_then(|(_, _, rack, _)| rack.map(|r| r.version))
         .unwrap_or(0);
     if view.machine == machine && view.version == version {
         return;
@@ -624,7 +647,7 @@ fn sync_view(
     let Some(entity) = machine else {
         return;
     };
-    let Ok((asset, clock, rack)) = machines.get(entity) else {
+    let Ok((asset, clock, rack, _)) = machines.get(entity) else {
         return;
     };
     let Some(config) = profiles.0.get(&asset.asset) else {
@@ -726,6 +749,13 @@ fn sync_view(
     }
 }
 
+/// The entire suffix names the port, including the channel on a mixer input.
+fn jack_mesh_port(node: &str) -> Option<&str> {
+    ["_Nut_", "_Hole_", "_Bushing_"]
+        .into_iter()
+        .find_map(|marker| node.split_once(marker).map(|(_, port)| port))
+}
+
 /// Tag imported parts the rack needs (jacks, pods, ports) and fit the frame;
 /// render layers come from the root's `Propagate`. Never rebuilds model geometry.
 fn prepare_parts(
@@ -763,12 +793,7 @@ fn prepare_parts(
                 place: place.clone(),
                 port: port.into(),
             };
-            let port = node.rsplit('_').next().unwrap_or_default();
-            if is_mesh
-                && ["_Nut_", "_Hole_", "_Bushing_"]
-                    .iter()
-                    .any(|k| node.contains(k))
-            {
+            if is_mesh && let Some(port) = jack_mesh_port(node) {
                 commands
                     .entity(entity)
                     .insert((JackHit(jack(port)), Pickable::default()));
@@ -831,7 +856,11 @@ fn prepare_parts(
                     place: place.clone(),
                     step: n.saturating_sub(1),
                 });
-            } else if is_mesh && node.contains("_JackHalo") {
+            } else if is_mesh
+                && let Some((_, port)) = node
+                    .split_once("_JackHalo_")
+                    .or_else(|| node.split_once("_JackHaloOuter_"))
+            {
                 commands.entity(entity).insert(PodMesh(jack(port)));
             } else if !is_mesh && let Some(port) = node.strip_prefix("Port_") {
                 commands.entity(entity).insert(PortNode(jack(port)));
@@ -871,6 +900,11 @@ mod tests {
     use super::*;
     #[test]
     fn e_on_a_targeted_machine_opens_its_rack_and_escape_closes_it() {
+        check_rack_interaction("mudpit_burbler", "Configure burbler");
+        check_rack_interaction("reed_water_purifier", "Configure the purifier");
+    }
+
+    fn check_rack_interaction(asset: &str, prompt: &str) {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .init_resource::<Profiles>()
@@ -887,19 +921,16 @@ mod tests {
         let machine = app
             .world_mut()
             .spawn(PlacedAsset {
-                asset: "mudpit_burbler".into(),
-                model: "burbler.glb".into(),
-                instance: "test-pit".into(),
+                asset: asset.into(),
+                model: format!("{asset}.glb"),
+                instance: format!("test-{asset}"),
             })
             .id();
         *app.world_mut()
             .resource_mut::<stubby_core::InteractTarget>() =
             stubby_core::InteractTarget::Machine(machine);
         app.update();
-        assert_eq!(
-            app.world().resource::<MachineInteraction>().prompt,
-            "Configure burbler"
-        );
+        assert_eq!(app.world().resource::<MachineInteraction>().prompt, prompt);
         app.world_mut()
             .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyE);
@@ -934,5 +965,19 @@ mod tests {
         keys.press(KeyCode::Escape);
         app.update();
         assert_eq!(app.world().resource::<ScreenMode>().open, None);
+    }
+}
+
+#[cfg(test)]
+mod jack_tests {
+    use super::jack_mesh_port;
+
+    #[test]
+    fn mesh_picking_preserves_numbered_mixer_inputs() {
+        assert_eq!(jack_mesh_port("Mixer_Nut_in_1"), Some("in_1"));
+        assert_eq!(jack_mesh_port("Mixer_Hole_in_2"), Some("in_2"));
+        assert_eq!(jack_mesh_port("Mixer_Bushing_in_4"), Some("in_4"));
+        assert_eq!(jack_mesh_port("Vcf_Nut_hpf"), Some("hpf"));
+        assert_eq!(jack_mesh_port("Knob_level_1"), None);
     }
 }
