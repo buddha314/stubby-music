@@ -16,7 +16,7 @@ audionimbus = { version = "=0.17.0", default-features = false, features = ["dyna
 omg-audio = { git = "https://github.com/JustGoscha/omg-audio", rev = "4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869", optional = true }
 omg-core = { git = "https://github.com/JustGoscha/omg-audio", rev = "4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869", optional = true }
 omg-dsp = { git = "https://github.com/JustGoscha/omg-audio", rev = "4f8ff13e48fb9e96a59b0b1a607b9d33ac01a869", optional = true }
-firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing", "sampler_node", "spatial_basic_node", "peak_meter_node"] }
+firewheel = { version = "0.14.0", default-features = false, features = ["std", "cpal", "scheduled_events", "tracing", "sampler_node", "spatial_basic_node", "peak_meter_node", "triple_buffer_node"] }
 fundsp = "0.23.0"
 rtrb = "0.4.1"
 triple_buffer = "=9.0.0"

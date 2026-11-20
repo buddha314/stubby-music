@@ -30,7 +30,147 @@
     "crest_z": 0.245
   },
   "interact": "Interact",
-  "configure": "the rack (add-reed-water-purifier 3.2) lands with the mixer, VCF and scope panels (3.1)",
+  "configure": {
+    "title": "REED WATER PURIFIER",
+    "hud": "hud/rack_frame/rack_frame.glb",
+    "interact": {
+      "node": "Interact",
+      "range_m": 3.0,
+      "prompt": "Configure the purifier"
+    },
+    "places": [
+      {
+        "place": "clock",
+        "kind": "clock",
+        "hp": 8,
+        "fixed": true,
+        "module": "burbler_clock",
+        "borrowed": true
+      },
+      {
+        "place": "vco_low",
+        "kind": "vco",
+        "hp": 8,
+        "fixed": true,
+        "module": "saw_vco"
+      },
+      {
+        "place": "vco_high",
+        "kind": "vco",
+        "hp": 8,
+        "fixed": true,
+        "module": "triangle_vco"
+      },
+      {
+        "place": "mix",
+        "kind": "mixer",
+        "hp": 8,
+        "fixed": true,
+        "module": "mixer"
+      },
+      {
+        "place": "filter",
+        "kind": "vcf",
+        "hp": 8,
+        "fixed": true,
+        "module": "vcf"
+      },
+      {
+        "place": "vca",
+        "kind": "vca",
+        "hp": 4,
+        "fixed": true,
+        "module": "volume"
+      },
+      {
+        "place": "scope",
+        "kind": "scope",
+        "hp": 10,
+        "fixed": true,
+        "module": "scope"
+      }
+    ],
+    "normalled_output": {
+      "place": "scope",
+      "port": "out"
+    },
+    "hearing_radius_metres": 20.0,
+    "cables": [
+      {
+        "color": "rust",
+        "from": {
+          "place": "vco_low",
+          "port": "out"
+        },
+        "to": {
+          "place": "mix",
+          "port": "in_1"
+        },
+        "hint": "Saw OUT to mixer IN 1"
+      },
+      {
+        "color": "ochre",
+        "from": {
+          "place": "vco_high",
+          "port": "out"
+        },
+        "to": {
+          "place": "mix",
+          "port": "in_2"
+        },
+        "hint": "Triangle OUT to mixer IN 2"
+      },
+      {
+        "color": "verdigris",
+        "from": {
+          "place": "mix",
+          "port": "mix"
+        },
+        "to": {
+          "place": "filter",
+          "port": "in"
+        },
+        "hint": "Mixer MIX to filter IN"
+      },
+      {
+        "color": "rust",
+        "from": {
+          "place": "filter",
+          "port": "hpf"
+        },
+        "to": {
+          "place": "vca",
+          "port": "in"
+        },
+        "hint": "Filter HPF to volume IN"
+      },
+      {
+        "color": "ochre",
+        "from": {
+          "place": "clock",
+          "port": "gate"
+        },
+        "to": {
+          "place": "vca",
+          "port": "trig"
+        },
+        "hint": "Clock GATE to volume TRIG"
+      },
+      {
+        "color": "verdigris",
+        "from": {
+          "place": "vca",
+          "port": "out"
+        },
+        "to": {
+          "place": "scope",
+          "port": "in"
+        },
+        "hint": "Volume OUT to scope IN"
+      }
+    ],
+    "patched_hint": "Tune saw to C2, triangle to C4, and filter cutoff to C5."
+  },
   "triangles": {
     "near": 2952
   },

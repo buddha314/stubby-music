@@ -37,7 +37,7 @@ grid, and a machine that works only when its knobs are at the settings it asks f
 - **A placeable machine**: the purifier stands in a stream (a bed of reeds, art) and has
   a rack (`configure` block) shaped like the sketch, every place fixed: a saw VCO, a
   triangle VCO, a mixer, a VCF, a VCA, a scope, and a borrowed clock (the stream's or
-  burbler's). The player patches the seven cables and tunes it.
+  burbler's). The player patches six cables and tunes it. The scope output is normalled to the outlet.
 - **Rack settings rules** (`bevy_stubby_rack`, `stubby_rack`, module data):
   - **Quantized knobs**: a knob may click to a pitch grid (semitones, equal temperament,
     A4 = 440 Hz), and its display shows the note name (`C2`, `C4`). The VCO frequency

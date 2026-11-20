@@ -17,8 +17,9 @@ use firewheel::{
     },
 };
 use fundsp::prelude32::{
-    AudioUnit, BufferVec, F32x, MAX_BUFFER_SIZE, Setting, Shared, adsr_live, clip_to, follow, pass,
-    shared, sine, square, tick, var,
+    AudioUnit, BufferVec, F32x, MAX_BUFFER_SIZE, Setting, Shared, U2, U3, U4, adsr_live, clip_to,
+    follow, highpass, lowpass, multisplit, pass, saw, shared, sine, square, sumi, tick, triangle,
+    var,
 };
 use std::sync::{Arc, Mutex};
 
@@ -122,18 +123,74 @@ const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
     quantum: 0.0,
 }];
 
-/// How long a VCA takes to follow a change of its gain parameter.
+pub(crate) const SCOPE_PARAMS: &[ParamSpec] = &[
+    ParamSpec {
+        name: "time",
+        min: 0.002,
+        max: 2.0,
+        default: 0.02,
+        quantum: 0.0,
+    },
+    ParamSpec {
+        name: "scale",
+        min: 0.1,
+        max: 4.0,
+        default: 0.5,
+        quantum: 0.0,
+    },
+];
+
+const VCF_PARAMS: &[ParamSpec] = &[
+    ParamSpec {
+        name: "cutoff",
+        min: 32.7,
+        max: 8372.0,
+        default: 1000.0,
+        quantum: 0.0,
+    },
+    ParamSpec {
+        name: "res",
+        min: 0.0,
+        max: 1.0,
+        default: 0.0,
+        quantum: 0.0,
+    },
+];
+
+const MIXER_PARAMS: &[ParamSpec] = &[
+    mixer_level("level_1"),
+    mixer_level("level_2"),
+    mixer_level("level_3"),
+    mixer_level("level_4"),
+];
+
+const fn mixer_level(name: &'static str) -> ParamSpec {
+    ParamSpec {
+        name,
+        min: 0.0,
+        max: 1.0,
+        default: 0.5,
+        quantum: 0.0,
+    }
+}
+
+/// How long a level control takes to follow a gain change.
 const GAIN_SMOOTH_SECONDS: f64 = 0.005;
 
 impl ModuleKind {
     pub fn inputs(&self) -> &'static [&'static str] {
         match self {
-            ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => &["voct"],
+            ModuleKind::SineVco { .. }
+            | ModuleKind::SquareVco { .. }
+            | ModuleKind::SawVco { .. }
+            | ModuleKind::TriangleVco { .. } => &["voct"],
             ModuleKind::Clock { .. }
             | ModuleKind::RandomClock { .. }
             | ModuleKind::Constant { .. } => &[],
             ModuleKind::Envelope { .. } => &["gate"],
             ModuleKind::Vca { .. } => &["in", "cv"],
+            ModuleKind::Mixer { .. } => &["in_1", "in_2", "in_3", "in_4"],
+            ModuleKind::Vcf { .. } | ModuleKind::Scope { .. } => &["in"],
             ModuleKind::StepSequencer { .. } => &["clock", "reset"],
         }
     }
@@ -142,9 +199,14 @@ impl ModuleKind {
         match self {
             ModuleKind::SineVco { .. }
             | ModuleKind::SquareVco { .. }
+            | ModuleKind::SawVco { .. }
+            | ModuleKind::TriangleVco { .. }
             | ModuleKind::Constant { .. }
             | ModuleKind::Envelope { .. }
-            | ModuleKind::Vca { .. } => &["out"],
+            | ModuleKind::Vca { .. }
+            | ModuleKind::Scope { .. } => &["out"],
+            ModuleKind::Mixer { .. } => &["mix"],
+            ModuleKind::Vcf { .. } => &["lpf", "hpf"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
             ModuleKind::RandomClock { .. } => &["gate"],
             ModuleKind::StepSequencer { .. } => &["gate", "cv"],
@@ -153,12 +215,18 @@ impl ModuleKind {
 
     pub fn params(&self) -> &'static [ParamSpec] {
         match self {
-            ModuleKind::SineVco { .. } | ModuleKind::SquareVco { .. } => VCO_PARAMS,
+            ModuleKind::SineVco { .. }
+            | ModuleKind::SquareVco { .. }
+            | ModuleKind::SawVco { .. }
+            | ModuleKind::TriangleVco { .. } => VCO_PARAMS,
             ModuleKind::Clock { .. } => CLOCK_PARAMS,
             ModuleKind::RandomClock { .. } => &[],
             ModuleKind::Constant { .. } => CONSTANT_PARAMS,
             ModuleKind::Envelope { .. } => ENVELOPE_PARAMS,
             ModuleKind::Vca { .. } => VCA_PARAMS,
+            ModuleKind::Mixer { .. } => MIXER_PARAMS,
+            ModuleKind::Vcf { .. } => VCF_PARAMS,
+            ModuleKind::Scope { .. } => SCOPE_PARAMS,
             ModuleKind::StepSequencer { .. } => SEQUENCER_PARAMS,
         }
     }
@@ -172,11 +240,16 @@ impl ModuleKind {
         match self {
             ModuleKind::SineVco { .. } => "SineVco",
             ModuleKind::SquareVco { .. } => "SquareVco",
+            ModuleKind::SawVco { .. } => "SawVco",
+            ModuleKind::TriangleVco { .. } => "TriangleVco",
             ModuleKind::Clock { .. } => "Clock",
             ModuleKind::RandomClock { .. } => "RandomClock",
             ModuleKind::Constant { .. } => "Constant",
             ModuleKind::Envelope { .. } => "Envelope",
             ModuleKind::Vca { .. } => "Vca",
+            ModuleKind::Mixer { .. } => "Mixer",
+            ModuleKind::Vcf { .. } => "Vcf",
+            ModuleKind::Scope { .. } => "Scope",
             ModuleKind::StepSequencer { .. } => "StepSequencer",
         }
     }
@@ -204,6 +277,12 @@ impl ModuleKind {
             "SquareVco" => ModuleKind::SquareVco {
                 freq_hz: get(VCO_PARAMS, "freq"),
             },
+            "SawVco" => ModuleKind::SawVco {
+                freq_hz: get(VCO_PARAMS, "freq"),
+            },
+            "TriangleVco" => ModuleKind::TriangleVco {
+                freq_hz: get(VCO_PARAMS, "freq"),
+            },
             "Clock" => ModuleKind::Clock {
                 bpm: get(CLOCK_PARAMS, "bpm"),
             },
@@ -216,6 +295,17 @@ impl ModuleKind {
             },
             "Vca" => ModuleKind::Vca {
                 gain: get(VCA_PARAMS, "gain"),
+            },
+            "Mixer" => ModuleKind::Mixer {
+                levels: std::array::from_fn(|i| get(MIXER_PARAMS, MIXER_PARAMS[i].name)),
+            },
+            "Vcf" => ModuleKind::Vcf {
+                cutoff_hz: get(VCF_PARAMS, "cutoff"),
+                resonance: get(VCF_PARAMS, "res"),
+            },
+            "Scope" => ModuleKind::Scope {
+                time: get(SCOPE_PARAMS, "time"),
+                scale: get(SCOPE_PARAMS, "scale"),
             },
             "StepSequencer" => ModuleKind::StepSequencer {
                 cv: ["cv_1", "cv_2", "cv_3", "cv_4"].map(|p| get(SEQUENCER_PARAMS, p)),
@@ -235,10 +325,15 @@ mod kind_tests {
         for name in [
             "SineVco",
             "SquareVco",
+            "SawVco",
+            "TriangleVco",
             "Clock",
             "Constant",
             "Envelope",
             "Vca",
+            "Mixer",
+            "Vcf",
+            "Scope",
             "StepSequencer",
         ] {
             let kind = ModuleKind::default_of(name).unwrap_or_else(|| panic!("{name}"));
@@ -255,7 +350,6 @@ mod kind_tests {
             }
         }
         assert_eq!(ModuleKind::default_of("RandomClock"), None);
-        assert_eq!(ModuleKind::default_of("SawVco"), None);
     }
 }
 
@@ -315,6 +409,8 @@ pub(crate) enum Waveform {
     Sine,
     /// Band-limited (fundsp wavetable), so it does not alias.
     Square,
+    Saw,
+    Triangle,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -344,6 +440,8 @@ impl AudioNode for VcoNode {
         let mut unit: Box<dyn AudioUnit> = match config.waveform {
             Waveform::Sine => Box::new(sine()),
             Waveform::Square => Box::new(square()),
+            Waveform::Saw => Box::new(saw()),
+            Waveform::Triangle => Box::new(triangle()),
         };
         unit.set_sample_rate(cx.stream_info.sample_rate.get() as f64);
         // Start at phase 0 so offline renders are deterministic.
@@ -413,9 +511,7 @@ impl AudioNodeProcessor for VcoProc {
                 &self.hz.buffer_ref(),
                 &mut self.out.buffer_mut(),
             );
-            for (o, s) in chunk.iter_mut().zip(self.out.channel_f32(0)) {
-                *o = *s;
-            }
+            chunk.copy_from_slice(&self.out.channel_f32(0)[..chunk.len()]);
         }
         self.fade.apply(buffers.outputs, info.frames, extra);
         ProcessStatus::OutputsModified
@@ -836,11 +932,11 @@ impl AudioNode for EnvelopeNode {
         // `adsr_live` starts only on a rise it sees after a low input, so a gate already high
         // on the first sample (a clock's first beat) would be missed: delay it one sample.
         let unit = (tick() - GATE_THRESHOLD) >> adsr_live(attack, decay, 0.0, decay);
-        Ok(FundspProc::new(Box::new(unit), 1, cx))
+        Ok(FundspProc::new(Box::new(unit), cx))
     }
 }
 
-/// A fundsp unit run as a node: inputs and output copied through fundsp buffers.
+/// A fundsp unit run as a node: inputs and outputs copied through fundsp buffers.
 struct FundspProc {
     unit: Box<dyn AudioUnit>,
     inputs: BufferVec,
@@ -848,32 +944,27 @@ struct FundspProc {
 }
 
 impl FundspProc {
-    fn new(mut unit: Box<dyn AudioUnit>, inputs: usize, cx: ConstructProcessorContext) -> Self {
+    fn new(mut unit: Box<dyn AudioUnit>, cx: ConstructProcessorContext) -> Self {
         unit.set_sample_rate(cx.stream_info.sample_rate.get() as f64);
         unit.reset();
         unit.allocate();
-        Self {
-            unit,
-            inputs: BufferVec::new(inputs),
-            out: BufferVec::new(1),
-        }
+        let inputs = BufferVec::new(unit.inputs());
+        let out = BufferVec::new(unit.outputs());
+        Self { unit, inputs, out }
     }
 
-    fn run(&mut self, inputs: &[&[f32]], out: &mut [f32]) {
-        for (chunk_index, chunk) in out.chunks_mut(MAX_BUFFER_SIZE).enumerate() {
-            let start = chunk_index * MAX_BUFFER_SIZE;
+    fn run(&mut self, inputs: &[&[f32]], outputs: &mut [&mut [f32]], frames: usize) {
+        for start in (0..frames).step_by(MAX_BUFFER_SIZE) {
+            let len = (frames - start).min(MAX_BUFFER_SIZE);
             for (channel, input) in inputs.iter().enumerate() {
-                for (i, &v) in input.iter().skip(start).take(chunk.len()).enumerate() {
+                for (i, &v) in input[start..start + len].iter().enumerate() {
                     self.inputs.set_f32(channel, i, v);
                 }
             }
-            self.unit.process(
-                chunk.len(),
-                &self.inputs.buffer_ref(),
-                &mut self.out.buffer_mut(),
-            );
-            for (o, s) in chunk.iter_mut().zip(self.out.channel_f32(0)) {
-                *o = *s;
+            self.unit
+                .process(len, &self.inputs.buffer_ref(), &mut self.out.buffer_mut());
+            for (channel, output) in outputs.iter_mut().enumerate() {
+                output[start..start + len].copy_from_slice(&self.out.channel_f32(channel)[..len]);
             }
         }
     }
@@ -885,11 +976,13 @@ impl AudioNodeProcessor for FundspProc {
         for _ in events.drain_patches::<EnvelopeNode>() {}
     }
 
-    fn process(&mut self, _: &ProcInfo, buffers: ProcBuffers, _: &mut ProcExtra) -> ProcessStatus {
-        let (Some(gate), Some(out)) = (buffers.inputs.first(), buffers.outputs.first_mut()) else {
-            return ProcessStatus::ClearAllOutputs;
-        };
-        self.run(&[gate], out);
+    fn process(
+        &mut self,
+        info: &ProcInfo,
+        buffers: ProcBuffers,
+        _: &mut ProcExtra,
+    ) -> ProcessStatus {
+        self.run(buffers.inputs, buffers.outputs, info.frames);
         ProcessStatus::OutputsModified
     }
 }
@@ -921,7 +1014,7 @@ impl AudioNode for VcaNode {
         let unit = (pass() * (pass() >> clip_to(0.0, f32::MAX)))
             * (var(&gain) >> follow(GAIN_SMOOTH_SECONDS as f32));
         Ok(VcaProc {
-            fundsp: FundspProc::new(Box::new(unit), 2, cx),
+            fundsp: FundspProc::new(Box::new(unit), cx),
             gain,
             fade: SourceFade::new(),
         })
@@ -951,13 +1044,156 @@ impl AudioNodeProcessor for VcaProc {
         buffers: ProcBuffers,
         extra: &mut ProcExtra,
     ) -> ProcessStatus {
-        let [input, cv, ..] = buffers.inputs else {
-            return ProcessStatus::ClearAllOutputs;
-        };
-        let Some(out) = buffers.outputs.first_mut() else {
-            return ProcessStatus::ClearAllOutputs;
-        };
-        self.fundsp.run(&[input, cv], out);
+        self.fundsp
+            .run(buffers.inputs, buffers.outputs, info.frames);
+        self.fade.apply(buffers.outputs, info.frames, extra);
+        ProcessStatus::OutputsModified
+    }
+}
+
+// ---------------------------------------------------------------- Mixer
+
+#[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
+pub(crate) struct MixerNode {
+    pub levels: [f32; 4],
+    pub enabled: bool,
+}
+
+impl MixerNode {
+    pub fn with(mut self, param: &str, value: f32) -> Self {
+        if let Some(index) = MIXER_PARAMS.iter().position(|spec| spec.name == param) {
+            self.levels[index] = value;
+        }
+        self
+    }
+}
+
+impl AudioNode for MixerNode {
+    type Configuration = EmptyConfig;
+
+    fn info(&self, _: &EmptyConfig) -> Result<AudioNodeInfo, NodeError> {
+        Ok(node_info(
+            "mixer",
+            ChannelCount::from(4usize),
+            ChannelCount::MONO,
+        ))
+    }
+
+    fn construct_processor(
+        &self,
+        _: &EmptyConfig,
+        cx: ConstructProcessorContext,
+    ) -> Result<impl AudioNodeProcessor, NodeError> {
+        let gains = self.levels.map(shared);
+        let unit = sumi::<U4, _, _>(|i| {
+            pass() * (var(&gains[i as usize]) >> follow(GAIN_SMOOTH_SECONDS as f32))
+        });
+        Ok(MixerProc {
+            fundsp: FundspProc::new(Box::new(unit), cx),
+            gains,
+            fade: SourceFade::new(),
+        })
+    }
+}
+
+struct MixerProc {
+    fundsp: FundspProc,
+    gains: [Shared; 4],
+    fade: SourceFade,
+}
+
+impl AudioNodeProcessor for MixerProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, extra: &mut ProcExtra) {
+        for patch in events.drain_patches::<MixerNode>() {
+            match patch {
+                MixerNodePatch::Levels((index, value)) => {
+                    if let Some(gain) = self.gains.get(index) {
+                        gain.set_value(value);
+                    }
+                }
+                MixerNodePatch::Enabled(enabled) => self.fade.set_enabled(enabled, extra),
+            }
+        }
+    }
+
+    fn process(
+        &mut self,
+        info: &ProcInfo,
+        buffers: ProcBuffers,
+        extra: &mut ProcExtra,
+    ) -> ProcessStatus {
+        self.fundsp
+            .run(buffers.inputs, buffers.outputs, info.frames);
+        self.fade.apply(buffers.outputs, info.frames, extra);
+        ProcessStatus::OutputsModified
+    }
+}
+
+// ---------------------------------------------------------------- VCF
+
+#[derive(Diff, Patch, Debug, Clone, Copy, PartialEq)]
+pub(crate) struct VcfNode {
+    pub cutoff: f32,
+    pub resonance: f32,
+    pub enabled: bool,
+}
+
+impl AudioNode for VcfNode {
+    type Configuration = EmptyConfig;
+
+    fn info(&self, _: &EmptyConfig) -> Result<AudioNodeInfo, NodeError> {
+        Ok(node_info("vcf", ChannelCount::MONO, ChannelCount::STEREO))
+    }
+
+    fn construct_processor(
+        &self,
+        _: &EmptyConfig,
+        cx: ConstructProcessorContext,
+    ) -> Result<impl AudioNodeProcessor, NodeError> {
+        let max_cutoff = cx.stream_info.sample_rate.get() as f32 * 0.45;
+        let cutoff = shared(self.cutoff);
+        let resonance = shared(self.resonance);
+        // Zero resonance gives the Butterworth response. Keep the highest Q finite.
+        let hz = (var(&cutoff) >> clip_to(0.0, max_cutoff)) >> follow(GAIN_SMOOTH_SECONDS as f32);
+        let q = (var(&resonance) >> clip_to(0.0, 1.0) >> follow(GAIN_SMOOTH_SECONDS as f32))
+            * (8.0 - std::f32::consts::FRAC_1_SQRT_2)
+            + std::f32::consts::FRAC_1_SQRT_2;
+        let unit = (pass() | hz | q) >> multisplit::<U3, U2>() >> (lowpass() | highpass());
+        Ok(VcfProc {
+            fundsp: FundspProc::new(Box::new(unit), cx),
+            cutoff,
+            resonance,
+            fade: SourceFade::new(),
+        })
+    }
+}
+
+struct VcfProc {
+    fundsp: FundspProc,
+    cutoff: Shared,
+    resonance: Shared,
+    fade: SourceFade,
+}
+
+impl AudioNodeProcessor for VcfProc {
+    fn events(&mut self, _: &ProcInfo, events: &mut ProcEvents, extra: &mut ProcExtra) {
+        for patch in events.drain_patches::<VcfNode>() {
+            match patch {
+                VcfNodePatch::Cutoff(hz) => self.cutoff.set_value(hz),
+                VcfNodePatch::Resonance(resonance) => self.resonance.set_value(resonance),
+                VcfNodePatch::Enabled(enabled) => self.fade.set_enabled(enabled, extra),
+            }
+        }
+    }
+
+    fn process(
+        &mut self,
+        info: &ProcInfo,
+        buffers: ProcBuffers,
+        extra: &mut ProcExtra,
+    ) -> ProcessStatus {
+        self.fundsp
+            .run(buffers.inputs, buffers.outputs, info.frames);
         self.fade.apply(buffers.outputs, info.frames, extra);
         ProcessStatus::OutputsModified
     }

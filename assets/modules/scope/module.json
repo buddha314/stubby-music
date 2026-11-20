@@ -1,0 +1,23 @@
+{
+  "id": "scope",
+  "parts": [
+    {
+      "part": "scope",
+      "kind": "Scope"
+    }
+  ],
+  "jacks": {
+    "in": "scope.in",
+    "out": "scope.out"
+  },
+  "knobs": {
+    "time": {
+      "param": "scope.time",
+      "default": 0.02
+    },
+    "scale": {
+      "param": "scope.scale",
+      "default": 0.5
+    }
+  }
+}

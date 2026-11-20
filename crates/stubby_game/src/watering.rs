@@ -58,16 +58,17 @@ fn water_trees(
         &mut AssetState,
         Option<&WateredFrom>,
     )>,
-    streams: Query<&LaidStream>,
+    streams: Query<(Entity, &LaidStream)>,
+    water: Option<Res<crate::purifier::WaterClarity>>,
     voices: Query<&MachineVoice>,
     mut reported: Local<Reported>,
     mut goals: MessageWriter<GoalRequest>,
 ) {
     let Some(catalog) = catalog else { return };
     let seconds = time.delta_secs();
-    let flowing: Vec<&LaidStream> = streams
+    let flowing: Vec<(Entity, &LaidStream)> = streams
         .iter()
-        .filter(|stream| {
+        .filter(|(_, stream)| {
             stream
                 .source
                 .and_then(|source| voices.get(source).ok())
@@ -81,18 +82,22 @@ fn water_trees(
             continue;
         };
         let at = transform.translation();
-        let reaching: Vec<&&LaidStream> = flowing
+        let reaching: Vec<_> = flowing
             .iter()
-            .filter(|stream| stream.horizontal_distance(at) <= growth.water_reach_m)
+            .filter(|(_, stream)| stream.horizontal_distance(at) <= growth.water_reach_m)
             .collect();
         let clarity = reaching
             .iter()
-            .map(|stream| stream.clarity)
+            .map(|(entity, stream)| {
+                water
+                    .as_ref()
+                    .map_or(stream.clarity, |water| water.at(*entity, stream, at))
+            })
             .reduce(f32::max);
         // Where the trickle starts: the nearest point of the nearest watering stream.
         let source = reaching
             .iter()
-            .map(|stream| stream.nearest_point(at))
+            .map(|(_, stream)| stream.nearest_point(at))
             .min_by(|a, b| a.distance_squared(at).total_cmp(&b.distance_squared(at)));
         match (source, from) {
             (Some(point), Some(from)) if from.0.distance(point) < 0.05 => {}

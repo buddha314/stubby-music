@@ -18,7 +18,11 @@ use crate::{
     synth_modules::{ModuleCatalog, ModuleParams, ParamProfile, SynthModule},
 };
 use bevy::{
-    asset::RenderAssetUsages, mesh::Indices, picking::events::PointerClick, prelude::*,
+    asset::RenderAssetUsages,
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
+    mesh::Indices,
+    picking::events::PointerClick,
+    prelude::*,
     render::render_resource::PrimitiveTopology,
 };
 use bevy_stubby_audio::{Synth, module_ids::ModuleIds};
@@ -140,6 +144,7 @@ impl RackState {
 
 /// Engine modules this rack owns (not the machine's clock), and whether it has sounded.
 #[derive(Component, Default)]
+#[component(on_remove = retire_rack)]
 pub struct RackEngine {
     owned: Vec<ModuleId>,
     /// The voice's normalled output, which the streams place in the world.
@@ -157,6 +162,18 @@ impl RackEngine {
             .iter()
             .find(|(_, id)| **id == module)
             .map(|((place, _), _)| place.as_str())
+    }
+}
+
+fn retire_rack(world: DeferredWorld, context: HookContext) {
+    let Some(rack) = world.get::<RackEngine>(context.entity) else {
+        return;
+    };
+    let Some(synth) = world.get_resource::<Synth>() else {
+        return;
+    };
+    for &id in &rack.owned {
+        synth.send(Command::RemoveModule { id });
     }
 }
 
@@ -216,7 +233,13 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .register_type::<RackTargets>()
             .init_resource::<PatchSelection>()
             .init_resource::<HoveredCable>()
-            .add_systems(Update, cancel_cable)
+            .add_systems(
+                Update,
+                (
+                    cancel_cable,
+                    draw_scope.after(show_knobs).after(patch_engine),
+                ),
+            )
             .add_observer(cable_over)
             .add_observer(cable_out)
             .add_observer(drag_from_jack::<S>)
@@ -1072,6 +1095,109 @@ fn show_knobs(
             }
         }
     }
+}
+
+#[derive(Component)]
+struct ScopeTrace(Handle<Mesh>);
+
+/// The rack view owns the display mesh. The audio tap belongs to the engine part
+/// playing in this place, which may be replaced when the rack is repatched.
+fn draw_scope(
+    mut commands: Commands,
+    synth: Option<Res<Synth>>,
+    screens: Res<ScreenMode>,
+    catalog: Res<ModuleCatalog>,
+    racks: Query<&RackEngine>,
+    views: Query<(Entity, &RackModuleView, &SynthModule, &ModuleParams)>,
+    children: Query<&Children>,
+    panels: Query<(&Name, Option<&ScopeTrace>)>,
+    assets: Option<(ResMut<Assets<Mesh>>, ResMut<Assets<StandardMaterial>>)>,
+    mut samples: Local<Vec<f32>>,
+) {
+    let Some(thread) = synth.as_ref().and_then(|synth| synth.thread()) else {
+        return;
+    };
+    let Some(rack) = open_rack(&screens).and_then(|machine| racks.get(machine).ok()) else {
+        return;
+    };
+    let Some((mut meshes, mut materials)) = assets else {
+        return;
+    };
+    for (root, view, module, params) in &views {
+        let Some(screen) = catalog
+            .0
+            .get(&module.asset)
+            .and_then(|profile| profile.screen.as_ref())
+        else {
+            continue;
+        };
+        let Some(definition) = RACK_MODULES.get(&module.asset) else {
+            continue;
+        };
+        let Some(part) = definition.parts.iter().find(|part| part.kind == "Scope") else {
+            continue;
+        };
+        let Some((panel, trace)) = children.iter_descendants(root).find_map(|entity| {
+            let (name, trace) = panels.get(entity).ok()?;
+            (name.as_str() == screen.node).then_some((entity, trace))
+        }) else {
+            continue;
+        };
+
+        samples.resize(screen.samples.max(2), 0.0);
+        let id = rack.parts.get(&(view.place.clone(), part.part.clone()));
+        if !id.is_some_and(|id| thread.read_scope(*id, &mut samples)) {
+            samples.fill(0.0);
+        }
+        let scale = params.0.get("scale").copied().unwrap_or(0.5);
+        let positions = waveform_ribbon(&samples, screen.width_metres, screen.height_metres, scale);
+        if let Some(ScopeTrace(handle)) = trace {
+            if let Some(mut mesh) = meshes.get_mut(handle) {
+                mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+            }
+        } else {
+            let handle = meshes.add(
+                Mesh::new(
+                    PrimitiveTopology::TriangleStrip,
+                    RenderAssetUsages::default(),
+                )
+                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions),
+            );
+            let [r, g, b] = screen.colour_linear;
+            commands.spawn((
+                ChildOf(panel),
+                Mesh3d(handle.clone()),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::linear_rgb(r, g, b),
+                    unlit: true,
+                    cull_mode: None,
+                    ..default()
+                })),
+                // The exported Blender empty points local +Y out of the panel.
+                Transform::from_xyz(0.0, 0.002, 0.0)
+                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+                bevy::camera::visibility::NoFrustumCulling,
+                bevy::camera::visibility::RenderLayers::layer(crate::machine_config::HUD_LAYER),
+                Pickable::IGNORE,
+            ));
+            commands.entity(panel).insert(ScopeTrace(handle));
+        }
+    }
+}
+
+fn waveform_ribbon(samples: &[f32], width: f32, height: f32, scale: f32) -> Vec<[f32; 3]> {
+    let half_stroke = 0.001;
+    let vertical_limit = (height * 0.5 - half_stroke).max(0.0);
+    let step = width / (samples.len() - 1) as f32;
+    samples
+        .iter()
+        .enumerate()
+        .flat_map(|(i, sample)| {
+            let x = i as f32 * step - width * 0.5;
+            let y = (sample * scale * height).clamp(-vertical_limit, vertical_limit);
+            [[x, y - half_stroke, 0.0], [x, y + half_stroke, 0.0]]
+        })
+        .collect()
 }
 
 // ------------------------------------------------------------------ mounting

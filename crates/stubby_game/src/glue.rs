@@ -384,6 +384,7 @@ impl Plugin for PrefabGluePlugin {
                         || asset.starts_with("desert_")
                         || asset == "ripple_pool"
                         || asset == "campfire"
+                        || asset == crate::purifier::PURIFIER
                 },
                 install: |_, _, _, _| Ok(()),
                 retire: |_, _| {},

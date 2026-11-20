@@ -15,12 +15,12 @@ campfire's clock is inside the recipe's BPM range.
 ### Requirement: The purifier's rack is the high-pass patch
 A placed purifier SHALL have a rack with a borrowed clock, a low VCO, a high VCO, a mixer,
 a VCF, a VCA and a scope, and its screen SHALL suggest the patch: low VCO SAW to mixer 1,
-high VCO TRI to mixer 2, mixer OUT to VCF IN, VCF HPF to VCA IN, clock to VCA CV, VCA OUT
-to scope IN, scope OUT to the outlet. The clock SHALL be the nearest running burbler's or
+high VCO TRI to mixer 2, mixer OUT to VCF IN, VCF HPF to VCA IN, clock to VCA CV and VCA OUT
+to scope IN. The scope output SHALL be normalled to the outlet. The clock SHALL be the nearest running burbler's or
 flowing stream's, lent as on the campfire.
 
 #### Scenario: Patched as sketched
-- **WHEN** every place is filled and the seven cables are patched, with a clock in reach
+- **WHEN** every place is filled and the six cables are patched, with a clock in reach
 - **THEN** the purifier sounds: the clock gates the high-passed mix, and the scope shows it
 
 #### Scenario: No clock in reach

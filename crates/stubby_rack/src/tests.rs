@@ -313,3 +313,115 @@ fn targets_match_notes_and_values() {
     assert!(gate.met(1.) && !gate.met(0.));
     assert!((note_hz("A4").unwrap() - 440.).abs() < 1e-3);
 }
+
+#[test]
+fn purifier_profile_renders_its_clock_gated_patch_at_the_outlet() {
+    use stubby_audio::{Engine, EngineConfig, ModuleKind, PortRef};
+
+    #[derive(Deserialize)]
+    struct Profile {
+        configure: Configuration,
+    }
+    #[derive(Deserialize)]
+    struct Configuration {
+        places: Vec<Place>,
+        cables: Vec<Cable>,
+        normalled_output: Jack,
+    }
+    #[derive(Deserialize)]
+    struct Place {
+        place: String,
+        module: String,
+        #[serde(default)]
+        borrowed: bool,
+    }
+    #[derive(Deserialize)]
+    struct Cable {
+        from: Jack,
+        to: Jack,
+    }
+
+    let profile: Profile = serde_json::from_str(include_str!(
+        "../../../assets/machines/reed_water_purifier/asset.json"
+    ))
+    .unwrap();
+    let config = profile.configure;
+    let clock = ModuleId(1);
+    let modules = config
+        .places
+        .iter()
+        .map(|place| (place.place.clone(), place.module.clone()))
+        .collect();
+    let cables: Vec<_> = config
+        .cables
+        .into_iter()
+        .map(|cable| (cable.from, cable.to))
+        .collect();
+    let registry = shipped();
+    let provided: HashMap<_, _> = config
+        .places
+        .iter()
+        .filter(|place| place.borrowed)
+        .map(|place| {
+            let part = &registry.get(&place.module).unwrap().parts[0];
+            assert_eq!(part.kind, "Clock");
+            ((place.place.clone(), part.part.clone()), clock)
+        })
+        .collect();
+    assert_eq!(provided.len(), 1);
+    let mut ids = (2..).map(ModuleId);
+    let plan = registry.plan(
+        &RackPatch {
+            modules: &modules,
+            cables: &cables,
+            normalled_output: Some(&config.normalled_output),
+            provided: &provided,
+        },
+        |place, knob| match (place, knob) {
+            ("vco_low", "freq") => note_hz("C2"),
+            ("vco_high", "freq") => note_hz("C4"),
+            ("filter", "cutoff") => note_hz("C5"),
+            _ => None,
+        },
+        || ids.next(),
+    );
+    let scope = plan.parts[&("scope".into(), "scope".into())];
+    assert_eq!(plan.voice, Some(PortRef::new(scope, "out")));
+    assert_eq!(plan.owned.len(), 6);
+
+    let (mut engine, mut renderer) = Engine::offline(EngineConfig::default()).unwrap();
+    engine
+        .send(Command::AddModule {
+            id: clock,
+            kind: ModuleKind::Clock { bpm: 120.0 },
+        })
+        .unwrap();
+    for command in plan.commands {
+        engine.send(command).unwrap();
+    }
+    engine.flush().unwrap();
+
+    let mut output = [0.0_f32; 512];
+    let mut trace = [0.0_f32; 128];
+    let (mut heard_gate, mut heard_rest) = (false, false);
+    for _ in 0..190 {
+        renderer.render(&mut output);
+        if output.iter().any(|sample| sample.abs() > 0.01)
+            && engine.read_scope(scope, &mut trace)
+            && trace.iter().any(|sample| sample.abs() > 0.01)
+        {
+            heard_gate = true;
+        }
+        if heard_gate && output.iter().all(|sample| sample.abs() < 1e-6) {
+            heard_rest = true;
+        }
+    }
+    assert!(
+        heard_gate,
+        "the outlet and trace should receive the filtered mix"
+    );
+    assert!(
+        heard_rest,
+        "the borrowed clock should close the VCA between gates"
+    );
+}

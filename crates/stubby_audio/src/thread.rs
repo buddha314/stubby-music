@@ -6,7 +6,9 @@
 //! stalled game frame never delays the engine's own housekeeping, and the game never
 //! touches Firewheel types.
 
-use crate::engine::{Engine, EngineConfig, OUTPUT_CHANNELS, OfflineRenderer, WorldMeter};
+use crate::engine::{
+    Engine, EngineConfig, OUTPUT_CHANNELS, OfflineRenderer, ScopeCaptures, WorldMeter,
+};
 use crate::protocol::{AcousticSceneGeometry, Command, EngineError, Event};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
@@ -62,6 +64,7 @@ pub struct AudioThread {
     clock: Arc<Mutex<Option<ClockSnapshot>>>,
     stats: Arc<Stats>,
     world: WorldMeter,
+    scopes: ScopeCaptures,
     join: Option<JoinHandle<()>>,
 }
 
@@ -94,7 +97,7 @@ impl AudioThread {
             .name("stubby-audio-control".into())
             .spawn(move || match make() {
                 Ok((engine, renderer)) => {
-                    let _ = ready_tx.send(Ok(engine.world_meter()));
+                    let _ = ready_tx.send(Ok((engine.world_meter(), engine.scope_captures())));
                     run(
                         engine,
                         renderer,
@@ -111,12 +114,13 @@ impl AudioThread {
             .map_err(|e| EngineError::Device(e.to_string()))?;
 
         match ready_rx.recv() {
-            Ok(Ok(world)) => Ok(Self {
+            Ok(Ok((world, scopes))) => Ok(Self {
                 requests,
                 notices: Mutex::new(notices),
                 clock,
                 stats,
                 world,
+                scopes,
                 join: Some(join),
             }),
             Ok(Err(e)) => {
@@ -197,6 +201,11 @@ impl AudioThread {
     /// never one-shot UI sounds. `f32::NEG_INFINITY` in silence.
     pub fn world_peak_db(&self) -> f32 {
         self.world.peak_db()
+    }
+
+    /// Copy a scope's latest capture into evenly spaced display samples.
+    pub fn read_scope(&self, id: crate::ModuleId, trace: &mut [f32]) -> bool {
+        self.scopes.read(id, trace)
     }
 
     /// Frames the offline renderer has produced (always 0 with a real device).

@@ -22,8 +22,7 @@ and the engine parameter and default behind each knob:
 `cargo test -p stubby_rack` checks every definition against its panel: every port and
 knob bound, nothing extra, jack directions matching the engine, defaults in range. A new
 module whose engine parts exist needs only these two files and a line in
-`stubby_rack::shipped_sources`. Saw and triangle VCOs have no `module.json` until the
-engine has those oscillators.
+`stubby_rack::shipped_sources`. Saw and triangle use the same semitone controls as the sine and square.
 
 ## Clock (`tools/blender/create_clock_lamp.py`)
 
@@ -69,8 +68,7 @@ at three scales:
 - **Sides:** the same glyph on both sides (mirrored on the left, so it reads correctly
   from outside), so it reads from any angle.
 
-Square is the opening's first discovery. The engine has `SineVco` and `SquareVco`
-today; saw and triangle are ready for when it gains those oscillators.
+Square is the opening's first discovery. The engine uses fundsp oscillators for all four waveforms.
 
 ```sh
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_vco.py           # all four
@@ -137,7 +135,7 @@ core in translucent shells) instead of LEDs.
 The reed water purifier's rack (`add-reed-water-purifier` 3.1), after the user's VCV Rack
 patch: saw and triangle VCOs into the **mixer**, its MIX through the **VCF**'s HPF, gated by
 the borrowed clock through `volume`, out through the **scope**. Same language as the burbler
-modules. Panels only: each gets its `module.json` with its engine module (2.2-2.4).
+modules. The mixer, VCF and scope are registered as rack modules.
 
 - **Mixer** (8HP, engine `Mixer`): `in_1`..`in_4` beside `Knob_level_<n>` (0-1), and `mix`
   out with `Light_mix`. Crown: two slopes meeting at a peak, streams joining.

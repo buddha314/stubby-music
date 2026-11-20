@@ -137,6 +137,8 @@ def main():
                         help='Run the spatial two-source audio demo (standalone only)')
     parser.add_argument('--grotto-audio-review', action='store_true',
                         help='Review the authored grotto inside, behind the boulders, and outside')
+    parser.add_argument('--purifier-review', action='store_true',
+                        help='Start by an unpatched purifier on a running stream (standalone only)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
     parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
@@ -154,6 +156,8 @@ def main():
         parser.error('--lods and --prefabs are separate reviews')
     if args.audio_demo and not args.standalone:
         parser.error('--audio-demo requires --standalone')
+    if args.purifier_review and not args.standalone:
+        parser.error('--purifier-review requires --standalone')
     if args.grotto_audio_review and not args.standalone:
         parser.error('--grotto-audio-review requires --standalone')
     if args.standalone and (args.command or args.play or args.review or args.streams or args.sky):
@@ -183,6 +187,8 @@ def main():
         if args.prefabs:
             command += ['--scene=review_prefab_runtime.bsn',
                         f'--prefab-review=/tmp/stubby-lod-{args.name}']
+        if args.purifier_review:
+            command += ["--purifier-review", "--no-seeded-layout"]
         if args.audio_demo:
             command += ['--audio-demo']
         if args.grotto_audio_review:

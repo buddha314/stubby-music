@@ -37,6 +37,8 @@ pub mod resources;
 mod review;
 // Stream laying (stubby_streams), under its old module name.
 pub use stubby_streams as streams;
+mod purifier;
+mod purifier_review;
 mod sky_review;
 pub mod stream_features;
 mod stream_review;
@@ -83,6 +85,8 @@ impl Plugin for DesertPlugin {
             campfire::CampfirePlugin,
             hud::HudPlugin,
             watering::WateringPlugin,
+            purifier::PurifierPlugin,
+            purifier_review::PurifierReviewPlugin,
         ))
         .add_systems(Startup, spawn_camera.after(stubby_world::WorldSetup));
         // Dev builds serve Bevy's remote protocol on 127.0.0.1 (CORS open for the rules
