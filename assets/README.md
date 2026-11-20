@@ -11,6 +11,7 @@ in its `.glb.meta`. Place the prefab and let Jackdaw select detail automatically
 See [the Bevy asset guide](../docs/bevy-asset-guide.md) for import and validation.
 
 Blender sources stay in `assets-src/blender/`, generators in `tools/blender/`, and
-previews in `previews/`. Shared `audio/`, `lighting/`, `recipes/`, `shaders/`,
-`textures/` and `ui/` stay shared. The desert generates meshes, mud textures and
-its HDR cubemap at startup.
+previews in `previews/`. Shared `audio/`, `hud/`, `lighting/`, `recipes/` (the rules),
+`shaders/`, `ui/` and `world/` (the seeded layout's rules, `world/README.md`) stay shared;
+`rack-recipies/` holds the user's VCV Rack patches that machines copy. The desert
+generates its meshes and mud textures at startup, and the sky is Bevy's atmosphere.

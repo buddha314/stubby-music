@@ -48,8 +48,9 @@ by default:
 cargo build -p stubby_audio --features audionimbus   # after tools/build_steam_audio_sdk.sh
 ```
 
-The native Steam Audio 4.8.1 library must be built or provisioned separately and
-available to the runtime loader. The standard game launch handles this setup:
+The native Steam Audio 4.8.1 library is built once by `tools/build_steam_audio_sdk.sh`
+(outside Cargo); build scripts link it and record it in the binaries' run path. The
+standard game launch builds or checks it:
 
 ```sh
 tools/run_game.sh --seed=42
@@ -62,7 +63,8 @@ artifact hash are unchanged, and rebuilds when any of those inputs change. Use
 Cargo, so ordinary builds do not pay this build cost. Build scripts (`steam_audio_lib.rs`)
 point the linker at that cache and put it in the binaries' run path, so direct Cargo
 builds and runs need no `STEAMAUDIO_LIB_DIR` or `LD_LIBRARY_PATH`; setting
-`STEAMAUDIO_LIB_DIR` overrides the cache. The source
+`STEAMAUDIO_LIB_DIR` names a prebuilt library directly, and `STEAMAUDIO_CACHE_DIR` moves
+the cache (worktrees can share one, e.g. `~/.cache/stubby-steam-audio`). The source
 build uses Steam Audio's minimal configuration
 with IPP disabled; do not enable AudioNimbus `auto-install` in reproducible or offline
 builds.
@@ -110,8 +112,8 @@ in the repo's `AGENTS.md`. The crate denies `unwrap`, `expect` and `panic!`.
 ## Design
 
 - Requirements and decisions: `openspec/changes/add-audio-engine` (engine core) and
-  `openspec/changes/add-rack-and-spatial-audio` (the planned VCV-style rack and
-  spatial emission).
+  `openspec/changes/add-rack-and-spatial-audio` (the VCV-style rack, in
+  `stubby_rack` and `bevy_stubby_rack`, and spatial emission).
 - Research: `docs/research/audio-engine.md`, `docs/research/rack-and-spatial-audio.md`.
 
 ## Why it lives in this repo

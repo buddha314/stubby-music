@@ -70,8 +70,10 @@ over a `[from, to]` range of growth; the previews are rendered through the same 
 | 0.45–0.8 | leaves mature from young `#7b8c3c` to `#36412a` |
 | 0.72–1.0 | blooms (`Bloom_<k>`) open one by one in `order` |
 
-What drives growth is a gameplay decision for `add-scrub-oak-production`: clean water
-delivered to the tree raises it; muddy water does not wake it.
+Water drives growth (`mines.json` → `scrub_oak.growth`, `stubby_game/src/watering.rs`): a
+flowing stream within 3 m waters the oak, and growth rises toward the cap its water's
+clarity allows (muddy reaches budding, silty leafed, clear full bloom), easing back
+without water.
 
 ### Nodes
 

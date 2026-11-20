@@ -13,6 +13,8 @@ it; the decision and numbers are recorded in that change's `design.md` (D4).
   ported to Firewheel 0.14. `cargo run --release -p spike_rack [rack|spatial|fft]`.
 - `spike_firewheel`: Firewheel driven by hand, with a scalar sine and with fundsp's
   sine hosted in a Firewheel node.
+- `spike_omg_audio` (its own Cargo workspace; see its README): the OMG Audio
+  static-snapshot and shared-bus spike behind `docs/research/spatial-audio-alternatives.md`.
 
 Run from this directory; `spikes/` is its own Cargo workspace, separate from the game.
 

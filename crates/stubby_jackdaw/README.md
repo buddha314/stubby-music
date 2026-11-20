@@ -24,10 +24,13 @@ SDK inputs use the cache, so this does not rebuild the native SDK on every game 
 The shared editor executable is
 `/home/buddha/src/jackdaw/target/debug/jackdaw`. **Jackdaw selects our versions**:
 `compatibility.json` records its source commit, upstream base, Bevy version and
-compiler. The standalone game and this adapter share the root Cargo workspace,
-Cargo.lock and Rust toolchain. The adapter package remains for saved-prefab type
-paths, with `JackdawPlugin` and `maybe_windowless` for Play. Runtime dependencies
-point to the sibling shared Jackdaw checkout, not a private game editor.
+compiler. **This package is the game**: `cargo run` (the workspace default) and
+`tools/run_game.sh` run it with `assets/scene.bsn`, the seeded layout
+(`src/seeded_layout.rs`, rules in `assets/world/opening.json`) and the prefab bridge;
+`tools/run_game.sh --bare` runs `stubby_game` alone, with no scene. It shares the root
+Cargo workspace, Cargo.lock and Rust toolchain, with `JackdawPlugin` and
+`maybe_windowless` for Play. Jackdaw's crates are git dependencies on the buddha314 fork,
+pinned by `rev`; `tools/jackdaw.sh link` builds against `~/src/jackdaw` instead.
 
 Run `tools/jackdaw.sh check` for read-only source/version validation and
 `tools/jackdaw.sh prepare` to rebuild matching shared binaries and the floor preview.
@@ -71,9 +74,10 @@ delivers a model (`.glb`), a prefab wraps it with its gameplay components, and l
 design places prefabs.
 
 The prefabs live beside their models under `assets/<category>/<id>/`: `flora/<family>/<variant>/` (scrub oaks, reed clumps),
-`props/` (desert brush, stumps, mud debris), `creatures/` (the lightning bug),
-`modules/` (VCOs, clock lamp), `machines/` (the mudpit burbler) and `streams/` (a
-stream segment). Drag one from the Project window into the viewport to place an
+`props/desert/` (brush, stumps, mud debris), `props/rocks/` (the grotto's boulders and the
+rock formations), `creatures/` (the lightning bug, the snail shell), `modules/` (VCOs,
+clock lamp), `machines/` (the mudpit burbler, the reed water purifier), `structures/` (the
+campfire) and `streams/` (a stream segment, the ripple pool). Drag one from the Project window into the viewport to place an
 instance; move, rotate and scale it like any entity. Prefabs are ordinary editor
 assets: open one to edit it, and every instance follows.
 
@@ -106,8 +110,9 @@ model in the Project window and open its import settings:
   game code runs: oaks dormant, reed clumps standing, props bleak, streams muddy.
 - **Things that hover have a ground pivot.** The lightning bug prefab's root sits on
   the ground, so dropping it snaps to the floor, and the bug itself is the child
-  `Lightning bug hover`, 1.8 m up, carrying the model and `ResourceNode`. Select the
-  child to change one bug's height.
+  `Lightning bug hover`, carrying the model and `ResourceNode`. Each flash appears at a
+  fresh seeded height within `hover_metres` (1.3 to 1.7 m, `asset.json`), so the child's
+  authored height does not set it.
 - Scrub oaks carry `MineNode`. Give every placed oak its own `instance` (the prefab's
   `scrub_oak-<k>` is only a default), since the harvest ledger keys on it.
 - Play binds supported models by file stem. Placed bugs get their own seeded clock,
@@ -119,8 +124,10 @@ model in the Project window and open its import settings:
   derive deterministic identities from the authored names and transforms.
 - Reeds become finite `reed_clump` resources: E yields six reeds, changes the visual
   to stubble, and the clump returns after 60 game seconds. The burbler is an infinite
-  clock mine with a seeded BPM, never an E pickup. E emits a use event; its full rack
-  interface, water transport and oak production are still separate tasks.
+  clock mine with a seeded BPM, never an E pickup. E opens its rack; its streams carry
+  its voice and water oaks, which grow toward the cap their water's clarity allows.
+- Any leaf socket whose glTF extras name a `resource` from the rules is a pickup of it
+  (`stubby_game/src/collectibles.rs`): rock formation openings, ripple pools.
 - `AssetState` exposes growth, water/light quality and stream-port highlighting for
   visual bindings. Burble clips follow audio sample phase. Flora sway uses game time.
   Each instance has its own material state. Reload/removal retires helpers and audio.
@@ -171,7 +178,7 @@ Music pitch, clock tempo and flash envelopes retain their audio timing.
 Build the adapter, then script laying a stream at the burbler:
 
 ```sh
-cargo +1.99.0 build --bin stubby_jackdaw --manifest-path crates/stubby_jackdaw/Cargo.toml
+cargo build -p stubby_jackdaw
 python3 tools/jackdaw_timed_test.py --streams --seconds 20 --name stream-review
 ```
 
@@ -190,7 +197,7 @@ python3 tools/jackdaw_timed_test.py --seconds 20 --name stream-shots \
 Build the adapter, then run the seven-instance saved-prefab fixture:
 
 ```sh
-cargo +1.99.0 build --bin stubby_jackdaw --manifest-path crates/stubby_jackdaw/Cargo.toml
+cargo build -p stubby_jackdaw
 python3 tools/jackdaw_timed_test.py --prefabs --seconds 20 --refresh 60 --name prefab-runtime
 ```
 
@@ -217,22 +224,21 @@ not establish indefinite display stability or the separate 10 ms visual timing b
 
 ## Physics integration status
 
-The shared development editor currently refuses its Physics module on Bevy main.
-Do not enable an unbuildable `[modules] physics = true` entry or add a second Bevy
-through Avian's released dependencies. Task `add-desert-opening` 4.2d remains open;
-[the compatibility check and resume steps](../docs/research/player-controller-and-physics.md#jackdaw-development-compatibility-check-2026-11-01)
-record the exact CLI rejection. The collider-shape JSONs remain ready for authoring
-once the shared module supports this SDK.
+Avian runs in the game (our `bevy-main` fork): E's reach is a spatial query, and boulders
+and rock formations get static triangle-mesh colliders from their near level, marked
+`stubby_core::Solid`, which the player slides along (`src/model_part_bindings.rs`). The
+editor's Physics module (`[modules] physics = true`) is still off: task
+`add-desert-opening` 4.2d / `add-prefab-colliders` remains open;
+[the compatibility check and resume steps](../../docs/research/player-controller-and-physics.md#jackdaw-development-compatibility-check-2026-11-01)
+record the earlier CLI rejection. The collider-shape JSONs are ready for authoring.
 
 ## Machine configuration interaction
 
-Within 3 m along the ground of a mudpit's authored Interact node, the game shows
-E | Configure burbler. E opens the rack HUD from the machine's configure profile;
-a closer finite pickup wins. The HUD uses rack_frame.glb, the existing clock
-model and labelled empty slot assets. It views the mine's existing clock rather
-than creating another audio module. Escape closes it and restores mouse look.
-The initial rack view is implemented; mounting, knob editing and cable patching
-remain the subsequent rack tasks.
+When E's 3 m reach (an avian spatial query, `stubby_player/src/interaction.rs`) finds a
+machine's Interact point, the game shows its prompt; E opens the rack from the machine's
+configure profile (a burning campfire opens its crafting screen instead, with the rack a
+tab away). Modules mount from the inventory, knobs turn, and cables patch as in VCV
+Rack. Escape or E closes it and restores mouse look.
 
 Checked with one focused interaction regression and one 20-second bounded review.
 The review confirmed the actual rack assets loaded and the screen opened/closed.
@@ -241,3 +247,25 @@ Known opening-scene limitation (2026-11-18): the grotto's burbler can currently 
 configured from only one side. Approach it from the open ground at the grotto mouth;
 the other-side interaction reach remains a deferred level fix in
 [`add-echo-grotto`, task 3.3](../../openspec/changes/add-echo-grotto/tasks.md).
+
+## Reviews and diagnostic flags
+
+Graphical reviews run under the 20-second watchdog, `tools/jackdaw_timed_test.py`
+(`--standalone` runs the built game without the editor; `--command <cmd> …` runs any
+command under the same watchdog). Flags the game itself takes:
+
+| Flag | What it does |
+| --- | --- |
+| `--seed=<n>`, `--world-config=<file>`, `--scene=<file.bsn>` | the world: its seed, its rules (default `assets/world/opening.json`), its scene |
+| `--no-seeded-layout` | only the authored scene, no seeded layout |
+| `--layout-review=<dir>` | overhead and reed-bed screenshots of the seeded layout |
+| `--screenshot=<png>` | one screenshot after 15 s of warmup |
+| `--prefab-review=<dir>` | the saved-prefab fixture (`jackdaw_timed_test.py --prefabs`) |
+| `--lod-review=<dir>`, `--lod-review-set=flora\|machines` | levels of detail (`--lods`) |
+| `--stream-review=<dir>` | laying, affording and dismantling a stream (`--streams`) |
+| `--sky-review=<dir>` | the sky through a day, and the scanner at night (`--sky`) |
+| `--purifier-review` | an unpatched purifier on a running stream (`--purifier-review`, with `--standalone`) |
+| `--grotto-audio-review=<dir>` | listening inside, behind and outside the grotto |
+| `--replenishment-review=<dir>` | dusk and reed replenishment (`--review`) |
+| `--audio-demo` | a sustained test tone beside the clock blips |
+

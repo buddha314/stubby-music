@@ -1,34 +1,31 @@
 # stubby-music
 
-A modular synthesis factory game. The first scene is a silent, seeded desert mudflat.
+A modular synthesis factory game: the music of nature brings light to the world. It
+opens on a silent, seeded desert mudflat (`NARRATIVE.md`, `AGENTS.md`).
 
-Launch the visual scene with AudioNimbus enabled by default. The first launch builds
-the pinned Steam Audio SDK; later launches only check whether its inputs changed:
+Launch the game with AudioNimbus spatial audio. The first launch builds the pinned Steam
+Audio SDK; later launches only check whether its inputs changed:
 
 ```sh
 tools/run_game.sh --seed=42
 ```
 
-WASD walks, the mouse looks freely, Space jumps, C crouches,
-and hold Left Shift to sprint. H brings up the field recorder, Tab opens the inventory. Escape releases the cursor; click to resume.
-The player starts standing on the terrain at eye height. Use another seed to
-regenerate the mud plates, fine crack texture, and mountain silhouettes.
+This runs `stubby_jackdaw`, the game as Jackdaw builds it: the authored opening scene
+(`assets/scene.bsn`) plus the layout generated from the seed (burblers, reed beds, oak
+groves, rock formations and props, `assets/world/opening.json`). `tools/run_game.sh --bare`
+runs `stubby_game` alone: the terrain, sky and player with no scene, for art studies.
 For faster development linking, set `STUBBY_DEV_LINKING=1` before the launcher; omit
 that setting for release builds.
 
-The floor uses clipped Voronoi polygons with raised rims, recessed sidewalls,
-subtle height variation, and a generated repeating fine-crack/grain albedo and normal textures on a
-rough PBR material. No reference photograph or external textures are required.
-The HDR sky is generated as a linear half-float cubemap with an amber low sun,
-dusty horizon and slate zenith; the cubemap also supplies filtered environment lighting, alongside matching sunlight.
+WASD walks, the mouse looks freely, Space jumps, C crouches, and hold Left Shift to
+sprint. E collects and opens machines, Q builds, H brings up the field recorder, B the
+scanner, Tab the inventory, O the recipes. Escape releases the cursor; click to resume.
 
-This is the initial art-study scene: a fixed terrain area roughly 216 m wide,
-grounded first-person movement, haze and distant mountains. Streaming, sandstorm particles,
-mood transitions and discovery objects are tracked in the opening proposal and are not
-implemented yet. AudioNimbus binaural spatial rendering and direct propagation are enabled
-in the default game features. The first SDK build is separate from Cargo and may take a
-while; later launch commands only verify the cached SDK unless a pinned input changes.
-Use `--no-default-features` for a temporary build without AudioNimbus.
+The floor uses clipped Voronoi polygons with raised rims, recessed sidewalls, subtle
+height variation, and generated fine-crack albedo and normal textures; the cracked ground
+is about 216 m wide. The sky is Bevy's atmosphere with desert dust, a moon and seeded
+stars. AudioNimbus binaural spatial rendering and direct propagation are on by default;
+use `--no-default-features` for a temporary build without them.
 
 From the repository root, launch the game with:
 
@@ -62,8 +59,12 @@ The SDK helper builds Steam Audio from pinned source into this checkout's
 `target/native/steam-audio/` and rebuilds only when its pinned inputs change; Cargo never
 builds it. The game's build scripts find that cache and record it in the binaries' run
 path, so no `STEAMAUDIO_LIB_DIR` or `LD_LIBRARY_PATH` is needed (setting
-`STEAMAUDIO_LIB_DIR` still overrides it). Until the SDK is built, Cargo warns and the link
-fails. Add `-- --audio-demo` to the Cargo command only
+`STEAMAUDIO_LIB_DIR` still overrides it). `STEAMAUDIO_CACHE_DIR` moves the cache, so
+worktrees can share one build (e.g. `~/.cache/stubby-steam-audio`); a symlink at
+`target/native/steam-audio` does the same without the variable, which the editor's build
+needs. Until the SDK is found, Cargo warns and the link fails (`unable to find library
+-lphonon`); after providing it, `touch tools/steam-audio-sdk.lock` so cached build scripts
+look again. Jackdaw's editor builds the game into `.jackdaw/target/game`. Add `-- --audio-demo` to the Cargo command only
 when you want a sustained 110 Hz square-wave test tone alongside clock blips. The direct path
 supports distance, air absorption, geometry occlusion and material transmission.
 Reflections/reverb, authored cave or building validation, live device-restart handling,
@@ -82,12 +83,21 @@ white flashes independently, remaining invisible and silent between pulses. Near
 clicks use the existing square VCO, envelope and VCA; spawn is outside hearing
 range. An audio output device is required for the live clock.
 
-Lightning bugs are also resource nodes: approach within 3 metres and press E to
-recover a square-wave recipe ingredient. The [recipe foundation](crates/stubby_recipes/README.md)
-provides validated data definitions, inventory, one-time resource yields and
-atomic crafting. Press O for the recipe book: Square wave is a raw building block
-for VCO, LFO and gate uses. Other waveform resources and production combinations
-will be authored later.
+Lightning bugs are also resource nodes: hold up the field recorder (H), come within
+3 metres and press E to record a square wave. Rock openings and hollow trunks yield
+high-pass filters and ripple pools along laid streams yield oscilloscopes; any model
+socket tagged with a `resource` is collectable (`stubby_game/src/collectibles.rs`). The
+[recipe foundation](crates/stubby_recipes/README.md) provides validated data definitions,
+inventory, resource yields and atomic crafting. Press O for the recipe book.
+
+Q builds: streams, a campfire, and a reed water purifier across a laid stream. E at a
+burning campfire opens the crafting screen (Satisfactory's Craft Bench), where recipes
+are made at the tempo the fire hears; the first is the reed water purifier.
+
+The opening's layout comes from the seed (`assets/world/opening.json`, see
+[assets/world/README.md](assets/world/README.md)). `--no-seeded-layout` leaves only the
+authored scene; `--world-config=<file>` runs another layout; `--layout-review=<dir>`
+saves an overhead and a reed-bed screenshot.
 
 Version selection follows the shared Jackdaw checkout, recorded in
 [`compatibility.json`](compatibility.json). Both game entry points
@@ -96,8 +106,8 @@ work; see [the version and upstream-sync policy](docs/research/jackdaw-version-p
 
 ## Adding and changing game rules (designers)
 
-Items, resources, mines and recipes are JSON rows in `assets/recipes/`, one file per
-kind. There is no `catalog.json` any more; it was split into these files.
+Game rules (items, resources, mines, recipes, buildables, goals, machines, the start
+and air cleaning) are JSON rows in `assets/recipes/`, one file per kind. There is no `catalog.json` any more; it was split into these files.
 
 **The rules designer** edits them in a browser, with forms, ID pickers, live problems,
 undo and save, and a panel showing values from the running game:
@@ -157,6 +167,9 @@ and [docs/research/satisfactory-goals-and-inventory.md](docs/research/satisfacto
 | A recipe (inputs → outputs) | `assets/recipes/recipes.json` |
 | What something built in the world costs | `assets/recipes/buildables.json` |
 | A goal or chore the hub shows the player | `assets/recipes/goals.json` |
+| A machine's tuning targets and clock reach | `assets/recipes/machines.json` |
+| What the player starts with | `assets/recipes/start.json` |
+| How much a plant cleans the air | `assets/recipes/air.json` |
 
 1. Edit the file. In VS Code, field names autocomplete and mistakes are underlined,
    because each file names its schema.
@@ -164,20 +177,24 @@ and [docs/research/satisfactory-goals-and-inventory.md](docs/research/satisfacto
    IDs and lists every problem, e.g. `resources.json [reed_clump] .yeilds: unknown field`.
 3. Run `cargo test -p stubby_recipes`, then open a PR and tick **Data** in the template.
 
-For example, a recipe that turns 6 reeds into one stream segment (once the
-`stream_segment` item exists in `items.json`):
+For example, the first recipe, made at a campfire whose clock is between 96 and 144 BPM:
 
 ```json
 {
-  "id": "stream_segment_from_reeds",
-  "name": "Stream segment",
-  "inputs": [{ "item": "reed", "quantity": 6 }],
-  "outputs": [{ "item": "stream_segment", "quantity": 1 }]
+  "id": "craft_reed_water_purifier",
+  "name": "Reed water purifier",
+  "inputs": [
+    { "item": "reed", "quantity": 20 },
+    { "item": "high_pass_filter", "quantity": 1 },
+    { "item": "oscilloscope", "quantity": 1 }
+  ],
+  "outputs": [{ "item": "reed_water_purifier_kit", "quantity": 1 }],
+  "bpm": { "min": 96, "max": 144 }
 }
 ```
 
 IDs are lowercase `snake_case`, unique across all the files (so the recipe above is
-not called `stream_segment`, which is the item) and never reused; the `name` is what
+not called `reed_water_purifier`, which is the buildable machine) and never reused; the `name` is what
 players see and can change any time. **Renaming or deleting an ID** needs a line in
 `assets/recipes/migrations.json` so old saves still load; the formatter and tests say
 when. If a rule needs something the files cannot express (a condition, a formula, a

@@ -86,7 +86,7 @@ Use **O** for the recipe book/codex. **What E acts on comes from avian3d, not ha
 (`interaction.rs`): every pickup and machine `Interact` point has a small kinematic sensor
 marker that follows it, one `SpatialQuery` cylinder (3 m, horizontal reach) at the player
 finds them, and the nearest becomes `InteractTarget`, which collecting, prompts and racks read.
-Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. The game opens with the recorder in hand, and **collecting a sound needs it** (reeds need nothing): its record light answers each capture, and its eight bars meter the engine's **world bus** (`WorldLevel`; world and music only; interface sounds go to `PortRef::ui_output()` so they never move it) (`recorder.rs`, `sync-recorder-feedback`). **Q** is build: it opens the **build menu** (`stubby_game::build`, Satisfactory's: a tile per `buildables.json` row with icon and cost). **Campfire** places a hologram on the ground at the aim (amber, red when short of its cost) and a click builds it. **Stream** enters stream build mode, laid like a Satisfactory conveyor (`streams.rs`, `openspec/changes/add-stream-building/`): aim by a free port (burbler mouth, stream end) and click to anchor, the hologram curves to the aim, click lays it (6 reeds a segment, from `buildables.json`) and chains from its end; right click drops the anchor; Escape or Q leaves. Reserve **F** for dismantle,
+Never put a physics body on a visual whose scale animates (bugs flash from scale 0). **H** brings up the field recorder and puts it away; the hand holds one item at a time (`hand.rs`), and each future hand item gets its own key. The game opens with the recorder in hand, and **collecting a sound needs it** (reeds need nothing): its record light answers each capture, and its eight bars meter the engine's **world bus** (`WorldLevel`; world and music only; interface sounds go to `PortRef::ui_output()` so they never move it) (`recorder.rs`, `sync-recorder-feedback`). **Q** is build: it opens the **build menu** (`stubby_game::build`, Satisfactory's: a tile per `buildables.json` row with icon and cost). **Campfire** places a hologram at the aim (amber, red when short of its cost or out of place) and a click builds it; every buildable places this way, by its row's `placement` (a purifier snaps across a laid stream). **Stream** enters stream build mode, laid like a Satisfactory conveyor (`stubby_streams`, `openspec/changes/add-stream-building/`): aim by a free port (burbler mouth, stream end) and click to anchor, the hologram curves to the aim, click lays it (6 reeds a segment, from `buildables.json`) and chains from its end; right click drops the anchor; Escape or Q leaves. Reserve **F** for dismantle,
 **Tab** for inventory and **B** for the disco light (labelled **Scanner** in the key hints, so the mirror ball is a surprise; a toggle, not a hand item: the mirror ball floats beside you and its 48 small beams reach out to 30 m (16 more shoot upward, for lighting what is above later) and every pickup they pass shows as a hologram with a beacon, and bugs stay lit between flashes; `flashlight.rs`); do not assign these to unrelated
 player actions. **Tab** opens the inventory screen and the upper right shows
 the goals hub: long- and short-term goals as the items to make, as Satisfactory's
@@ -162,7 +162,7 @@ Escape or focus loss releases the cursor, and left click recaptures it; a second
 AGENTS.md                 this file
 CLAUDE.md                 imports AGENTS.md
 openspec/                 requirements and change proposals (see below)
-docs/research/            research notes behind decisions
+docs/research/            research notes behind decisions (docs/art, docs/audio, docs/design beside it)
 crates/
   stubby_audio/           audio engine — NO bevy dependency
   bevy_stubby_audio/      service: the engine in Bevy (Synth, ClockTick, module IDs, pulse bus)
@@ -174,16 +174,22 @@ crates/
   stubby_world/           system: the desert, time, world generation, placed-prefab lifecycle (binders)
   stubby_streams/         system: laying mud streams; bar lines and voices ride them (MachineVoice)
   stubby_ui/              service: shared HUD widgets (item icons, slots, tooltips)
-  stubby_game/            the Bevy app
+  stubby_game/            the Bevy app; `tools/run_game.sh --bare` runs it alone, with no scene
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_rules_server/    tool: the rules designer, a web page on 127.0.0.1 (no Bevy, never the game)
-  stubby_jackdaw/         the package Jackdaw builds: stubby_game plus the editor bridge
-assets/                   the one asset folder: scene.bsn, asset families (models + prefabs + profiles), shared textures/shaders
+  stubby_jackdaw/         the game: stubby_game plus the scene, the seeded layout and the editor bridge
+                          (`cargo run`, `tools/run_game.sh`)
+assets/                   the one asset folder: scene.bsn, asset families (models + prefabs + profiles),
+                          recipes/ (the rules), world/ (the seeded layout's rules), shared shaders, ui, audio
 jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
+tools/                    run_game.sh, jackdaw.sh, build_steam_audio_sdk.sh, ci_local.sh,
+                          jackdaw_timed_test.py (the 20 s watchdog), icons/, audio/, assets/
+previews/                 asset previews, mirroring assets/ (never loaded by the game)
+spikes/                   throwaway experiments, their own Cargo workspaces
 ```
 
 ## Requirements live in OpenSpec
@@ -430,16 +436,21 @@ testable by asserting identical output for identical seeds.
 | Concern | Choice | Version (crates.io, 2026-10-31) |
 | ------- | ------ | ------------------------------- |
 | Engine | `bevy` | Bevy main as Jackdaw main locks it; `compatibility.json` |
-| Audio I/O | `cpal` | 0.18.2 |
+| Audio I/O | `cpal` (through `firewheel-cpal`) | 0.18.2 |
 | Audio engine (graph, device, scheduling) | `firewheel` | 0.14.0 |
 | DSP inside modules | `fundsp` | 0.23.0 |
 | RT messaging | `rtrb`, `triple_buffer` | 0.4.1 / 9.0.0 |
 | RT safety | `assert_no_alloc` (debug) | 1.1.2 |
-| Noise | `noise` | 0.9.0 |
-| Particles (sand) | `bevy_hanabi` | 0.19.0 (needs Bevy 0.19; no 0.20 release yet) |
-| Physics | `avian3d` | 0.8.0 |
-| Player controller | `bevy-tnua`, `bevy-tnua-avian3d` | 0.33.1 / 0.13.1 |
-| Input | `bevy_enhanced_input` | 0.27.2 |
+| Spatial audio | `audionimbus` over Steam Audio | =0.17.0 / 4.8.1 (`tools/steam-audio-sdk.lock`) |
+| Physics | `avian3d` | 0.8.0, through our `bevy-main` fork (`[patch.crates-io]`) |
+| Editor crates | Jackdaw (`jackdaw_runtime`, `_prefab`, `_terrain`, `_bsn`, `_scene_types`) | git, buddha314 fork, pinned `rev` |
+| Seeded RNG | `rand_chacha` | 0.9.0 |
+| WAV decoding | `hound` | ~3.5 |
+
+Considered and **not used** (no crate depends on them; 2026-11-20): `noise` (the ground is
+our own Voronoi), `bevy_hanabi` (sand particles), `bevy-tnua` / `bevy-tnua-avian3d` (the
+player controller is our own, `stubby_player::controls`), `bevy_enhanced_input` (input is
+Bevy's).
 
 Check a crate's Bevy compatibility before adding it, since Bevy plugins lag Bevy
 releases. Pin exact minor versions in `Cargo.toml`.
@@ -489,7 +500,7 @@ Several agents work in this repo at once. To avoid stepping on each other:
   **Claude, by the user's direct request (2026-11-01..06):** crate work on the rack and
   burbler UX, performance (sky environment map refiltered only as the sun and moon move, ground chunked for culling,
   two shadow cascades; `docs/research/performance-profiling.md`), stream laying
-  (`streams.rs`, the `buildables` rule type, `add-stream-building`), bar lines on streams
+  (`stubby_streams`, the `buildables` rule type, `add-stream-building`), bar lines on streams
   and placed machine voices (`add-localized-machine-voices`).
   **Claude (2026-11-16):** the moving sky, `sync-calendar-and-night-sky`: Bevy's atmosphere
   with desert dust, the moon and seeded stars (`stubby_world/src/sky.rs`, `calendar.rs`);
@@ -703,7 +714,7 @@ equivalent of an iron ore node, so the player does not pick it up.
 - **Stream hologram.** While extending, the planned stream shows as a holographic
   preview, like a Satisfactory conveyor before it is built. That is its own asset,
   separate from the burbler.
-- **Laying streams works (2026-11-03, `streams.rs`, `add-stream-building`).** Q build
+- **Laying streams works (2026-11-03, `stubby_streams`, `add-stream-building`).** Q build
   mode, a cubic Bézier from the port's flow direction to the aim, whole 4 m segments
   bent from the glTF meshes, scrolling hologram chevrons, port halos, reed `need / have`
   under the reticle; cost from `buildables.json`. Bar lines ride a sounding burbler's
@@ -716,7 +727,7 @@ equivalent of an iron ore node, so the player does not pick it up.
   that stream's flow (head on at a free end) and laying ends there (`snap_to_stream`).
   Dismantling refunds its reeds all or nothing and splits
   the stream; the part cut off downstream, and anything laid on from it, lies quiet.
-  Still to do: the staff's flow and notes on laid streams (2.7), bubbles (2.6), saving
+  Notes ride sounding streams. Still to do: the staff's flow (2.7), bubbles (2.6), saving
   laid streams, collision checks.
   `tools/jackdaw_timed_test.py --streams` runs the script (`--stream-review=<dir>`)
   under the watchdog. **Streams water trees** (`stubby_game::watering`, 2026-11-17): a
