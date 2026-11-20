@@ -16,7 +16,12 @@ A pool keeps clear of a segment's ends and of anything placed in the stream (a c
 Deterministic, no `thread_rng`.
 
 ### D2. Ripples on the beat
-A pool is a small widening of the bed where the water stills. On a sounding stream, a
+A pool is a small still pool of clear water **just beyond a bank** (built 2026-11-19): water
+seeps through the bank and settles, still and clear beside the moving mud, so it reads from a
+distance. It sits beside the channel rather than widening it because a model laid over a bent
+segment cannot remove that segment's banks, and the staff and notes keep riding the stream
+unhidden. It is symmetric along the flow, so a half turn puts it on the other bank (the seed
+may pick the side). On a sounding stream, a
 baked one-beat ring clip plays on each beat of the stream's clock, phase-locked to the
 audio clock as the burbler's bubbles are. A silent stream's pools are still, so the
 opening stays silent and still. Later the ring's shape may follow the sound's waveform

@@ -83,11 +83,42 @@ def snail_shell(d):
     d.ellipse(px((36, 88), (48, 100)), fill=TILE)
 
 
+def oscilloscope(d):
+    """A round scope screen over still water: a square trace across it, ripples beneath."""
+    for r, w in ((44, 3), (34, 2)):
+        d.ellipse(px((64 - r, 96 - r * 0.28), (64 + r, 96 + r * 0.28)), outline=BONE, width=w * SS)
+    d.rounded_rectangle(px((26, 18), (102, 76)), radius=12 * SS, fill=TILE, outline=BONE, width=5 * SS)
+    trace = [(34, 56), (48, 56), (48, 36), (64, 36), (64, 56), (80, 56), (80, 36), (94, 36)]
+    d.line(px(*trace), fill=AMBER, width=5 * SS, joint="curve")
+
+
+def high_pass_filter(d):
+    """The high-pass response: silent below the cutoff, open above it."""
+    d.line(px((22, 98), (106, 98)), fill=BONE, width=3 * SS)
+    pts = [(22 + 84 * t, 98 - 62 / (1 + math.exp(-14 * (t - 0.42)))) for t in (i / 60 for i in range(61))]
+    d.line(px(*pts), fill=AMBER, width=7 * SS, joint="curve")
+    d.line(px((57, 30), (57, 104)), fill=GREEN, width=2 * SS)
+
+
+def reed_water_purifier(d):
+    """A check dam: sticks across the stream, the pond behind and the spill below."""
+    for y in (36, 44):
+        d.line(px((18, y), (110, y)), fill=GREEN, width=3 * SS)
+    for y in (90, 98):
+        d.line(px((18, y), (110, y)), fill=AMBER, width=3 * SS)
+    for k, (x0, y0, x1, y1) in enumerate([(20, 66, 108, 58), (22, 58, 106, 70), (26, 74, 104, 64),
+                                           (30, 62, 98, 76)]):
+        d.line(px((x0, y0), (x1, y1)), fill=BONE, width=(6 - k % 2) * SS)
+    d.line(px((64, 76), (64, 88)), fill=AMBER, width=4 * SS)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in {"square_wave": square_wave, "patch_cable": patch_cable,
                        "reed": reed, "clock": clock, "campfire": campfire,
-                       "stream_segment": stream_segment, "snail_shell": snail_shell}.items():
+                       "stream_segment": stream_segment, "snail_shell": snail_shell,
+                       "oscilloscope": oscilloscope, "high_pass_filter": high_pass_filter,
+                       "reed_water_purifier": reed_water_purifier}.items():
         img, d = canvas()
         draw(d)
         img.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / f"{name}.png")

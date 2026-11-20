@@ -1,0 +1,9 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "machines/reed_water_purifier/reed_water_purifier.glb": {
+      "walk_through": true,
+      "why": "a low dam across the stream; the player wades over it as over the stream"
+    }
+  }
+}
