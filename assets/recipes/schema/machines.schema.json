@@ -31,6 +31,14 @@
     "MachineDefinition": {
       "type": "object",
       "properties": {
+        "clarity_lift_s": {
+          "description": "For a machine that cleans water: seconds it takes to lift the water below it one\nclarity level while it works, and to let it fall back when it stops.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
         "clock_reach_m": {
           "description": "How far, in metres, a machine with a borrowed clock reaches for a running one.",
           "type": [

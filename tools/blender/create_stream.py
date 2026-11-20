@@ -75,11 +75,11 @@ PREVIEW_BPM = 90
 CLARITY = [
     {"at": 0.0, "name": "muddy", "base_color": "#2a1d13", "roughness": 0.5, "alpha": 0.98,
      "staff_strength": 2.5, "staff_halo": False, "reed_greenness": 0.0},
-    {"at": 0.33, "name": "silty", "base_color": "#5a4630", "roughness": 0.22, "alpha": 0.76,
+    {"at": 0.33, "name": "silty", "base_color": "#8a7049", "roughness": 0.2, "alpha": 0.72,
      "staff_strength": 4.0, "staff_halo": True, "reed_greenness": 0.33},
-    {"at": 0.67, "name": "cloudy", "base_color": "#6d6852", "roughness": 0.1, "alpha": 0.5,
+    {"at": 0.67, "name": "cloudy", "base_color": "#a39d80", "roughness": 0.1, "alpha": 0.48,
      "staff_strength": 6.0, "staff_halo": True, "reed_greenness": 0.67},
-    {"at": 1.0, "name": "clear", "base_color": "#6f8a88", "roughness": 0.04, "alpha": 0.22,
+    {"at": 1.0, "name": "clear", "base_color": "#86aeaa", "roughness": 0.04, "alpha": 0.24,
      "staff_strength": 8.0, "staff_halo": True, "reed_greenness": 1.0},
 ]
 

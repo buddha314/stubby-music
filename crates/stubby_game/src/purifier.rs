@@ -11,8 +11,9 @@ pub const PURIFIER: &str = "reed_water_purifier";
 /// Maximum distance from a dam's origin to the stream centre line, when a dam placed by
 /// other means than building on a segment (a review, a level) looks for its segment.
 const CHANNEL_REACH_M: f32 = 0.75;
-/// Seconds for a dam to add or lose one clarity level.
-const TRANSITION_SECONDS: f32 = 1.0;
+/// Seconds for a dam to add or lose one clarity level when its machine rule gives none
+/// (`machines.json` `clarity_lift_s`).
+const DEFAULT_LIFT_SECONDS: f32 = 1.0;
 
 pub struct PurifierPlugin;
 impl Plugin for PurifierPlugin {
@@ -65,12 +66,13 @@ impl WaterClarity {
         streams: &HashMap<Entity, Option<PortOwner>>,
         active: HashMap<Entity, Lift>,
         seconds: f32,
+        lift_seconds: f32,
     ) {
         if active.is_empty() && self.lifts.is_empty() {
             self.profiles.clear();
             return;
         }
-        let step = seconds / TRANSITION_SECONDS;
+        let step = seconds / lift_seconds.max(1e-3);
         for (dam, mut next) in active.iter().map(|(dam, lift)| (*dam, *lift)) {
             if let Some(previous) = self
                 .lifts
@@ -155,6 +157,7 @@ fn attach_dams(
 
 fn update_clarity(
     time: Res<Time<Virtual>>,
+    rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
     mut clarity: ResMut<WaterClarity>,
     streams: Query<(Entity, &LaidStream)>,
     voices: Query<&MachineVoice>,
@@ -191,7 +194,11 @@ fn update_clarity(
             )
         })
         .collect();
-    clarity.advance(&all, active, time.delta_secs());
+    let lift_seconds = rules
+        .as_ref()
+        .and_then(|rules| rules.of(PURIFIER)?.clarity_lift_s)
+        .unwrap_or(DEFAULT_LIFT_SECONDS);
+    clarity.advance(&all, active, time.delta_secs(), lift_seconds);
 }
 
 /// Use the authored water palette. Vertex colour multiplies the muddy material,

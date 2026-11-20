@@ -70,9 +70,28 @@ fn prepare(
     server: Res<AssetServer>,
     mut calendar: ResMut<stubby_world::calendar::Calendar>,
     script: Option<Res<Script>>,
+    time: Res<Time<Real>>,
+    mut gave_up: Local<bool>,
 ) {
     let scripted = script.is_some();
-    if matches!(*setup, Setup::Ready | Setup::Scripted(_)) {
+    if matches!(*setup, Setup::Ready | Setup::Scripted(_)) || *gave_up {
+        return;
+    }
+    // No burbler outlet near spawn, or a stream that will not lay: say so and stop.
+    if time.elapsed_secs() > 15. {
+        *gave_up = true;
+        let stage = match *setup {
+            Setup::FindOutlet => "no open burbler outlet within 60 m of spawn",
+            Setup::Lay(_) => "the stream would not lay",
+            _ => "the dam never took a clock",
+        };
+        error!("Purifier review gave up: {stage}");
+        if let Some(script) = &script {
+            log(
+                script,
+                serde_json::json!({"event": "complete", "success": false, "why": stage}),
+            );
+        }
         return;
     }
     let Ok(mut camera) = camera.single_mut() else {
@@ -221,6 +240,15 @@ fn log(script: &Script, event: serde_json::Value) {
         let _ = writeln!(file, "{event}");
     }
     info!("purifier e2e: {event}");
+}
+
+/// From the bank, high, the dam in the middle: muddy above, clearer below. The same view
+/// before and after tuning, so the two screenshots compare.
+fn clearing_view(stream: &LaidStream, dam: Vec3) -> Transform {
+    let (along, _) = stream.nearest_along(dam);
+    let (p, flow) = stream.centre_at(along - stream.start);
+    Transform::from_translation(p + flow.cross(Vec3::Y) * 5.5 + Vec3::Y * 4.5 - flow * 0.5)
+        .looking_at(p + flow * 0.5, Vec3::Y)
 }
 
 fn shoot(commands: &mut Commands, script: &Script, name: &str) {
@@ -376,12 +404,26 @@ fn script(
             }
         }
         Step::Patch => {
-            let Some((dam, _, mut rack, knobs, ..)) = racks
+            let Some((dam, _, mut rack, knobs, .., place)) = racks
                 .iter_mut()
                 .find(|(_, asset, ..)| asset.asset == crate::purifier::PURIFIER)
             else {
                 return;
             };
+            // First the water as it is, untuned, from the view the clearing is shot from.
+            if let Ok((_, mut camera)) = camera.single_mut() {
+                *camera = clearing_view(stream, place.translation());
+            }
+            if waited < 0.6 {
+                return;
+            }
+            if waited - time.delta_secs() < 0.6 {
+                shoot(&mut commands, &script, "2a-muddy.png");
+                return;
+            }
+            if waited < 0.9 {
+                return;
+            }
             let Some(mut knobs) = knobs else { return };
             let config = &profiles.0[crate::purifier::PURIFIER];
             rack.own = config
@@ -414,12 +456,7 @@ fn script(
                     "below": below, "above": above, "after_s": waited, "ok": ok}),
                 );
                 if let (Ok((_, mut camera)), Some(_)) = (camera.single_mut(), on) {
-                    // From the bank, high, the dam in the middle: muddy above, clearer below.
-                    let (p, flow) = stream.centre_at(along - stream.start);
-                    *camera = Transform::from_translation(
-                        p + flow.cross(Vec3::Y) * 5.5 + Vec3::Y * 4.5 - flow * 0.5,
-                    )
-                    .looking_at(p + flow * 0.5, Vec3::Y);
+                    *camera = clearing_view(stream, at);
                 }
                 next(&mut script, Step::Pools);
             } else if waited > 6.0 {
@@ -438,7 +475,7 @@ fn script(
                 return; // the camera has moved to the clearing water
             }
             if script.since + 0.4 <= now && script.since + 0.4 > now - time.delta_secs() {
-                shoot(&mut commands, &script, "2-clearing.png");
+                shoot(&mut commands, &script, "2b-clearing.png");
             }
             let on_stream: Vec<_> = pools
                 .iter()
