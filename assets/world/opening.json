@@ -116,6 +116,40 @@
       ]
     },
     {
+      "id": "lightning_bugs",
+      "revision": 1,
+      "region": "opening",
+      "origin": [
+        -104.0,
+        -104.0
+      ],
+      "size": [
+        208.0,
+        208.0
+      ],
+      "asset": "creatures/lightning_bug/lightning_bug.glb",
+      "resolution": 128,
+      "density": 0.0045,
+      "clearance": 0.5,
+      "min_spacing": 6.0,
+      "distances": [
+        {
+          "stems": [
+            "spawn"
+          ],
+          "min_m": 36.0
+        },
+        {
+          "stems": [
+            "scrub_oak_"
+          ],
+          "min_m": 2.5,
+          "max_m": 12.0,
+          "denser_nearer": true
+        }
+      ]
+    },
+    {
       "id": "rock_formations",
       "revision": 1,
       "region": "opening",
@@ -243,5 +277,11 @@
       "mean_spacing_m": 12.0,
       "end_margin_m": 0.6
     }
-  ]
+  ],
+  "landmarks": {
+    "spawn": [
+      0.0,
+      6.0
+    ]
+  }
 }

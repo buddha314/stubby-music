@@ -40,6 +40,10 @@ pub struct WorldConfig {
     /// Things that form along every laid stream (ripple pools), at seeded random places.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub stream_features: Vec<StreamFeature>,
+    /// Named points on the ground (XZ metres) that rules keep distances from like any
+    /// anchor: `spawn`, so no lightning bug is in earshot of the start.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub landmarks: std::collections::BTreeMap<String, [f32; 2]>,
 }
 
 /// A model that forms along laid streams: a Poisson process in arc length (gaps drawn
@@ -109,6 +113,7 @@ impl Default for WorldConfig {
             edits: Vec::new(),
             authored_footprints: Default::default(),
             stream_features: Vec::new(),
+            landmarks: Default::default(),
         }
     }
 }
@@ -475,6 +480,18 @@ mod tests {
                 (20.0..=40.5).contains(&d),
                 "an oak {d} m from its nearest burbler"
             );
+        }
+        // The opening starts silent: no seeded bug within hearing (35 m) of spawn, and
+        // every seeded bug lives by an oak.
+        let bugs = of("lightning_bugs");
+        eprintln!("seed {}: {} lightning bugs", config.seed, bugs.len());
+        assert!(!bugs.is_empty());
+        for bug in &bugs {
+            assert!(
+                bug.distance(stubby_core::OPENING_SPAWN_XZ) >= 35.,
+                "a bug in earshot of spawn"
+            );
+            assert!(nearest(*bug, &oaks) <= 12.5, "a bug away from every oak");
         }
         // The first filter can be made: a formation with an opening (variants 2 to 5).
         assert!(layout.placements.iter().any(|p| {

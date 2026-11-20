@@ -332,6 +332,11 @@ impl WorldConfig {
             .iter()
             .filter(|(_, p)| p.is_finite())
             .map(|(s, p)| (s.clone(), p.xz()))
+            .chain(
+                self.landmarks
+                    .iter()
+                    .map(|(name, at)| (name.clone(), Vec2::from_array(*at))),
+            )
             .collect();
         // In configuration order: a rule reads the placements of the rules before it.
         for rule in &self.scatter {
