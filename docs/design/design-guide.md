@@ -27,6 +27,9 @@ Draft stages, to be settled in `add-narrative-arc`:
 Open: what triggers each stage (light quality, deities woken, goals met), and how the
 stages map onto the long-term goals (`sync-major-minor-milestones`).
 
+For scenes that let us inspect how this arc might feel after a long play session, see
+[Long-session design previews](long-session-previews.md).
+
 ## Mythic regions
 
 **Decided (user, 2026-11-18):** the map is procedural and has regions, each the home of

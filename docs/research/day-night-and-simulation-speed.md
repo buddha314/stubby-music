@@ -13,3 +13,6 @@ Validation: workspace tests, Clippy with warnings denied, and compilation agains
 Repeat with `python3 tools/jackdaw_timed_test.py --review --seconds 20 --refresh 60 --name replenishment-review`. Build the adapter first; the helper preserves the 20-second maximum and temporarily selects **Review: dusk and replenishment**. This opt-in mode starts five game minutes before sunset at 64×, injects E and speed keys, and writes JSONL evidence and screenshots under `/tmp/stubby-replenishment-review/`. Normal gameplay never installs the review systems. Keep the hard watchdog for subsequent graphical testing.
 
 Final evidence is retained locally under `/home/buddha/.cache/stubby-music-replenishment/evidence/final-review/`.
+
+For longer runs and comparisons between player interventions, see
+[Previewing long sessions in simulation games](long-session-simulation-previews.md).
