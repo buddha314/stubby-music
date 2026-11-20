@@ -425,3 +425,132 @@ fn purifier_profile_renders_its_clock_gated_patch_at_the_outlet() {
         "the borrowed clock should close the VCA between gates"
     );
 }
+
+/// The purifier's patch, rendered offline for two seconds, with its filter-to-VCA cable
+/// taken from `filter_out` (`hpf` as shipped). The outlet's left channel.
+fn render_purifier(filter_out: &str) -> Vec<f32> {
+    use stubby_audio::{Engine, EngineConfig, ModuleKind};
+
+    #[derive(Deserialize)]
+    struct Profile {
+        configure: Configuration,
+    }
+    #[derive(Deserialize)]
+    struct Configuration {
+        places: Vec<Place>,
+        cables: Vec<Cable>,
+        normalled_output: Jack,
+    }
+    #[derive(Deserialize)]
+    struct Place {
+        place: String,
+        module: String,
+        #[serde(default)]
+        borrowed: bool,
+    }
+    #[derive(Deserialize)]
+    struct Cable {
+        from: Jack,
+        to: Jack,
+    }
+    let profile: Profile = serde_json::from_str(include_str!(
+        "../../../assets/machines/reed_water_purifier/asset.json"
+    ))
+    .unwrap();
+    let config = profile.configure;
+    let clock = ModuleId(1);
+    let modules = config
+        .places
+        .iter()
+        .map(|place| (place.place.clone(), place.module.clone()))
+        .collect();
+    let cables: Vec<_> = config
+        .cables
+        .into_iter()
+        .map(|mut cable| {
+            if cable.from.place == "filter" {
+                cable.from.port = filter_out.into();
+            }
+            (cable.from, cable.to)
+        })
+        .collect();
+    let registry = shipped();
+    let provided: HashMap<_, _> = config
+        .places
+        .iter()
+        .filter(|place| place.borrowed)
+        .map(|place| {
+            let part = &registry.get(&place.module).unwrap().parts[0];
+            ((place.place.clone(), part.part.clone()), clock)
+        })
+        .collect();
+    let mut ids = (2..).map(ModuleId);
+    let plan = registry.plan(
+        &RackPatch {
+            modules: &modules,
+            cables: &cables,
+            normalled_output: Some(&config.normalled_output),
+            provided: &provided,
+        },
+        |place, knob| match (place, knob) {
+            ("vco_low", "freq") => note_hz("C2"),
+            ("vco_high", "freq") => note_hz("C4"),
+            ("filter", "cutoff") => note_hz("C5"),
+            _ => None,
+        },
+        || ids.next(),
+    );
+    let (mut engine, mut renderer) = Engine::offline(EngineConfig::default()).unwrap();
+    engine
+        .send(Command::AddModule {
+            id: clock,
+            kind: ModuleKind::Clock { bpm: 120.0 },
+        })
+        .unwrap();
+    for command in plan.commands {
+        engine.send(command).unwrap();
+    }
+    engine.flush().unwrap();
+    let mut left = Vec::new();
+    let mut block = [0.0_f32; 512];
+    for _ in 0..(2 * 48_000 / 256) {
+        renderer.render(&mut block);
+        left.extend(block.iter().step_by(2));
+    }
+    left
+}
+
+/// The power of `samples` at `hz` (Goertzel), at 48 kHz.
+fn power_at(samples: &[f32], hz: f32) -> f32 {
+    let w = std::f32::consts::TAU * hz / 48_000.;
+    let coeff = 2. * w.cos();
+    let (mut s1, mut s2) = (0.0_f32, 0.0_f32);
+    for &x in samples {
+        let s0 = x + coeff * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+    }
+    (s1 * s1 + s2 * s2 - coeff * s1 * s2) / samples.len() as f32
+}
+
+/// The purifier's job is the high-pass: with the filter's HPF patched (as shipped) the
+/// low saw's C2 fundamental is all but gone and its bright upper harmonics pass, the
+/// opposite of the same patch through the LPF. The patch test above only hears sound.
+#[test]
+fn the_purifier_high_passes_its_mix() {
+    let hpf = render_purifier("hpf");
+    let lpf = render_purifier("lpf");
+    let c2 = note_hz("C2").unwrap();
+    let c6 = note_hz("C6").unwrap(); // the saw's 16th harmonic, an octave over the cutoff
+    let (hpf_low, lpf_low) = (power_at(&hpf, c2), power_at(&lpf, c2));
+    let (hpf_high, lpf_high) = (power_at(&hpf, c6), power_at(&lpf, c6));
+    assert!(lpf_low > 0., "the low-pass passes C2");
+    assert!(
+        hpf_low < lpf_low * 0.01,
+        "C2 at least 20 dB down through the HPF: {hpf_low} vs {lpf_low}"
+    );
+    assert!(
+        hpf_high > lpf_high * 4.,
+        "C6 passes the HPF better than the LPF: {hpf_high} vs {lpf_high}"
+    );
+}

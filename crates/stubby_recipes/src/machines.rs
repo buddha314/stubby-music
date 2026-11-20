@@ -41,10 +41,16 @@ pub struct MachineDefinition {
     /// How far, in metres, a machine with a borrowed clock reaches for a running one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clock_reach_m: Option<f32>,
+    /// For a machine that cleans water: seconds it takes to lift the water below it one
+    /// clarity level while it works, and to let it fall back when it stops.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub clarity_lift_s: Option<f32>,
 }
 
 /// The farthest a machine may reach for a clock.
 pub const MAX_CLOCK_REACH_M: f32 = 50.;
+/// The slowest a machine may lift water one level, in seconds.
+pub const MAX_CLARITY_LIFT_S: f32 = 600.;
 
 const NOTES: [&str; 12] = [
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
@@ -86,6 +92,15 @@ pub fn validate_machines(rows: &[MachineDefinition]) -> Vec<RulesError> {
                 &row.id,
                 "clock_reach_m",
                 format!("{reach} m is outside 0..{MAX_CLOCK_REACH_M}"),
+            ));
+        }
+        if let Some(seconds) = row.clarity_lift_s
+            && !(seconds > 0. && seconds <= MAX_CLARITY_LIFT_S)
+        {
+            errors.push(error(
+                &row.id,
+                "clarity_lift_s",
+                format!("{seconds} s is outside 0..{MAX_CLARITY_LIFT_S}"),
             ));
         }
         let mut seen = BTreeSet::new();
@@ -137,12 +152,14 @@ mod tests {
                 target(None, Some(1.)),
             ],
             clock_reach_m: Some(500.),
+            clarity_lift_s: Some(0.),
         };
         let errors = validate_machines(&[row]);
         let fields: Vec<_> = errors.iter().map(|e| e.field.as_str()).collect();
         assert!(fields.contains(&"targets/0"), "{errors:?}");
         assert!(fields.contains(&"targets/1/note"), "{errors:?}");
         assert!(fields.contains(&"clock_reach_m"), "{errors:?}");
+        assert!(fields.contains(&"clarity_lift_s"), "{errors:?}");
         assert!(is_note("F#2") && is_note("B-1") && !is_note("C"));
     }
 }
