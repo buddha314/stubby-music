@@ -2,8 +2,8 @@
 
 ### Requirement: Four reviewable settlement phases
 
-The project SHALL provide independent Jackdaw review scenes for Camp, Grove,
-Village and City. Each scene SHALL show the same site and preserve its shared
+The project SHALL provide independent Jackdaw review scenes for Camp, Village,
+Town and City. Each scene SHALL show the same site and preserve its shared
 orientation, water route and landmarks. Later scenes SHALL show visible
 additions appropriate to their phase.
 
@@ -29,7 +29,7 @@ A phase asset index SHALL identify reusable families and outstanding art needs.
 Each phase SHALL be selectable by name in the standalone graphical watchdog so
 a designer can inspect it with a common seed.
 
-#### Scenario: Review the grove
+#### Scenario: Review the village
 
-- **WHEN** a designer selects Grove in the standalone watchdog
-- **THEN** Jackdaw loads the Grove scene with seed 42 under the existing time limit
+- **WHEN** a designer selects Village in the standalone watchdog
+- **THEN** Jackdaw loads the Village scene with seed 42 under the existing time limit

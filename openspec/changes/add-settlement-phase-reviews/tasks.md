@@ -6,5 +6,5 @@
 ## 2. Review
 
 - [x] 2.1 (claimed: Codex) Add a watchdog selector and validate that Jackdaw resolves the four scenes.
-- [ ] 2.2 Compare the four scenes at the same solar hour. Review the canal route and street scale in Village and City.
+- [ ] 2.2 Compare the four scenes at the same solar hour. Review the canal route and street scale in Town and City.
 - [ ] 2.3 Decide the achievement and world response that should anchor each phase before proposing progression rules.

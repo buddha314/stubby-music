@@ -72,7 +72,7 @@ bevy_ecs::hierarchy::Children [
     jackdaw::prefab::components::PrefabEntityId(0)
     bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: 4.900000 } }
     --
-    #"Village canal reach"
+    #"Town canal reach"
     bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.200000, y: 0.022500, z: 4.000000 } }
     jackdaw_scene_types::types::Brush { faces: [
         jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 3.8000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
@@ -94,7 +94,7 @@ bevy_ecs::hierarchy::Children [
         jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.0000 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
     ] }
     --
-    #"Village workshop mass"
+    #"Town workshop mass"
     bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.000000, y: 1.500000, z: -5.600000 } }
     jackdaw_scene_types::types::Brush { faces: [
         jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.0500 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },

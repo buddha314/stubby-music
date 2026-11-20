@@ -167,8 +167,8 @@ fn settlement_review_scenes_resolve_and_preserve_the_shared_site() {
     ];
     for (phase, brush_count, tree_count) in [
         ("camp", 0, 0),
-        ("grove", 1, 3),
-        ("village", 8, 3),
+        ("village", 1, 3),
+        ("town", 8, 3),
         ("city", 17, 4),
     ] {
         let path = root.join(format!("world/phase_reviews/{phase}.bsn"));

@@ -15,13 +15,13 @@ the future, in the spirit of *Tomorrowland* and *Big Hero 6*'s San Fransokyo. Mu
 water rebuild civilization: small villages, then towns, then whole cities.
 
 **Decided (user, 2026-11-20):** organize the first phase reviews as Camp →
-Grove → Village → City. The silent mudflat is the opening before Camp.
+Village → Town → City. The silent mudflat is the opening before Camp.
 
 | Phase | What the player sees | Ties to |
 | --- | --- | --- |
 | Camp | The vardo, a campfire, the first burblers and streams | `add-campfire-craft-bench` |
-| Grove | Clearer water reaches the first grove and the trees begin to change the local air | `add-reed-water-purifier`, `clean-air-by-foliage` |
-| Village | Buildings and a commons grow around the water route as people return | `add-settlement-phase-reviews` |
+| Village | Clearer water reaches the first grove and the trees begin to change the local air | `add-reed-water-purifier`, `clean-air-by-foliage` |
+| Town | Buildings and a commons grow around the water route as people return | `add-settlement-phase-reviews` |
 | City | A solarpunk city grows along the same route | `add-settlement-phase-reviews` |
 
 **Open.** How the phases map onto long-term goals and how light quality,
