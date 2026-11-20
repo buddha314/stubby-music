@@ -34,6 +34,8 @@ Game-facing nodes, per variant:
   Bloom_<k>            hanging luminous catkins, extras: order. Open one by one in
                        `order` over the last stretch of growth
   BugSpawn_<k>         where a produced bug appears: one in each bloom
+  Hollow               (hollow variants only) the mouth of the hollow in the bole: extras
+                       resource = hollow_trunk, a collectable socket (a high-pass filter)
 Levels of detail live inside the model, as `scrub_oak_<k>_LOD0` (everything above)
   and `scrub_oak_<k>_LOD1` (ScrubOak_Far_Bark and ScrubOak_Far_Foliage_Node), the node
   convention Jackdaw imports into the model's settings; the far foliage node ships at scale 0
@@ -63,7 +65,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from create_burbler import Burbler, linear  # noqa: E402
 from module_kit import PROJECT  # noqa: E402
 
-VARIANTS = [11, 23, 37, 41, 58, 64]   # one seed per exported variant
+VARIANTS = [11, 23, 37, 41, 58, 64, 73, 89]   # one seed per exported variant
+# Hollow variants (add-high-pass-sources): the stems rise from a squat, gnarled bole with a
+# weathered hollow in its side, a `Hollow` socket (extras resource: hollow_trunk) at its
+# mouth, so the hollow gives a high-pass filter. Seeded groves pick them among the others.
+HOLLOW = {6, 7}
+BOLE_HEIGHT = 0.75
+BOLE_RADIUS = 0.3
 OUT = PROJECT / "assets/flora/scrub_oak"
 PREVIEW_OUT = PROJECT / "previews/flora/scrub_oak"
 RING = 6                               # sides on a branch tube
@@ -106,6 +114,8 @@ class ScrubOak(Burbler):
         self.root["mine"] = "scrub_oak"
         self.root["produces"] = "lightning_bug"
         self.root["variant"] = index
+        self.hollow = index in HOLLOW
+        self.root["hollow"] = self.hollow
         self.rng = random.Random(self.seed)
         noise.seed_set(self.seed)
 
@@ -118,6 +128,7 @@ class ScrubOak(Burbler):
         catkin = linear(COLORS["catkin"])
         self.catkin = m("Catkin", catkin, emission=catkin, strength=5.0)
         self.catkin_halo = self.translucent("CatkinHalo", catkin, 0.7, 0.025)
+        self.hollow_dark = m("HollowDark", linear("#16100c"), roughness=1.0)
         self.limbs, self.tips = [], []
 
     # ------------------------------------------------------------ growth
@@ -166,13 +177,68 @@ class ScrubOak(Burbler):
             child.rotate(Quaternion(axis, spread))
             self.grow(bm, p, child, length * rng.uniform(0.62, 0.8), end_radius * 0.92, depth - 1, limb)
 
+    def bole(self):
+        """A squat, gnarled bole at the root crown with a weathered hollow bored into one
+        side; returns where the stems start (its top) and the hollow's mouth."""
+        rng = self.rng
+        segments, rings = 14, 7
+
+        def fill(bm):
+            verts = []
+            for j in range(rings + 1):
+                z = -0.06 + (BOLE_HEIGHT + 0.06) * j / rings
+                taper = 1.0 - 0.3 * j / rings + 0.18 * max(0.0, 1 - j / 2)   # a root flare
+                ring = []
+                for k in range(segments):
+                    a = math.tau * k / segments
+                    r = BOLE_RADIUS * taper * (1 + 0.14 * noise.noise(Vector((math.cos(a) * 2, math.sin(a) * 2, z * 3))))
+                    ring.append(bm.verts.new((r * math.cos(a), r * math.sin(a), z)))
+                verts.append(ring)
+            for a, b in zip(verts, verts[1:]):
+                for k in range(segments):
+                    bm.faces.new((a[k], a[(k + 1) % segments], b[(k + 1) % segments], b[k]))
+            bm.faces.new(verts[-1])
+            bm.faces.new(list(reversed(verts[0])))
+        bole = self.mesh_obj("LimbWood_Bole", fill, self.bark)
+        bole.name = "ScrubOak_LimbWood_Bole"
+        # The hollow: an egg bored in from one side, dark inside, its mouth near the ground.
+        azimuth = rng.uniform(0, math.tau)
+        out = Vector((math.cos(azimuth), math.sin(azimuth), 0))
+        mouth_z = 0.3
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12)
+        cutter = bpy.context.view_layer.objects.active
+        cutter.scale = (0.2, 0.13, 0.24)
+        cutter.rotation_euler = (0, 0, azimuth)
+        cutter.location = out * (BOLE_RADIUS * 0.82) + Vector((0, 0, mouth_z))
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        cutter.data.materials.append(self.hollow_dark)
+        bpy.context.scene.collection.objects.link(bole)
+        mod = bole.modifiers.new("Hollow", "BOOLEAN")
+        mod.operation = "DIFFERENCE"
+        mod.solver = "EXACT"
+        mod.material_mode = "TRANSFER"
+        mod.object = cutter
+        bpy.context.view_layer.objects.active = bole
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        bpy.context.scene.collection.objects.unlink(bole)
+        bpy.data.objects.remove(cutter)
+        mouth = out * (BOLE_RADIUS * 1.05) + Vector((0, 0, mouth_z))
+        return BOLE_HEIGHT * 0.85, mouth
+
     def stems(self):
         rng = self.rng
+        top = 0.0
+        if self.hollow:
+            top, mouth = self.bole()
+            self.node("Hollow", tuple(mouth), resource="hollow_trunk", role="interact",
+                      prompt="Collect high-pass filter")
         count = rng.choice((2, 3, 3, 4, 5))
         for n in range(count):
             azimuth = 2 * math.pi * n / count + rng.uniform(-0.5, 0.5)
             lean = math.radians(rng.uniform(16, 40))
             base = Vector((math.cos(azimuth), math.sin(azimuth), 0)) * rng.uniform(0.05, 0.22)
+            if self.hollow:   # the stems rise from the bole's crown
+                base = base * 0.6 + Vector((0, 0, top))
             direction = Vector((math.sin(lean) * math.cos(azimuth), math.sin(lean) * math.sin(azimuth),
                                 math.cos(lean)))
             limb = self.node(f"Limb_{n}", base, sway_max_deg=2.5)
@@ -329,6 +395,7 @@ class ScrubOak(Burbler):
             "produces": "lightning_bug",
             "variant": self.index,
             "seed": self.seed,
+            "hollow": self.hollow,
             "limbs": len(self.limbs),
             "blooms": self.bloom_count,
             "triangles": {"near": near, "far": far},
@@ -385,6 +452,10 @@ def write_profile():
         "mine": "scrub_oak",
         "produces": "lightning_bug",
         "variants": [p["model"] for p in profiles],
+        "hollow_variants": [p["model"] for p in profiles if p.get("hollow")],
+        "hollow": "Hollow variants have a bole with a hollow whose mouth is the `Hollow` socket "
+                  "(extras resource: hollow_trunk): collected with E for a high-pass filter, back "
+                  "half a day later, whatever the tree's growth (add-high-pass-sources)",
         "per_instance": PER_INSTANCE,
         "growth": {
             "value": "0 dormant (winter) .. 1 full bloom",
