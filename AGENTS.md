@@ -604,7 +604,9 @@ equivalent of an iron ore node, so the player does not pick it up.
   pointer with VCV Rack's elastic sag, springing after each move (a damped spring); plugs
   take the cable's colour. **Sound begins only when every cable is patched**, and the screen guides it
   visually: ghost cables show the patches still to make and pods pulse in their colour.
-  **This is not a text adventure: no hint lines or step text on the rack screen.**
+  **Satisfactory is the baseline for hints** (user, 2026-11-20): short guidance lines are
+  fine where Satisfactory would show them. What stays visual is the *state*: the cable in
+  hand is drawn, never described ("this is not a text adventure", 2026-11-01).
   Plugging a cable in **snaps**: three CC0 clicks (Kenney Interface Sounds, licence in
   `assets/audio/sfx/patch_snap/`) played in turn, through the engine's one-shot
   `Command::PlaySample` (load once with `AudioThread::load_sample`; sound effects only,
