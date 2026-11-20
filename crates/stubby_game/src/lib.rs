@@ -15,6 +15,7 @@ mod audio_developer;
 mod build;
 mod campfire;
 mod collectibles;
+mod crafting_screen;
 pub mod designer;
 mod hud;
 mod inventory_screen;
@@ -83,6 +84,7 @@ impl Plugin for DesertPlugin {
             pause_menu::PauseMenuPlugin,
             build::BuildPlugin,
             campfire::CampfirePlugin,
+            crafting_screen::CraftingScreenPlugin,
             hud::HudPlugin,
             watering::WateringPlugin,
             purifier::PurifierPlugin,

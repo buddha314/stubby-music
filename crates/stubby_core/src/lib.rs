@@ -39,7 +39,14 @@ pub enum Screen {
     Pause,
     /// The build menu (Q): the buildables, each with its cost.
     Build,
+    /// A craft bench's crafting screen (Satisfactory's Craft Bench): the bench machine.
+    Crafting(Entity),
 }
+
+/// On a machine: E opens its crafting screen instead of its rack (a lit campfire,
+/// add-campfire-craft-bench D1). The rack stays reachable from that screen.
+#[derive(Component, Debug, Clone, Copy, Default)]
+pub struct CraftBench;
 
 #[derive(Resource, Default)]
 pub struct ScreenMode {

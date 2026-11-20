@@ -126,8 +126,7 @@ mod tests {
     }
 
     fn dam(app: &mut App, stream: Entity, at: Vec3) -> Entity {
-        let laid = app.world().get::<LaidStream>(stream).unwrap().clone();
-        let on = OnSegment::of(stream, &laid, at);
+        let on = OnSegment::of(stream, app.world().get::<LaidStream>(stream).unwrap(), at);
         app.world_mut()
             .spawn((
                 on,

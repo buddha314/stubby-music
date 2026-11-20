@@ -35,7 +35,7 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 4.1a (claimed: claude; done 2026-11-20) Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6). Generic: buildables now say `model`, `placement` (`ground`, `beside_stream`, `across_segment`, `laid`) and an optional `built_hint`, and one placement mode in `build.rs` serves them all (the campfire moved onto it). A dam records its segment (`OnSegment`, keyed by `LaidStream::segment_key`), follows it when dismantling elsewhere respawns the stream, and goes with it, its build cost returned, when its own segment is dismantled
 - [x] 4.3 (claimed: Codex; review fixes by claude 2026-11-20: a dam keeps the segment it stands on instead of re-searching every frame, and lifts ease out when the water stops instead of vanishing) Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
 - [x] 4.3a Data: `mines.json` leafed at silty, `min_clarity` 0.33 (user, 2026-11-19) (D4)
-- [ ] 4.4 (next) Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
+- [x] 4.4 (claimed: claude; done 2026-11-20) Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
 - [ ] 4.5 Bounded watchdog review: craft, place, patch, tune, see the water clear
 - [x] 4.5a (claimed: Codex) Seed-42 review setup with a patched burbler, laid stream, unpatched purifier, and six available cables. Launch from the feature worktree with `python3 tools/jackdaw_timed_test.py --standalone --purifier-review --name purifier`.
 - [ ] 4.5b Live review of E targeting, cable guidance, tuning, scope controls and the upstream/downstream water boundary.
