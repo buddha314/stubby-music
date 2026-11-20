@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # Build and launch the compatibility set selected by the shared Jackdaw revision.
+#
+#   tools/jackdaw.sh [open]   open this project in the shared editor (~/src/jackdaw)
+#   tools/jackdaw.sh prepare  export the mudflat preview, build the shared editor, record it
+#   tools/jackdaw.sh sync     Bevy main -> jbuehler23 main -> our fork -> this game, then prepare
+#   tools/jackdaw.sh build|run|doctor   the editor's `jd` for this project
+#   tools/jackdaw.sh link|unlink        build against the local editor checkout, or the pin
+#   tools/jackdaw.sh check    nothing (used by scripts to source the environment)
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="${JACKDAW_SOURCE:-${repo_dir}/../jackdaw}"

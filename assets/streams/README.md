@@ -54,10 +54,35 @@ segment on the same 24 subdivisions, so the game bends and chains it the same wa
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream_hologram.py
 ```
 
-The game lays both (`crates/stubby_game/src/streams.rs`, `add-stream-building`):
-segment and hologram meshes are baked from these glTFs once and bent along the plan;
-`Bar_0` rides a sounding burbler's streams, one per downbeat, on the staff's fixed wave.
-`Pulse_0`, the staff's morph targets and the clarity stages are not used yet: laid streams
-stay muddy, with a still staff and no notes, until those land.
+The game lays both (`crates/stubby_streams/src/lib.rs` and `dismantle.rs`,
+`add-stream-building`): segment and hologram meshes are baked from these glTFs once and
+bent along the plan. On a sounding stream, `Pulse_0` notes ride the staff on every beat
+and `Bar_0` once per bar. A tuned reed water purifier lifts the water below it one
+clarity stage (`stubby_game/src/purifier.rs` tints it from the profile's four stages:
+muddy, silty, cloudy, clear). The staff's wave morph targets are not used yet: the bent
+staff stays still.
 
 Still to come: the conveyor-belt segments streams run along.
+
+## Ripple pool (`tools/blender/create_stream_features.py`)
+
+| Close | About 12 m |
+| --- | --- |
+| ![ripple pool](../../previews/streams/ripple_pool/preview.png) | ![ripple pool from 12 m](../../previews/streams/ripple_pool/preview_far.png) |
+
+A small still pool of clear water just beyond a laid stream's bank, where an oscilloscope
+is found (`add-ripple-pool`). It is in the stream segment's frame (flow +X, origin at the
+channel centre); a half turn puts it on the other bank. Pools form along every laid stream
+at seeded Poisson-random places, one per 12 m on average (`stream_features` in
+`assets/world/opening.json`), and go with their segment when it is dismantled.
+
+- `Ripples` (extras `shown_while: beat`, shipped at scale 0): shown while the pool keeps
+  its stream's clock, i.e. while the stream sounds; its `Ripple_Beat` clip (one beat) then
+  plays on that clock, a ring leaving the centre on every beat.
+- `Interact` (extras `resource: ripple_pool`): the collectable socket; the oscilloscope
+  returns half a day after it is taken.
+- No levels of detail: small and animated.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_stream_features.py -- ripple_pool
+```

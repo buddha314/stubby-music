@@ -1,4 +1,4 @@
-# Rules: items, resources, mines, recipes
+# Rules: items, resources, mines, recipes, buildables, goals, machines
 
 The game's rules are rows in these files. **The designer owns the rows**; the schema
 and validator are code in `crates/stubby_recipes` (`rules.rs`), and new kinds of rule
@@ -7,14 +7,14 @@ go through OpenSpec. See AGENTS.md, "Rules are data; the schema is code", and
 
 | File | Holds |
 | --- | --- |
-| `items.json` | Everything that can sit in an inventory: `square_wave`, `reed`, `clock`, `patch_cable` |
-| `resources.json` | Finite pickups and what they yield: `lightning_bug`, `reed_clump`, `clock_source` |
+| `items.json` | Everything that can sit in an inventory: `square_wave`, `reed`, `clock`, `patch_cable`, `snail_shell`, `high_pass_filter`, `oscilloscope`, `reed_water_purifier_kit` |
+| `resources.json` | Finite pickups, what they yield and when they return: `lightning_bug`, `reed_clump`, `clock_source`, `empty_snail_shell`, `rock_opening`, `hollow_trunk`, `ripple_pool` |
 | `mines.json` | Infinite sources and the resource they produce: `scrub_oak`, `mudpit_burbler` |
-| `recipes.json` | Inputs → outputs. Empty: no production recipe is designed yet |
-| `buildables.json` | What the player builds in the world and its item cost per one built: `stream_segment` (6 `reed`) |
-| `goals.json` | What the hub tells the player to do next (format 2). A `major` goal is a set of `minor` steps (`part_of` it), done in file order; it completes with its last step and has no cost of its own. A step is met by a `condition` (`machine_configured`, `tree_watered`, `tree_grown` with a bloom `level`, `item_held` with a `quantity`) or by `requires` (items delivered). Majors open in file order, or after their `after` |
-| `start.json` | The starter inventory a new player gets: 10 patch cables |
-| `machines.json` | Machine settings tuned in play: each machine kind's `targets` (knobs its work needs, at a `note` such as `C2` or a `value` such as `1`) and `clock_reach_m` (how far a machine with a borrowed clock reaches). `machine` is the placed asset ID (`campfire`) |
+| `recipes.json` | Inputs → outputs, optionally only at a bench tempo (`bpm: {min, max}`, on the 24 BPM grid): `craft_reed_water_purifier` (20 `reed`, a `high_pass_filter`, an `oscilloscope`, 96 to 144 BPM → a `reed_water_purifier_kit`) |
+| `buildables.json` | What the player builds in the world, its item cost per one built, its `model`, its `placement` (`ground`, `beside_stream`, `across_segment`, `laid`) and an optional `built_hint`: `campfire` (25 `reed`), `stream_segment` (6 `reed`), `reed_water_purifier` (a kit) |
+| `goals.json` | What the hub tells the player to do next (format 2). A `major` goal is a set of `minor` steps (`part_of` it), done in file order; it completes with its last step and has no cost of its own. A step is met by a `condition` (`machine_configured`, `tree_watered`, `tree_grown` with a bloom `level`, `item_held` with a `quantity`, `built` with a `buildable`, `fire_lit`) or by `requires` (items delivered). Majors open in file order, or after their `after` |
+| `start.json` | The starter inventory a new player gets: 10 patch cables and 25 reeds |
+| `machines.json` | Machine settings tuned in play: each machine kind's `targets` (knobs its work needs, at a `note` such as `C2` or a `value` such as `1`) and `clock_reach_m` (how far a machine with a borrowed clock reaches). `machine` is the placed asset ID (`campfire`; `reed_water_purifier`, whose targets are its low VCO at C2, high VCO at C4 and filter cutoff at C5) |
 | `air.json` | Foliage that cleans the air: which placed assets, how far (`radius_m`), how strongly (`strength`), and what their cleaning follows (`growth`, `water_or_light`, `light`) |
 | `migrations.json` | Every renamed or removed ID, so saves survive the change |
 | `ids.lock` | Every ID ever shipped (maintained by the formatter; never delete lines) |
@@ -76,8 +76,8 @@ new rule type: write an OpenSpec change instead of bending the data.
 - **IDs are part of the save format.** To rename or remove one, add a row to
   `migrations.json` (`registry`, `from`, `to`, or `to: null` to remove). An ID that
   disappears without one fails the `ids.lock` check.
-- Every file carries `"format": 1`. Only a schema change that old files cannot satisfy
-  bumps it.
+- Every file carries a `format` (1, except `goals.json` at 2). Only a schema change that old
+  files cannot satisfy bumps it.
 
 ## What the current rows mean
 
@@ -88,3 +88,11 @@ mine produces finite lightning bugs, scaled later by water and light quality
 `clock_source` resource (renamed from `clock`, which is the item's ID), which yields the
 `clock` item. Square wave is in development: keep its stable ID and metadata while its
 asset is built. Collection feedback plays once per waveform, not per yielded item.
+
+Rock openings and hollow trunks each yield a `high_pass_filter`, and ripple pools an
+`oscilloscope`, all returning after 1800 s (half a game day). **A resource's pickups are
+its model's sockets**: any leaf node whose glTF extras name the resource ID (`"resource":
+"rock_opening"`) is collectable, one source per socket (`stubby_game/src/collectibles.rs`),
+so adding a collectible is a tagged socket and a row, no code. No model tags
+`hollow_trunk` yet (the hollow oak is still to be drawn). The purifier is crafted at a
+campfire as a kit and built from it across a laid stream.
