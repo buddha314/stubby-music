@@ -21,13 +21,13 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 2.1 (claimed: Codex) Triangle and saw VCOs (fundsp), module data for `triangle_vco` and `saw_vco`
 - [x] 2.2 (claimed: Codex) Four-channel mixer with levels; module data and panel
 - [x] 2.3 (claimed: Codex) State-variable VCF (LPF and HPF outs, cutoff Hz, resonance); module data and panel
-- [ ] 2.4 Scope: pass-through, recent-sample ring to the panel; module data and panel
+- [x] 2.4 (claimed: Codex) Scope: pass-through, recent-sample ring to the panel; module data and panel
 
 ## 3. Art (Claude)
 - [x] 3.1 (claimed: claude; done 2026-11-19) Mixer, VCF and scope panels in the module kit (`assets/modules/`, `tools/blender/create_purifier_modules.py`): panels and `asset.json` only; each `module.json` comes with its engine module (2.2-2.4). Ports: mixer `in_1..in_4`, `mix`; VCF `in`, `lpf`, `hpf`; scope `in`, `out`. Knobs: `level_<n>`; `cutoff` (Hz, log), `res`; `time`, `scale`. The scope's `Screen` node is where the game draws the trace
 - [ ] 3.2 Purifier model: a check dam of reeds and sticks across a stream segment's bed, water pooled behind and spilling over (D6); profile with `configure` and `targets`, prefab, LODs, icon, hologram
   - [x] 3.2a (claimed: claude; done 2026-11-19) The dam: `tools/blender/create_stream_features.py`, `assets/machines/reed_water_purifier/`: sticks, stakes and reed bundles packed with mud across the bed and up both banks, `Pond` behind (upstream), `Spill` through a notch and `Foam`; `Interact` (configure) on the right bank, `Outlet` (clarity_lift 1); LOD0/LOD1 and `.meta`; prefab; icon. The hologram is the game's tint over the model (`build.rs`), so no separate asset
-  - [ ] 3.2b The profile's `configure` block and `targets`, once the mixer, VCF and scope panels exist (3.1)
+  - [x] 3.2b (claimed: Codex) Purifier rack profile and C2/C4/C5 targets in `machines.json`
 
 ## 4. Game
 - [ ] 4.1 Recipe row with its BPM range; purifier item; placement (Open Question 5)

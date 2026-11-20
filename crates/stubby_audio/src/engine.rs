@@ -11,8 +11,8 @@ use crate::audionimbus_spatial::{
     DirectEffectParamsShared, DirectEmitterInput,
 };
 use crate::modules::{
-    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, MixerNode, SequencerNode,
-    VcaNode, VcfNode, VcoConfig, VcoNode, Waveform,
+    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, MixerNode, SCOPE_PARAMS,
+    SequencerNode, VcaNode, VcfNode, VcoConfig, VcoNode, Waveform,
 };
 #[cfg(feature = "omg_audio")]
 use crate::omg_spatial::{OmgSpatialNode, trace_snapshot};
@@ -22,11 +22,15 @@ use crate::protocol::{
 };
 use crate::random_clock::RandomClockNode;
 use audioadapter_buffers::direct::InterleavedSlice;
-use firewheel::nodes::spatial_basic::SpatialBasicNode;
+use firewheel::nodes::{
+    spatial_basic::SpatialBasicNode,
+    triple_buffer::{TripleBufferConfig, TripleBufferNode, TripleBufferState, WindowSize},
+    volume::{VolumeNode, VolumeNodeConfig},
+};
 use firewheel::{
     ActivateInfo, FirewheelConfig, FirewheelContext,
     backend::BackendProcessInfo,
-    channel_config::ChannelCount,
+    channel_config::{ChannelCount, NonZeroChannelCount},
     diff::{Diff, PathBuilder},
     error::{AddEdgeError, UpdateError},
     node::{NodeID, StreamStatus},
@@ -34,8 +38,8 @@ use firewheel::{
 };
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
-#[cfg(feature = "audionimbus")]
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 /// Output is always stereo; mono module outputs feed both channels.
@@ -73,6 +77,10 @@ enum NodeState {
     Vca(VcaNode),
     Mixer(MixerNode),
     Vcf(VcfNode),
+    Scope {
+        tap: NodeID,
+        capture: TripleBufferNode,
+    },
     Sequencer(SequencerNode),
 }
 
@@ -131,6 +139,7 @@ pub struct Engine {
     /// speakers. One-shot UI samples skip it, so its meter hears only the world.
     world: NodeID,
     world_meter: WorldMeter,
+    scopes: ScopeCaptures,
 }
 
 /// The world bus's level, readable from any thread (lock-free atomics). The field
@@ -144,6 +153,53 @@ impl WorldMeter {
         let [left, right] = self.0.peak_gain_db(-120.);
         left.max(right)
     }
+}
+
+/// Recent scope samples. Firewheel owns the realtime writer. Readers run off the
+/// callback and may skip a frame while the control thread edits the registry.
+#[derive(Clone, Default)]
+pub(crate) struct ScopeCaptures(Arc<Mutex<HashMap<ModuleId, TripleBufferState>>>);
+
+impl ScopeCaptures {
+    pub fn read(&self, id: ModuleId, trace: &mut [f32]) -> bool {
+        let mut state = {
+            let Ok(scopes) = self.0.try_lock() else {
+                return false;
+            };
+            let Some(state) = scopes.get(&id) else {
+                return false;
+            };
+            state.clone()
+        };
+        let mut guard = state.output();
+        let Some(data) = guard.data() else {
+            return false;
+        };
+        let Some(channel) = data.buffer.iter_channels().next() else {
+            return false;
+        };
+        let Some(samples) = channel
+            .get(..data.frames)
+            .filter(|samples| !samples.is_empty())
+        else {
+            return false;
+        };
+        let last = trace.len().saturating_sub(1).max(1);
+        for (i, position) in trace.iter_mut().enumerate() {
+            *position = samples[i * (samples.len() - 1) / last];
+        }
+        true
+    }
+}
+
+fn scope_window(seconds: f32) -> WindowSize {
+    let spec = &SCOPE_PARAMS[0];
+    let seconds = if seconds.is_nan() {
+        spec.default
+    } else {
+        spec.conform(seconds)
+    };
+    WindowSize::Seconds(f64::from(seconds))
 }
 
 fn firewheel_config() -> FirewheelConfig {
@@ -177,6 +233,7 @@ impl Engine {
         Ok(Self {
             world,
             world_meter,
+            scopes: ScopeCaptures::default(),
             cx,
             modules: HashMap::new(),
             cables: HashMap::new(),
@@ -204,6 +261,15 @@ impl Engine {
     /// The world bus's meter.
     pub fn world_meter(&self) -> WorldMeter {
         self.world_meter.clone()
+    }
+
+    pub(crate) fn scope_captures(&self) -> ScopeCaptures {
+        self.scopes.clone()
+    }
+
+    /// Copy a scope's latest capture into evenly spaced display samples.
+    pub fn read_scope(&self, id: ModuleId, trace: &mut [f32]) -> bool {
+        self.scopes.read(id, trace)
     }
 
     /// Start the engine on the default output device.
@@ -388,6 +454,17 @@ impl Engine {
                     new.diff(old, PathBuilder::default(), &mut queue);
                     *old = new;
                 }
+                (NodeState::Scope { tap, capture }, "time") => {
+                    let new = TripleBufferNode {
+                        window_size: scope_window(value),
+                    };
+                    new.diff(
+                        capture,
+                        PathBuilder::default(),
+                        &mut self.cx.event_queue(*tap),
+                    );
+                    *capture = new;
+                }
                 (NodeState::Vcf(old), param) => {
                     let mut new = *old;
                     match param {
@@ -565,6 +642,10 @@ impl Engine {
                 };
                 (self.cx.add_node(state, None), NodeState::Vcf(state))
             }
+            ModuleKind::Scope { time, .. } => {
+                let (node, state) = self.add_scope(id, time)?;
+                (Ok(node), state)
+            }
             ModuleKind::Mixer { levels } => {
                 let state = MixerNode {
                     levels,
@@ -599,6 +680,50 @@ impl Engine {
         let node = node.map_err(|e| EngineError::Graph(e.to_string()))?;
         self.modules.insert(id, Module { kind, node, state });
         Ok(())
+    }
+
+    fn add_scope(&mut self, id: ModuleId, time: f32) -> Result<(NodeID, NodeState), EngineError> {
+        let graph = |error: &dyn std::fmt::Display| EngineError::Graph(error.to_string());
+        let channels = NonZeroChannelCount::MONO;
+        let capture = TripleBufferNode {
+            window_size: scope_window(time),
+        };
+        let tap = self
+            .cx
+            .add_node(
+                capture,
+                Some(TripleBufferConfig {
+                    channels,
+                    max_window_size: WindowSize::Seconds(f64::from(SCOPE_PARAMS[0].max)),
+                }),
+            )
+            .map_err(|error| graph(&error))?;
+        let result = (|| {
+            let state = self
+                .cx
+                .node_state::<TripleBufferState>(tap)
+                .cloned()
+                .ok_or_else(|| EngineError::Graph("scope capture has no state".into()))?;
+            let pass = self
+                .cx
+                .add_node(
+                    VolumeNode::from_linear(1.0),
+                    Some(VolumeNodeConfig { channels }),
+                )
+                .map_err(|error| graph(&error))?;
+            if let Err(error) = self.cx.connect(pass, tap, &[(0, 0)], false) {
+                let _ = self.cx.remove_node(pass);
+                return Err(graph(&error));
+            }
+            if let Ok(mut scopes) = self.scopes.0.lock() {
+                scopes.insert(id, state);
+            }
+            Ok((pass, NodeState::Scope { tap, capture }))
+        })();
+        if result.is_err() {
+            let _ = self.cx.remove_node(tap);
+        }
+        result
     }
 
     /// Load (or replace) a one-shot sample: one buffer per channel (mono or stereo),
@@ -704,6 +829,13 @@ impl Engine {
                 }
                 .diff(&old, PathBuilder::default(), &mut queue);
                 true
+            }
+            NodeState::Scope { tap, .. } => {
+                let _ = self.cx.remove_node(tap);
+                if let Ok(mut scopes) = self.scopes.0.lock() {
+                    scopes.remove(&id);
+                }
+                false
             }
             NodeState::Clock(_)
             | NodeState::RandomClock

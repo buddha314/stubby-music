@@ -28,6 +28,28 @@
         }
       ],
       "clock_reach_m": 5.0
+    },
+    {
+      "id": "reed_water_purifier_tuning",
+      "machine": "reed_water_purifier",
+      "targets": [
+        {
+          "place": "vco_low",
+          "knob": "freq",
+          "note": "C2"
+        },
+        {
+          "place": "vco_high",
+          "knob": "freq",
+          "note": "C4"
+        },
+        {
+          "place": "filter",
+          "knob": "cutoff",
+          "note": "C5"
+        }
+      ],
+      "clock_reach_m": 5.0
     }
   ]
 }

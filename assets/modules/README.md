@@ -135,7 +135,7 @@ core in translucent shells) instead of LEDs.
 The reed water purifier's rack (`add-reed-water-purifier` 3.1), after the user's VCV Rack
 patch: saw and triangle VCOs into the **mixer**, its MIX through the **VCF**'s HPF, gated by
 the borrowed clock through `volume`, out through the **scope**. Same language as the burbler
-modules. The mixer and VCF have rack bindings. The scope gets its binding with its engine module (2.4).
+modules. The mixer, VCF and scope are registered as rack modules.
 
 - **Mixer** (8HP, engine `Mixer`): `in_1`..`in_4` beside `Knob_level_<n>` (0-1), and `mix`
   out with `Light_mix`. Crown: two slopes meeting at a peak, streams joining.

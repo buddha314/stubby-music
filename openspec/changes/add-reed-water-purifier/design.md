@@ -46,8 +46,7 @@ The recipe takes **reeds (draft: 20), one `high_pass_filter` and one `oscillosco
 The player's work is the patch and the tuning. When triangle and saw sources are designed,
 their places may open to items.
 
-The normalled output is the scope's OUT 1. The comb carries the sketch's seven cables, so
-the screen ghosts them like the burbler's.
+The scope's OUT is normalled to the outlet. The rack ghosts the six cables the player patches, as on the burbler.
 
 ### D2. Quantized pitch knobs
 A knob may declare `quantize: "semitone"` in its module data. Turning it clicks through
@@ -110,7 +109,7 @@ dam (F) returns the stream to the clarity it had above it.
   (`add-rack-and-spatial-audio`). They must be scheduled with that work, not around it.
 - The scope needs audio-thread data on the panel: a lock-free ring of recent samples,
   under the realtime rules (no allocation or locks on the callback).
-- A seven-cable patch is a big jump from the burbler's two. The ghosts and pods guide it,
+- A six-cable patch is a big jump from the burbler's two. The ghosts and pods guide it,
   but the first purifier may need fewer places pre-filled (fixed mixer, VCA, clock).
 
 ## Open Questions

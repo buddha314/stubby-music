@@ -718,6 +718,51 @@ fn vcf_selects_low_and_high_frequencies_and_applies_cutoff_edits() {
 }
 
 #[test]
+fn scope_passes_audio_and_captures_the_latest_waveform() {
+    let mut rig = Rig::new();
+    let source = rig.add(1, ModuleKind::Constant { value: 0.25 });
+    let scope = rig.add(
+        2,
+        ModuleKind::Scope {
+            time: 0.02,
+            scale: 0.5,
+        },
+    );
+    rig.connect(out(source), PortRef::new(scope, "in"));
+    rig.connect(out(scope), PortRef::output());
+    rig.flush();
+    rig.render(2_400);
+    let mut trace = [0.0; 64];
+    assert!(rig.engine.read_scope(scope, &mut trace));
+    assert_eq!(trace, [0.25; 64]);
+    assert_eq!(rig.left.last(), Some(&0.25));
+
+    rig.send(Command::SetParam {
+        module: scope,
+        param: "time",
+        value: 0.002,
+    });
+    rig.send(Command::SetParam {
+        module: scope,
+        param: "scale",
+        value: 4.0,
+    });
+    rig.send(Command::SetParam {
+        module: source,
+        param: "value",
+        value: -0.125,
+    });
+    rig.flush();
+    rig.render(BLOCK);
+    assert!(rig.engine.read_scope(scope, &mut trace));
+    assert_eq!(trace, [-0.125; 64]);
+    assert_eq!(rig.left.last(), Some(&-0.125));
+
+    rig.send(Command::RemoveModule { id: scope });
+    assert!(!rig.engine.read_scope(scope, &mut trace));
+}
+
+#[test]
 fn an_input_takes_only_one_cable() {
     let mut rig = Rig::new();
     let cv1 = rig.add(1, ModuleKind::Constant { value: 0.0 });

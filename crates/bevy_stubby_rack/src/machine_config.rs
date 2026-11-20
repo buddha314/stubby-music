@@ -148,6 +148,7 @@ impl Default for Profiles {
         }
         [
             include_str!("../../../assets/machines/mudpit_burbler/asset.json"),
+            include_str!("../../../assets/machines/reed_water_purifier/asset.json"),
             include_str!("../../../assets/structures/campfire/asset.json"),
         ]
         .into_iter()

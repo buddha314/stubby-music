@@ -123,6 +123,23 @@ const VCA_PARAMS: &[ParamSpec] = &[ParamSpec {
     quantum: 0.0,
 }];
 
+pub(crate) const SCOPE_PARAMS: &[ParamSpec] = &[
+    ParamSpec {
+        name: "time",
+        min: 0.002,
+        max: 2.0,
+        default: 0.02,
+        quantum: 0.0,
+    },
+    ParamSpec {
+        name: "scale",
+        min: 0.1,
+        max: 4.0,
+        default: 0.5,
+        quantum: 0.0,
+    },
+];
+
 const VCF_PARAMS: &[ParamSpec] = &[
     ParamSpec {
         name: "cutoff",
@@ -173,7 +190,7 @@ impl ModuleKind {
             ModuleKind::Envelope { .. } => &["gate"],
             ModuleKind::Vca { .. } => &["in", "cv"],
             ModuleKind::Mixer { .. } => &["in_1", "in_2", "in_3", "in_4"],
-            ModuleKind::Vcf { .. } => &["in"],
+            ModuleKind::Vcf { .. } | ModuleKind::Scope { .. } => &["in"],
             ModuleKind::StepSequencer { .. } => &["clock", "reset"],
         }
     }
@@ -186,7 +203,8 @@ impl ModuleKind {
             | ModuleKind::TriangleVco { .. }
             | ModuleKind::Constant { .. }
             | ModuleKind::Envelope { .. }
-            | ModuleKind::Vca { .. } => &["out"],
+            | ModuleKind::Vca { .. }
+            | ModuleKind::Scope { .. } => &["out"],
             ModuleKind::Mixer { .. } => &["mix"],
             ModuleKind::Vcf { .. } => &["lpf", "hpf"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
@@ -208,6 +226,7 @@ impl ModuleKind {
             ModuleKind::Vca { .. } => VCA_PARAMS,
             ModuleKind::Mixer { .. } => MIXER_PARAMS,
             ModuleKind::Vcf { .. } => VCF_PARAMS,
+            ModuleKind::Scope { .. } => SCOPE_PARAMS,
             ModuleKind::StepSequencer { .. } => SEQUENCER_PARAMS,
         }
     }
@@ -230,6 +249,7 @@ impl ModuleKind {
             ModuleKind::Vca { .. } => "Vca",
             ModuleKind::Mixer { .. } => "Mixer",
             ModuleKind::Vcf { .. } => "Vcf",
+            ModuleKind::Scope { .. } => "Scope",
             ModuleKind::StepSequencer { .. } => "StepSequencer",
         }
     }
@@ -283,6 +303,10 @@ impl ModuleKind {
                 cutoff_hz: get(VCF_PARAMS, "cutoff"),
                 resonance: get(VCF_PARAMS, "res"),
             },
+            "Scope" => ModuleKind::Scope {
+                time: get(SCOPE_PARAMS, "time"),
+                scale: get(SCOPE_PARAMS, "scale"),
+            },
             "StepSequencer" => ModuleKind::StepSequencer {
                 cv: ["cv_1", "cv_2", "cv_3", "cv_4"].map(|p| get(SEQUENCER_PARAMS, p)),
                 gate: ["gate_1", "gate_2", "gate_3", "gate_4"].map(|p| get(SEQUENCER_PARAMS, p)),
@@ -309,6 +333,7 @@ mod kind_tests {
             "Vca",
             "Mixer",
             "Vcf",
+            "Scope",
             "StepSequencer",
         ] {
             let kind = ModuleKind::default_of(name).unwrap_or_else(|| panic!("{name}"));

@@ -89,6 +89,8 @@ pub enum ModuleKind {
     Mixer { levels: [f32; 4] },
     /// State-variable filter with simultaneous low- and high-pass outputs.
     Vcf { cutoff_hz: f32, resonance: f32 },
+    /// Unity-gain audio pass-through with a recent waveform capture.
+    Scope { time: f32, scale: f32 },
     /// Four-step sequencer (the snail shell; sync-snail-shell-sequencer). Inputs
     /// `"clock"` and `"reset"`, outputs `"gate"` and `"cv"`; parameters `"cv_1"`..`"cv_4"`
     /// (volts on V/OCT, 0..2, snapped to semitones) and `"gate_1"`..`"gate_4"` (0 or 1).

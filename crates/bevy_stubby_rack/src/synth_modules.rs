@@ -32,6 +32,8 @@ pub struct ModuleProfile {
     pub lamp: Option<LampProfile>,
     #[serde(default)]
     pub display: Option<DisplayProfile>,
+    #[serde(default)]
+    pub screen: Option<WaveformScreen>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -67,6 +69,15 @@ pub struct DisplayProfile {
     pub shows: String,
     pub digits: usize,
     pub digit_segments: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct WaveformScreen {
+    pub node: String,
+    pub width_metres: f32,
+    pub height_metres: f32,
+    pub samples: usize,
+    pub colour_linear: [f32; 3],
 }
 
 /// Every module profile, by asset id.
