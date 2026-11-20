@@ -27,15 +27,40 @@ flowing stream's, lent as on the campfire.
 - **WHEN** no running burbler or flowing stream is within reach
 - **THEN** the clock place is empty and the purifier is silent
 
-### Requirement: A working purifier clears the water downstream
-A purifier SHALL raise the clarity of the stream downstream of it toward its cap while
-its rack sounds with its targets met (low VCO C2, high VCO C4, cutoff at its target), and
-SHALL let the clarity ease back when it stops.
+### Requirement: Water has four levels of clarity
+Stream water SHALL have four levels of clarity, from dirtiest to cleanest: muddy, silty,
+cloudy and clear. A stream SHALL leave its burbler muddy.
+
+#### Scenario: A new stream
+- **WHEN** a stream is laid from a burbler with no filter on it
+- **THEN** its water is muddy along its whole length
+
+### Requirement: The purifier is a check dam in the stream
+A purifier SHALL be placed onto a laid stream segment, across its bed and square to its
+flow, as a small check dam the water pools behind and spills over. It SHALL NOT be
+placeable off a stream, and it SHALL NOT stop the stream's flow or music.
+
+#### Scenario: Placing on a stream
+- **WHEN** the player aims the purifier's hologram at a laid stream segment
+- **THEN** it snaps across that segment's bed, and a click places it there
+
+#### Scenario: Off the stream
+- **WHEN** the hologram is aimed at bare ground
+- **THEN** it shows red and cannot be placed
+
+### Requirement: A working purifier lifts the water one level
+A purifier SHALL raise the stream below it one clarity level above the water reaching it
+while its rack sounds with its targets met (low VCO C2, high VCO C4, cutoff at its target),
+and SHALL let the clarity ease back when it stops.
 
 #### Scenario: Cleaning
-- **WHEN** a purifier stands in a stream, sounds, and meets its targets
-- **THEN** the stream below it grows clearer, and a tree it waters may grow past budding
+- **WHEN** a purifier stands in a muddy stream, sounds, and meets its targets
+- **THEN** the stream below it rises to silty, and a tree it waters may grow past budding
 
 #### Scenario: Targets not met
 - **WHEN** the purifier sounds but a VCO is not on its note
 - **THEN** the water is not cleaned
+
+#### Scenario: Upstream unchanged
+- **WHEN** a purifier is working
+- **THEN** the water above the dam keeps its clarity

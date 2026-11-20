@@ -28,12 +28,26 @@ compares current versus originally generated transforms to preserve edits; this
 is not proof that stored groups preserve deletions on regeneration.
 
 ## Scope and first deliverable
-Keep spawn, burbler, grove, loose opening bugs and required reeds authored. Add
-one existing decorative prop rule, disabled by default until explicitly enabled.
-Select its approved asset from the existing catalog with the art owner; no new
-models or resource sources. The first deliverable is one seed-17 layout whose
-config, masks and edits survive preview, Play and regeneration. Resource scatter
-can then use the same records, with live-prefab instantiation proven first.
+**Seed first (user, 2026-11-19).** The opening is generated from the seed: burblers,
+reed beds, rock formations, the oak grove, ripple pools and props are all scatter rules.
+Hand placement comes back only as an **overlay**, if the seeded layout fails the opening's
+placement constraints (`add-opening-region`) or reads badly; the authored-priority and
+override machinery below is that overlay. Today's hand-placed opening objects in
+`scene.bsn` are removed once the seeded rules place their kinds.
+
+The rules depend on each other, which one-candidate-per-cell scatter alone does not
+express: resolve them **in order**, each reading the placements before it.
+1. **Burblers**, spaced apart, each with a seeded tempo and a unique instance ID.
+2. **Wetness**: a channel from distance to burbler pools and low ground; **reed beds**
+   cluster where it is high (several clumps per bed), and **ripple pools** sit in it.
+3. **Oak grove** near a burbler (20–40 m), some trunks seeded hollow.
+4. **Rock formations**: clusters of boulders from the existing variants, some
+   formations with an opening.
+5. **Props** last, as decoration.
+
+The first deliverable stays one seed-17 layout whose config, masks and edits survive
+preview, Play and regeneration, with live-prefab instantiation (task 2.4) proven before
+any interactive rule is enabled.
 Streaming, infinite terrain, biome synthesis, a seed UI, multiplayer replication,
 full ecological saves and cross-platform replay guarantees are deferred.
 

@@ -7,8 +7,9 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 0.3 The clock comes from the stream or burbler (borrowed) (user, 2026-11-18)
 - [x] 0.4 Recipe: reeds plus a high-pass filter and an oscilloscope, 96 to 144 BPM; the purifier comes with its modules in place (user, 2026-11-18). Open: reed count
 - [x] 0.5 Triangle and saw: fixed VCOs until their sources are designed; cutoff quantized to C5 (user, 2026-11-18)
-- [ ] 0.7 How clean (Open Question 4) and placement (5)
-- [ ] 0.8 Collecting a high-pass filter and an oscilloscope (their own changes; the recipe cannot be made before)
+- [x] 0.7 Four levels of clear (muddy, silty, cloudy, clear), the first filter lifts one; the purifier is a check dam in the stream's course (user, 2026-11-19; design D4, D6)
+- [ ] 0.8 Collecting a high-pass filter and an oscilloscope: `add-high-pass-sources` and `add-ripple-pool` (the recipe cannot be made before)
+- [ ] 0.9 Does a second reed purifier lift the water again (Open Question 4)
 - [x] 0.6 The patch is saved as `assets/rack-recipies/reed-water-filter.vcv` (user, 2026-11-18)
 
 ## 1. Rack settings
@@ -24,11 +25,13 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 
 ## 3. Art (Claude)
 - [ ] 3.1 Mixer, VCF and scope panels in the module kit (`assets/modules/`)
-- [ ] 3.2 Purifier model (a reed filter bed in a stream), profile with `configure` and `targets`, prefab, LODs, icon, hologram
+- [ ] 3.2 Purifier model: a check dam of reeds and sticks across a stream segment's bed, water pooled behind and spilling over (D6); profile with `configure` and `targets`, prefab, LODs, icon, hologram
 
 ## 4. Game
 - [ ] 4.1 Recipe row with its BPM range; purifier item; placement (Open Question 5)
 - [ ] 4.2 Binder and borrowed clock (reuse the campfire's lending)
-- [ ] 4.3 Cleaning rule: clarity downstream while targets are met
+- [ ] 4.1a Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6)
+- [ ] 4.3 Cleaning rule: four clarity levels; the stream below a working dam rises one level, easing back when it stops (D4)
+- [ ] 4.3a Data: `mines.json` growth caps by level (leafed at silty) (D4)
 - [ ] 4.4 Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
 - [ ] 4.5 Bounded watchdog review: craft, place, patch, tune, see the water clear

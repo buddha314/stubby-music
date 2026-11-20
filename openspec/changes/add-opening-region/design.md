@@ -30,6 +30,8 @@ running, the region keeps changing, and the world goes on past the region's edge
   connects them.
 - Reed clumps within 40 m of the burbler hold at least enough reeds for that stream
   (6 per segment), with room to spare.
+- At least one rock formation opening or hollow trunk (a high-pass filter) and one ripple
+  pool (an oscilloscope) lie in the region, so the reed water purifier can be made.
 - All of it is reachable on foot over flat mudflat.
 
 ## Layout: prefabs in Jackdaw (decided)
@@ -37,9 +39,9 @@ Levels are designed by placing **prefabs** in the Jackdaw opening scene. Every
 placeable world asset has one under `assets/<category>/<id>/` (oaks, reed clumps,
 props, the burbler, the lightning bug, world modules, stream segments), made and
 edited in Jackdaw and checked by `crates/stubby_jackdaw/tests/prefabs.rs`. The scene file
-is the region's layout, so it is deterministic by construction. Seeded scatter (props,
-extra reeds) may fill in around the authored layout later; the placement constraints
-below hold for the authored layout and for any scatter.
+holds the prefabs. **The region's layout is generated from the seed** (user,
+2026-11-19; `add-hybrid-world-placement`): its rules place prefabs, and hand placement is
+an overlay used only if the seeded layout fails the constraints below.
 
 The game must turn placed prefabs into live things: a placed bug flashes and clicks on
 its own clock, a placed oak is a mine in the ledger, a placed module joins the engine.
