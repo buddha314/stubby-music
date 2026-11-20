@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 mod lod_review;
 mod prefab_bridge;
+mod seeded_layout;
 
 fn main() -> AppExit {
     let plugins = DefaultPlugins.set(AssetPlugin {
@@ -28,6 +29,7 @@ fn main() -> AppExit {
         .add_plugins(jackdaw_runtime::JackdawPlugin)
         .add_plugins(stubby_jackdaw::DesertPlugin { seed })
         .add_plugins(prefab_bridge::PrefabBridgePlugin)
+        .add_plugins(seeded_layout::SeededLayoutPlugin)
         .add_plugins(lod_review::LodReviewPlugin)
         .add_plugins(stubby_jackdaw::audio::SynthAudioPlugin {
             demo: std::env::args().any(|a| a == "--audio-demo"),

@@ -46,6 +46,16 @@ express: resolve them **in order**, each reading the placements before it.
    formations with an opening.
 5. **Props** last, as decoration.
 
+**As built (2026-11-20).** The rules are `assets/world/opening.json`, a whole world
+configuration both entry points start from (`WorldConfig::shipped`). Each rule may list
+`variants` (native scatter's palette), `min_spacing`, a `scale` range and `distances`: from
+the nearest anchor whose model stem matches (an authored object, or an earlier rule's
+placement), at least `min_m`, at most `max_m`, optionally `denser_nearer` (native scatter's
+weight channel). Rules resolve in file order, each with its own seed (the world seed mixed
+with the rule ID), and every placement keeps both clearances from everything placed before
+it. The region is the cracked ground (±108 m about the origin; burblers 16 m further in).
+Generator revision `mudflat-v2`.
+
 The first deliverable stays one seed-17 layout whose config, masks and edits survive
 preview, Play and regeneration, with live-prefab instantiation (task 2.4) proven before
 any interactive rule is enabled.

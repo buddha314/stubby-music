@@ -24,7 +24,7 @@
     - **The standalone game and LOD:** see `add-desert-opening` 1.5. Jackdaw `.glb.meta` files now sit beside 17 models, and they name Jackdaw's `ModelLoader`.
 
 - [ ] 2.1 Seeded placement of the whole opening, authored overlay only on failure (user, 2026-11-19); tracked in `add-hybrid-world-placement` (tasks 1–2b). Do not independently implement another generator here.
-- [ ] 2.2 Check opening placement constraints using seed **17 only** (silent spawn, oak distance, affordable first stream); share the focused hybrid-placement fixture where applicable. No 1,000-seed sweep.
+- [x] 2.2 (claimed: claude; done 2026-11-20, `seed_17_opening_meets_its_placement_constraints`: burblers apart, oaks 20-40 m from a burbler, 10+ reed clumps within 40 m of each seeded burbler, a formation with an opening, spawn clear) Check opening placement constraints using seed **17 only** (silent spawn, oak distance, affordable first stream); share the focused hybrid-placement fixture where applicable. No 1,000-seed sweep.
 - [ ] 2.3 Starting conditions: winter, dormant oaks, light quality 0
 - [ ] 2.4 Wire the loop end to end once its parts land: bug → burbler voice → stream → oak growth → bug production
 - [ ] 2.7 Placed player start (Codex; design "Player start"): a `PlayerStart` marker component (reflected, registered, inspector category "Actor"); an `On<Insert<PlayerStart>>` observer reads its world `GlobalTransform` (Jackdaw's `insert_observer_global_transform.rs` shows it is final at scene load) and moves the `controls::Player` camera there, on the ground, facing its yaw; fall back to `controls::spawn_transform()` when none is placed; warn on more than one; a test that the opening scene's start is more than 35 m from every bug. No new crate, no editor change.
