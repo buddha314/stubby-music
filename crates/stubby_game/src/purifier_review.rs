@@ -38,6 +38,8 @@ impl Plugin for PurifierReviewPlugin {
                 step: Step::Tempo,
                 since: 0.,
                 passed: true,
+                requested: false,
+                pressed_at: None,
             })
             // Before the build menu's placement reads the click (after StreamSystems::Input).
             .add_systems(Update, script.before(StreamSystems::Input));
@@ -206,11 +208,16 @@ struct Script {
     step: Step,
     since: f32,
     passed: bool,
+    /// The craft request has been sent (frames can be slower than a time window).
+    requested: bool,
+    /// When E went down at the ripple pool.
+    pressed_at: Option<f32>,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Step {
     Tempo,
+    Collect,
     Craft,
     Aim,
     Click,
@@ -268,8 +275,21 @@ fn script(
     mut player: ResMut<PlayerInventory>,
     mut crafts: MessageWriter<bevy_stubby_recipes::CraftRequest>,
     mut placing: ResMut<crate::build::Placing>,
-    mut buttons: ResMut<ButtonInput<MouseButton>>,
-    mut capture: ResMut<stubby_core::LookCapture>,
+    (mut buttons, mut keys, mut capture): (
+        ResMut<ButtonInput<MouseButton>>,
+        ResMut<ButtonInput<KeyCode>>,
+        ResMut<stubby_core::LookCapture>,
+    ),
+    (target, screens, nodes, eyes): (
+        Res<stubby_core::InteractTarget>,
+        Res<stubby_core::ScreenMode>,
+        Query<(
+            &bevy_stubby_recipes::ResourceNode,
+            &GlobalTransform,
+            Has<stubby_core::Interactable>,
+        )>,
+        Query<&GlobalTransform, (With<Camera3d>, Without<HudCamera>)>,
+    ),
     mut camera: Query<(Entity, &mut Transform), (With<Camera3d>, Without<HudCamera>)>,
     streams: Query<&LaidStream>,
     mut racks: Query<(
@@ -314,13 +334,83 @@ fn script(
                     &script,
                     serde_json::json!({"event": "tempo", "bpm": TEMPO, "ok": true}),
                 );
-                next(&mut script, Step::Craft);
+                next(&mut script, Step::Collect);
             } else {
                 knobs.0.insert(("clock".into(), "bpm".into()), TEMPO);
             }
         }
+        Step::Collect => {
+            // Walk up to the stream's ripple pool and hold E: the oscilloscope the recipe
+            // needs comes from the pool, through the generic socket rule.
+            let pool = pools
+                .iter()
+                .find(|(on, ..)| on.0 == stream_entity)
+                .map(|(_, place, _)| {
+                    // The pool's Interact sits 2.3 m out from the stream, the model's -Z.
+                    let at = place.transform_point(Vec3::new(0., 0.45, -2.3));
+                    let out = (place.rotation() * Vec3::NEG_Z)
+                        .with_y(0.)
+                        .normalize_or(Vec3::X);
+                    (at, out)
+                });
+            let Some((at, out)) = pool else {
+                log(
+                    &script,
+                    serde_json::json!({"event": "collected", "ok": true,
+                    "skipped": "no ripple pool on this stream; the oscilloscope is granted"}),
+                );
+                let _ = player.items.grant(&[stubby_recipes::Stack {
+                    item: "oscilloscope".into(),
+                    quantity: 1,
+                }]);
+                next(&mut script, Step::Craft);
+                return;
+            };
+            if let Ok((_, mut camera)) = camera.single_mut() {
+                // Beyond the pool, facing back over it toward the stream.
+                *camera = Transform::from_translation(at + out * 1.8 + Vec3::Y * 1.2)
+                    .looking_at(at, Vec3::Y);
+            }
+            // The pool's model loads after the stream is laid: wait until its pickup is live
+            // (marked interactable), then hold E for half a second.
+            let live = nodes.iter().any(|(node, place, interactable)| {
+                interactable && !node.collected && place.translation().distance(at) < 0.5
+            });
+            match script.pressed_at {
+                None if live && waited > 0.3 => {
+                    script.pressed_at = Some(now);
+                    keys.press(stubby_core::INTERACT);
+                }
+                Some(t) if now - t > 0.5 => keys.release(stubby_core::INTERACT),
+                _ => {}
+            }
+            let done = script.pressed_at.is_some_and(|t| now - t > 0.8);
+            if done || waited > 6.0 {
+                let scopes = player.items.quantity("oscilloscope");
+                let ok = scopes >= 1;
+                script.passed &= ok;
+                log(
+                    &script,
+                    serde_json::json!({"event": "collected", "item": "oscilloscope",
+                    "held": scopes, "ok": ok, "feedback": player.feedback.clone(),
+                    "target": format!("{:?}", *target), "screen": format!("{:?}", screens.open),
+                    "eye_to_pool_m": eyes.single().map(|e| e.translation().distance(at)).unwrap_or(-1.),
+                    "pickups_within_4m": nodes.iter().filter(|(_, p, _)| p.translation().distance(at) < 4.)
+                        .map(|(n, p, i)| format!("{} {:.1}m interactable={i} collected={}", n.resource, p.translation().distance(at), n.collected))
+                        .collect::<Vec<_>>()}),
+                );
+                if !ok {
+                    let _ = player.items.grant(&[stubby_recipes::Stack {
+                        item: "oscilloscope".into(),
+                        quantity: 1,
+                    }]);
+                }
+                next(&mut script, Step::Craft);
+            }
+        }
         Step::Craft => {
-            if waited < 0.05 {
+            if !script.requested {
+                script.requested = true;
                 let _ = player.items.grant(&[
                     stubby_recipes::Stack {
                         item: "reed".into(),
@@ -330,23 +420,20 @@ fn script(
                         item: "high_pass_filter".into(),
                         quantity: 1,
                     },
-                    stubby_recipes::Stack {
-                        item: "oscilloscope".into(),
-                        quantity: 1,
-                    },
                 ]);
                 crafts.write(bevy_stubby_recipes::CraftRequest {
                     recipe: "craft_reed_water_purifier".into(),
                     bpm: Some(TEMPO),
                 });
-                script.since = now - 0.05;
+                script.since = now;
             } else if waited > 0.3 {
                 let kits = player.items.quantity("reed_water_purifier_kit");
                 let ok = kits >= 1;
                 script.passed &= ok;
                 log(
                     &script,
-                    serde_json::json!({"event": "crafted", "kits": kits, "ok": ok}),
+                    serde_json::json!({"event": "crafted", "kits": kits, "ok": ok,
+                        "feedback": player.feedback.clone()}),
                 );
                 next(&mut script, Step::Aim);
             }
