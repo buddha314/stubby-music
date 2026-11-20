@@ -188,6 +188,30 @@ pub struct LaidStream {
 impl LaidStream {
     /// A straight muddy stream from `from` to `to`, with no meshes: for tests and
     /// scripted reviews of what streams do, not for laying.
+    /// A stable key for segment `k` of this stream: its path's control points and its
+    /// index along that path. Dismantling elsewhere respawns a stream as pieces that keep
+    /// both, so what sits on a segment (a dam, ripple pools) finds it again by this key.
+    pub fn segment_key(&self, k: u32) -> u64 {
+        let path = self
+            .path
+            .points
+            .iter()
+            .flat_map(|p| p.to_array())
+            .fold(0xcbf29ce484222325_u64, |h, v| {
+                (h ^ u64::from(v.to_bits())).wrapping_mul(0x100000001b3)
+            });
+        path ^ u64::from(k).wrapping_mul(0x9e3779b97f4a7c15)
+    }
+
+    /// The segment of this stream nearest `at`, and the chain arc length there (as
+    /// [`Self::nearest_along`] gives it).
+    pub fn segment_under(&self, at: Vec3) -> (u32, f32) {
+        let (along, _) = self.nearest_along(at);
+        let s = along - self.start + self.start_s();
+        let k = ((s / self.span.max(1e-3)).floor().max(0.) as u32).clamp(self.first, self.last);
+        (k, along)
+    }
+
     pub fn straight(source: Option<Entity>, from: Vec3, to: Vec3) -> Self {
         Self::straight_segments(source, from, to, 1)
     }

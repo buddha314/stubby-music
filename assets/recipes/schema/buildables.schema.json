@@ -32,6 +32,13 @@
       "description": "Something the player builds in the world (not an inventory item), and what one costs.",
       "type": "object",
       "properties": {
+        "built_hint": {
+          "description": "A line shown once it is built (Satisfactory's hints are the baseline).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "cost": {
           "description": "Items taken from the inventory for each one built.",
           "type": "array",
@@ -42,8 +49,20 @@
         "id": {
           "type": "string"
         },
+        "model": {
+          "description": "The model built and shown as the hologram, under `assets/` (none: laid by its own\nsystem, as streams are).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "name": {
           "type": "string"
+        },
+        "placement": {
+          "description": "How its hologram finds its place.",
+          "$ref": "#/$defs/Placement",
+          "default": "ground"
         }
       },
       "additionalProperties": false,
@@ -51,6 +70,31 @@
         "id",
         "name",
         "cost"
+      ]
+    },
+    "Placement": {
+      "description": "How a buildable's hologram finds its place (add-reed-water-purifier D6).",
+      "oneOf": [
+        {
+          "description": "On the ground at the aim.",
+          "type": "string",
+          "const": "ground"
+        },
+        {
+          "description": "At the aim, or beside the nearest stream within its machine rule's `clock_reach_m`.",
+          "type": "string",
+          "const": "beside_stream"
+        },
+        {
+          "description": "Across the aimed laid stream segment, square to its flow; nowhere else.",
+          "type": "string",
+          "const": "across_segment"
+        },
+        {
+          "description": "Laid by its own system (streams).",
+          "type": "string",
+          "const": "laid"
+        }
       ]
     },
     "Stack": {

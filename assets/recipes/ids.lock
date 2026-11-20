@@ -8,6 +8,7 @@ campfire_tuning
 catch_a_spark
 clock
 clock_source
+craft_reed_water_purifier
 cut_reeds
 desert_brush_air
 empty_snail_shell
@@ -21,6 +22,8 @@ patch_cable
 reed
 reed_air
 reed_clump
+reed_water_purifier
+reed_water_purifier_kit
 reed_water_purifier_tuning
 ripple_pool
 rock_opening

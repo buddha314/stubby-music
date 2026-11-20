@@ -5,8 +5,11 @@ use std::collections::HashMap;
 use stubby_core::{AssetClock, MachineVoice, PlacedAsset, PrefabError};
 use stubby_streams::{LaidStream, PortOwner};
 
+use crate::stream_features::OnSegment;
+
 pub const PURIFIER: &str = "reed_water_purifier";
-/// Maximum distance from a dam's origin to the stream centre line.
+/// Maximum distance from a dam's origin to the stream centre line, when a dam placed by
+/// other means than building on a segment (a review, a level) looks for its segment.
 const CHANNEL_REACH_M: f32 = 0.75;
 /// Seconds for a dam to add or lose one clarity level.
 const TRANSITION_SECONDS: f32 = 1.0;
@@ -15,6 +18,7 @@ pub struct PurifierPlugin;
 impl Plugin for PurifierPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<WaterClarity>()
+            .add_systems(Update, attach_dams.after(stubby_core::PrefabBinding))
             .add_systems(PostUpdate, (update_clarity, tint_water).chain());
     }
 }
@@ -116,52 +120,78 @@ impl WaterClarity {
     }
 }
 
+/// A dam stands on one segment: one built there knows it already; one placed otherwise
+/// takes the segment under it, once (`OnSegment` then follows it through respawns).
+#[allow(clippy::type_complexity)] // Dams without a segment, and the streams.
+fn attach_dams(
+    mut commands: Commands,
+    dams: Query<(Entity, &PlacedAsset, &GlobalTransform), Without<OnSegment>>,
+    streams: Query<(Entity, &LaidStream)>,
+) {
+    for (dam, asset, place) in &dams {
+        if asset.asset != PURIFIER {
+            continue;
+        }
+        let at = place.translation();
+        let nearest = streams
+            .iter()
+            .map(|(entity, stream)| {
+                let (_, point) = stream.nearest_along(at);
+                (
+                    Vec2::new(at.x - point.x, at.z - point.z).length(),
+                    entity,
+                    stream,
+                )
+            })
+            .filter(|(distance, ..)| *distance <= CHANNEL_REACH_M)
+            .min_by(|a, b| a.0.total_cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        if let Some((_, entity, stream)) = nearest {
+            commands
+                .entity(dam)
+                .insert(OnSegment::of(entity, stream, at));
+        }
+    }
+}
+
 fn update_clarity(
     time: Res<Time<Virtual>>,
     mut clarity: ResMut<WaterClarity>,
     streams: Query<(Entity, &LaidStream)>,
     voices: Query<&MachineVoice>,
     dams: Query<
-        (Entity, &PlacedAsset, &GlobalTransform, &RackTargets),
+        (Entity, &PlacedAsset, &RackTargets, &OnSegment),
         (With<AssetClock>, Without<PrefabError>),
     >,
 ) {
-    let flowing: HashMap<_, _> = streams
+    // Every stream carries its lifts while they ease; only flowing water starts one.
+    let all: HashMap<_, _> = streams
         .iter()
-        .filter_map(|(entity, stream)| {
-            let voice = voices.get(stream.source?).ok()?;
-            voice.sounding.then_some((entity, stream.upstream))
-        })
+        .map(|(entity, stream)| (entity, stream.upstream))
         .collect();
+    let flowing = |entity: Entity| {
+        streams
+            .get(entity)
+            .ok()
+            .and_then(|(_, stream)| voices.get(stream.source?).ok())
+            .is_some_and(|voice| voice.sounding)
+    };
     let active = dams
         .iter()
-        .filter_map(|(dam, asset, transform, targets)| {
-            if asset.asset != PURIFIER || !targets.sounding || !targets.met {
-                return None;
-            }
-            let at = transform.translation();
-            streams
-                .iter()
-                .filter(|(entity, _)| flowing.contains_key(entity))
-                .filter_map(|(entity, stream)| {
-                    let (along, point) = stream.nearest_along(at);
-                    let distance = Vec2::new(at.x - point.x, at.z - point.z).length();
-                    (distance <= CHANNEL_REACH_M).then_some((
-                        distance,
-                        Lift {
-                            stream: entity,
-                            at: along,
-                            amount: 0.0,
-                        },
-                    ))
-                })
-                .min_by(|(a, left), (b, right)| {
-                    a.total_cmp(b).then_with(|| left.stream.cmp(&right.stream))
-                })
-                .map(|(_, lift)| (dam, lift))
+        .filter(|(_, asset, targets, on)| {
+            asset.asset == PURIFIER && targets.sounding && targets.met && flowing(on.stream)
+        })
+        .map(|(dam, _, _, on)| {
+            (
+                dam,
+                Lift {
+                    stream: on.stream,
+                    at: on.along,
+                    amount: 0.0,
+                },
+            )
         })
         .collect();
-    clarity.advance(&flowing, active, time.delta_secs());
+    clarity.advance(&all, active, time.delta_secs());
 }
 
 /// Use the authored water palette. Vertex colour multiplies the muddy material,

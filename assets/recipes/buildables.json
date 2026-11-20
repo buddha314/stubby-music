@@ -10,7 +10,23 @@
           "item": "reed",
           "quantity": 25
         }
-      ]
+      ],
+      "model": "structures/campfire/campfire.glb",
+      "placement": "beside_stream",
+      "built_hint": "Built a campfire. Light it with a backbeat: a spark on 2 and 4."
+    },
+    {
+      "id": "reed_water_purifier",
+      "name": "Reed water purifier",
+      "cost": [
+        {
+          "item": "reed_water_purifier_kit",
+          "quantity": 1
+        }
+      ],
+      "model": "machines/reed_water_purifier/reed_water_purifier.glb",
+      "placement": "across_segment",
+      "built_hint": "Built a purifier. Patch and tune it, and the water below clears."
     },
     {
       "id": "stream_segment",
@@ -20,7 +36,8 @@
           "item": "reed",
           "quantity": 6
         }
-      ]
+      ],
+      "placement": "laid"
     }
   ]
 }

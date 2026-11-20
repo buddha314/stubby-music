@@ -681,7 +681,11 @@ equivalent of an iron ore node, so the player does not pick it up.
   any placed model whose glTF extras name a `resource` from the rules is a pickup of it
   (`stubby_game::collectibles`); a new collectible is art and a rules row, never code.
   Things that form along laid streams are data too (`stream_features` in
-  `assets/world/opening.json`), and a `*_Beat` clip plays on the placement's clock
+  `assets/world/opening.json`), and a `*_Beat` clip plays on the placement's clock.
+  **Building is generic too** (2026-11-20): a `buildables.json` row names its `model`,
+  `placement` (`ground`, `beside_stream`, `across_segment`, `laid`) and an optional
+  `built_hint`; `stubby_game::build` places them all. A thing built across a stream
+  segment keeps it (`OnSegment`) and goes with it, refunded
   (`add-reed-water-purifier` D4, D6). Until it exists every stream stays mud
   (`LaidStream.clarity` 0).
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds

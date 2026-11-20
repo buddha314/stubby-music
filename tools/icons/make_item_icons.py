@@ -118,7 +118,8 @@ def main():
                        "reed": reed, "clock": clock, "campfire": campfire,
                        "stream_segment": stream_segment, "snail_shell": snail_shell,
                        "oscilloscope": oscilloscope, "high_pass_filter": high_pass_filter,
-                       "reed_water_purifier": reed_water_purifier}.items():
+                       "reed_water_purifier": reed_water_purifier,
+                       "reed_water_purifier_kit": reed_water_purifier}.items():
         img, d = canvas()
         draw(d)
         img.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / f"{name}.png")

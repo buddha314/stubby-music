@@ -2612,7 +2612,8 @@ mod tests {
     fn vcos_start_straight_up_on_a_note() {
         // User, 2026-11-18: VCOs are quantized and start with the knob straight up.
         let catalog = ModuleCatalog::default();
-        for vco in ["square_vco", "sine_vco"] {
+        // Every VCO: a saw or triangle that started on C4 met the purifier's C4 target untouched.
+        for vco in ["square_vco", "sine_vco", "saw_vco", "triangle_vco"] {
             let knob = RACK_MODULES.knob(vco, "freq").expect("a frequency knob");
             assert!(knob.quantize.is_some(), "{vco} is quantized");
             let start = initial_knob(vco, "freq", None, &KnobDefaults::default()).unwrap();

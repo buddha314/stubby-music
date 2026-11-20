@@ -88,7 +88,15 @@ The purifier **stands in the course of the stream**: a small beaver dam, or chec
 reeds and sticks across the bed, the water pooling behind it and spilling over. It is
 placed **onto a laid stream segment**, as a stream joins a port: the hologram snaps across
 the aimed segment's bed, square to its flow, and is red anywhere else. It splits nothing:
-the segment keeps flowing through it, and the clarity changes at the dam. Dismantling the
+the segment keeps flowing through it, and the clarity changes at the dam.
+
+As built (2026-11-20): placement is data on the buildable row (`placement:
+"across_segment"`, a rule-type addition to `buildables.json` alongside `model` and
+`built_hint`), served by the one placement mode every buildable now uses. The dam keeps
+the segment it stands on (`OnSegment`: the stream, the segment's stable key, where along
+the chain); dismantling elsewhere respawns the stream as pieces and the dam finds its
+segment again by key; dismantling its own segment takes the dam too and returns its
+build cost. Dismantling the
 dam (F) returns the stream to the clarity it had above it.
 
 ### D5. Where the modules come from

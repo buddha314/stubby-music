@@ -28,6 +28,11 @@
       "description": "A renewable stream-building ingredient."
     },
     {
+      "id": "reed_water_purifier_kit",
+      "name": "Reed water purifier",
+      "description": "A check dam of sticks and reeds with its rack in place. Build it across a laid stream; tuned, it lifts the water below it one level clearer."
+    },
+    {
       "id": "snail_shell",
       "name": "Snail shell",
       "description": "An empty, high-spired snail shell of four whorls. Mounted in a rack it becomes a four-step sequencer: light the steps you want, patch a clock in, and take GATE and CV out."

@@ -8,7 +8,7 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 0.4 Recipe: reeds plus a high-pass filter and an oscilloscope, 96 to 144 BPM; the purifier comes with its modules in place (user, 2026-11-18). Open: reed count
 - [x] 0.5 Triangle and saw: fixed VCOs until their sources are designed; cutoff quantized to C5 (user, 2026-11-18)
 - [x] 0.7 Four levels of clear (muddy, silty, cloudy, clear), the first filter lifts one; the purifier is a check dam in the stream's course (user, 2026-11-19; design D4, D6)
-- [ ] 0.8 Collecting a high-pass filter and an oscilloscope: `add-high-pass-sources` and `add-ripple-pool` (the recipe cannot be made before)
+- [x] 0.8 (done 2026-11-20, #257) Collecting a high-pass filter and an oscilloscope: `add-high-pass-sources` and `add-ripple-pool` (the recipe cannot be made before)
 - [x] 0.9 Filters in sequence lift the water further, up to clear (user, 2026-11-19)
 - [x] 0.6 The patch is saved as `assets/rack-recipies/reed-water-filter.vcv` (user, 2026-11-18)
 
@@ -30,12 +30,12 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
   - [x] 3.2b (claimed: Codex) Purifier rack profile and C2/C4/C5 targets in `machines.json`
 
 ## 4. Game
-- [ ] 4.1 Recipe row with its BPM range; purifier item; placement (Open Question 5)
+- [x] 4.1 (claimed: claude; done 2026-11-20) Recipe row with its BPM range; purifier item; placement (Open Question 5). `craft_reed_water_purifier` (20 reeds, a high-pass filter, an oscilloscope; 96-144 BPM) makes a `reed_water_purifier_kit` (IDs are unique across rules: `reed_water_purifier` is the machine); the `reed_water_purifier` buildable costs one kit. Reed count 20 is the draft
 - [x] 4.2 (claimed: Codex) Binder and borrowed clock (reuse the campfire's lending)
-- [ ] 4.1a Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6)
-- [x] 4.3 (claimed: Codex) Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
+- [x] 4.1a (claimed: claude; done 2026-11-20) Placement: the dam snaps across an aimed laid stream segment, square to its flow; red elsewhere (D6). Generic: buildables now say `model`, `placement` (`ground`, `beside_stream`, `across_segment`, `laid`) and an optional `built_hint`, and one placement mode in `build.rs` serves them all (the campfire moved onto it). A dam records its segment (`OnSegment`, keyed by `LaidStream::segment_key`), follows it when dismantling elsewhere respawns the stream, and goes with it, its build cost returned, when its own segment is dismantled
+- [x] 4.3 (claimed: Codex; review fixes by claude 2026-11-20: a dam keeps the segment it stands on instead of re-searching every frame, and lifts ease out when the water stops instead of vanishing) Cleaning rule: four clarity levels; the stream below a working dam rises one level above what reaches it, so dams in sequence reach clear; easing back when one stops (D4)
 - [x] 4.3a Data: `mines.json` leafed at silty, `min_clarity` 0.33 (user, 2026-11-19) (D4)
-- [ ] 4.4 Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
+- [ ] 4.4 (next) Crafting screen at the camp (`add-campfire-craft-bench` 3.3, 2b.3)
 - [ ] 4.5 Bounded watchdog review: craft, place, patch, tune, see the water clear
 - [x] 4.5a (claimed: Codex) Seed-42 review setup with a patched burbler, laid stream, unpatched purifier, and six available cables. Launch from the feature worktree with `python3 tools/jackdaw_timed_test.py --standalone --purifier-review --name purifier`.
 - [ ] 4.5b Live review of E targeting, cable guidance, tuning, scope controls and the upstream/downstream water boundary.
