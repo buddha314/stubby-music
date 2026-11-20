@@ -127,3 +127,29 @@ core in translucent shells) instead of LEDs.
 ~/.local/bin/blender -b --factory-startup -P tools/blender/create_hud_modules.py
 ~/.local/bin/blender -b --factory-startup -P tools/blender/render_hud_mock.py   # docs/art/hud_mock.png
 ```
+
+## Purifier modules (`tools/blender/create_purifier_modules.py`)
+
+| Mixer | VCF | Scope |
+| --- | --- | --- |
+| ![mixer](../../previews/modules/mixer/preview.png) | ![vcf](../../previews/modules/vcf/preview.png) | ![scope](../../previews/modules/scope/preview.png) |
+
+The reed water purifier's rack (`add-reed-water-purifier` 3.1), after the user's VCV Rack
+patch: saw and triangle VCOs into the **mixer**, its MIX through the **VCF**'s HPF, gated by
+the borrowed clock through `volume`, out through the **scope**. Same language as the burbler
+modules. Panels only: each gets its `module.json` with its engine module (2.2-2.4).
+
+- **Mixer** (8HP, engine `Mixer`): `in_1`..`in_4` beside `Knob_level_<n>` (0-1), and `mix`
+  out with `Light_mix`. Crown: two slopes meeting at a peak, streams joining.
+- **VCF** (8HP, engine `Vcf`, state-variable): `Knob_cutoff` (32.7-8372 Hz, log; quantized
+  to semitones in its module data), `Knob_res` (0-1), `in`, and `lpf` and `hpf` outs with
+  `Light_lpf`, `Light_hpf`. Crown: a resonant response, flat with a peak at the cutoff.
+- **Scope** (10HP, engine `Scope`): a dark screen with an 8x6 graticule. `Screen` (extras
+  `display: waveform`, `width_m`, `height_m`, `samples`, `trace_material`) is where the game
+  draws IN's recent samples in the `Scope_Trace` material; the preview's trace is drawn after
+  export, as an example only. `Knob_time` and `Knob_scale` set the view; `out` passes `in`
+  through, with `Light_out`. Crown: a ripple dying away, for the pool it comes from.
+
+```sh
+~/.local/bin/blender -b --factory-startup -P tools/blender/create_purifier_modules.py   # all three
+```
