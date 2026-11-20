@@ -5,7 +5,7 @@
 ## 1. Art (Claude)
 - [x] 1.1 (claimed: claude; done 2026-11-19) Rock formations from the boulder kit, several variants, some with an opening and `Opening` sockets; acoustic rock extras; LODs, colliders, prefabs; previews. `tools/blender/create_rock_formations.py`, `assets/props/rocks/rock_formation_{0..5}/`: a pile and a scatter (no opening), a window rock (bored slab), a slot (two fins about 1 m apart), a bridge (capstone on two supports, 1.6 m passage) and a tor (bored boulder plus a slot: two openings). Sockets `Opening_<k>` with extras `resource: rock_opening`, `width_m`, `height_m`; every passage runs along the model's Z (Blender Y). Placed formations are scenery for now: bridged, solid from their LOD0 triangles (openings stay open) and acoustic, through the same game lines as boulders
 - [ ] 1.2 Hollow scrub oak trunk variant with a `Hollow` socket; seeded hollow rate in `assets/flora/scrub_oak/asset.json`
-- [ ] 1.3 Item icon `assets/ui/icons/high_pass_filter.png`
+- [x] 1.3 (claimed: claude; done 2026-11-19) Item icon `assets/ui/icons/high_pass_filter.png`
 
 ## 2. Rules (data)
 - [ ] 2.1 `high_pass_filter` item; `rock_opening` and `hollow_trunk` resources yielding one, `replenishment: after 1800`; `rules-fmt`

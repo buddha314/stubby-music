@@ -4,9 +4,9 @@
 - [ ] 0.3 Open Question 2 (pools on wild water)
 
 ## 1. Art (Claude)
-- [ ] 1.1 Ripple pool model: an eddy widening a stream segment's bed, still water, `Interact` socket; LODs, prefab, previews
-- [ ] 1.2 One-beat ring ripple clip (baked glTF animation, as the burbler's bubbles)
-- [ ] 1.3 Item icon `assets/ui/icons/oscilloscope.png`
+- [x] 1.1 (claimed: claude; done 2026-11-19) Ripple pool model, `tools/blender/create_stream_features.py`, `assets/streams/ripple_pool/`: still clear water just beyond the left bank (D2), in the stream segment's frame (flow +X, origin at the channel centre); `Interact` (resource `ripple_pool`); prefab, previews. No LODs: small and animated
+- [x] 1.2 (claimed: claude; done 2026-11-19) `Ripple_Beat`, one beat at 24 fps: a ring leaves the centre on the beat while last beat's ring reaches the rim, with a drop at the centre; `Ripples` ships at scale 0, shown while the stream sounds, clip looped at BPM / 60
+- [x] 1.3 (claimed: claude; done 2026-11-19) Item icon `assets/ui/icons/oscilloscope.png`
 
 ## 2. Rules (data)
 - [ ] 2.1 `oscilloscope` item; `ripple_pool` resource yielding one, `replenishment: after 1800`; `rules-fmt`

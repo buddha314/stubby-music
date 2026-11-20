@@ -203,6 +203,8 @@ FAMILIES = {
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),
+    "streams/ripple_pool": ("streams/ripple_pool/ripple_pool.glb", "a low rim and still water; the player steps in to collect"),
+    "machines/reed_water_purifier": ("machines/reed_water_purifier/reed_water_purifier.glb", "a low dam across the stream; the player wades over it as over the stream"),
 }
 
 
