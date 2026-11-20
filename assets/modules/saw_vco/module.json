@@ -1,0 +1,20 @@
+{
+  "id": "saw_vco",
+  "parts": [
+    {
+      "part": "vco",
+      "kind": "SawVco"
+    }
+  ],
+  "jacks": {
+    "voct": "vco.voct",
+    "out": "vco.out"
+  },
+  "knobs": {
+    "freq": {
+      "param": "vco.freq",
+      "default": 261.63,
+      "quantize": "semitone"
+    }
+  }
+}

@@ -11,8 +11,8 @@ use crate::audionimbus_spatial::{
     DirectEffectParamsShared, DirectEmitterInput,
 };
 use crate::modules::{
-    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, SequencerNode, VcaNode,
-    VcoConfig, VcoNode, Waveform,
+    ClockConfig, ClockNode, ConstantNode, EnvelopeNode, EventMailbox, MixerNode, SequencerNode,
+    VcaNode, VcfNode, VcoConfig, VcoNode, Waveform,
 };
 #[cfg(feature = "omg_audio")]
 use crate::omg_spatial::{OmgSpatialNode, trace_snapshot};
@@ -71,6 +71,8 @@ enum NodeState {
     /// Timing is fixed at creation, so there is nothing to diff later.
     Envelope,
     Vca(VcaNode),
+    Mixer(MixerNode),
+    Vcf(VcfNode),
     Sequencer(SequencerNode),
 }
 
@@ -386,6 +388,21 @@ impl Engine {
                     new.diff(old, PathBuilder::default(), &mut queue);
                     *old = new;
                 }
+                (NodeState::Vcf(old), param) => {
+                    let mut new = *old;
+                    match param {
+                        "cutoff" => new.cutoff = value,
+                        "res" => new.resonance = value,
+                        _ => continue,
+                    }
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
+                (NodeState::Mixer(old), param) => {
+                    let new = old.with(param, value);
+                    new.diff(old, PathBuilder::default(), &mut queue);
+                    *old = new;
+                }
                 (NodeState::Vca(old), "gain") => {
                     let new = VcaNode {
                         gain: value,
@@ -472,9 +489,14 @@ impl Engine {
             return Err(EngineError::DuplicateModule(id));
         }
         let (node, state) = match kind {
-            ModuleKind::SineVco { freq_hz } | ModuleKind::SquareVco { freq_hz } => {
+            ModuleKind::SineVco { freq_hz }
+            | ModuleKind::SquareVco { freq_hz }
+            | ModuleKind::SawVco { freq_hz }
+            | ModuleKind::TriangleVco { freq_hz } => {
                 let waveform = match kind {
                     ModuleKind::SquareVco { .. } => Waveform::Square,
+                    ModuleKind::SawVco { .. } => Waveform::Saw,
+                    ModuleKind::TriangleVco { .. } => Waveform::Triangle,
                     _ => Waveform::Sine,
                 };
                 let state = VcoNode {
@@ -531,6 +553,24 @@ impl Engine {
                     decay: decay_s,
                 };
                 (self.cx.add_node(state, None), NodeState::Envelope)
+            }
+            ModuleKind::Vcf {
+                cutoff_hz,
+                resonance,
+            } => {
+                let state = VcfNode {
+                    cutoff: cutoff_hz,
+                    resonance,
+                    enabled: true,
+                };
+                (self.cx.add_node(state, None), NodeState::Vcf(state))
+            }
+            ModuleKind::Mixer { levels } => {
+                let state = MixerNode {
+                    levels,
+                    enabled: true,
+                };
+                (self.cx.add_node(state, None), NodeState::Mixer(state))
             }
             ModuleKind::Vca { gain } => {
                 let state = VcaNode {
@@ -635,6 +675,22 @@ impl Engine {
         let fading = match module.state {
             NodeState::Vco(old) => {
                 VcoNode {
+                    enabled: false,
+                    ..old
+                }
+                .diff(&old, PathBuilder::default(), &mut queue);
+                true
+            }
+            NodeState::Vcf(old) => {
+                VcfNode {
+                    enabled: false,
+                    ..old
+                }
+                .diff(&old, PathBuilder::default(), &mut queue);
+                true
+            }
+            NodeState::Mixer(old) => {
+                MixerNode {
                     enabled: false,
                     ..old
                 }

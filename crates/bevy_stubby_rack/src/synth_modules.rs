@@ -19,20 +19,6 @@ use std::collections::HashMap;
 use std::time::Instant;
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
-/// Profiles embedded at build time, as the lightning bug's is, so the game and the
-/// Jackdaw adapter read identical data.
-const PROFILES: [&str; 9] = [
-    include_str!("../../../assets/modules/square_vco/asset.json"),
-    include_str!("../../../assets/modules/saw_vco/asset.json"),
-    include_str!("../../../assets/modules/triangle_vco/asset.json"),
-    include_str!("../../../assets/modules/sine_vco/asset.json"),
-    include_str!("../../../assets/modules/clock_lamp/asset.json"),
-    include_str!("../../../assets/modules/burbler_clock/asset.json"),
-    include_str!("../../../assets/modules/volume/asset.json"),
-    include_str!("../../../assets/modules/snail_sequencer/asset.json"),
-    include_str!("../../../assets/modules/stream_blank/asset.json"),
-];
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct ModuleProfile {
     pub id: String,
@@ -90,11 +76,11 @@ pub struct ModuleCatalog(pub HashMap<String, ModuleProfile>);
 impl Default for ModuleCatalog {
     fn default() -> Self {
         Self(
-            PROFILES
-                .iter()
-                .map(|json| {
-                    let profile: ModuleProfile = serde_json::from_str(json)
-                        .unwrap_or_else(|e| panic!("module profile: {e}"));
+            stubby_rack::shipped_sources()
+                .into_iter()
+                .map(|source| {
+                    let profile: ModuleProfile = serde_json::from_str(source.panel)
+                        .unwrap_or_else(|e| panic!("module profile beside {}: {e}", source.file));
                     (profile.id.clone(), profile)
                 })
                 .collect(),
@@ -313,7 +299,7 @@ fn audition_showcase(
 /// The engine module behind a placed module asset, from its rack definition (the same
 /// one the rack uses, so the two never disagree): its one part, at the placed asset's
 /// knob values or the definition's defaults. `None` for modules without a definition
-/// or an engine part yet (saw and triangle VCOs).
+/// or with anything other than one engine part.
 fn engine_kind(profile: &ModuleProfile, params: &ModuleParams) -> Option<ModuleKind> {
     let module = crate::rack::RACK_MODULES.get(&profile.id)?;
     let [part] = module.parts.as_slice() else {

@@ -18,9 +18,9 @@ audio work stream (`add-rack-and-spatial-audio`) unless the user assigns otherwi
 - [x] 1.3 Profile `targets` and a `targets_met` check; move the campfire's `light_pattern` onto it (`configure.targets`, `RackTargets`, a log line naming missed targets when they change)
 
 ## 2. Engine modules (audio stream)
-- [ ] 2.1 Triangle and saw VCOs (fundsp), module data for `triangle_vco` and `saw_vco`
-- [ ] 2.2 Four-channel mixer with levels; module data and panel
-- [ ] 2.3 State-variable VCF (LPF and HPF outs, cutoff Hz, resonance); module data and panel
+- [x] 2.1 (claimed: Codex) Triangle and saw VCOs (fundsp), module data for `triangle_vco` and `saw_vco`
+- [x] 2.2 (claimed: Codex) Four-channel mixer with levels; module data and panel
+- [x] 2.3 (claimed: Codex) State-variable VCF (LPF and HPF outs, cutoff Hz, resonance); module data and panel
 - [ ] 2.4 Scope: pass-through, recent-sample ring to the panel; module data and panel
 
 ## 3. Art (Claude)

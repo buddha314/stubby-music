@@ -60,6 +60,10 @@ pub enum ModuleKind {
     /// Band-limited square oscillator; same ports and parameter as `SineVco`. Its
     /// odd harmonics make it far easier to locate by ear than a sine.
     SquareVco { freq_hz: f32 },
+    /// Band-limited sawtooth oscillator, with the same controls as the sine.
+    SawVco { freq_hz: f32 },
+    /// Band-limited triangle oscillator, with the same controls as the sine.
+    TriangleVco { freq_hz: f32 },
     /// Clock. Outputs `"gate"` (high for the first half of each beat) and `"phase"`
     /// (0..1 ramp per beat), parameter `"bpm"`. Emits [`Event::ClockTick`] per beat.
     Clock { bpm: f32 },
@@ -81,6 +85,10 @@ pub enum ModuleKind {
     /// Voltage-controlled amplifier: `out = in * max(cv, 0) * gain`. Inputs `"in"`
     /// and `"cv"`, output `"out"`, parameter `"gain"`. With no CV it is closed.
     Vca { gain: f32 },
+    /// Four mono inputs with independently adjustable linear levels, summed to "mix".
+    Mixer { levels: [f32; 4] },
+    /// State-variable filter with simultaneous low- and high-pass outputs.
+    Vcf { cutoff_hz: f32, resonance: f32 },
     /// Four-step sequencer (the snail shell; sync-snail-shell-sequencer). Inputs
     /// `"clock"` and `"reset"`, outputs `"gate"` and `"cv"`; parameters `"cv_1"`..`"cv_4"`
     /// (volts on V/OCT, 0..2, snapped to semitones) and `"gate_1"`..`"gate_4"` (0 or 1).

@@ -612,6 +612,112 @@ fn one_volt_of_pitch_cv_raises_one_octave() {
 }
 
 #[test]
+fn saw_and_triangle_track_pitch_cv_and_keep_distinct_harmonics() {
+    let pitch_hz = 480.0;
+    let mut second_harmonics = Vec::new();
+    for kind in [
+        ModuleKind::SawVco {
+            freq_hz: pitch_hz / 2.0,
+        },
+        ModuleKind::TriangleVco {
+            freq_hz: pitch_hz / 2.0,
+        },
+    ] {
+        let mut rig = Rig::new();
+        let cv = rig.add(1, ModuleKind::Constant { value: 1.0 });
+        let oscillator = rig.add(2, kind);
+        rig.connect(out(cv), PortRef::new(oscillator, "voct"));
+        rig.connect(out(oscillator), PortRef::output());
+        rig.flush();
+        rig.render(2 * SR as usize);
+        let samples = &rig.left[SR as usize..];
+        assert!((freq_by_zero_crossings(samples) - f64::from(pitch_hz)).abs() < 0.1);
+        assert!(peak(samples) > 0.5);
+        let second_harmonic =
+            samples
+                .iter()
+                .enumerate()
+                .fold([0.0_f64; 2], |[re, im], (i, &sample)| {
+                    let phase = std::f64::consts::TAU * 2.0 * f64::from(pitch_hz) * i as f64
+                        / f64::from(SR);
+                    let (sin, cos) = phase.sin_cos();
+                    [re + f64::from(sample) * cos, im + f64::from(sample) * sin]
+                });
+        second_harmonics.push(2.0 * second_harmonic[0].hypot(second_harmonic[1]) / f64::from(SR));
+    }
+    assert!(second_harmonics[0] > 0.1);
+    assert!(second_harmonics[1] < 0.01);
+}
+
+#[test]
+fn mixer_sums_independently_scaled_inputs_and_applies_level_edits() {
+    let mut rig = Rig::new();
+    let source = rig.add(1, ModuleKind::Constant { value: 0.25 });
+    let mixer = rig.add(
+        2,
+        ModuleKind::Mixer {
+            levels: [1.0, 0.0, 0.0, 0.5],
+        },
+    );
+    rig.connect(out(source), PortRef::new(mixer, "in_1"));
+    rig.connect(out(source), PortRef::new(mixer, "in_4"));
+    rig.connect(PortRef::new(mixer, "mix"), PortRef::output());
+    rig.flush();
+    rig.render(SR as usize / 10);
+    assert!((rig.left.last().unwrap() - 0.375).abs() < 1e-4);
+
+    rig.engine
+        .send(Command::SetParam {
+            module: mixer,
+            param: "level_4",
+            value: 0.0,
+        })
+        .unwrap();
+    rig.flush();
+    rig.render(SR as usize / 10);
+    assert!((rig.left.last().unwrap() - 0.25).abs() < 1e-4);
+}
+
+#[test]
+fn vcf_selects_low_and_high_frequencies_and_applies_cutoff_edits() {
+    for (port, initial_cutoff) in [("lpf", 100.0), ("hpf", 4000.0)] {
+        let mut rig = Rig::new();
+        let osc = rig.add(1, ModuleKind::SineVco { freq_hz: 1000.0 });
+        let filter = rig.add(
+            2,
+            ModuleKind::Vcf {
+                cutoff_hz: initial_cutoff,
+                resonance: 0.0,
+            },
+        );
+        rig.connect(out(osc), PortRef::new(filter, "in"));
+        rig.connect(PortRef::new(filter, port), PortRef::output());
+        rig.flush();
+        let span = SR as usize / 10;
+        rig.render(span);
+        assert!(
+            peak(&rig.left[span / 2..]) < 0.1,
+            "{port} should reject the tone"
+        );
+
+        let cutoff = if port == "lpf" { 4000.0 } else { 100.0 };
+        rig.engine
+            .send(Command::SetParam {
+                module: filter,
+                param: "cutoff",
+                value: cutoff,
+            })
+            .unwrap();
+        rig.flush();
+        rig.render(span);
+        assert!(
+            peak(&rig.left[rig.left.len() - span / 2..]) > 0.9,
+            "{port} should pass the tone"
+        );
+    }
+}
+
+#[test]
 fn an_input_takes_only_one_cable() {
     let mut rig = Rig::new();
     let cv1 = rig.add(1, ModuleKind::Constant { value: 0.0 });

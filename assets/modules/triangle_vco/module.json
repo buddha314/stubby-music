@@ -1,0 +1,20 @@
+{
+  "id": "triangle_vco",
+  "parts": [
+    {
+      "part": "vco",
+      "kind": "TriangleVco"
+    }
+  ],
+  "jacks": {
+    "voct": "vco.voct",
+    "out": "vco.out"
+  },
+  "knobs": {
+    "freq": {
+      "param": "vco.freq",
+      "default": 261.63,
+      "quantize": "semitone"
+    }
+  }
+}

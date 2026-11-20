@@ -1,0 +1,25 @@
+{
+  "id": "vcf",
+  "parts": [
+    {
+      "part": "filter",
+      "kind": "Vcf"
+    }
+  ],
+  "jacks": {
+    "in": "filter.in",
+    "lpf": "filter.lpf",
+    "hpf": "filter.hpf"
+  },
+  "knobs": {
+    "cutoff": {
+      "param": "filter.cutoff",
+      "default": 1000.0,
+      "quantize": "semitone"
+    },
+    "res": {
+      "param": "filter.res",
+      "default": 0.0
+    }
+  }
+}
