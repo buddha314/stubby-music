@@ -152,7 +152,7 @@ Escape or focus loss releases the cursor, and left click recaptures it; a second
   (`add-hybrid-world-placement` 2b); hand placement is an overlay only where that fails.
   The rules are `assets/world/opening.json`; `stubby_jackdaw/src/seeded_layout.rs` spawns them
   when the scene spawns (Play or file), as model sources the prefab bridge and binders bring
-  alive, around the authored objects (kept for now: spawn composition, bugs, grotto). Only
+  alive, around the authored objects (kept for now: spawn composition, the grotto, seven bugs; every kind can now be seeded). Only
   Play shows them, not the editor's edit view. `--no-seeded-layout` skips it;
   `--layout-review=<dir>` saves an overhead and a reed-bed view. The ground is ±108 m.
 

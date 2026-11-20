@@ -525,7 +525,8 @@ fn prepare_animations(
             // One-beat clips, played on the placement's clock: the burbler's `Bubble_<n>_Burble`
             // and any model's `<name>_Beat` (a ripple pool's rings).
             .filter(|(name, _)| {
-                (name.starts_with("Bubble_") && name.ends_with("_Burble")) || name.ends_with("_Beat")
+                (name.starts_with("Bubble_") && name.ends_with("_Burble"))
+                    || name.ends_with("_Beat")
             })
             .collect();
         named.sort_by_key(|(name, _)| *name);

@@ -12,7 +12,9 @@ another). The layout it describes is generated from the world seed when the scen
   already there (authored objects and earlier rules' placements, matched by model stem):
   - `burblers`: 65 m apart, 16 m inside the ground;
   - `reed_beds`: 2.8 to 14 m from a burbler, densest at its pool;
-  - `oak_groves`: 20 to 40 m from a burbler, 7 m apart;
+  - `oak_groves`: 20 to 40 m from a burbler, 7 m apart (two of the eight variants are hollow);
+  - `lightning_bugs`: 2.5 to 12 m from an oak, densest close in, and at least 36 m from the
+    `spawn` landmark, so the opening starts silent (a bug's click carries 35 m);
   - `rock_formations`: 25 m from burblers, 30 m from the grotto's boulders, 30 m apart;
   - `desert_props`: brush, stumps and debris, 5 m from burblers.
 
@@ -22,6 +24,7 @@ another). The layout it describes is generated from the world seed when the scen
   `min_m`, `max_m`, `denser_nearer`). The region is the cracked ground, ±108 m.
 - `stream_features`: things that form along every laid stream (`ripple_pools`: one per
   12 m on average, at seeded Poisson-random places per segment).
+- `landmarks`: named points rules keep distances from like any anchor (`spawn`).
 - `protected_areas`: kept clear (the spawn, and the view from it to the authored burbler).
 - `authored_footprints`: how much room each authored kind keeps around itself.
 - `edits`: a designer's suppressions and moves of generated objects, by their stable key.
