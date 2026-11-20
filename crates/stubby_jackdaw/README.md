@@ -265,7 +265,7 @@ command under the same watchdog). Flags the game itself takes:
 | `--stream-review=<dir>` | laying, affording and dismantling a stream (`--streams`) |
 | `--sky-review=<dir>` | the sky through a day, and the scanner at night (`--sky`) |
 | `--purifier-review` | an unpatched purifier on a running stream (`--purifier-review`, with `--standalone`) |
-| `--purifier-e2e=<dir>` | the purifier loop played by itself: tempo, craft, build, patch, tune, clear, pools (`--purifier-e2e`) |
+| `--purifier-e2e=<dir>` | the purifier loop played by itself: tempo, collect an oscilloscope with E, craft, build, patch, tune, clear, pools (`--purifier-e2e`) |
 | `--grotto-audio-review=<dir>` | listening inside, behind and outside the grotto |
 | `--replenishment-review=<dir>` | dusk and reed replenishment (`--review`) |
 | `--audio-demo` | a sustained test tone beside the clock blips |
