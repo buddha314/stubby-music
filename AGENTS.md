@@ -148,7 +148,7 @@ Escape or focus loss releases the cursor, and left click recaptures it; a second
   is public, so only CC0 assets may be committed; record each asset's licence beside it.
 - The environment is **procedurally generated** from a seed. The same seed always
   produces the same world. **The opening too** (user, 2026-11-19): burblers, reed beds,
-  rock formations, the oak grove, ripple pools and props come from ordered seeded rules
+  rock formations, the oak grove and props come from ordered seeded rules
   (`add-hybrid-world-placement` 2b); hand placement is an overlay only where that fails.
 
 ## Repo map (target layout — create as the work lands)
@@ -654,11 +654,14 @@ equivalent of an iron ore node, so the player does not pick it up.
   boulders are the first rock formation), not invented as machines. **Low-pass and
   band-pass filters matter more** (they separate the solids and nutrients) but their
   sources are **not decided yet**: do not invent them. Both need an **oscilloscope**
-  asset to see what they do, collected from a new **ripple pool** (`add-ripple-pool`).
+  asset to see what they do, from **ripple pools** that form at seeded Poisson-random places
+  along laid streams and ripple on the beat (`add-ripple-pool`).
   Each rock opening and each hollow trunk (only some oaks are hollow) gives **one**
-  high-pass filter, never back (`add-high-pass-sources`, user, 2026-11-19). **Water has
+  high-pass filter; filters and oscilloscopes return semi-daily (`add-high-pass-sources`,
+  user, 2026-11-19). **Water has
   four levels: muddy, silty, cloudy, clear**; the first filter, the reed water purifier,
-  is a small check dam across a laid stream and lifts the water below it one level
+  is a small check dam across a laid stream and lifts the water below it one level, so
+  dams in sequence reach clear
   (`add-reed-water-purifier` D4, D6). Until it exists every stream stays mud
   (`LaidStream.clarity` 0).
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds

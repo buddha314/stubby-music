@@ -17,7 +17,7 @@
 ## 2b. The opening's rules, in order (design "Scope and first deliverable")
 - [ ] 2b.1 Ordered rule resolution: a rule may read earlier rules' placements (distance, clearance)
 - [ ] 2b.2 Burblers: spacing, seeded tempo on the 24 BPM grid, unique instance and module IDs
-- [ ] 2b.3 Wetness channel (burbler pools, low ground); reed beds clustered on it; ripple pools in it (`add-ripple-pool`)
+- [ ] 2b.3 Wetness channel (burbler pools, low ground); reed beds clustered on it
 - [ ] 2b.4 Oak grove 20-40 m from a burbler; some trunks hollow (`add-high-pass-sources`)
 - [ ] 2b.5 Rock formations: boulder clusters, some with an opening (art: `add-high-pass-sources`)
 - [ ] 2b.6 Desert props as decoration (`add-desert-opening` 2.6)

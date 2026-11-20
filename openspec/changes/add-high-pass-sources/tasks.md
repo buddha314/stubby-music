@@ -1,6 +1,6 @@
 ## 0. Decide (user)
 - [x] 0.1 One high-pass filter per rock opening and per hollow trunk; not every trunk is hollow (user, 2026-11-19)
-- [ ] 0.2 Open Questions 1 (hollow while dormant) and 2 (sound after collection)
+- [x] 0.2 Recur semi-daily (`after` 1800 s); hollows collectable while dormant; collecting silences the source until it returns (user, 2026-11-19)
 
 ## 1. Art (Claude)
 - [ ] 1.1 Rock formations from the boulder kit, several variants, some with an opening and `Opening` sockets; acoustic rock extras; LODs, colliders, prefabs; previews
@@ -8,7 +8,7 @@
 - [ ] 1.3 Item icon `assets/ui/icons/high_pass_filter.png`
 
 ## 2. Rules (data)
-- [ ] 2.1 `high_pass_filter` item; `rock_opening` and `hollow_trunk` resources yielding one, no replenishment; `rules-fmt`
+- [ ] 2.1 `high_pass_filter` item; `rock_opening` and `hollow_trunk` resources yielding one, `replenishment: after 1800`; `rules-fmt`
 
 ## 3. Game (Codex)
 - [ ] 3.1 Binders: formation and hollow oak sockets become pickups with stable instance IDs (`model_part_bindings`)

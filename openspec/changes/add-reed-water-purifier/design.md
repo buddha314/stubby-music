@@ -74,9 +74,10 @@ idea for step gates. Both should move to `targets` once this lands.
 ### D4. Cleaning: four levels of clear (user, 2026-11-19)
 Water has **four levels of clarity: muddy, silty, cloudy, clear** (`LaidStream.clarity`
 0, 1/3, 2/3, 1). Every stream leaves its burbler muddy. **The first filter lifts the water
-one level**: while the purifier works, the stream below it rises from muddy toward silty,
-easing back when it stops. Upstream water is unchanged. Later filters (low-pass,
-band-pass; sources not decided) take it the rest of the way.
+one level**: while the purifier works, the stream below it rises one level above the
+water reaching the dam, easing back when it stops. Upstream water is unchanged.
+**Filters in sequence lift it further, up to clear** (user, 2026-11-19): three working dams
+in a row take muddy to silty, cloudy and clear. A dam fed clear water passes it clear.
 
 Today's growth caps (`mines.json`) put `leafed` at clarity 0.5, which silty (1/3) does not
 reach, so the first purifier would grow nothing new. Lower `leafed` to silty in the same
@@ -118,6 +119,5 @@ dam (F) returns the stream to the clarity it had above it.
 2. **Triangle and saw sources**, later; their VCOs are fixed until then.
 3. ~~Collecting a high-pass filter and an oscilloscope~~: their own changes,
    `add-high-pass-sources` and `add-ripple-pool` (2026-11-19).
-4. ~~What clean means~~: four levels; the first filter lifts one (D4). Still open: does a
-   second reed purifier below the first lift it again, or only a different filter?
+4. ~~What clean means~~: four levels; each filter lifts one, in sequence up to clear (D4).
 5. ~~Placement~~: a check dam on a laid stream segment (D6).

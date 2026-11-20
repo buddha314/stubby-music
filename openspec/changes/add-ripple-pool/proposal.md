@@ -1,31 +1,33 @@
 ## Why
 
 The reed water purifier needs an **oscilloscope** (`add-reed-water-purifier`), collected
-from rippling water. Nothing in the world ripples yet: the burbler's pool bubbles mud and
-streams flow. The user asked for **a new pool** for it (2026-11-19).
+from rippling water, and the game needs **a lot of them** (user, 2026-11-19). Ripple pools
+**form in streams**: small still eddies along a laid stream whose surface ripples to the
+stream's beat. Laying streams is how the player finds them.
 
 ## What Changes
 
-- **A new world asset, the ripple pool**: a small still pool of water on wet ground whose
-  surface ripples in rings, a waveform drawn on water. Its ripples are the oscilloscope:
-  they trace the sound arriving at the pool, so a pool near a sounding burbler shows that
-  burbler's wave.
-- **It yields an oscilloscope** when collected with E (draft: one per pool, no
-  replenishment, as the high-pass sources; Open Question 1).
-- **Placement**: ripple pools sit in the wetness channel of the seeded opening
-  (`add-hybrid-world-placement` 2b.3), near reed beds; the opening holds at least one.
-- **Rules data**: the `oscilloscope` item, the `ripple_pool` resource, its recipe-book entry.
+- **Ripple pools form along laid streams**, at seeded random places: a Poisson process
+  along the stream's length, so gaps between pools are random but their average is set.
+  The same stream laid the same way in the same world gets the same pools.
+- **A ripple animation on the beat**: on a sounding stream, rings leave each pool's centre
+  on every beat of the stream's clock. A silent stream's pools are still.
+- **Each pool yields one oscilloscope** with E, and **refreshes semi-daily** (half a day of
+  simulation time, the existing `after` replenishment at 1800 s).
+- **Rules data**: the `oscilloscope` item, the `ripple_pool` resource and its recipe-book
+  entry; the pool spacing as stream data.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `ripple-pool`: the ripple pool asset and how it gives an oscilloscope.
+- `ripple-pool`: ripple pools in streams and how they give oscilloscopes.
 
 ## Impact
 
-- Art (Claude): `assets/water/ripple_pool/` (or `assets/flora/`-style family), model,
-  ripple shader or animated rings, LODs, prefab, icon.
+- Art (Claude): the pool model, an eddy that widens the stream bed, and its beat ripple
+  clip; icon.
 - Rules (data): `items.json`, `resources.json`.
-- Game (Codex): binder, pickup, ripples driven by the sound reaching the pool (the
-  scope's sample ring from `add-reed-water-purifier` 2.4 can feed both).
+- Game (Codex): `stubby_streams` places pools along laid segments (seeded Poisson) and
+  removes them with their segment; the ripple clip plays on the stream's clock; pickups
+  through the existing E path.
