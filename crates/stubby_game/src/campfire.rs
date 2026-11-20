@@ -43,6 +43,7 @@ impl Plugin for CampfirePlugin {
                 strike,
                 burn,
                 show_fire,
+                mark_benches,
                 fly_sparks,
                 ghost_staff,
                 update_chains,
@@ -756,5 +757,21 @@ mod tests {
         assert!(!bar.hear(2, 4, true));
         assert!(!bar.hear(3, 4, true));
         assert_eq!(bar, Backbeat { next: 0 });
+    }
+}
+
+/// A burning fire is a craft bench: E opens its crafting screen, with its rack a tab away
+/// (add-campfire-craft-bench D1). Unlit or in embers, E opens the rack to light it.
+fn mark_benches(
+    mut commands: Commands,
+    fires: Query<(Entity, &Fire, Has<stubby_core::CraftBench>)>,
+) {
+    for (camp, fire, bench) in &fires {
+        let burning = *fire == Fire::Burning;
+        if burning && !bench {
+            commands.entity(camp).insert(stubby_core::CraftBench);
+        } else if !burning && bench {
+            commands.entity(camp).remove::<stubby_core::CraftBench>();
+        }
     }
 }

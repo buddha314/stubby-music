@@ -311,12 +311,13 @@ fn interact(
     mut state: ResMut<MachineInteraction>,
     mut screens: ResMut<ScreenMode>,
     machines: Query<&PlacedAsset, Without<PrefabError>>,
+    benches: Query<(), With<stubby_core::CraftBench>>,
     mut opened: MessageWriter<MachineConfigurationOpened>,
     mut used: MessageWriter<AssetUsed>,
 ) {
     state.target = None;
     state.prompt.clear();
-    if let Some(Screen::MachineConfiguration(entity)) = screens.open {
+    if let Some(Screen::MachineConfiguration(entity) | Screen::Crafting(entity)) = screens.open {
         if !machines.contains(entity) || keys.just_pressed(stubby_core::INTERACT) {
             screens.close();
         }
@@ -337,7 +338,12 @@ fn interact(
     state.target = Some(machine);
     state.prompt.clone_from(&config.interact.prompt);
     if keys.just_pressed(stubby_core::INTERACT) {
-        screens.open = Some(Screen::MachineConfiguration(machine));
+        // A craft bench (a lit campfire) opens its crafting screen; its rack is a tab away.
+        screens.open = Some(if benches.contains(machine) {
+            Screen::Crafting(machine)
+        } else {
+            Screen::MachineConfiguration(machine)
+        });
         opened.write(MachineConfigurationOpened { machine });
         used.write(AssetUsed {
             entity: machine,
