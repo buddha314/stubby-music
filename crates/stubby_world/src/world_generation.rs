@@ -37,6 +37,63 @@ pub struct WorldConfig {
     /// asset not listed protects only its point. Scatter candidates also add their own.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub authored_footprints: std::collections::BTreeMap<String, f32>,
+    /// Things that form along every laid stream (ripple pools), at seeded random places.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub stream_features: Vec<StreamFeature>,
+}
+
+/// A model that forms along laid streams: a Poisson process in arc length (gaps drawn
+/// from an exponential distribution with mean `mean_spacing_m`), on either bank by the
+/// seed (`add-ripple-pool` D1). The model sits in the stream segment's frame (flow +X,
+/// origin at the channel's centre); half a turn puts it on the other bank.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StreamFeature {
+    pub id: String,
+    pub asset: String,
+    pub mean_spacing_m: f32,
+    /// Kept clear of a segment's ends, metres, so features do not straddle joins.
+    #[serde(default)]
+    pub end_margin_m: f32,
+}
+
+/// Where a stream feature forms along one laid segment: offsets in metres from the
+/// segment's start, and whether it is on the far bank. Seeded from the world seed, the
+/// feature and the segment's own key (`segment`: anything stable for that segment, such as
+/// its path and index), so it never moves when the stream is extended or other streams
+/// are laid, and laying the same segment again gives the same places.
+pub fn stream_feature_places(
+    seed: u64,
+    feature: &StreamFeature,
+    segment: u64,
+    span: f32,
+) -> Vec<(f32, bool)> {
+    use rand_chacha::{
+        ChaCha8Rng,
+        rand_core::{RngCore, SeedableRng},
+    };
+    if !(feature.mean_spacing_m > 0. && span > 2. * feature.end_margin_m) {
+        return Vec::new();
+    }
+    let key = feature.id.bytes().fold(
+        seed ^ segment.rotate_left(17) ^ 0xcbf29ce484222325,
+        |h, b| (h ^ u64::from(b)).wrapping_mul(0x100000001b3),
+    );
+    let mut rng = ChaCha8Rng::seed_from_u64(key);
+    let mut unit = || (rng.next_u32() as f64 + 0.5) / 4_294_967_296.;
+    // The margins leave less of the segment eligible; shorten the gaps to match, so a
+    // stream still averages one per `mean_spacing_m` of its length.
+    let usable = span - 2. * feature.end_margin_m;
+    let mean = f64::from(feature.mean_spacing_m * usable / span);
+    let mut places = Vec::new();
+    let mut s = feature.end_margin_m;
+    loop {
+        s += (-unit().ln() * mean) as f32;
+        if s > span - feature.end_margin_m {
+            return places;
+        }
+        places.push((s, unit() < 0.5));
+    }
 }
 
 impl Default for WorldConfig {
@@ -51,6 +108,7 @@ impl Default for WorldConfig {
             protected_areas: Vec::new(),
             edits: Vec::new(),
             authored_footprints: Default::default(),
+            stream_features: Vec::new(),
         }
     }
 }
@@ -431,5 +489,28 @@ mod tests {
             !(at.cmpge(Vec2::from_array(spawn.min)).all()
                 && at.cmple(Vec2::from_array(spawn.max)).all())
         }));
+    }
+
+    /// Ripple pools along streams: the same segment gives the same places, and over many
+    /// segments they average one per mean spacing (add-ripple-pool D1).
+    #[test]
+    fn stream_features_are_seeded_and_poisson() {
+        let config = WorldConfig::shipped();
+        let pools = &config.stream_features[0];
+        assert_eq!(pools.id, "ripple_pools");
+        let a = stream_feature_places(17, pools, 42, 4.);
+        assert_eq!(a, stream_feature_places(17, pools, 42, 4.));
+        let total: usize = (0..2000)
+            .map(|k| stream_feature_places(17, pools, k, 4.).len())
+            .sum();
+        let per_metre = total as f32 / (2000. * 4.); // per metre of stream
+        assert!(
+            (per_metre * pools.mean_spacing_m - 1.).abs() < 0.12,
+            "{per_metre} per metre"
+        );
+        assert!(
+            a.iter()
+                .all(|(s, _)| (pools.end_margin_m..=4. - pools.end_margin_m).contains(s))
+        );
     }
 }

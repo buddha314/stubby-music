@@ -7102,6 +7102,7 @@ dependencies = [
  "half",
  "jackdaw_terrain",
  "png",
+ "rand_chacha",
  "serde",
  "serde_json",
  "stubby_audio",

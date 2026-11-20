@@ -8,6 +8,16 @@
       "description": "Clock resource provided by a mudpit burbler mine."
     },
     {
+      "id": "high_pass_filter",
+      "name": "High-pass filter",
+      "description": "Passes short waves and stops long ones, as sound through a narrow opening does. Found in openings through rock and in hollow trunks; it comes back half a day after you take it."
+    },
+    {
+      "id": "oscilloscope",
+      "name": "Oscilloscope",
+      "description": "Shows a sound as a line, as a still pool draws the beat in rings. Found in ripple pools along streams; it comes back half a day after you take it."
+    },
+    {
       "id": "patch_cable",
       "name": "Patch cable",
       "description": "Joins two jacks on a rack. Racks come with the spare cables their voice needs; these are for patches of your own."

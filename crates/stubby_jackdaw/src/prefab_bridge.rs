@@ -62,6 +62,7 @@ fn bridge(
                     | "snail_shell"
                     | "campfire"
                     | "reed_water_purifier"
+                    | "ripple_pool"
             ))
         {
             if previous.is_some() {

@@ -250,7 +250,10 @@ struct SocketsRestored;
 
 /// The model's sockets: childless empties outside its levels of detail (`Interact`,
 /// `Sparks`, a light socket), as `(name, frame in the model)`.
-fn sockets(gltf: &Gltf, nodes: &Assets<GltfNode>) -> Option<Vec<(String, Transform)>> {
+fn sockets(
+    gltf: &Gltf,
+    nodes: &Assets<GltfNode>,
+) -> Option<Vec<(String, Transform, Option<bevy::gltf::GltfExtras>)>> {
     let all: Vec<_> = gltf
         .nodes
         .iter()
@@ -277,7 +280,13 @@ fn sockets(gltf: &Gltf, nodes: &Assets<GltfNode>) -> Option<Vec<(String, Transfo
                     && parents.contains_key(id)
                     && !in_level(*id)
             })
-            .map(|(id, node)| (node.name.clone(), node_frame(*id, nodes, &parents)))
+            .map(|(id, node)| {
+                (
+                    node.name.clone(),
+                    node_frame(*id, nodes, &parents),
+                    node.extras.clone(),
+                )
+            })
             .collect(),
     )
 }
@@ -298,8 +307,12 @@ fn restore_sockets(
     let Some(nodes) = nodes else {
         return;
     };
+    // `SocketsRestored` lands when the commands apply, after this loop: a model drawn by
+    // several flattened meshes would otherwise get its sockets once per mesh (2026-11-20:
+    // each rock opening, and the campfire's `Interact`, were doubled or tripled).
+    let mut done = std::collections::HashSet::new();
     for (mesh, part) in &parts {
-        if !part.flattened || restored.contains(part.root) {
+        if !part.flattened || restored.contains(part.root) || done.contains(&part.root) {
             continue;
         }
         let Some(file) = mesh
@@ -315,12 +328,18 @@ fn restore_sockets(
         let Some(sockets) = sockets(gltf, &nodes) else {
             continue;
         };
+        done.insert(part.root);
         commands
             .entity(part.root)
             .insert(SocketsRestored)
             .with_children(|root| {
-                for (name, frame) in sockets {
-                    root.spawn((Name::new(name), frame, Visibility::default()));
+                // With their glTF extras, as a scene node has them: what a socket is for
+                // (a `resource` to collect, an `action`) travels with it.
+                for (name, frame, extras) in sockets {
+                    let mut socket = root.spawn((Name::new(name), frame, Visibility::default()));
+                    if let Some(extras) = extras {
+                        socket.insert(extras);
+                    }
                 }
             });
     }

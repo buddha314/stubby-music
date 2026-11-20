@@ -557,7 +557,7 @@ impl Path {
     }
     /// Position and horizontal flow direction at arc length `s`, extended straight past
     /// either end.
-    fn at(&self, s: f32) -> (Vec3, Vec3) {
+    pub fn at(&self, s: f32) -> (Vec3, Vec3) {
         let length = self.length();
         let clamped = s.clamp(0., length);
         let t = self.parameter(clamped);
