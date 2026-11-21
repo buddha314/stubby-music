@@ -102,6 +102,21 @@ downbeat and vary their poses. A stopped or missing clock leaves the Dancer in
 an idle pose until a clock is available. Clock assignment and reassignment
 rules are open.
 
+### The Dancer models (2026-11-20)
+
+Built on a rigged CC0 base (user, 2026-11-20: reuse existing rigs): Quaternius's Universal
+Animation Library mannequin (`assets-src/third_party/quaternius/`), its 53-joint humanoid rig
+and the clips a resident needs (Idle, Dance, Walk, Talk, Sit, Tend, Interact).
+`tools/blender/create_dancers.py` reduces it to about 1.4k triangles and makes the four body
+shapes on the one rig (`assets/characters/dancers/dancer_<shape>/`): compact, lanky, broad and
+full, each thickened or thinned about its bones and scaled (1.61 to 1.98 m). Faces are blank;
+the figure reads as a silhouette. Skin tone is not baked: a placement's `MaterialTint` recolours
+`Dancer_Skin` to one of the four draft tones, so any shape takes any tone (the sheet
+`previews/characters/dancers/sheet.png` shows all 16). A placement's `Idle` loops in time with
+the nearest clock, or the clip its `LoopClip` names (`Dance`). Review in the game:
+`python3 tools/jackdaw_timed_test.py --asset-review dancers`. Still open: the subtle rim in
+dark scenes, and choosing shape and tone from each Dancer's seed (the settlement system).
+
 ## Shared site
 
 The burbler is the head of an eastbound water route. The campfire sits on

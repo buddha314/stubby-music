@@ -460,6 +460,10 @@ testable by asserting identical output for identical seeds.
 - **Idle clips keep time** (user, 2026-11-20): a placed model with an `Idle` clip and no clock of
   its own plays it phase-locked to the nearest running clock within 30 m, else to the master
   clock (`stubby_world::prefab_presentation::idle_phase`). Name a creature's rest loop `Idle`.
+- **Dancers** (2026-11-20): four body shapes on one CC0 humanoid rig
+  (`assets/characters/dancers/`); a placement picks the skin tone with
+  `stubby_world::prefab_presentation::MaterialTint` and the looping clip with `LoopClip`
+  (default `Idle`, in time with the nearest clock).
 - **Rigged creatures may start from CC0 bases** (Quaternius, Kenney, Poly Haven), kept under
   `assets-src/third_party/<source>/` with their licence; the generator restyles and extends them.
 - **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by

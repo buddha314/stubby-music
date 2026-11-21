@@ -1,0 +1,32 @@
+{
+  "id": "dancers",
+  "kind": "character",
+  "about": "The settlement's residents: four body shapes on one rig, each tinted per Dancer (MaterialTint on Dancer_Skin). Body shape and skin tone combine independently.",
+  "shapes": {
+    "compact": "characters/dancers/dancer_compact/dancer_compact.glb#Scene0",
+    "lanky": "characters/dancers/dancer_lanky/dancer_lanky.glb#Scene0",
+    "broad": "characters/dancers/dancer_broad/dancer_broad.glb#Scene0",
+    "full": "characters/dancers/dancer_full/dancer_full.glb#Scene0"
+  },
+  "tones": {
+    "solar_amber": "#D89B54",
+    "clay_coral": "#C96D74",
+    "leaf_teal": "#4F9D88",
+    "dusk_violet": "#8878AB"
+  },
+  "clips": [
+    "Dance",
+    "Idle",
+    "Interact",
+    "Sit",
+    "Talk",
+    "Tend",
+    "Walk"
+  ],
+  "triangles": {
+    "compact": 1373,
+    "lanky": 1373,
+    "broad": 1373,
+    "full": 1373
+  }
+}

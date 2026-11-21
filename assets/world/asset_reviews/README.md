@@ -6,6 +6,7 @@ and the game never loads them on its own.
 
 | Scene | What it shows |
 | --- | --- |
+| [dancers.bsn](dancers.bsn) | The Dancers: four body shapes by four skin tones, keeping time with a burbler; two rows dance |
 | [vardo.bsn](vardo.bsn) | The vardo, the player's base, with the cyber-cob standing between its shafts (its `Idle` clip loops), beside a campfire |
 | [homestead.bsn](homestead.bsn) | The Dancer cottage with its homestead props (table, stools, bench, barrels, bucket, planters, hammock) and a campfire for scale |
 

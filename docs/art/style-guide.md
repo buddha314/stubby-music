@@ -126,6 +126,7 @@ been made once (2026-10-31, `accents[0]`).
 | Desert props | Twig `#7d7468` → `#4f4234`, Stump `#8f897d` → `#4f4134`, Heartwood `#8a7a62`, Mud plate `#5a4433` → `#3e2f22`; bloomed Leaf `#4f6a2a`, Moss `#3f5a24`, Sprout `#6f9a34`, Mushroom stem `#d9d2c0`; luminous flowers Magenta, mushrooms Cyan |
 | Patch cables | Rust `#9c3b2a`, Ochre `#b8892f`, Verdigris `#3f7a6e`, Slate `#4b5a78`, Bone `#cfc6b2` (not emissive) |
 | Vardo | Forest green `#2f4a33`, Plank groove `#1e2e21`, Burgundy trim `#6b2a28`; folk motifs in Brass `#c4aa76`, lace in Print inverted `#e7e5dd`, wool in Rust `#9c3b2a`, dark iron in Ridges `#2e2b33`; accents: Cyan, Magenta (bloomed) |
+| Dancers (skin, draft) | Solar amber `#D89B54`, Clay coral `#C96D74`, Leaf teal `#4F9D88`, Dusk violet `#8878AB` |
 | Cyber-cob | Coat black `#1d1a1c`, Coat white `#e0d8c8`, Muzzle `#6e5a58`; mane cream in Bone `#cfc6b2`, hooves in Mud plate `#3e2f22`, leather in Cattail `#4a3222`, steel in Titanium, brass in Brass, fibres Cyan (dim) |
 | Homestead | Door paint: Verdigris `#3f7a6e`; Canvas: Bone `#cfc6b2`; Rope: reed Blade dry `#8a7552`; Sawn wood: Heartwood `#8a7a62` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |

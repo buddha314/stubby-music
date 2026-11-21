@@ -45,6 +45,8 @@ struct FloraProfiles {
 pub struct PrefabPresentationPlugin;
 impl Plugin for PrefabPresentationPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<MaterialTint>()
+            .register_type::<LoopClip>();
         app.add_systems(
             PostUpdate,
             (
@@ -568,6 +570,23 @@ fn prepare_animations(
         ));
     }
 }
+/// A placement's own colour for one of its model's materials, by name (a Dancer's skin tone
+/// on `Dancer_Skin`). sRGB, 0..1.
+#[derive(Component, Reflect, Debug, Clone, PartialEq)]
+#[reflect(Component)]
+pub struct MaterialTint {
+    pub material: String,
+    pub srgb: [f32; 3],
+}
+
+/// Which of its model's clips a placement loops, in time with the nearest clock as `Idle`
+/// is (a Dancer set to `Dance`). Without it, `Idle`.
+#[derive(Component, Reflect, Debug, Clone, PartialEq)]
+#[reflect(Component)]
+pub struct LoopClip {
+    pub clip: String,
+}
+
 /// How far a placed asset looks for a running clock to keep its idle in time with.
 pub const IDLE_CLOCK_REACH_M: f32 = 30.0;
 
@@ -618,13 +637,13 @@ fn loop_idle_clips(
         ),
     >,
     parents: Query<&ChildOf>,
-    roots: Query<(&PlacedAsset, Option<&IdleSource>), Without<AssetClock>>,
+    roots: Query<(&PlacedAsset, Option<&IdleSource>, Option<&LoopClip>), Without<AssetClock>>,
 ) {
     for player in &players {
         let Some(root) = parents.iter_ancestors(player).find(|e| roots.contains(*e)) else {
             continue;
         };
-        let (asset, source) = roots.get(root).expect("root matched");
+        let (asset, source, chosen) = roots.get(root).expect("root matched");
         let Some(source) = source else {
             commands
                 .entity(root)
@@ -634,14 +653,15 @@ fn loop_idle_clips(
         let Some(gltf) = gltfs.get(&source.0) else {
             continue;
         };
-        let Some(idle) = gltf.named_animations.get("Idle") else {
+        let name = chosen.map_or("Idle", |c| c.clip.as_str());
+        let Some(idle) = gltf.named_animations.get(name) else {
             commands.entity(player).insert(IdleChecked);
             continue;
         };
         let duration = clips.get(idle).map_or(1., AnimationClip::duration);
         let (graph, node) = AnimationGraph::from_clip(idle.clone());
         info!(
-            "{}: its Idle clip plays in time with the nearest clock",
+            "{}: its {name} clip plays in time with the nearest clock",
             asset.instance
         );
         commands.entity(player).insert((
@@ -904,7 +924,7 @@ fn find_materials(
         Without<InstanceMaterial>,
     >,
     parents: Query<&ChildOf>,
-    roots: Query<&PlacedAsset>,
+    roots: Query<(&PlacedAsset, Has<MaterialTint>)>,
 ) {
     for (entity, handle, name) in &meshes {
         let Some(root) = parents
@@ -913,10 +933,11 @@ fn find_materials(
         else {
             continue;
         };
-        let Ok(asset) = roots.get(root) else {
+        let Ok((asset, tinted)) = roots.get(root) else {
             continue;
         };
-        if !(asset.asset.starts_with("scrub_oak_")
+        if !(tinted
+            || asset.asset.starts_with("scrub_oak_")
             || asset.asset.starts_with("reed_clump_")
             || asset.asset.starts_with("desert_")
             || asset.asset == "mudpit_burbler")
@@ -958,17 +979,27 @@ fn color_between(colors: &serde_json::Value, from: &str, to: &str, level: f32) -
 fn shade_materials(
     profiles: Res<FloraProfiles>,
     bus: Res<PulseBus>,
-    roots: Query<(&PlacedAsset, &AssetState, Option<&AssetClock>)>,
+    roots: Query<(
+        &PlacedAsset,
+        &AssetState,
+        Option<&AssetClock>,
+        Option<&MaterialTint>,
+    )>,
     parts: Query<&InstanceMaterial>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for part in &parts {
-        let Ok((asset, state, clock)) = roots.get(part.root) else {
+        let Ok((asset, state, clock, tint)) = roots.get(part.root) else {
             continue;
         };
         let Some(mut material) = materials.get_mut(&part.handle) else {
             continue;
         };
+        if let Some(tint) = tint.filter(|tint| tint.material == part.name) {
+            let [r, g, b] = tint.srgb;
+            material.base_color = Color::srgb(r, g, b);
+            continue;
+        }
         let color = if asset.asset.starts_with("scrub_oak_") {
             let colors = &profiles.oak["growth"]["colors"];
             if part.name == "ScrubOak_Bark" {
