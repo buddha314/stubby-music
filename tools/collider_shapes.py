@@ -239,6 +239,7 @@ FAMILIES = {
     "structures/cottage": ("structures/cottage/cottage.glb", cottage),
     "props/homestead": ("props/homestead/*/*.glb", homestead),
     "structures/vardo": ("structures/vardo/vardo.glb", vardo),
+    "creatures/cyber_cob": ("creatures/cyber_cob/cyber_cob.glb", "a skinned, moving creature: no static collider"),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

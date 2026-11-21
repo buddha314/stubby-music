@@ -74,6 +74,7 @@ impl Plugin for PrefabPresentationPlugin {
                 find_parts,
                 animation_sources,
                 prepare_animations,
+                loop_idle_clips,
                 update_hover,
                 hover_ring,
                 find_materials,
@@ -84,7 +85,13 @@ impl Plugin for PrefabPresentationPlugin {
         )
         .add_systems(
             PostUpdate,
-            (pose_parts, shade_materials, seek_animations).before(bevy::app::AnimationSystems),
+            (
+                pose_parts,
+                shade_materials,
+                seek_animations,
+                seek_idle_clips,
+            )
+                .before(bevy::app::AnimationSystems),
         );
     }
 }
@@ -561,6 +568,146 @@ fn prepare_animations(
         ));
     }
 }
+/// How far a placed asset looks for a running clock to keep its idle in time with.
+pub const IDLE_CLOCK_REACH_M: f32 = 30.0;
+
+/// A model's `Idle` clip plays on a placed asset that has no clock of its own (the cyber-cob
+/// by the vardo), in time with the music (user, 2026-11-20): phase-locked to the nearest
+/// running clock within `IDLE_CLOCK_REACH_M`, or to the master clock when none is near. Any
+/// model with an `Idle` clip comes alive this way; no code per kind.
+#[derive(Component)]
+struct IdleClip {
+    root: Entity,
+    node: AnimationNodeIndex,
+    duration: f32,
+}
+/// Marks a player already looked at (with or without an `Idle` clip).
+#[derive(Component)]
+struct IdleChecked;
+/// The model a clock-free placed asset's clips come from, held so it stays loaded.
+#[derive(Component)]
+struct IdleSource(Handle<Gltf>);
+
+/// Where in an idle clip of `duration` seconds to be after `beats` beats of a clock at
+/// `bpm`: one cycle spans a whole number of beats, or a beat holds a whole number of
+/// cycles, whichever keeps the clip nearest its authored speed; so idles land on the beat.
+pub fn idle_phase(beats: f64, bpm: f64, duration: f32) -> f32 {
+    let duration = f64::from(duration.max(0.001));
+    let beat = 60. / bpm.max(1e-6);
+    let cycles = if beat <= duration {
+        beats / (duration / beat).round().max(1.)
+    } else {
+        beats * (beat / duration).round().max(1.)
+    };
+    (cycles.rem_euclid(1.) * duration) as f32
+}
+
+#[allow(clippy::type_complexity)] // glTF assets, players and their placed roots.
+fn loop_idle_clips(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    gltfs: Res<Assets<Gltf>>,
+    clips: Res<Assets<AnimationClip>>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    players: Query<
+        Entity,
+        (
+            With<AnimationPlayer>,
+            Without<ClockAnimations>,
+            Without<IdleChecked>,
+        ),
+    >,
+    parents: Query<&ChildOf>,
+    roots: Query<(&PlacedAsset, Option<&IdleSource>), Without<AssetClock>>,
+) {
+    for player in &players {
+        let Some(root) = parents.iter_ancestors(player).find(|e| roots.contains(*e)) else {
+            continue;
+        };
+        let (asset, source) = roots.get(root).expect("root matched");
+        let Some(source) = source else {
+            commands
+                .entity(root)
+                .insert(IdleSource(assets.load(asset.model.clone())));
+            continue;
+        };
+        let Some(gltf) = gltfs.get(&source.0) else {
+            continue;
+        };
+        let Some(idle) = gltf.named_animations.get("Idle") else {
+            commands.entity(player).insert(IdleChecked);
+            continue;
+        };
+        let duration = clips.get(idle).map_or(1., AnimationClip::duration);
+        let (graph, node) = AnimationGraph::from_clip(idle.clone());
+        info!(
+            "{}: its Idle clip plays in time with the nearest clock",
+            asset.instance
+        );
+        commands.entity(player).insert((
+            AnimationGraphHandle(graphs.add(graph)),
+            IdleClip {
+                root,
+                node,
+                duration,
+            },
+            IdleChecked,
+        ));
+    }
+}
+
+#[allow(clippy::type_complexity)] // Clock sources, positions and players are separate stores.
+fn seek_idle_clips(
+    bus: Res<PulseBus>,
+    synth: Option<Res<Synth>>,
+    master: Option<Res<bevy_stubby_audio::MasterClock>>,
+    clocks: Query<(&AssetClock, &GlobalTransform)>,
+    places: Query<&GlobalTransform>,
+    mut players: Query<(&IdleClip, &mut AnimationPlayer)>,
+) {
+    let rate = synth.and_then(|synth| synth.thread().and_then(|thread| thread.sample_rate()));
+    let now = Instant::now();
+    for (idle, mut player) in &mut players {
+        let at = places
+            .get(idle.root)
+            .map_or(Vec3::ZERO, GlobalTransform::translation);
+        // The nearest running clock in reach, as (beats, bpm); else the master clock.
+        let near = rate.and_then(|rate| {
+            clocks
+                .iter()
+                .filter_map(|(clock, place)| {
+                    let d = place.translation().distance(at);
+                    let elapsed = bus.elapsed(clock.clock, now, rate)?;
+                    (d <= IDLE_CLOCK_REACH_M).then_some((
+                        d,
+                        elapsed * f64::from(clock.bpm) / 60.,
+                        f64::from(clock.bpm),
+                    ))
+                })
+                .min_by(|a, b| a.0.total_cmp(&b.0))
+                .map(|(_, beats, bpm)| (beats, bpm))
+        });
+        let timing = near.or_else(|| {
+            master
+                .as_ref()
+                .and_then(|m| m.beats())
+                .map(|beats| (beats, bevy_stubby_audio::MASTER_BPM))
+        });
+        let active = player.play(idle.node).repeat();
+        match timing {
+            Some((beats, bpm)) => {
+                active
+                    .pause()
+                    .set_seek_time(idle_phase(beats, bpm, idle.duration));
+            }
+            // No engine at all (a silent build): let it run free rather than freeze.
+            None => {
+                active.resume();
+            }
+        }
+    }
+}
+
 fn seek_animations(
     bus: Res<PulseBus>,
     synth: Option<Res<Synth>>,
@@ -886,6 +1033,16 @@ fn shade_materials(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn idle_clips_land_on_the_beat() {
+        // A 3.33 s idle at 120 BPM (0.5 s beats): seven beats per cycle, restarting on a beat.
+        assert_eq!(idle_phase(0.0, 120.0, 3.33), 0.0);
+        assert!(idle_phase(7.0, 120.0, 3.33).abs() < 1e-4);
+        // At the 1 BPM master clock (60 s beats): eighteen cycles per beat, one on each beat.
+        assert!(idle_phase(1.0, 1.0, 3.33).abs() < 1e-3);
+        assert!((idle_phase(0.5 / 18.0, 1.0, 3.33) - 1.665).abs() < 1e-3);
+    }
     fn profiles() -> FloraProfiles {
         FloraProfiles {
             oak: serde_json::from_str(include_str!("../../../assets/flora/scrub_oak/asset.json"))
