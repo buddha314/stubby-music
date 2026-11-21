@@ -57,7 +57,14 @@ previews in `previews/structures/cottage/` (hero, front-left, night, four elevat
 `metal`, the sod roof `gravel`, reed mats `carpet`, glass and the tank `glass`); 47 large
 meshes carry the tag. Sockets: `Door`, `Chimney_top`. Solid: the game builds colliders from
 the near level, as for boulders. Not yet: the homestead prop kit, the door's teal paint and
-the curved corrugated sheet of the concept, and a placement in a review scene.
+the curved corrugated sheet of the concept.
+
+**Homestead props (2026-11-20):** `tools/blender/create_homestead_props.py` builds the kit the
+concept showed on and around the porch, each its own placeable asset under
+`assets/props/homestead/` (200 to 730 triangles): table, bench, stool, barrel, bucket,
+planter and a hammock on two grown-wood posts. The door is now painted weathered verdigris,
+as in the concept. **Preview them together:** `python3 tools/jackdaw_timed_test.py
+--asset-review homestead` (scene `assets/world/asset_reviews/homestead.bsn`, at noon).
 
 ## For the model
 

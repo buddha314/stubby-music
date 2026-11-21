@@ -64,6 +64,13 @@
    "cull_metres": 600.0
   },
   {
+   "models": "props/homestead/*/*.glb",
+   "handover_metres": [
+    20.0
+   ],
+   "cull_metres": 120.0
+  },
+  {
    "models": "machines/reed_water_purifier/reed_water_purifier.glb",
    "handover_metres": [
     25.0
