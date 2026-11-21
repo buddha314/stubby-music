@@ -416,6 +416,9 @@ testable by asserting identical output for identical seeds.
 ## Blender asset pipeline
 
 - Blender is installed at `~/.local/bin/blender`.
+- **Concept art starts from a saved prompt** (user, 2026-11-20): image-generator prompts live in
+  `docs/art/prompts/` (workflow and shared style blocks in its README); chosen images go in
+  `docs/art/<asset>/` and continuity rules in `docs/art/<asset>.md` before modelling.
 - **Previews live in `previews/`, mirroring `assets/`** (`previews/flora/reeds/states.png`), so
   they stay out of the Jackdaw asset browser and the shipped assets. Only PNGs the game loads
   belong in `assets/`: today `assets/ui/` and the generated floor textures.
