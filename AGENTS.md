@@ -5,7 +5,9 @@ Guidance for AI agents (Claude Code, Codex, etc.) and humans working in this rep
 
 ## Graphical testing and the display flicker
 
-**Current setup (2026-11-03):** the monitors are driven by the **NVIDIA RTX 5070 Ti**
+**Two machines** (user, 2026-11-20): `ctenophora`, the workstation (RTX 5070 Ti), and `breq`,
+the laptop (Radeon RX 7700S, 8 GB); run `hostname` to tell which. The display notes below
+are `ctenophora`'s. **Current setup (2026-11-03):** the monitors are driven by the **NVIDIA RTX 5070 Ti**
 (`nvidia` driver, Vulkan) under **KDE Plasma (Wayland)**. The main monitor, DP-6, is 4K
 with 60/95/144/240 Hz modes (no 165 Hz). The old AMD flicker workaround
 (`amdgpu.dcdebugmask=0x410`) is no longer on the kernel command line and no longer
