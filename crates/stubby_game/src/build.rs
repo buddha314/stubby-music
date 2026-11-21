@@ -425,12 +425,8 @@ fn place(
         return;
     }
     if !affordable {
-        let needs = cost
-            .iter()
-            .map(|stack| format!("{} {}", stack.quantity, stack.item.replace('_', " ")))
-            .collect::<Vec<_>>()
-            .join(", ");
-        player.feedback = format!("A {} needs {needs}.", buildable.name.to_lowercase());
+        player.feedback =
+            shortfall_notice(&buildable.name, &cost, &player.items, catalog.as_deref());
         return;
     }
     if !placeable || player.items.take_stacks(&cost).is_err() {
@@ -464,6 +460,44 @@ fn place(
 
 /// The hologram's parts take the hologram material, amber when it can be built and red
 /// when it can't, and cast no shadow.
+/// What a build is short of, and for anything that is crafted, where it is made, so the
+/// player is pointed at the campfire rather than left guessing (user, 2026-11-20).
+fn shortfall_notice(
+    name: &str,
+    cost: &[stubby_recipes::Stack],
+    held: &stubby_recipes::Inventory,
+    catalog: Option<&RecipeCatalog>,
+) -> String {
+    let item_name = |id: &str| {
+        catalog
+            .and_then(|c| c.0.item(id))
+            .map_or_else(|| id.replace('_', " "), |item| item.name.to_lowercase())
+    };
+    let crafted = |id: &str| {
+        catalog.is_some_and(|c| {
+            c.0.recipes()
+                .any(|r| r.outputs.iter().any(|s| s.item == id))
+        })
+    };
+    let short: Vec<_> = cost
+        .iter()
+        .filter(|stack| held.quantity(&stack.item) < stack.quantity)
+        .collect();
+    if let Some(stack) = short.iter().find(|stack| crafted(&stack.item)) {
+        return format!(
+            "A {} needs a {} kit: craft it at a lit campfire (E), then build it here.",
+            name.to_lowercase(),
+            item_name(&stack.item).trim_end_matches(" kit"),
+        );
+    }
+    let needs = short
+        .iter()
+        .map(|stack| format!("{} {}", stack.quantity, item_name(&stack.item)))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("A {} needs {needs}.", name.to_lowercase())
+}
+
 fn tint_hologram(
     mut commands: Commands,
     placing: Res<Placing>,

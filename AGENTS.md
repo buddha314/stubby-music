@@ -144,7 +144,11 @@ opening scene has none placed. The first chores (short-term goals met by a condi
 its stream to a scrub oak; needs digging, `openspec/changes/add-digging/`), and later
 **Light the fire**: a campfire within 5 m of a sounding burbler or its stream borrows that
 clock (a `borrowed` rack place), and a whole bar with the snail sequencer's gates on 2 and 4
-lights it; it dies to embers when the clock stops (`stubby_game::campfire`). **Streams
+lights it; it dies to embers when the clock stops (`stubby_game::campfire`). The next major goal,
+**Clean the water** (2026-11-20), walks the purifier loop: find a high-pass filter, find an
+oscilloscope, craft the purifier kit at the lit campfire, build the check dam (Q), and tune it
+until an oak leafs on the clearer water; the build menu's notice says where a missing kit is
+crafted. **Streams
 accumulate a composition** (`add-stream-layers`): the heartbeat puts a note on the staff on
 every beat. The player builds a campfire from reeds (Q, 25 reeds, `buildables.json`), places
 it, then configures it (E): placed within 5 m of a stream it snaps beside it and joins it there,
