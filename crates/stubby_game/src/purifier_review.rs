@@ -387,7 +387,8 @@ fn script(
                 _ => {}
             }
             let done = script.pressed_at.is_some_and(|t| now - t > 0.8);
-            if done || waited > 6.0 {
+            // The whole review must finish inside the 20 s watchdog: do not wait long here.
+            if done || waited > 3.0 {
                 let scopes = player.items.quantity("oscilloscope");
                 let ok = scopes >= 1;
                 script.passed &= ok;
@@ -564,10 +565,11 @@ fn script(
                 screens.open = Some(stubby_core::Screen::MachineConfiguration(dam));
                 return;
             }
-            if script.since + 2.0 <= now && script.since + 2.0 > now - time.delta_secs() {
+            // The scope refreshes once a beat (0.5 s at the review's 120 BPM): two refreshes in.
+            if script.since + 1.2 <= now && script.since + 1.2 > now - time.delta_secs() {
                 shoot(&mut commands, &script, "2c-scope.png");
             }
-            if waited > 2.6 {
+            if waited > 1.6 {
                 screens.close();
                 next(&mut script, Step::Pools);
             }
