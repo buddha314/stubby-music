@@ -52,6 +52,9 @@ SOURCE = PROJECT / "assets-src/third_party/quaternius/horse.glb"
 PROSTHESIS_SIDE = "R"       # the horse's own right foreleg (see the docstring)
 WITHERS_M = 1.48            # a cob: about 14.2 hands
 KEEP_CLIPS = ("Idle", "Idle_2", "Idle_Headlow", "Eating", "Walk", "Gallop")
+# Where the vardo's shafts pass the cob's back pad when it stands at the vardo's Hitch, in
+# metres in the cob's frame (create_vardo.py: the shafts run x 0.44 -> 0.42, rising to 0.98 m).
+SHAFT_AT_PAD_M = (0.435, 0.94)
 
 
 class CyberCob(Burbler):
@@ -420,10 +423,25 @@ class CyberCob(Burbler):
             bmesh.ops.solidify(bm, geom=bm.faces[:], thickness=0.05)
         parts.append(self.part("BackPad", pad, self.leather, self.rigid("Torso2")))
 
+        # The tugs hold the shafts: rings where the shafts pass (SHAFT_AT_PAD_M, converted to
+        # this mesh's units), each hung from the pad's edge on a short leather strap.
+        withers = max(p.z for p, _ in self.verts if -1.3 < p.y < -0.7 and abs(p.x) < 0.2)
+        unit = withers / WITHERS_M          # mesh units per metre
+        shaft_x, shaft_z = (v * unit for v in SHAFT_AT_PAD_M)
+        tug_r = 0.065 * unit
+
         def tugs(bm):
             for sx in (-1, 1):
-                self.ring(bm, (bc.x + sx * bax * 1.12, bc.y, bc.z - baz * 0.15), 0.07, 0.07, 0.016, 12, axis="y", sides=4)
+                self.ring(bm, (sx * shaft_x, bc.y, shaft_z), tug_r, tug_r, 0.012 * unit, 14, axis="y", sides=4)
         parts.append(self.part("ShaftTugs", tugs, self.brass, self.rigid("Torso2")))
+
+        def tug_straps(bm):
+            for sx in (-1, 1):
+                edge = Vector((bc.x + sx * bax * 1.04, bc.y, bc.z + baz * 0.35))
+                ring_top = Vector((sx * shaft_x, bc.y, shaft_z + tug_r))
+                self.tube(bm, [edge, edge.lerp(ring_top, 0.5) + Vector((0, 0, 0.02 * unit)), ring_top],
+                          [0.016 * unit] * 3, 5)
+        parts.append(self.part("TugStraps", tug_straps, self.leather, self.rigid("Torso2")))
         return parts
 
     # ------------------------------------------------------------ build

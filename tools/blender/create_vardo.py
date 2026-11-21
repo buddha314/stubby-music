@@ -87,6 +87,7 @@ class Vardo(Burbler):
         self.leaf = m("Leaf", linear("#4f6a2a"), roughness=0.8)
         self.lace = m("Lace", linear("#e7e5dd"), roughness=0.9)
         self.wool = m("Wool", linear("#9c3b2a"), roughness=1.0)                # rust cable red
+        self.leather = m("Leather", linear("#4a3222"), roughness=0.8)          # cattail: the traces
         self.wicker = m("Wicker", linear("#9a8460"), roughness=1.0)
         amber, cyan, magenta = linear("#ffb350"), linear("#33ffd9"), linear("#ff4dd9")
         self.window = m("Window", amber, emission=amber, strength=3.0)
@@ -102,6 +103,7 @@ class Vardo(Burbler):
             self.timber: "wood", self.grown: "wood", self.shingle: "wood",
             self.iron: "metal", self.rust: "metal", self.moss: None, self.leaf: None,
             self.lace: None, self.wool: None, self.wicker: None, self.window: "glass",
+            self.leather: None,
             self.lantern: None, self.lantern_halo: None, self.cyan: None, self.magenta: None,
             self.leaf_glow: None, self.leaf_halo: None,
         }
@@ -163,6 +165,29 @@ class Vardo(Burbler):
             self.ring(f"ShaftRing{sx}", (tip.x, tip.y - 0.04, tip.z - 0.07), 0.05, 0.012, self.iron, 4, 12)
         self.pipe("Swingletree", [(-0.55, FRONT_AXLE - 0.35, FRONT_R + 0.2), (0.55, FRONT_AXLE - 0.35, FRONT_R + 0.2)], 0.035, self.timber, 6)
         self.node("Hitch", (0, FRONT_AXLE - 2.4, 0), role="hitch")
+        self.traces()
+
+    def traces(self):
+        """The traces: a leather strap each side from the cob's hames, where it stands at the
+        Hitch (create_cyber_cob.py: about x 0.27 m, 0.6 m ahead of the cob's centre, 0.85 m
+        up), back along its flank to the swingletree's ends, bowing a little clear of it."""
+        hitch_y = FRONT_AXLE - 2.4
+        tree_y, tree_z = FRONT_AXLE - 0.35, FRONT_R + 0.2
+        for sx in (-1, 1):
+            hames = Vector((sx * 0.27, hitch_y - 0.6, 0.85))
+            tree = Vector((sx * 0.55, tree_y, tree_z))
+            pts = []
+            for i in range(7):
+                t = i / 6
+                p = hames.lerp(tree, t)
+                # Bow out past the cob's barrel, and sag a little between the ends.
+                p.x += sx * 0.07 * math.sin(math.pi * min(1.0, t * 1.6))
+                p.z -= 0.05 * math.sin(math.pi * t)
+                pts.append(p)
+            self.mesh_obj(f"Trace{sx}", lambda bm, p=pts: self.tube(bm, p, [0.022] * len(p), 6), self.leather)
+            # The hook at the hames end, and the trace's iron end at the swingletree.
+            self.ring(f"TraceHook{sx}", tuple(pts[0]), 0.03, 0.008, self.iron, 4, 10)
+            self.pipe(f"TraceEnd{sx}", [tuple(tree - Vector((0, 0.06, 0))), tuple(tree + Vector((0, 0.02, 0)))], 0.03, self.iron, 6)
 
     # ------------------------------------------------------------ the body
 

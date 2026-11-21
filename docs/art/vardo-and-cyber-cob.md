@@ -88,3 +88,13 @@ splayed a full ring of cards to the ground and hid the hooves.
 plays in time with the music: phase-locked to the nearest running clock within 30 m, or to
 the master clock (user, 2026-11-20), as any placed model with an `Idle` clip now does.
 
+## The harness (2026-11-21)
+
+The pair now meets as a shaft harness does. The shafts end at the cob's shoulder and ride
+in two brass **tugs**, rings hung from the back pad on short leather straps where the shafts
+pass (`SHAFT_AT_PAD_M` in `create_cyber_cob.py`). A leather **trace** each side, part of the
+vardo, runs from the cob's hames back along its flank, bowing clear of the barrel, to the
+ends of the swingletree (`Vardo.traces`), so it meets the cob wherever it stands at the
+`Hitch`. The pair sheet, rendered from the exported models with the cob at the hitch:
+`tools/blender/render_vardo_pair.py` -> `previews/structures/vardo/pair_sheet.png`.
+
