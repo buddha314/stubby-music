@@ -53,9 +53,17 @@ recommends explicit geometry and material authoring controls.
 ### Marking a model by glTF extras
 
 A model can opt in from its source instead of the editor: give a mesh node the glTF
-extras `"acoustic": "rock"` in its Blender generator, and the game marks the meshes under
-that node with `AcousticOccluder::ROCK` when they spawn (`add-echo-grotto`; the boulders
-of `tools/blender/create_boulders.py` do this). Only the near level carries the extras.
+extras `"acoustic": "<preset>"` in its Blender generator, and the game marks the meshes
+under that node with `AcousticOccluder::preset(<preset>)` when they spawn. The presets are
+the table above by name: `generic`, `rock`, `concrete`, `brick`, `wood`, `glass`, `metal`,
+`carpet`, `gravel` (`add-echo-grotto` began with `rock`; the cottage added the rest).
+Only the near level carries the extras.
+
+**Every material declares its acoustic class** (user, 2026-11-20): a generator maps each
+material it uses to a preset, or to none when the material only dresses small parts, and
+records the map in the asset's profile (`asset.json` `acoustics`, as
+`tools/blender/create_cottage.py` does). Which meshes carry the tag still follows *What to
+mark* below: large surfaces yes, trim, clutter and moving parts no.
 
 ## What to mark
 

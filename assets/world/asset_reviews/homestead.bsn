@@ -1,0 +1,64 @@
+// Asset review: the cottage and its homestead props, placed in the cottage's own frame
+// (porch on its right side), shown from the opening view. Not a level; a place to look.
+// Regenerate the layout from docs/art/cottage.md if the cottage changes.
+bevy_ecs::hierarchy::Children [
+    #"Cottage"
+    jackdaw::prefab::components::IsA { source: "structures/cottage/cottage.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.000000, y: 0.000000, z: 3.000000 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Porch table"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_table/homestead_table.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.083142, y: 0.200000, z: 7.744005 }, rotation: glam::Quat { x: 0.000000, y: 0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"Porch stool, near"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_stool/homestead_stool.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.017949, y: 0.200000, z: 7.031089 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Porch stool, far"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_stool/homestead_stool.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.061731, y: 0.200000, z: 8.506922 }, rotation: glam::Quat { x: 0.000000, y: -0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"Porch bench"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_bench/homestead_bench.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.301795, y: 0.200000, z: 7.386826 }, rotation: glam::Quat { x: 0.000000, y: 0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"Barrel by the door"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_barrel/homestead_barrel.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.869873, y: 0.000000, z: 7.578461 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Second barrel"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_barrel/homestead_barrel.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.755162, y: 0.000000, z: 8.279775 }, rotation: glam::Quat { x: 0.000000, y: -0.173648, z: 0.000000, w: 0.984808 } }
+    --
+    #"Bucket"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_bucket/homestead_bucket.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.341764, y: 0.000000, z: 7.363750 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Planter under the window"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_planter/homestead_planter.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.633270, y: 0.000000, z: 3.904552 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Planter at the porch"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_planter/homestead_planter.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 13.686379, y: 0.000000, z: 10.224742 }, rotation: glam::Quat { x: 0.000000, y: -0.500000, z: 0.000000, w: 0.866025 } }
+    --
+    #"Hammock in the yard"
+    jackdaw::prefab::components::IsA { source: "props/homestead/homestead_hammock/homestead_hammock.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.600962, y: 0.000000, z: 10.504998 }, rotation: glam::Quat { x: 0.000000, y: 0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"Campfire for scale"
+    jackdaw::prefab::components::IsA { source: "structures/campfire/campfire.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.000000, y: 0.000000, z: 0.400000 } }
+]

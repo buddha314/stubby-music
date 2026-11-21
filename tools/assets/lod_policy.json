@@ -57,6 +57,27 @@
    "cull_metres": 300.0
   },
   {
+   "models": "structures/cottage/cottage.glb",
+   "handover_metres": [
+    60.0
+   ],
+   "cull_metres": 600.0
+  },
+  {
+   "models": "structures/vardo/vardo.glb",
+   "handover_metres": [
+    50.0
+   ],
+   "cull_metres": 600.0
+  },
+  {
+   "models": "props/homestead/*/*.glb",
+   "handover_metres": [
+    20.0
+   ],
+   "cull_metres": 120.0
+  },
+  {
    "models": "machines/reed_water_purifier/reed_water_purifier.glb",
    "handover_metres": [
     25.0

@@ -5,7 +5,9 @@ Guidance for AI agents (Claude Code, Codex, etc.) and humans working in this rep
 
 ## Graphical testing and the display flicker
 
-**Current setup (2026-11-03):** the monitors are driven by the **NVIDIA RTX 5070 Ti**
+**Two machines** (user, 2026-11-20): `ctenophora`, the workstation (RTX 5070 Ti), and `breq`,
+the laptop (Radeon RX 7700S, 8 GB); run `hostname` to tell which. The display notes below
+are `ctenophora`'s. **Current setup (2026-11-03):** the monitors are driven by the **NVIDIA RTX 5070 Ti**
 (`nvidia` driver, Vulkan) under **KDE Plasma (Wayland)**. The main monitor, DP-6, is 4K
 with 60/95/144/240 Hz modes (no 165 Hz). The old AMD flicker workaround
 (`amdgpu.dcdebugmask=0x410`) is no longer on the kernel command line and no longer
@@ -417,6 +419,9 @@ testable by asserting identical output for identical seeds.
 ## Blender asset pipeline
 
 - Blender is installed at `~/.local/bin/blender`.
+- **Concept art starts from a saved prompt** (user, 2026-11-20): image-generator prompts live in
+  `docs/art/prompts/` (workflow and shared style blocks in its README); chosen images go in
+  `docs/art/<asset>/` and continuity rules in `docs/art/<asset>.md` before modelling.
 - **Previews live in `previews/`, mirroring `assets/`** (`previews/flora/reeds/states.png`), so
   they stay out of the Jackdaw asset browser and the shipped assets. Only PNGs the game loads
   belong in `assets/`: today `assets/ui/` and the generated floor textures.
@@ -440,6 +445,12 @@ testable by asserting identical output for identical seeds.
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
   `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
+- **Preview new assets in an asset review scene** (`assets/world/asset_reviews/`, at noon):
+  `python3 tools/jackdaw_timed_test.py --asset-review <name>` (`homestead`: the cottage and its props).
+- **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by
+  name (`AcousticOccluder::preset`: rock, brick, wood, glass, metal, ...), set as glTF extras
+  `"acoustic"` on large near-level meshes by the generator, and listed in the profile
+  (`tools/blender/create_cottage.py` is the example).
 - **Audit acoustics when authoring levels or large geometry.** Read
   `docs/audio/acoustic-level-authoring.md`; mark sound-critical static `Mesh3d`
   children with `stubby_core::AcousticOccluder` and choose its absorption,

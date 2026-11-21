@@ -189,12 +189,17 @@ fn mark_acoustic_rock(
         }
     }
     for (node, extras) in &nodes {
-        let rock = serde_json::from_str::<serde_json::Value>(&extras.value)
+        let Some(occluder) = serde_json::from_str::<serde_json::Value>(&extras.value)
             .ok()
-            .is_some_and(|value| value.get("acoustic").and_then(|v| v.as_str()) == Some("rock"));
-        if !rock {
+            .and_then(|value| {
+                value
+                    .get("acoustic")
+                    .and_then(|v| v.as_str())
+                    .and_then(stubby_core::AcousticOccluder::preset)
+            })
+        else {
             continue;
-        }
+        };
         let mesh_count = std::iter::once(node)
             .chain(children.iter_descendants(node))
             .filter(|entity| all_meshes.contains(*entity))
@@ -208,9 +213,7 @@ fn mark_acoustic_rock(
         }
         for entity in std::iter::once(node).chain(children.iter_descendants(node)) {
             if meshes.contains(entity) {
-                commands
-                    .entity(entity)
-                    .insert(stubby_core::AcousticOccluder::ROCK);
+                commands.entity(entity).insert(occluder);
             }
         }
     }

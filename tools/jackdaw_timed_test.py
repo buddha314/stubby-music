@@ -143,6 +143,10 @@ def main():
                         help='Play the purifier loop itself: tempo, craft, build, patch, tune, clear (standalone only)')
     parser.add_argument('--phase-review', choices=('camp', 'village', 'town', 'city'),
                         help='Review a settlement phase scene (standalone only)')
+    parser.add_argument('--asset-review',
+                        choices=sorted(p.stem for p in (ROOT / 'assets/world/asset_reviews').glob('*.bsn')),
+                        help='Look at new assets in a review scene, assets/world/asset_reviews/<name>.bsn '
+                             '(standalone, seeded layout off)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')
     parser.add_argument('--sky', action='store_true', help='Review the sky at dawn, noon, dusk and night')
@@ -154,8 +158,11 @@ def main():
     args = parser.parse_args()
     if not 0 < args.seconds <= 20:
         parser.error('--seconds must be greater than zero and no more than 20')
-    if args.lods:
+    if args.lods or args.asset_review:
         args.standalone = True
+    if args.asset_review and (args.phase_review or args.lods or args.prefabs or args.audio_demo
+                              or args.grotto_audio_review or args.purifier_review or args.purifier_e2e):
+        parser.error('--asset-review selects its own standalone scene')
     if args.phase_review and not args.standalone:
         parser.error('--phase-review requires --standalone')
     if args.phase_review and (args.lods or args.prefabs or args.audio_demo or args.grotto_audio_review
@@ -192,6 +199,9 @@ def main():
         if args.phase_review:
             command += [f'--scene=world/phase_reviews/{args.phase_review}.bsn',
                         f'--screenshot=/tmp/stubby-phase-{args.name}.png']
+        elif args.asset_review:
+            command += [f'--scene=world/asset_reviews/{args.asset_review}.bsn', '--no-seeded-layout',
+                        f'--screenshot=/tmp/stubby-asset-{args.asset_review}.png']
         elif args.lods:
             command += [f'--lod-review=/tmp/stubby-lod-{args.name}', f'--lod-review-set={args.lods}']
         elif not args.prefabs:

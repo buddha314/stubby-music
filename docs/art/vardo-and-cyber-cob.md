@@ -45,3 +45,19 @@ The source archive contains 36 large PNG explorations (~100 MB unpacked). This d
 | `vardo-cyber-cob/wagon-orientation-study.png` | `images/a_clean_studio_illustration_look_highly_detailed.png`; paired wagon views |
 | `vardo-cyber-cob/vardo-side-study.png` | `images/a_detailed_watercolor_ink_technical_illustration_s.png`; side silhouette and aged timber/iron materials |
 | `vardo-cyber-cob/cyber-cob-side-study.png` | `images/a_detailed_hyper_realistic_concept_art_photoreal.png`; coat, mane, single prosthetic leg, and subtle light direction |
+
+## The vardo model (2026-11-20)
+
+`tools/blender/create_vardo.py` builds it from the rules above: `assets/structures/vardo/`
+(glb with `vardo_LOD0`/`_LOD1`, prefab, profile, colliders), previews in
+`previews/structures/vardo/` (three-quarter, rear three-quarter, side, front, rear, top,
+night). 11.2k triangles near, 208 far. Front wheels 0.9 m, rear 1.3 m (ratio 1.44); the
+shafts and a turntable at the towing end, the entrance at the rear with a half-door (its top
+leaf open inward, the interior lit), removable steps, a pan box with pans, a ladder rack
+with a basket and a wool blanket, and a lantern. The roof's end ribs grow down the corner
+posts into the sill. Accents are restrained: three small cyan leaf glows, one magenta ring on
+the chimney, thin cyan rim lines. Every material declares an acoustic class (painted planks,
+trim, roof and wheels `wood`, iron `metal`, windows `glass`). Sockets: `Door`, `Chimney_top`,
+`Hitch` (where the cob stands, for the pair review). In the game:
+`python3 tools/jackdaw_timed_test.py --asset-review vardo`.
+

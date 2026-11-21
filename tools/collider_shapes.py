@@ -193,6 +193,42 @@ def campfire(glb):
     return [cylinder_around(near)]
 
 
+def cottage(glb):
+    """A box around the house's walls (the near level's earth and timber), and one around
+    the water tank; the porch, mast and roof overhangs stay open."""
+    parts = world_meshes(glb)
+    def gather(*words):
+        found = [p for name, p in parts.items() if any(w in name for w in words) and "Far" not in name]
+        return np.concatenate(found) if found else None
+    shapes = []
+    for words in (("Wall", "Plinth"), ("TankWater", "TankPallet")):
+        pts = gather(*words)
+        if pts is not None:
+            shapes.append(cuboid_around(pts))
+    return shapes
+
+
+def homestead(glb):
+    """The bigger homestead props block the player (a box around the near level); the
+    bucket, stool and planter are low enough to step round, and stay walk-through."""
+    if any(word in glb.stem for word in ("bucket", "stool", "planter")):
+        return "small enough to walk round; no collider"
+    parts = world_meshes(glb)
+    return [cuboid_around(np.concatenate([p for name, p in parts.items() if "Far" not in name]))]
+
+
+def vardo(glb):
+    """A box around the body and roof, and one around the running gear and wheels; the
+    shafts and the steps stay open (the cob stands between the shafts)."""
+    parts = world_meshes(glb)
+    def gather(*words):
+        found = [p for name, p in parts.items() if any(w in name for w in words) and "Far" not in name]
+        return np.concatenate(found) if found else None
+    return [cuboid_around(pts) for pts in (gather("Body", "Roof", "Lunette"),
+                                           gather("Felloe", "Tyre", "Axle", "Rail"))
+            if pts is not None]
+
+
 FAMILIES = {
     # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
@@ -200,6 +236,9 @@ FAMILIES = {
     "props/desert": ("props/desert/*/*.glb", None),
     "props/rocks": ("props/rocks/*/*.glb", rock_formation),
     "structures/campfire": ("structures/campfire/campfire.glb", campfire),
+    "structures/cottage": ("structures/cottage/cottage.glb", cottage),
+    "props/homestead": ("props/homestead/*/*.glb", homestead),
+    "structures/vardo": ("structures/vardo/vardo.glb", vardo),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

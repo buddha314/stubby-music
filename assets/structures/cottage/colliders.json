@@ -1,0 +1,32 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "structures/cottage/cottage.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 6.3,
+          "y_length": 2.7,
+          "z_length": 8.3,
+          "translation": [
+            0.0,
+            1.35,
+            0.0
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 1.1,
+          "y_length": 1.26,
+          "z_length": 1.25,
+          "translation": [
+            -3.75,
+            0.63,
+            3.25
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

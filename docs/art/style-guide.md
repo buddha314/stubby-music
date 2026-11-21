@@ -125,6 +125,8 @@ been made once (2026-10-31, `accents[0]`).
 | Reeds | Stalk dry `#9a8460`, green `#5f6e34`, Blade dry `#8a7552`, green `#4f5e2c`, Cattail `#4a3222`, Cut `#c2ab7c` |
 | Desert props | Twig `#7d7468` → `#4f4234`, Stump `#8f897d` → `#4f4134`, Heartwood `#8a7a62`, Mud plate `#5a4433` → `#3e2f22`; bloomed Leaf `#4f6a2a`, Moss `#3f5a24`, Sprout `#6f9a34`, Mushroom stem `#d9d2c0`; luminous flowers Magenta, mushrooms Cyan |
 | Patch cables | Rust `#9c3b2a`, Ochre `#b8892f`, Verdigris `#3f7a6e`, Slate `#4b5a78`, Bone `#cfc6b2` (not emissive) |
+| Vardo | Forest green `#2f4a33`, Plank groove `#1e2e21`, Burgundy trim `#6b2a28`; folk motifs in Brass `#c4aa76`, lace in Print inverted `#e7e5dd`, wool in Rust `#9c3b2a`, dark iron in Ridges `#2e2b33`; accents: Cyan, Magenta (bloomed) |
+| Homestead | Door paint: Verdigris `#3f7a6e`; Canvas: Bone `#cfc6b2`; Rope: reed Blade dry `#8a7552`; Sawn wood: Heartwood `#8a7a62` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
 The accents belong to flora and the bloomed world. Keep them off modules: amber is
@@ -223,6 +225,9 @@ bloom gives it one. Segment displays stay segmented, because a number has to be 
 - Lights that the game animates are separate materials (`Glyph`, `LedOut`,
   `Clock_Lamp`, …). The game clones them per instance, so name them stably.
 - Colour lives in materials, not textures, until a texture earns its place.
+- **Every material declares an acoustic class** (a Steam Audio preset by name, or none for
+  materials on small parts only); large near-level meshes carry it as glTF extras
+  `acoustic` (`docs/audio/acoustic-level-authoring.md`).
 
 ## Naming and game-facing nodes
 
@@ -244,6 +249,9 @@ detail inside it as `<id>_LOD<n>` nodes; Jackdaw's import settings in `<id>.glb.
 Ids are `snake_case`.
 
 ## Pipeline
+
+Concept art starts from a saved prompt (`docs/art/prompts/`, workflow in its README):
+prompt, generate, select images into `docs/art/<asset>/`, write the brief, then model.
 
 Generator scripts are the source of truth, never hand edits to a `.blend`:
 
@@ -270,6 +278,7 @@ expensive part of soft light; keep their resolution as low as still reads round.
 | Module | ≤ 10k | ≤ 16 |
 | Creature | ≤ 2k | ≤ 4 |
 | Prop, tree | ≤ 15k, with a ≤ 3k far LOD | ≤ 8 |
+| Structure (dwelling, vehicle) | ≤ 20k, with a ≤ 3k far LOD | ≤ 24 |
 
 ## Review checklist
 

@@ -1,0 +1,32 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "structures/vardo/vardo.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 2.1,
+          "y_length": 1.85,
+          "z_length": 3.5,
+          "translation": [
+            0.0,
+            2.075,
+            0.05
+          ]
+        },
+        {
+          "shape": "Cuboid",
+          "x_length": 2.167,
+          "y_length": 2.357,
+          "z_length": 3.117,
+          "translation": [
+            0.0,
+            1.161,
+            0.041
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}
