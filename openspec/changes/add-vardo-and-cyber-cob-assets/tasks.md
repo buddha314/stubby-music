@@ -4,7 +4,7 @@ All tasks are art and asset pipeline unless explicitly noted. The asset guide an
 
 - [x] 1.1 Transcribe the supplied decisions into `docs/art/vardo-and-cyber-cob.md` and add the curated reference studies.
 - [x] 1.2 (claimed: Claude; 2026-11-20: previews/structures/vardo/ side, front, rear, three-quarters) Review the wagon silhouette with consistent front, rear, side, and three-quarter views; fix towing end, entrance end, wheel ratio, and shared geometry.
-- [x] 1.3 (claimed: Claude; previews/creatures/cyber_cob/; prosthesis on the horse's own right foreleg, to confirm: see the art guide) Review the cyber-cob from side and three-quarter views; verify one near-side front prosthesis and three natural legs, plus subtle optical strands in mane and tail.
+- [x] 1.3 (claimed: Claude; previews/creatures/cyber_cob/; prosthesis on the horse's own right foreleg, confirmed by the user 2026-11-20) Review the cyber-cob from side and three-quarter views; verify one near-side front prosthesis and three natural legs, plus subtle optical strands in mane and tail.
 
 ## 2. Vardo asset
 

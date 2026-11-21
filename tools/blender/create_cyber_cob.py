@@ -223,7 +223,8 @@ class CyberCob(Burbler):
         return top
 
     def feathering(self):
-        """Cream feathering around the fetlocks of the three natural legs."""
+        """Feathering on the three natural legs, as a cob's grows: long hair from the back and
+        sides of the fetlock falling over the top of the hoof, the hoof's front left clear."""
         parts = []
         legs = [("Front", s) for s in "LR" if s != PROSTHESIS_SIDE] + [("Back", "L"), ("Back", "R")]
         for front, side in legs:
@@ -234,13 +235,16 @@ class CyberCob(Burbler):
             r = max(((Vector((p.x, p.y, 0)) - foot).length for p, _ in near), default=0.15)
 
             def fill(bm, foot=foot, r=r):
-                for k in range(24):
-                    a = math.tau * k / 24 + self.rng.uniform(-0.12, 0.12)
+                # The model's front is -Y: the hoof's front faces -Y and stays clear.
+                for k in range(30):
+                    a = self.rng.uniform(math.radians(-130), math.radians(130)) + math.pi / 2
                     d = Vector((math.cos(a), math.sin(a), 0))
-                    t = Vector((-d.y, d.x, 0)) * self.rng.uniform(0.025, 0.045)
-                    top_p = foot + d * (r * 0.85) + Vector((0, 0, self.rng.uniform(0.38, 0.62)))
-                    low = foot + d * (r * self.rng.uniform(1.25, 1.55)) + Vector((0, 0, self.rng.uniform(0.02, 0.12)))
-                    bm.faces.new([bm.verts.new(p) for p in (top_p - t * 0.5, top_p + t * 0.5, low + t, low - t)])
+                    behind = max(0.0, d.y)                         # 1 straight behind, 0 at the sides
+                    w = Vector((-d.y, d.x, 0)) * self.rng.uniform(0.03, 0.05)
+                    top_p = foot + d * (r * 0.8) + Vector((0, 0, self.rng.uniform(0.55, 0.8)))
+                    low = (foot + d * (r * (1.05 + 0.2 * behind))
+                           + Vector((0, 0, self.rng.uniform(0.14, 0.24) - 0.1 * behind)))
+                    bm.faces.new([bm.verts.new(p) for p in (top_p - w, top_p + w, low)])
             parts.append(self.part(f"Feather{front}{side}", fill, self.cream, self.rigid(bone)))
         return parts
 
@@ -259,18 +263,14 @@ class CyberCob(Burbler):
         deform = bm.verts.layers.deform.active
         idx = {vg.name: vg.index for vg in self.body.vertex_groups}
         mw = self.body.matrix_world
-        doomed = []
-        for f in bm.faces:
-            ok = True
-            for v in f.verts:
-                w = v[deform]
-                best = max(w.items(), key=lambda kv: kv[1])[0] if w else None
-                name = self.body.vertex_groups[best].name if best is not None else None
-                if name not in drop or (mw @ v.co).z > knee.z - 0.05:
-                    ok = False
-                    break
-            if ok:
-                doomed.append(f)
+        # Everything of that leg below the knee, by position: within the leg's footprint, on
+        # its side of the body (skin weights alone left scraps of hoof and pastern).
+        axis = Vector((knee.x, knee.y, 0))
+        def below_knee(v):
+            p = mw @ v.co
+            return (p.z < knee.z - 0.05 and (Vector((p.x, p.y, 0)) - axis).length < 0.42
+                    and p.x * knee.x > 0)
+        doomed = [f for f in bm.faces if all(below_knee(v) for v in f.verts)]
         bmesh.ops.delete(bm, geom=doomed, context="FACES")
         bm.to_mesh(mesh)
         bm.free()
