@@ -4,4 +4,5 @@
 //! names crafting, the player or the world.
 pub mod machine_config;
 pub mod rack;
+pub mod samples;
 pub mod synth_modules;

@@ -454,6 +454,38 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
             ));
         }
     }
+    for item in &definition.items {
+        if let Some(sample) = &item.sample {
+            if !sample.path.starts_with("audio/samples/")
+                || !sample.path.ends_with(".wav")
+                || !sample.path.split('/').all(|part| {
+                    !part.is_empty()
+                        && part != "."
+                        && part != ".."
+                        && part.bytes().all(|b| {
+                            b.is_ascii_lowercase()
+                                || b.is_ascii_digit()
+                                || matches!(b, b'_' | b'-' | b'.')
+                        })
+                })
+            {
+                errors.push(RulesError::new(
+                    ITEMS,
+                    &item.id,
+                    "sample.path",
+                    "expected an asset-relative WAV path under audio/samples/",
+                ));
+            }
+            if sample.source.trim().is_empty() {
+                errors.push(RulesError::new(
+                    ITEMS,
+                    &item.id,
+                    "sample.source",
+                    "expected a source label",
+                ));
+            }
+        }
+    }
     let items: BTreeSet<&str> = definition.items.iter().map(|i| i.id.as_str()).collect();
     let resources: BTreeSet<&str> = definition.resources.iter().map(|r| r.id.as_str()).collect();
     let stacks =
@@ -862,6 +894,36 @@ mod tests {
             && e.id == "stream_segment"
             && e.field == "cost"
             && e.message.contains("mystery")));
+    }
+
+    #[test]
+    fn sample_items_validate_paths_and_source_labels() {
+        let mut items: serde_json::Value = serde_json::from_str(shipped_files().items).unwrap();
+        items["items"][0]["sample"] = serde_json::json!({
+            "path": "audio/samples/impact_review/rock-wood.wav",
+            "source": "Stone striking wood"
+        });
+        let id = items["items"][0]["id"].as_str().unwrap().to_owned();
+        let rules = Rules::load(&with("items", &items.to_string())).unwrap();
+        assert!(
+            crate::Catalog::new(rules.definition)
+                .unwrap()
+                .item(&id)
+                .unwrap()
+                .is_sound()
+        );
+
+        items["items"][0]["sample"]["path"] = serde_json::json!("audio/samples/../cue.wav");
+        items["items"][0]["sample"]["source"] = serde_json::json!(" ");
+        let errors = Rules::load(&with("items", &items.to_string())).unwrap_err();
+        for field in ["sample.path", "sample.source"] {
+            assert!(
+                errors
+                    .0
+                    .iter()
+                    .any(|error| error.id == id && error.field == field)
+            );
+        }
     }
 
     #[test]

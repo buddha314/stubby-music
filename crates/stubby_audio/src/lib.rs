@@ -21,6 +21,7 @@ mod modules;
 pub mod omg_spatial;
 mod protocol;
 mod random_clock;
+mod sample_voice;
 pub mod signal;
 mod thread;
 

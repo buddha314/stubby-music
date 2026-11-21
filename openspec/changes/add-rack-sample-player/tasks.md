@@ -1,5 +1,5 @@
-- [ ] 1. Add sample catalog and discovery rows with stable clip IDs, display metadata and asset validation. Author enough collectible clips to exercise selection and define the sampler's unlock.
-- [ ] 2. Prototype sample-accurate trigger handling with the existing Firewheel playback stack. Add offline tests for held gates, retrigger, routing and realtime safety.
-- [ ] 3. Add a data-authored sampler tile and a persisted clip selection to rack configurations. Verify older configurations and missing clips load safely.
-- [ ] 4. Implement the in-rack picker, preview, assignment and clear actions. Exercise keyboard navigation and verify cable gestures around the picker.
-- [ ] 5. Build a bounded rack review where two modules select different collected clips and a clock or sequencer triggers them. Verify reopening the rack preserves each selection.
+- [ ] 1. (claimed: Codex) Add sample catalog and discovery rows with stable clip IDs, display metadata and asset validation. Author enough collectible clips to exercise selection and define the sampler's unlock. Item schema, field-recorder discovery and the review bank are implemented. Production yields and unlock are open.
+- [x] 2. (claimed: Codex) Prototype sample-accurate trigger handling with the existing Firewheel playback stack. Add offline tests for held gates, retrigger, routing and realtime safety.
+- [x] 3. (claimed: Codex) Add a data-authored sampler tile and a persisted clip selection to rack configurations. Verify older configurations and missing clips load safely.
+- [ ] 4. (claimed: Codex) Implement the in-rack picker, preview, assignment and clear actions. Assignment and clear handlers are tested. Check pointer and keyboard navigation in the live picker and verify cable gestures around it.
+- [ ] 5. (claimed: Codex) Build a bounded rack review where two modules select different collected clips and a clock or sequencer triggers them. The watchdog review opens the wired rack with three clips. Verify reopening the rack preserves each live selection.

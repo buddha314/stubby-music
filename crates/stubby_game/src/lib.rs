@@ -36,6 +36,8 @@ pub mod prefabs {
 pub use stubby_life::bug as pulse;
 pub mod resources;
 mod review;
+mod sample_library;
+mod sampler_review;
 // Stream laying (stubby_streams), under its old module name.
 pub use stubby_streams as streams;
 mod purifier;
@@ -74,7 +76,11 @@ impl Plugin for DesertPlugin {
             waveform_audio::WaveformAudioPlugin,
             synth_modules::SynthModulesPlugin::default(),
         ))
-        .add_plugins(grotto_audio_review::GrottoAudioReviewPlugin)
+        .add_plugins((
+            grotto_audio_review::GrottoAudioReviewPlugin,
+            sampler_review::SamplerReviewPlugin,
+            sample_library::SampleLibraryPlugin,
+        ))
         .add_plugins((
             streams::StreamBuildPlugin::<resources::PlayerInventory>::default(),
             stream_review::StreamReviewPlugin,

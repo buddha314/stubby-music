@@ -96,3 +96,13 @@ its model's sockets**: any leaf node whose glTF extras name the resource ID (`"r
 so adding a collectible is a tagged socket and a row, no code. Hollow scrub oaks
 (variants 6 and 7) tag their `Hollow` socket `hollow_trunk`. The purifier is crafted at a
 campfire as a kit and built from it across a laid stream.
+
+### Collectible sounds
+
+An item in `items.json` can declare a `sample` with `path` and `source`.
+Use a PCM WAV in `assets/audio/samples/` and write the path relative to
+`assets/`. The source is the short label shown in the rack picker. Record the
+clip's licence beside the WAV. Give the item to an authored source through the
+usual resource yield. A successful field-recorder collection makes the item ID
+available in the picker through the recipe book. Multiple sampler modules can
+share the same clip.

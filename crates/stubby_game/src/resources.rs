@@ -252,7 +252,7 @@ fn collect_nearby(
                 catalog
                     .0
                     .item(&stack.item)
-                    .is_some_and(|item| item.waveform.is_some())
+                    .is_some_and(stubby_recipes::ItemDefinition::is_sound)
             })
         })
     });

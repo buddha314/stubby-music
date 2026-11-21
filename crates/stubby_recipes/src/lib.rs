@@ -32,15 +32,33 @@ pub enum Waveform {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct SampleDefinition {
+    /// Asset-relative PCM WAV under audio/samples/.
+    pub path: String,
+    /// The source label shown in the sampler picker.
+    pub source: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ItemDefinition {
     pub id: String,
     pub name: String,
     pub description: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub waveform: Option<Waveform>,
+    /// Learning this item unlocks its authored one-shot for the rack sampler.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample: Option<SampleDefinition>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub uses: Vec<SignalUse>,
 }
+impl ItemDefinition {
+    pub fn is_sound(&self) -> bool {
+        self.waveform.is_some() || self.sample.is_some()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Stack {

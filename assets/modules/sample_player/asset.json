@@ -1,0 +1,30 @@
+{
+  "id": "sample_player",
+  "model": "modules/sample_player/sample_player.glb#Scene0",
+  "module_kind": "SamplePlayer",
+  "scale": "eurorack_3u_8hp_x10",
+  "size_metres": {
+    "width": 0.4064,
+    "height": 1.375,
+    "depth": 0.32
+  },
+  "placement": {
+    "upright": true,
+    "max_tilt_degrees": 15.0,
+    "max_sink_metres": 0.25
+  },
+  "silhouette": "sample_wave",
+  "ports": [
+    {
+      "node": "Port_trigger",
+      "port": "trigger",
+      "direction": "in"
+    },
+    {
+      "node": "Port_out",
+      "port": "out",
+      "direction": "out"
+    }
+  ],
+  "params": []
+}

@@ -55,6 +55,8 @@ impl Default for ListenerPose {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ModuleKind {
+    /// Selectable one-shot with a rising-edge `trigger` input and mono `out`.
+    SamplePlayer,
     /// Sine oscillator. Input `"voct"`, output `"out"`, parameter `"freq"` (Hz).
     SineVco { freq_hz: f32 },
     /// Band-limited square oscillator; same ports and parameter as `SineVco`. Its
@@ -132,6 +134,11 @@ impl PortRef {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Command {
+    /// Bind a loaded clip. The new selection takes effect on the next trigger.
+    SelectSample {
+        module: ModuleId,
+        sample: Option<SampleId>,
+    },
     AddModule {
         id: ModuleId,
         kind: ModuleKind,

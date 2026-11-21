@@ -21,7 +21,9 @@ use crate::protocol::{
     PortRef, SampleId,
 };
 use crate::random_clock::RandomClockNode;
+use crate::sample_voice::{RetireSample, SampleVoice};
 use audioadapter_buffers::direct::InterleavedSlice;
+use firewheel::event::NodeEventType;
 use firewheel::nodes::{
     spatial_basic::SpatialBasicNode,
     triple_buffer::{TripleBufferConfig, TripleBufferNode, TripleBufferState, WindowSize},
@@ -36,6 +38,7 @@ use firewheel::{
     node::{NodeID, StreamStatus},
     processor::FirewheelProcessor,
 };
+use fundsp::wave::{Wave, WavePlayer};
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
 use std::sync::Arc;
@@ -68,6 +71,7 @@ impl Default for EngineConfig {
 
 #[derive(Debug, Clone, Copy)]
 enum NodeState {
+    SamplePlayer,
     Vco(VcoNode),
     Clock(ClockNode),
     RandomClock,
@@ -134,6 +138,7 @@ pub struct Engine {
     retiring: Vec<(NodeID, u64)>,
     /// Loaded one-shot samples, one buffer per channel, at the engine's sample rate.
     samples: HashMap<SampleId, Vec<Vec<f32>>>,
+    sample_waves: HashMap<SampleId, Arc<Wave>>,
     stream: Option<firewheel::cpal::CpalStream>,
     /// The world bus: every module output and emitter is heard through it, then the
     /// speakers. One-shot UI samples skip it, so its meter hears only the world.
@@ -254,6 +259,7 @@ impl Engine {
             event_rings: Vec::new(),
             retiring: Vec::new(),
             samples: HashMap::new(),
+            sample_waves: HashMap::new(),
             stream: None,
         })
     }
@@ -345,6 +351,7 @@ impl Engine {
     /// thread at the next [`flush`](Self::flush). Never blocks.
     pub fn send(&mut self, command: Command) -> Result<(), EngineError> {
         match command {
+            Command::SelectSample { module, sample } => self.select_sample(module, sample),
             Command::AddModule { id, kind } => self.add_module(id, kind),
             Command::PlaySample { sample, gain } => self.play_sample(sample, gain),
             Command::RemoveModule { id } => self.remove_module(id),
@@ -566,6 +573,9 @@ impl Engine {
             return Err(EngineError::DuplicateModule(id));
         }
         let (node, state) = match kind {
+            ModuleKind::SamplePlayer => {
+                (self.cx.add_node(SampleVoice, None), NodeState::SamplePlayer)
+            }
             ModuleKind::SineVco { freq_hz }
             | ModuleKind::SquareVco { freq_hz }
             | ModuleKind::SawVco { freq_hz }
@@ -752,7 +762,64 @@ impl Engine {
                 })
                 .collect()
         };
+        self.sample_waves.remove(&id);
         self.samples.insert(id, channels);
+    }
+
+    fn select_sample(
+        &mut self,
+        module: ModuleId,
+        sample: Option<SampleId>,
+    ) -> Result<(), EngineError> {
+        let target = self
+            .modules
+            .get(&module)
+            .ok_or(EngineError::UnknownModule(module))?;
+        if !matches!(target.state, NodeState::SamplePlayer) {
+            return Err(EngineError::Config("module is not a sample player"));
+        }
+        let node = target.node;
+        let player = sample
+            .map(|id| {
+                self.sample_wave(id)
+                    .map(|wave| WavePlayer::new(wave, 0, 0, wave.length(), None))
+            })
+            .transpose()?;
+        self.cx.queue_event_for(node, NodeEventType::custom(player));
+        Ok(())
+    }
+
+    fn sample_wave(&mut self, id: SampleId) -> Result<&Arc<Wave>, EngineError> {
+        use std::collections::hash_map::Entry;
+        match self.sample_waves.entry(id) {
+            Entry::Occupied(wave) => Ok(wave.into_mut()),
+            Entry::Vacant(slot) => {
+                let channels = self
+                    .samples
+                    .get(&id)
+                    .ok_or(EngineError::Config("unknown sample"))?;
+                let first = channels
+                    .first()
+                    .filter(|channel| !channel.is_empty())
+                    .ok_or(EngineError::Config("empty sample"))?;
+                let mut mono = first.clone();
+                if channels.len() > 1 {
+                    if channels.iter().any(|channel| channel.len() != mono.len()) {
+                        return Err(EngineError::Config("sample channel lengths differ"));
+                    }
+                    let scale = 1. / channels.len() as f32;
+                    for (index, output) in mono.iter_mut().enumerate() {
+                        *output = channels.iter().map(|channel| channel[index] * scale).sum();
+                    }
+                }
+                let rate = f64::from(
+                    self.cx
+                        .stream_info()
+                        .map_or(48_000, |info| info.sample_rate.get()),
+                );
+                Ok(slot.insert(Arc::new(Wave::from_samples(rate, &mono))))
+            }
+        }
     }
 
     /// One voice per play: a sampler node to the speakers, retired once it has played.
@@ -838,6 +905,11 @@ impl Engine {
                 // The scope is often a voice's last stage (the purifier's outlet): its
                 // pass-through and outputs stay until the modules before it have faded
                 // out, or their fades never reach the speakers and the voice clicks off.
+                true
+            }
+            NodeState::SamplePlayer => {
+                self.cx
+                    .queue_event_for(module.node, NodeEventType::custom(RetireSample));
                 true
             }
             NodeState::Clock(_)

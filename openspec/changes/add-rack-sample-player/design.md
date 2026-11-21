@@ -17,22 +17,21 @@ modular rack. [VCV Library](https://library.vcvrack.com/NYSTHI)
 ## Collection and saved patches
 
 A sound collectible can unlock an authored clip by stable catalog ID. Store
-discovery with the player's other permanent unlocks. Keep clip metadata and
-asset references in authored rows. Reuse the existing field recorder feedback.
+discovery in the existing recipe book. The catalog item ID identifies the clip,
+and an optional `sample` on the item row gives its WAV path and source label. Reuse the existing field recorder feedback.
 A rack configuration saves the clip ID per module. If a saved clip is
 unavailable, keep the ID, show its unavailable state and leave the output
 silent. Older rack configurations start with an empty selection.
 
 ## Playback
 
-Reuse the existing sample loading and off-thread preparation path in
-`stubby_audio`. Check the pinned Firewheel sampler first for the voice and
-retrigger behavior. Firewheel's stock sampler receives playback events and
-has no signal inputs. Prototype a small threshold-edge adapter before
-choosing how to deliver triggers at the correct sample offset. Keep the rack
-voice on the normal patch graph. Route auditions through the established interface bus so they stay out
-of the field recorder meter. The current one-shot helper connects directly to
-the device output and will need an explicit destination for this use.
+Reuse Firewheel's graph, sample loading and off-thread resampling.
+Firewheel's stock sampler has no signal inputs. A small Firewheel node reads
+the patched gate and resets fundsp's `WavePlayer` at the matching sample
+offset. Voice data shares a prepared mono wave. Selection changes are
+exchanged through Firewheel's deferred-drop events. Auditions use the
+one-shot command path to the shared device output, bypassing the world meter
+as other interface cues do.
 
 A rising edge above the shared gate threshold plays a one-shot. A new rising
 edge restarts an active clip with a short declick transition. Selection changes
@@ -59,3 +58,12 @@ Onset is the first output frame above 0.01 absolute amplitude on either channel.
 This baseline exercises command-driven one-shot playback. Patch-cable triggering
 and clip selection are covered by the remaining implementation tasks. The
 previews and generated renders are local review material.
+
+
+## Review rack
+
+The bounded `--standalone --sampler-review` run opens the nearest burbler
+with two sampler places and a mixer. Both samplers have clock and mixer
+cables prepatched. Three CC0 impact clips are available in this review bank.
+The normal recipe book loads samples from authored item rows after collection.
+A live collection source and a sampler unlock are still open.
