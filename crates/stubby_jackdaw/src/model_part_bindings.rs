@@ -167,7 +167,7 @@ fn bind_parts(
             || asset.asset.starts_with("homestead_")
             || matches!(
                 asset.asset.as_str(),
-                "campfire" | "cottage" | "reed_water_purifier"
+                "campfire" | "cottage" | "vardo" | "reed_water_purifier"
             ))
         {
             continue;
@@ -379,7 +379,8 @@ fn solid_boulders(
         };
         if !(asset.asset.starts_with("boulder_")
             || asset.asset.starts_with("rock_formation_")
-            || asset.asset == "cottage")
+            || asset.asset == "cottage"
+            || asset.asset == "vardo")
         {
             continue;
         }

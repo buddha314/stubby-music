@@ -64,6 +64,13 @@
    "cull_metres": 600.0
   },
   {
+   "models": "structures/vardo/vardo.glb",
+   "handover_metres": [
+    50.0
+   ],
+   "cull_metres": 600.0
+  },
+  {
    "models": "props/homestead/*/*.glb",
    "handover_metres": [
     20.0

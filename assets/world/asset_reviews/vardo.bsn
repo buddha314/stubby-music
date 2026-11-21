@@ -1,0 +1,13 @@
+// Asset review: the vardo (the player's base) beside a campfire, side-on to the opening
+// view and turned a little to show its towing end. Not a level; a place to look.
+bevy_ecs::hierarchy::Children [
+    #"Vardo"
+    jackdaw::prefab::components::IsA { source: "structures/vardo/vardo.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 12.000000, y: 0.000000, z: 3.500000 }, rotation: glam::Quat { x: 0.000000, y: -0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"Campfire"
+    jackdaw::prefab::components::IsA { source: "structures/campfire/campfire.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.000000, y: 0.000000, z: 0.400000 } }
+]
