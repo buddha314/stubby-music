@@ -198,7 +198,7 @@ marked as a **Data** fix (rows only) or a **Rule** change (OpenSpec first):
 
 | # | Finding | Kind |
 | --- | --- | --- |
-| 1 | **Goals cover only Camp.** None guide the water loop: collecting a high-pass filter and an oscilloscope, crafting the purifier kit at a burning campfire, building it across a stream, tuning it, clear water. | Data, plus Rule for a clarity condition |
+| 1 | **Done 2026-11-20:** *Clean the water* walks the loop with existing condition kinds (the last step, an oak leafing, stands in for clearer water until #2). Was: **Goals cover only Camp.** None guide the water loop: collecting a high-pass filter and an oscilloscope, crafting the purifier kit at a burning campfire, building it across a stream, tuning it, clear water. | Data, plus Rule for a clarity condition |
 | 2 | **No goal condition for water clarity** ("the stream below a dam reaches clear", "clear water for a day"). Needed by goal 1 and by the Camp → Village transition. | Rule |
 | 3 | **"Light the fire" needs a snail shell** (the campfire's sequencer place) but no goal or hint points the player at one. | Data (a goal or a hint) |
 | 4 | **`clock` item is orphaned.** The `clock_source` resource yields it, but the burbler is configured, never collected; only a test adds it. Retire it (with a migration row) or define a portable clock. | Data, user decision |
