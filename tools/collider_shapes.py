@@ -193,6 +193,21 @@ def campfire(glb):
     return [cylinder_around(near)]
 
 
+def cottage(glb):
+    """A box around the house's walls (the near level's earth and timber), and one around
+    the water tank; the porch, mast and roof overhangs stay open."""
+    parts = world_meshes(glb)
+    def gather(*words):
+        found = [p for name, p in parts.items() if any(w in name for w in words) and "Far" not in name]
+        return np.concatenate(found) if found else None
+    shapes = []
+    for words in (("Wall", "Plinth"), ("TankWater", "TankPallet")):
+        pts = gather(*words)
+        if pts is not None:
+            shapes.append(cuboid_around(pts))
+    return shapes
+
+
 FAMILIES = {
     # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
@@ -200,6 +215,7 @@ FAMILIES = {
     "props/desert": ("props/desert/*/*.glb", None),
     "props/rocks": ("props/rocks/*/*.glb", rock_formation),
     "structures/campfire": ("structures/campfire/campfire.glb", campfire),
+    "structures/cottage": ("structures/cottage/cottage.glb", cottage),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

@@ -444,6 +444,10 @@ testable by asserting identical output for identical seeds.
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
   `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
+- **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by
+  name (`AcousticOccluder::preset`: rock, brick, wood, glass, metal, ...), set as glTF extras
+  `"acoustic"` on large near-level meshes by the generator, and listed in the profile
+  (`tools/blender/create_cottage.py` is the example).
 - **Audit acoustics when authoring levels or large geometry.** Read
   `docs/audio/acoustic-level-authoring.md`; mark sound-critical static `Mesh3d`
   children with `stubby_core::AcousticOccluder` and choose its absorption,

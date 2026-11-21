@@ -47,6 +47,18 @@ so model from the hero and these rules:
   sun-facing roof slope; the turbine mast and the rain tank on the same corners in every
   view.
 
+## The model (2026-11-20)
+
+`tools/blender/create_cottage.py` builds it from the hero view and these rules:
+`assets/structures/cottage/` (glb with `cottage_LOD0`/`_LOD1`, prefab, profile, colliders),
+previews in `previews/structures/cottage/` (hero, front-left, night, four elevations, top).
+5.7k triangles near, 178 far, 17 materials. Every material declares an acoustic class
+(earth `brick`, stone `rock`, timber and grown wood `wood`, iron, titanium and graphene
+`metal`, the sod roof `gravel`, reed mats `carpet`, glass and the tank `glass`); 47 large
+meshes carry the tag. Sockets: `Door`, `Chimney_top`. Solid: the game builds colliders from
+the near level, as for boulders. Not yet: the homestead prop kit, the door's teal paint and
+the curved corrugated sheet of the concept, and a placement in a review scene.
+
 ## For the model
 
 - One glb with model-owned LODs (`<id>_LOD0`, ...) and a master prefab, as every placeable.
