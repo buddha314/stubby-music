@@ -1,0 +1,117 @@
+// Asset review: the Dancers, four body shapes (rows) by four skin tones (columns), keeping
+// time with the burbler's clock; the second and fourth rows dance. Not a level.
+bevy_ecs::hierarchy::Children [
+    #"Dancer compact solar_amber"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_compact/dancer_compact.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 2.200000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.8471, 0.6078, 0.3294] }
+    --
+    #"Dancer compact clay_coral"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_compact/dancer_compact.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 4.400000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.7882, 0.4275, 0.4549] }
+    --
+    #"Dancer compact leaf_teal"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_compact/dancer_compact.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 6.600000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.3098, 0.6157, 0.5333] }
+    --
+    #"Dancer compact dusk_violet"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_compact/dancer_compact.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 8.800000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.5333, 0.4706, 0.6706] }
+    --
+    #"Dancer lanky solar_amber"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_lanky/dancer_lanky.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.100000, y: 0.000000, z: 2.200000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.8471, 0.6078, 0.3294] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer lanky clay_coral"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_lanky/dancer_lanky.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.100000, y: 0.000000, z: 4.400000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.7882, 0.4275, 0.4549] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer lanky leaf_teal"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_lanky/dancer_lanky.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.100000, y: 0.000000, z: 6.600000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.3098, 0.6157, 0.5333] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer lanky dusk_violet"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_lanky/dancer_lanky.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.100000, y: 0.000000, z: 8.800000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.5333, 0.4706, 0.6706] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer broad solar_amber"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_broad/dancer_broad.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.200000, y: 0.000000, z: 2.200000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.8471, 0.6078, 0.3294] }
+    --
+    #"Dancer broad clay_coral"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_broad/dancer_broad.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.200000, y: 0.000000, z: 4.400000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.7882, 0.4275, 0.4549] }
+    --
+    #"Dancer broad leaf_teal"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_broad/dancer_broad.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.200000, y: 0.000000, z: 6.600000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.3098, 0.6157, 0.5333] }
+    --
+    #"Dancer broad dusk_violet"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_broad/dancer_broad.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.200000, y: 0.000000, z: 8.800000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.5333, 0.4706, 0.6706] }
+    --
+    #"Dancer full solar_amber"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_full/dancer_full.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.300000, y: 0.000000, z: 2.200000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.8471, 0.6078, 0.3294] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer full clay_coral"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_full/dancer_full.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.300000, y: 0.000000, z: 4.400000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.7882, 0.4275, 0.4549] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer full leaf_teal"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_full/dancer_full.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.300000, y: 0.000000, z: 6.600000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.3098, 0.6157, 0.5333] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Dancer full dusk_violet"
+    jackdaw::prefab::components::IsA { source: "characters/dancers/dancer_full/dancer_full.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.300000, y: 0.000000, z: 8.800000 }, rotation: glam::Quat { x: 0.000000, y: -0.707107, z: 0.000000, w: 0.707107 } }
+    stubby_world::prefab_presentation::MaterialTint { material: "Dancer_Skin", srgb: [0.5333, 0.4706, 0.6706] }
+    stubby_world::prefab_presentation::LoopClip { clip: "Dance" }
+    --
+    #"Burbler (the clock they keep)"
+    jackdaw::prefab::components::IsA { source: "machines/mudpit_burbler/mudpit_burbler.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.000000, y: 0.000000, z: 1.000000 } }
+    --
+    #"Campfire"
+    jackdaw::prefab::components::IsA { source: "structures/campfire/campfire.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 7.000000, y: 0.000000, z: 1.200000 } }
+]
