@@ -24,6 +24,10 @@ recognizable landmark, the early route, and a matching camera at each stop so
 the transformation stays legible. Pair a fixed view at the same solar hour
 with a short walk at normal speed to judge how the world sounds and feels.
 
+The [draft Dancer schedule](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule)
+adds food, clean water and shelter to the settlement reviews. For population
+and production scenarios, see the [Burb Sweeper economy audit](../research/burb-sweeper-economy.md).
+
 ## First experiment
 
 Set up a seed-42 grove with a sounding burbler, a connected stream, three dam

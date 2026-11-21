@@ -31,6 +31,11 @@ light rail system. The growing resident population is called **Dancers**.
 Thresholds, population mechanics and how the phases map onto long-term goals
 are open. [Settlement phase design](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules)
 
+The [Dancer consumption schedule and character brief](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule)
+cover daily rations, shelter, silhouette variants and local clocks. The
+[Burb Sweeper economy audit](../research/burb-sweeper-economy.md) records
+precedents for housing, shared labour, crop inputs and long-run balance.
+
 The Jackdaw examples are review scenes. The
 [long-session design previews](long-session-previews.md) describe the experience
 to compare at each stop.
