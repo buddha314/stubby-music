@@ -16,7 +16,9 @@ fn main() -> AppExit {
             return AppExit::error();
         }
     };
-    let phase_review = config.scene.starts_with("world/phase_reviews/");
+    // Phase and asset review scenes are seen at noon, as reviews are (AGENTS.md).
+    let phase_review = config.scene.starts_with("world/phase_reviews/")
+        || config.scene.starts_with("world/asset_reviews/");
     let seed = config.seed_value().expect("validated world seed");
     // Dev builds bring up the rules designer beside the game (add-machine-rules D4).
     stubby_jackdaw::designer::launch();

@@ -1,0 +1,44 @@
+{
+  "id": "homestead_props",
+  "kind": "prop",
+  "about": "The furniture and gear around a Dancer cottage (docs/art/cottage.md): placed beside it, so the cottage model stays one clean glb.",
+  "props": {
+    "table": "props/homestead/homestead_table/homestead_table.glb#Scene0",
+    "bench": "props/homestead/homestead_bench/homestead_bench.glb#Scene0",
+    "stool": "props/homestead/homestead_stool/homestead_stool.glb#Scene0",
+    "barrel": "props/homestead/homestead_barrel/homestead_barrel.glb#Scene0",
+    "bucket": "props/homestead/homestead_bucket/homestead_bucket.glb#Scene0",
+    "planter": "props/homestead/homestead_planter/homestead_planter.glb#Scene0",
+    "hammock": "props/homestead/homestead_hammock/homestead_hammock.glb#Scene0"
+  },
+  "triangles": {
+    "table": {
+      "near": 208,
+      "far": 24
+    },
+    "bench": {
+      "near": 288,
+      "far": 24
+    },
+    "stool": {
+      "near": 406,
+      "far": 12
+    },
+    "barrel": {
+      "near": 732,
+      "far": 32
+    },
+    "bucket": {
+      "near": 398,
+      "far": 12
+    },
+    "planter": {
+      "near": 576,
+      "far": 24
+    },
+    "hammock": {
+      "near": 524,
+      "far": 24
+    }
+  }
+}

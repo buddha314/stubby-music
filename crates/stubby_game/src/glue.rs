@@ -382,6 +382,7 @@ impl Plugin for PrefabGluePlugin {
                     asset.starts_with("boulder_")
                         || asset.starts_with("rock_formation_")
                         || asset.starts_with("desert_")
+                        || asset.starts_with("homestead_")
                         || asset == "ripple_pool"
                         || asset == "campfire"
                         || asset == "cottage"

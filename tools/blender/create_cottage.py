@@ -74,6 +74,7 @@ class Cottage(Burbler):
         self.moss = m("Moss", linear("#3f5a24"), roughness=1.0)
         self.leaf = m("Leaf", linear("#4f6a2a"), roughness=0.9)
         self.reed = m("ReedMat", linear("#9a8460"), roughness=1.0)
+        self.paint = m("DoorPaint", linear("#3f7a6e"), roughness=0.8)   # weathered verdigris
         # High-tech (titanium, graphene from the kit)
         self.tank_water = self.translucent("TankWater", linear("#b8bcc2"), 0.0, 0.45)
         # Light: soft, organic; the window is its own material for the game to drive.
@@ -91,6 +92,7 @@ class Cottage(Burbler):
             self.band: "brick",
             self.stone: "rock",
             self.timber: "wood",
+            self.paint: "wood",
             self.grown: "wood",
             self.rust: "metal",
             self.moss: "gravel",       # a sod roof: porous, absorbent
@@ -330,7 +332,7 @@ class Cottage(Burbler):
         framed("WindowBack", 0.8, HALF_L + 0.02, 1.2, 1.9, 0.8, "back")
         # The door: boarded timber with iron straps, a stone step.
         dx = 0.95
-        self.box("Door", (dx, fy - 0.03, PLINTH + 1.0), (1.0, 0.08, 2.0), self.timber)
+        self.box("Door", (dx, fy - 0.03, PLINTH + 1.0), (1.0, 0.08, 2.0), self.paint)
         for zz in (0.75, 1.55, 2.05):
             self.box(f"DoorStrap{zz}", (dx, fy - 0.08, zz), (0.95, 0.03, 0.06), self.rust)
         self.box("DoorFrame", (dx, fy - 0.02, PLINTH + 2.06), (1.25, 0.14, 0.14), self.timber)
@@ -685,4 +687,5 @@ class Cottage(Burbler):
         bpy.ops.render.render(write_still=True, scene=scene.name)
 
 
-print(json.dumps(Cottage().build()))
+if __name__ == "__main__":
+    print(json.dumps(Cottage().build()))

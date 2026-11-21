@@ -208,6 +208,15 @@ def cottage(glb):
     return shapes
 
 
+def homestead(glb):
+    """The bigger homestead props block the player (a box around the near level); the
+    bucket, stool and planter are low enough to step round, and stay walk-through."""
+    if any(word in glb.stem for word in ("bucket", "stool", "planter")):
+        return "small enough to walk round; no collider"
+    parts = world_meshes(glb)
+    return [cuboid_around(np.concatenate([p for name, p in parts.items() if "Far" not in name]))]
+
+
 FAMILIES = {
     # family folder (under assets/): (model glob under assets/, shaper or why it is walk-through)
     "flora/scrub_oak": ("flora/scrub_oak/*/*.glb", oak),
@@ -216,6 +225,7 @@ FAMILIES = {
     "props/rocks": ("props/rocks/*/*.glb", rock_formation),
     "structures/campfire": ("structures/campfire/campfire.glb", campfire),
     "structures/cottage": ("structures/cottage/cottage.glb", cottage),
+    "props/homestead": ("props/homestead/*/*.glb", homestead),
     "machines/mudpit_burbler": ("machines/mudpit_burbler/mudpit_burbler.glb", burbler),
     "creatures/lightning_bug": ("creatures/lightning_bug/lightning_bug.glb", "a small flying creature, collected with E"),
     "streams/stream_segment": ("streams/stream_segment/stream_segment.glb", "low banks under the step height; the player wades across"),

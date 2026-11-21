@@ -444,6 +444,8 @@ testable by asserting identical output for identical seeds.
   new ones in Jackdaw (place the glb, add components, **Save as Prefab**; see
   `crates/stubby_jackdaw/README.md`) and edit them there. `cargo test -p stubby_jackdaw --test prefabs`
   validates them.
+- **Preview new assets in an asset review scene** (`assets/world/asset_reviews/`, at noon):
+  `python3 tools/jackdaw_timed_test.py --asset-review <name>` (`homestead`: the cottage and its props).
 - **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by
   name (`AcousticOccluder::preset`: rock, brick, wood, glass, metal, ...), set as glTF extras
   `"acoustic"` on large near-level meshes by the generator, and listed in the profile

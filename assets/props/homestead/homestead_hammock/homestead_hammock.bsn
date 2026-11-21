@@ -1,0 +1,6 @@
+#"Homestead Hammock"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "props/homestead/homestead_hammock/homestead_hammock.glb", scene_index: 0 }

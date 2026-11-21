@@ -1,0 +1,81 @@
+{
+  "about": "Static collider shapes for the prefabs; see tools/collider_shapes.py. Each shape is an AvianCollider(ColliderConstructor) on a child entity at `translation`, model coordinates (Bevy: Y up), metres.",
+  "models": {
+    "props/homestead/homestead_barrel/homestead_barrel.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 0.668,
+          "y_length": 0.92,
+          "z_length": 0.667,
+          "translation": [
+            0.001,
+            0.46,
+            0.001
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/homestead/homestead_bench/homestead_bench.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 1.5,
+          "y_length": 0.46,
+          "z_length": 0.34,
+          "translation": [
+            0.0,
+            0.23,
+            0.0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/homestead/homestead_bucket/homestead_bucket.glb": {
+      "walk_through": true,
+      "why": "small enough to walk round; no collider"
+    },
+    "props/homestead/homestead_hammock/homestead_hammock.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 3.5,
+          "y_length": 1.911,
+          "z_length": 0.84,
+          "translation": [
+            0.0,
+            0.949,
+            0.0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "props/homestead/homestead_planter/homestead_planter.glb": {
+      "walk_through": true,
+      "why": "small enough to walk round; no collider"
+    },
+    "props/homestead/homestead_stool/homestead_stool.glb": {
+      "walk_through": true,
+      "why": "small enough to walk round; no collider"
+    },
+    "props/homestead/homestead_table/homestead_table.glb": {
+      "colliders": [
+        {
+          "shape": "Cuboid",
+          "x_length": 1.7,
+          "y_length": 0.787,
+          "z_length": 0.86,
+          "translation": [
+            0.0,
+            0.387,
+            0.0
+          ]
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}
