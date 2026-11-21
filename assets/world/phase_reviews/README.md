@@ -9,8 +9,8 @@ in place in every scene.
 
 | Scene | Existing assets to reuse | Blockout and art backlog |
 | --- | --- | --- |
-| [Camp](camp.bsn) | `machines/mudpit_burbler`, `structures/campfire`, `streams/stream_segment`, `flora/reeds`, window rock in `props/rocks/rock_formation_2` | Bring in the vardo and cyber-cob when their runtime assets are ready. |
-| [Village](village.bsn) | Camp families plus `machines/reed_water_purifier` and `flora/scrub_oak` | The scene presets oak growth and uses a water brush for the future clear channel. Extend the working watershed in a separate simulation review. |
+| [Camp](camp.bsn) | `machines/mudpit_burbler`, `structures/campfire`, `streams/stream_segment`, `flora/reeds`, window rock in `props/rocks/rock_formation_2` | The vardo stands on the north bank with the cyber-cob at its hitch (2026-11-21). |
+| [Village](village.bsn) | Camp families plus `machines/reed_water_purifier` and `flora/scrub_oak` | The scene presets oak growth and uses a water brush for the future clear channel. The vardo and cob, two cottages (the first with its homestead props) and six Dancers: two dance by the fire, one tends the oak by the first dam, two talk on a porch (2026-11-21). Extend the working watershed in a separate simulation review. |
 | [Town](town.bsn) | Village families continue through the settlement | Scene brushes show the commons, low workshops and houses on both banks. Design the first production building families and their street fronts. |
 | [City](city.bsn) | The original camp, grove and town commons remain on the approach | Scene brushes show the civic canal, plaza, hall, towers and roof gardens. Design the larger buildings, street-level access and night lighting. |
 
