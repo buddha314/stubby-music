@@ -224,6 +224,8 @@ enum Step {
     Built,
     Patch,
     Clearing(Entity),
+    /// Open the tuned dam's rack and photograph its scope (one beat of the wave).
+    Scope(Entity),
     Pools,
     Done,
 }
@@ -280,9 +282,9 @@ fn script(
         ResMut<ButtonInput<KeyCode>>,
         ResMut<stubby_core::LookCapture>,
     ),
-    (target, screens, nodes, eyes): (
+    (target, mut screens, nodes, eyes): (
         Res<stubby_core::InteractTarget>,
-        Res<stubby_core::ScreenMode>,
+        ResMut<stubby_core::ScreenMode>,
         Query<(
             &bevy_stubby_recipes::ResourceNode,
             &GlobalTransform,
@@ -545,7 +547,7 @@ fn script(
                 if let (Ok((_, mut camera)), Some(_)) = (camera.single_mut(), on) {
                     *camera = clearing_view(stream, at);
                 }
-                next(&mut script, Step::Pools);
+                next(&mut script, Step::Scope(dam));
             } else if waited > 6.0 {
                 script.passed = false;
                 log(
@@ -554,6 +556,19 @@ fn script(
                     "targets": targets.map(|t| (t.met, t.sounding, t.missed.clone())),
                     "below": below, "above": above}),
                 );
+                next(&mut script, Step::Pools);
+            }
+        }
+        Step::Scope(dam) => {
+            if screens.open.is_none() && waited < 0.5 {
+                screens.open = Some(stubby_core::Screen::MachineConfiguration(dam));
+                return;
+            }
+            if script.since + 2.0 <= now && script.since + 2.0 > now - time.delta_secs() {
+                shoot(&mut commands, &script, "2c-scope.png");
+            }
+            if waited > 2.6 {
+                screens.close();
                 next(&mut script, Step::Pools);
             }
         }
