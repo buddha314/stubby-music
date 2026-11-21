@@ -65,8 +65,17 @@ enough clean water to plant a crop. Village becomes Town when three villages tra
 goods with one another. Town becomes City when the player can build an art gallery,
 a concert hall and at least one light rail system. The resident
 population is called **Dancers**, with growth inspired by Farthest Frontier. Crop water thresholds, trade
-conditions, civic construction criteria and population mechanics are open in
+conditions and civic construction criteria are open in
 [the settlement phase design](openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules).
+
+**Dancers (user, 2026-11-20):** individuals, each with a home, a profession and one task at
+a time. A cottage holds at most four, filled at random (seeded); larger dwellings come
+later. Settlement size starts from Farthest Frontier's population metrics (30 Dancers and 8
+cottages for an established village, 150 for Town, 300 for City), adjusted as we go. Once a
+village is established, many recipes need a crew of Dancers; professions are set by count,
+as in Farthest Frontier. The model is a Bevy-free core, `stubby_economy`, in this
+repository unless it grows big, ported in part from `automate-godot`
+(`openspec/changes/add-settlement-economy/`).
 
 Dancers are mostly silhouettes, with 3–5 body shapes and 3–5 skin tones from
 a solarpunk rainbow palette. Body shape and skin tone combine independently.

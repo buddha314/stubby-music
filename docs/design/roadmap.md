@@ -94,6 +94,12 @@ Proposed, from the research (rankings in the survey):
   input (clean water, tending), and the field shows which. Nutrients come from the
   low-pass channel once its source is decided (Farthest Frontier's soil fertility, mapped
   onto our filters).
+- **Decided (user, 2026-11-20): Dancers are individuals; a cottage holds at most four,
+  filled at random; larger dwellings come later. Town size follows Farthest Frontier's
+  population metrics to begin with (30 Dancers and 8 cottages for an established village;
+  150 for Town; 300 for City), adjusted as we go. Once a village is established, many
+  recipes need a crew of Dancers, and each Dancer's task is tracked, as in Farthest
+  Frontier.** `openspec/changes/add-settlement-economy/`.
 - **Dancers arrive on surplus.** Provisioned on the draft schedule (water at dawn and dusk,
   food at midday, shelter at night). They come when there is spare water, food and
   shelter, and drift away when short; no deaths (Farthest Frontier, Anno).
@@ -153,7 +159,8 @@ Proposed, from the research (rankings in the survey):
    Dancer schedule already assumes it).
 2. **A headless settlement resolver** in a Bevy-free core, in the style of
    `stubby_recipes`: needs, stock, housing, labour, at the calendar's checkpoints.
-   **Port it from `automate-godot`** (`docs/research/automate-godot-port.md`): its tick
+   **Port it from `automate-godot`** into `stubby_economy`, in this repository unless it
+   grows big (user, 2026-11-20; `add-settlement-economy`) (`docs/research/automate-godot-port.md`): its tick
    dispatcher, rule engine (producer, converter, consumer, upkeep, with deficits) and
    workforce pool are about 200 lines of GDScript, the generalised form of Burb Sweeper's
    resolver, and already exactly the shape the Dancer schedule needs. Record intended
@@ -207,8 +214,7 @@ game; Stubby Music is an open-ended simulator.
 - Which Burb Sweeper doctrine items to adopt as pillars (marked above).
 - The first crop, its clarity threshold and how "enough water" is measured.
 - What a village is, which goods count as trade, and what a qualifying exchange is.
-- Whether Dancers are simulated as households or individuals, and whether lineages
-  prefer different tempos.
+- Whether Dancer lineages prefer different tempos. (Individuals: decided.)
 - Whether research uses recordings as currency, and how many kinds.
 - Whether the vardo moves between regions.
 - The low-pass and band-pass filter sources (still undecided).

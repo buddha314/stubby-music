@@ -28,6 +28,12 @@ residents, and how residents help sustain trade and civic life. Arrival and grow
 rates, household or individual simulation, and the scope of work and needs remain
 open. [Farthest Frontier population guide](https://www.farthestfrontier.com/guide/villagers/population/)
 
+**Decided (user, 2026-11-20):** Dancers are individuals. A cottage holds at most four,
+filled at random; larger dwellings follow. Settlement size starts from Farthest Frontier's
+Town Center thresholds (30, 150 and 300 villagers) and is adjusted as we go. Established
+villages have recipes that need a crew of Dancers, and every Dancer's task is tracked as in
+Farthest Frontier. The model and its rules are `add-settlement-economy`.
+
 ## Draft Dancer consumption schedule
 
 Provision Dancers from the stock of the settlement they live in. Use game units
