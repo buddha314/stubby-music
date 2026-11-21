@@ -223,6 +223,9 @@ bloom gives it one. Segment displays stay segmented, because a number has to be 
 - Lights that the game animates are separate materials (`Glyph`, `LedOut`,
   `Clock_Lamp`, …). The game clones them per instance, so name them stably.
 - Colour lives in materials, not textures, until a texture earns its place.
+- **Every material declares an acoustic class** (a Steam Audio preset by name, or none for
+  materials on small parts only); large near-level meshes carry it as glTF extras
+  `acoustic` (`docs/audio/acoustic-level-authoring.md`).
 
 ## Naming and game-facing nodes
 
@@ -273,6 +276,7 @@ expensive part of soft light; keep their resolution as low as still reads round.
 | Module | ≤ 10k | ≤ 16 |
 | Creature | ≤ 2k | ≤ 4 |
 | Prop, tree | ≤ 15k, with a ≤ 3k far LOD | ≤ 8 |
+| Structure (dwelling) | ≤ 20k, with a ≤ 3k far LOD | ≤ 18 |
 
 ## Review checklist
 

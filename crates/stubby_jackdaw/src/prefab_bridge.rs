@@ -61,6 +61,7 @@ fn bridge(
                     | "volume"
                     | "snail_shell"
                     | "campfire"
+                    | "cottage"
                     | "reed_water_purifier"
                     | "ripple_pool"
             ))

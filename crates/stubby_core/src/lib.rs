@@ -86,6 +86,29 @@ impl AcousticOccluder {
         scattering: 0.05,
         transmission: [0.015, 0.002, 0.001],
     };
+
+    /// Steam Audio's surface presets by name, as a model names them in its glTF extras
+    /// (`"acoustic": "wood"`): every material a model uses declares one
+    /// (`docs/audio/acoustic-level-authoring.md`). Unknown names are `None`.
+    pub fn preset(name: &str) -> Option<Self> {
+        let preset = |absorption, transmission| Self {
+            absorption,
+            scattering: 0.05,
+            transmission,
+        };
+        Some(match name {
+            "generic" => Self::GENERIC,
+            "rock" => Self::ROCK,
+            "concrete" => preset([0.05, 0.07, 0.08], [0.015, 0.002, 0.001]),
+            "brick" => preset([0.03, 0.04, 0.07], [0.015, 0.015, 0.015]),
+            "wood" => preset([0.11, 0.07, 0.06], [0.070, 0.014, 0.005]),
+            "glass" => preset([0.06, 0.03, 0.02], [0.060, 0.044, 0.011]),
+            "metal" => preset([0.20, 0.07, 0.06], [0.200, 0.025, 0.010]),
+            "carpet" => preset([0.24, 0.69, 0.73], [0.020, 0.005, 0.003]),
+            "gravel" => preset([0.60, 0.70, 0.80], [0.031, 0.012, 0.008]),
+            _ => return None,
+        })
+    }
 }
 
 impl Default for AcousticOccluder {
@@ -320,4 +343,23 @@ pub struct MachineVoice {
     pub output: Option<stubby_audio::PortRef>,
     pub sounding: bool,
     pub hearing_radius_metres: f32,
+}
+
+#[cfg(test)]
+mod acoustic_tests {
+    use super::AcousticOccluder;
+
+    #[test]
+    fn every_named_surface_has_a_preset() {
+        for name in [
+            "generic", "rock", "concrete", "brick", "wood", "glass", "metal", "carpet", "gravel",
+        ] {
+            assert!(AcousticOccluder::preset(name).is_some(), "{name}");
+        }
+        assert_eq!(
+            AcousticOccluder::preset("rock"),
+            Some(AcousticOccluder::ROCK)
+        );
+        assert_eq!(AcousticOccluder::preset("marshmallow"), None);
+    }
 }

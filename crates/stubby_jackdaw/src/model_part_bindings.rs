@@ -164,7 +164,10 @@ fn bind_parts(
             || asset.asset.starts_with("desert_")
             || asset.asset.starts_with("boulder_")
             || asset.asset.starts_with("rock_formation_")
-            || matches!(asset.asset.as_str(), "campfire" | "reed_water_purifier"))
+            || matches!(
+                asset.asset.as_str(),
+                "campfire" | "cottage" | "reed_water_purifier"
+            ))
         {
             continue;
         }
@@ -226,12 +229,14 @@ fn bind_parts(
                 .entity(entity)
                 .insert(rest.with_scale(rest.scale * start as f32));
         }
-        // Acoustic rock (add-echo-grotto): the flattened part joins the spatial-audio scene,
-        // as an unflattened model's mesh does through its extras.
-        if info.extras["acoustic"].as_str() == Some("rock") {
-            commands
-                .entity(entity)
-                .insert(stubby_core::AcousticOccluder::ROCK);
+        // An acoustic surface (add-echo-grotto; any preset by name since the cottage): the
+        // flattened part joins the spatial-audio scene, as an unflattened model's mesh does
+        // through its extras.
+        if let Some(occluder) = info.extras["acoustic"]
+            .as_str()
+            .and_then(stubby_core::AcousticOccluder::preset)
+        {
+            commands.entity(entity).insert(occluder);
         }
         commands.entity(entity).insert(AssetPart {
             root,
@@ -371,7 +376,10 @@ fn solid_boulders(
         let Ok(asset) = roots.get(part.root) else {
             continue;
         };
-        if !(asset.asset.starts_with("boulder_") || asset.asset.starts_with("rock_formation_")) {
+        if !(asset.asset.starts_with("boulder_")
+            || asset.asset.starts_with("rock_formation_")
+            || asset.asset == "cottage")
+        {
             continue;
         }
         let Some(file) = mesh
