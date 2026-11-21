@@ -66,6 +66,24 @@ struct BeamStyle {
     up_count: usize,
     #[serde(default)]
     up_tilt_deg: Vec<f32>,
+    /// The beams' glow in the haze (user, 2026-11-20: the scanner scatters in the fog).
+    #[serde(default)]
+    scatter: Option<ScatterStyle>,
+}
+/// Each beam glows along its length as light scattered by the haze: strength = `gain` times
+/// the fog's density over `reference_density`, at most `max`. The fog's density follows
+/// the air quality, so bleak air shows the shafts and clean air barely does.
+#[derive(serde::Deserialize, Clone, Copy, Debug)]
+struct ScatterStyle {
+    gain: f32,
+    reference_density: f32,
+    max: f32,
+    edge_power: f32,
+}
+impl ScatterStyle {
+    fn strength(&self, density: f32) -> f32 {
+        (self.gain * density / self.reference_density.max(1e-6)).clamp(0., self.max)
+    }
 }
 #[derive(serde::Deserialize, Clone, Debug)]
 struct RevealStyle {
@@ -223,6 +241,121 @@ fn hologram(style: &HologramStyle, strength: f32) -> HologramMaterial {
     }
 }
 
+// ---------------------------------------------------------------- the beams' glow
+
+#[derive(ShaderType, Clone, Copy, Debug)]
+pub struct BeamUniform {
+    pub colour: Vec4,
+    /// x: strength, y: edge sharpness.
+    pub params: Vec4,
+}
+
+/// Additive, depth-tested, two-sided, no depth write: a beam's glow in the haze
+/// (`assets/shaders/scanner_beam.wesl`).
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct BeamMaterial {
+    #[uniform(0)]
+    pub beam: BeamUniform,
+}
+impl Material for BeamMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/scanner_beam.wesl".into()
+    }
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Add
+    }
+    fn enable_prepass() -> bool {
+        false
+    }
+    fn enable_shadows() -> bool {
+        false
+    }
+    fn specialize(
+        _: &MaterialPipeline,
+        descriptor: &mut RenderPipelineDescriptor,
+        _: &MeshVertexBufferLayoutRef,
+        _: MaterialPipelineKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
+        if let Some(depth) = descriptor.depth_stencil.as_mut() {
+            depth.depth_write_enabled = Some(false);
+        }
+        Ok(())
+    }
+}
+
+/// The glow materials, one per beam colour, whose strength follows the fog.
+#[derive(Resource)]
+struct BeamGlow(Vec<Handle<BeamMaterial>>);
+
+/// An open cone of unit length along -Z (a spotlight's forward) and unit radius at its far
+/// end, its apex at the origin; uv.y runs 0 at the apex to 1 at the end.
+pub fn unit_cone(segments: u32) -> Mesh {
+    use bevy::asset::RenderAssetUsages;
+    use bevy::mesh::{Indices, PrimitiveTopology};
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut uvs = Vec::new();
+    let mut indices = Vec::new();
+    for k in 0..=segments {
+        let a = std::f32::consts::TAU * k as f32 / segments as f32;
+        let (s, c) = a.sin_cos();
+        // The side's outward normal: radial, tilted back toward the apex a little.
+        let normal = Vec3::new(c, s, 1.).normalize();
+        positions.push([0., 0., 0.]);
+        normals.push(normal.to_array());
+        uvs.push([k as f32 / segments as f32, 0.]);
+        positions.push([c, s, -1.]);
+        normals.push(normal.to_array());
+        uvs.push([k as f32 / segments as f32, 1.]);
+    }
+    for k in 0..segments {
+        let (a, b, c, d) = (2 * k, 2 * k + 1, 2 * k + 2, 2 * k + 3);
+        indices.extend([a, b, d, a, d, c]);
+    }
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+    .with_inserted_indices(Indices::U32(indices))
+}
+
+/// The beams' glow follows the fog the camera sees: its density is the air quality's.
+fn scatter_in_fog(
+    style: Res<FlashlightStyle>,
+    glow: Option<Res<BeamGlow>>,
+    mut materials: Option<ResMut<Assets<BeamMaterial>>>,
+    fogs: Query<&DistanceFog, (With<Camera3d>, Without<HudCamera>)>,
+    mut shown: Local<f32>,
+) {
+    let (Some(glow), Some(materials), Some(scatter)) =
+        (glow, materials.as_mut(), style.0.beams.scatter)
+    else {
+        return;
+    };
+    let density =
+        fogs.iter()
+            .find_map(|fog| match fog.falloff {
+                FogFalloff::Exponential { density }
+                | FogFalloff::ExponentialSquared { density } => Some(density),
+                _ => None,
+            })
+            .unwrap_or(0.);
+    let strength = scatter.strength(density);
+    if (strength - *shown).abs() < 1e-3 {
+        return;
+    }
+    *shown = strength;
+    for handle in &glow.0 {
+        if let Some(mut material) = materials.get_mut(handle) {
+            material.beam.params.x = strength;
+        }
+    }
+}
+
 // ---------------------------------------------------------------- the ball
 
 /// The disco ball: placed above the player's head to the left when switched on, it stays
@@ -284,16 +417,20 @@ pub(crate) fn add(app: &mut App) {
     if !app.is_plugin_added::<bevy::render::RenderPlugin>() {
         return;
     }
-    app.add_plugins(MaterialPlugin::<HologramMaterial>::default())
-        .insert_resource(FlashlightStyle::shipped())
-        .add_systems(Startup, setup)
-        .add_systems(Update, (follow_view, reveal, fade_holograms).chain())
-        .add_systems(
-            Update,
-            pulse_on_beats
-                .after(follow_view)
-                .run_if(resource_exists::<bevy::ecs::message::Messages<ClockTick>>),
-        );
+    app.add_plugins((
+        MaterialPlugin::<HologramMaterial>::default(),
+        MaterialPlugin::<BeamMaterial>::default(),
+    ))
+    .insert_resource(FlashlightStyle::shipped())
+    .add_systems(Startup, setup)
+    .add_systems(Update, (follow_view, reveal, fade_holograms).chain())
+    .add_systems(Update, scatter_in_fog)
+    .add_systems(
+        Update,
+        pulse_on_beats
+            .after(follow_view)
+            .run_if(resource_exists::<bevy::ecs::message::Messages<ClockTick>>),
+    );
 }
 
 /// Near a clock the ball keeps its time: it follows the nearest clock within reach and
@@ -357,6 +494,7 @@ fn setup(
     style: Res<FlashlightStyle>,
     assets: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut beam_materials: Option<ResMut<Assets<BeamMaterial>>>,
     clusters: Option<ResMut<bevy::light::cluster::GlobalClusterSettings>>,
 ) {
     if let Some(mut clusters) = clusters
@@ -400,6 +538,30 @@ fn setup(
         ChildOf(ball),
     ));
     let width = style.beams.width_deg.to_radians();
+    // The glow in the haze: one cone mesh, one material per beam colour.
+    let glow = style.beams.scatter.and_then(|scatter| {
+        let materials = beam_materials.as_mut()?;
+        let handles: Vec<_> = style
+            .beams
+            .colors
+            .iter()
+            .map(|&[r, g, b]| {
+                let c = LinearRgba::from(Color::srgb(r, g, b));
+                materials.add(BeamMaterial {
+                    beam: BeamUniform {
+                        colour: Vec4::new(c.red, c.green, c.blue, 1.),
+                        params: Vec4::new(0., scatter.edge_power, 0., 0.),
+                    },
+                })
+            })
+            .collect();
+        Some((meshes.add(unit_cone(24)), handles))
+    });
+    if let Some((_, handles)) = &glow {
+        commands.insert_resource(BeamGlow(handles.clone()));
+    }
+    let reach = style.beams.range_m;
+    let radius = reach * width.tan();
     for (i, direction) in beams.iter().enumerate() {
         let [r, g, b] = style.beams.colors[i % style.beams.colors.len().max(1)];
         let tilt = (-direction.y).asin().to_degrees();
@@ -413,20 +575,32 @@ fn setup(
         } else {
             style.beams.intensity_lumens
         };
-        commands.spawn((
-            SpotLight {
-                color: Color::srgb(r, g, b),
-                intensity,
-                range: style.beams.range_m,
-                // Crisp spots, as a mirror ball's are.
-                inner_angle: width * 0.85,
-                outer_angle: width,
-                shadow_maps_enabled: false,
-                ..default()
-            },
-            Transform::default().looking_to(*direction, Vec3::Y),
-            ChildOf(ball),
-        ));
+        commands
+            .spawn((
+                SpotLight {
+                    color: Color::srgb(r, g, b),
+                    intensity,
+                    range: style.beams.range_m,
+                    // Crisp spots, as a mirror ball's are.
+                    inner_angle: width * 0.85,
+                    outer_angle: width,
+                    shadow_maps_enabled: false,
+                    ..default()
+                },
+                Transform::default().looking_to(*direction, Vec3::Y),
+                ChildOf(ball),
+            ))
+            .with_children(|beam| {
+                if let Some((cone, handles)) = &glow {
+                    beam.spawn((
+                        Mesh3d(cone.clone()),
+                        MeshMaterial3d(handles[i % handles.len()].clone()),
+                        Transform::from_scale(Vec3::new(radius, radius, reach)),
+                        NotShadowCaster,
+                        NotShadowReceiver,
+                    ));
+                }
+            });
     }
 }
 
@@ -657,6 +831,16 @@ fn fade_holograms(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_beams_scatter_less_as_the_air_clears() {
+        let style = FlashlightStyle::shipped();
+        let scatter = style.0.beams.scatter.expect("the shipped beams scatter");
+        let bleak = scatter.strength(0.007);
+        let clean = scatter.strength(0.0015);
+        assert!(bleak > 0. && clean < bleak * 0.3);
+        assert_eq!(scatter.strength(0.), 0.);
+    }
 
     #[test]
     fn b_toggles_the_disco_light_and_the_recorder_stays_in_hand() {
