@@ -13,6 +13,8 @@ economy core (`add-settlement-economy` 1–7) and the settlement system.
 - [ ] 1.2 Rows: `craft_reed_water_purifier` by hand, 0.75 s
 - [ ] 1.3 `assets/recipes/README.md`: durations and the two ways
 
+- [ ] 1.4 Verify recipe forms display, validate and save hand-craft seconds and crew profession, count and quarter notes through the Rules Designer
+
 ## 2. The progress bar
 - [ ] 2.1 `stubby_ui::progress_bar`: track, fill, stepped or smooth, optional label, in the HUD style
 

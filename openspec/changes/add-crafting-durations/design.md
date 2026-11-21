@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Where | at a crafting station (the campfire today) | at a station in an established village |
 | Who | the player, standing there | a crew of Dancers of a profession |
-| Time | real time, while the button is held (UI time, AGENTS.md) | world time (simulation speed applies), unattended |
+| Time | real time, while the button is held (UI time, AGENTS.md) | worksite quarter notes, unattended |
 | Inputs | taken when the bar fills; nothing taken if let go | reserved when the job starts (`automate-godot`'s prepare/complete) |
 | From and to | the player's inventory | the settlement's storage (open: or the player's) |
 | Recipes | those with `by_hand` | those with `crew` |
@@ -17,10 +17,10 @@ or hand the batch to Dancers.
 
 ### D2. Durations are rows; early ones feel almost instant (user, 2026-11-20)
 
-`by_hand: { "seconds": 0.75 }` and `crew: { "profession": ..., "dancers": N, "seconds": S }`.
+`by_hand: { "seconds": 0.75 }` and `crew: { "profession": ..., "dancers": N, "quarter_notes": NQ }`.
 Seconds, not Satisfactory's hammers, but the bar steps in Satisfactory's 0.25 s so short
 recipes read as a few quick ticks. Starting guide: the first recipes 0.25 to 1 s; later
-hand recipes a few seconds; crewed recipes minutes of world time. The purifier kit starts
+hand recipes a few seconds; crewed recipes a budget of worksite quarter notes. The purifier kit starts
 at 0.75 s, like Satisfactory's iron ingot.
 
 ### D3. Hand crafting follows Satisfactory's bench
@@ -39,7 +39,7 @@ at 0.75 s, like Satisfactory's iron ingot.
 
 On the station's screen, a crewed recipe shows **Dancers** instead of (or beside) the
 hold button: the player sets how many to make and queues them. Each job reserves its crew
-and inputs through the economy (`add-settlement-economy` section 7), runs in world time and
+and inputs through the economy (`add-settlement-economy` section 7), advances on worksite quarter notes and
 delivers once. The screen lists the station's queue with a bar per running job and how
 many Dancers are missing for a waiting one; a small bar floats over the station in the
 world while a job runs, so delegated work is visible from a distance.

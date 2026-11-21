@@ -36,29 +36,29 @@ Farthest Frontier. The model and its rules are `add-settlement-economy`.
 
 ## Draft Dancer consumption schedule
 
-Provision Dancers from the stock of the settlement they live in. Use game units
-for the first balance pass. One world day includes daylight and night, currently
-3,600 simulation seconds. Local BPM can change how a Dancer moves while the
-settlement calendar keeps the same provisioning schedule.
+Provision Dancers from their settlement's stock. Clean water, food and fresh air are
+budgeted per quarter note of each Dancer's local clock. Faster BPM makes Dancers
+build faster and increases recurring consumption over the same elapsed time.
+Shelter still needs one place per resident and is checked at night.
 
-| When | Per resident Dancer | What the settlement checks |
-| --- | --- | --- |
-| Dawn | 1 unit of clean water | Allocate the first water ration. |
-| Midday | 1 food ration | Draw from edible stock, with crops as an early supply route. |
-| Dusk | 1 unit of clean water | Allocate the second water ration and check how many residents have shelter. |
-| Night | Shelter | One place per resident. Housing capacity carries forward. |
+At the standard **120 BPM**, one day's food, clean water and fresh air sustain a Dancer
+working continuously from dawn to dawn at normal simulation speed. Spread each
+daily budget over the quarter notes in that reference day. On the current
+3,600-second day at 1×, that is 7,200 quarter notes. At 60 BPM, the same span
+uses half the daily budget. Carry each clock's cursor across
+save/load, and count each crossed note once when advancing the simulation.
 
-Twelve resident Dancers would need 24 clean-water units, 12 food rations and
-12 shelter places to cover a full day. Use the actual resident count at each
-scheduled withdrawal. At higher simulation speeds, process every crossed
-checkpoint once and in order. Resume from the last processed checkpoint on load.
+Fresh-air use lowers air quality where Dancers are working or resting. Plants
+and algae replenish air within their cleaning radius. The visible air quality
+reflects the balance between replenishment and local demand.
 
-For the first prototype, record water and food shortfalls and show uncovered
-shelter demand. A settlement with shortfalls can pause new arrivals while it
-recovers. When reviewing stock levels, count inventory already reserved for
-upcoming needs before treating goods as trade surplus. The schedule, clean
-water cutoff, reserve horizon and consequences of prolonged shortages are
-open balance decisions.
+Record shortfalls per resident and need. An enabled crafted spring invokes
+Dancers who descend from the sky and settle in its region. Candidate arrivals
+follow a Poisson rate set by local air quality. Each arrival needs a vacant
+home and seven in-game days of uncommitted clean water at the local tempo.
+The player can turn invocation on or off. The spring recipe, rate curve and
+per-note ration quantities remain open for tuning.
+[Spring invocation design](../add-settlement-economy/design.md#spring-invocation)
 
 The [Burb Sweeper economy review](../../../docs/research/burb-sweeper-economy.md)
 records precedents for unmet demand, housing capacity, shared labour and

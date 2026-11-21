@@ -26,14 +26,15 @@ change ports what fits into a Bevy-free core and adds the people.
   profession, a current task and a local clock.
 - **Housing**: dwellings are rows with a capacity; the cottage's is 4; new Dancers are
   housed at random, seeded and deterministic.
-- **Provisioning** on the draft schedule (water at dawn and dusk, food at midday, shelter at
-  night), every crossed checkpoint once and in order; shortfalls recorded, never deaths.
-- **Arrivals** when there is spare shelter, water and food; none while short.
+- **Provisioning** draws food, clean water and local fresh air per quarter note, with shelter checked at
+  night. Recurring resource consumption and clocked work scale with BPM. Shortfalls are
+  recorded and never cause deaths.
+- **Arrivals** descend at enabled springs at a Poisson rate set by local air quality, with a vacancy and seven in-game days of clean water reserved for each newcomer.
 - **Professions and tasks, as Farthest Frontier**: everyone starts as a laborer; the player
   sets counts per profession, up to the work places buildings offer; builders are drawn
   from laborers up to a cap; each Dancer has one task at a time.
-- **Crewed recipes**: a recipe may need a crew of Dancers of a profession for its
-  duration; it waits, and says how many are missing, until they are free.
+- **Crewed recipes**: a recipe may need a crew of Dancers of a profession for the
+  required worksite quarter notes; it waits, and says how many are missing, until they are free.
 - **Settlement tiers** as rule rows, starting from Farthest Frontier's Town Center table.
 - New rule types in `stubby_recipes`: dwellings, professions, recipe crews, settlement
   tiers, rations. Each lands with its schema, validator and rows.

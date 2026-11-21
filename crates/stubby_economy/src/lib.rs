@@ -4,6 +4,7 @@
 
 pub mod housing;
 pub mod ledger;
+pub mod provision;
 pub mod roster;
 pub mod rules;
 pub mod state;

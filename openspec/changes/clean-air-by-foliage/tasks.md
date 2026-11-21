@@ -7,3 +7,5 @@
 - [x] 2.3 The basin's clean air (`BasinAir`) drives the windstorm; for now the sky's dust thins with it (user decision 2026-11-16).
 - [ ] 3.1 Ground tint and flora emission sample it per place (was `add-desert-opening` 3.7). Flora already follows via `AssetState.light_quality`; the ground does not yet.
 - [ ] 4.1 Bounded review: grow a grove, walk from bleak desert into it at noon and at night; no visible steps. (Prefab review: blooming the oak visibly clears the camera's air within ~3 s; the reeds beside it green only ~20% by then, as cleaning eases over 6 s. A longer walk-in review is still to do.)
+
+- [ ] Expose and validate replenishment rate alongside the existing cleaner settings in the Rules Designer when shared air depletion lands.

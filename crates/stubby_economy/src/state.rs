@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::housing::{Dwelling, DwellingId, Housing};
+use crate::provision::Provision;
 use crate::roster::{AppearanceCounts, Dancer, DancerId, Roster};
 use crate::rules::Stock;
 use crate::time::CheckpointCursor;
@@ -11,6 +12,8 @@ use crate::time::CheckpointCursor;
 pub struct Settlement {
     world_seed: u64,
     roster: Roster,
+    #[serde(default)]
+    pub(crate) provision: Provision,
     housing: Housing,
     pub cursor: CheckpointCursor,
     pub stock: Stock,
@@ -21,6 +24,7 @@ impl Settlement {
         Self {
             world_seed,
             roster: Roster::default(),
+            provision: Provision::default(),
             housing: Housing::default(),
             cursor: CheckpointCursor::default(),
             stock: Stock::new(),

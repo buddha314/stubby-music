@@ -1,4 +1,4 @@
-//! Stock rules for one calendar checkpoint.
+//! Stock rules for one economy resolution.
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -51,7 +51,7 @@ pub enum RuleError {
     InvalidQuantity { resource: String },
 }
 
-/// Resolve the host's rules for this checkpoint. Within each kind, use the
+/// Resolve the host's rules for this step. Within each kind, use the
 /// order supplied by the host. A failed resolution leaves the inputs intact.
 pub fn resolve(stock: &Stock, rules: &[BoundRule]) -> Result<Resolution, RuleError> {
     validate(stock)?;
@@ -114,10 +114,8 @@ impl Resolution {
             }
             checked(resource, demand)?;
             let available = self.stock.entry(resource.clone()).or_default();
-            if demand > *available {
-                add(&mut self.deficits, resource, demand - *available)?;
-            }
-            *available = (*available - demand).max(0.0);
+            let met = draw(available, demand);
+            add(&mut self.deficits, resource, demand - met)?;
         }
         Ok(())
     }
@@ -148,7 +146,14 @@ fn validate(amounts: &Stock) -> Result<(), RuleError> {
     Ok(())
 }
 
-fn checked(resource: &str, quantity: f64) -> Result<f64, RuleError> {
+/// Draw at most the available quantity. Inputs have already been validated.
+pub(crate) fn draw(available: &mut f64, demand: f64) -> f64 {
+    let met = available.min(demand);
+    *available -= met;
+    met
+}
+
+pub(crate) fn checked(resource: &str, quantity: f64) -> Result<f64, RuleError> {
     if quantity.is_finite() && quantity >= 0.0 {
         Ok(quantity)
     } else {
