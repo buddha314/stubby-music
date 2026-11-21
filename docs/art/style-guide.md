@@ -245,6 +245,9 @@ Ids are `snake_case`.
 
 ## Pipeline
 
+Concept art starts from a saved prompt (`docs/art/prompts/`, workflow in its README):
+prompt, generate, select images into `docs/art/<asset>/`, write the brief, then model.
+
 Generator scripts are the source of truth, never hand edits to a `.blend`:
 
 ```bash
