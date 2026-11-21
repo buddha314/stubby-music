@@ -49,6 +49,16 @@ Music is how the world gets better; it is never just decoration. **All machines 
 instruments**: every machine is a rack the player patches and plays, controlled by
 audio, as the burbler is.
 
+### Settlement progression
+
+**Draft progression rules (user direction):** Camp becomes Village when there is
+enough clean water to plant a crop. Village becomes Town when three villages trade
+goods with one another. Town becomes City when the player can build an art gallery,
+a concert hall and at least one light rail system. Develop a growing resident
+population, taking inspiration from Farthest Frontier. Crop water thresholds, trade
+conditions, civic construction criteria and population mechanics are open in
+[the settlement phase design](openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules).
+
 ### Resources and recipes: the builder-game model
 
 - Treat this as a factory builder: discovering a waveform resource is akin to

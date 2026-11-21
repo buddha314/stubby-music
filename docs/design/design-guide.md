@@ -24,10 +24,16 @@ Village → Town → City. The silent mudflat is the opening before Camp.
 | Town | Buildings and a commons grow around the water route as people return | `add-settlement-phase-reviews` |
 | City | A solarpunk city grows along the same route | `add-settlement-phase-reviews` |
 
-**Open.** How the phases map onto long-term goals and how light quality,
-deities woken, and goals met affect the transition. The Jackdaw examples are
-review scenes. The [long-session design previews](long-session-previews.md)
-describe the experience to compare at each stop.
+**Draft progression.** Camp becomes Village when there is enough clean water to
+plant a crop. Village becomes Town when three villages trade goods. Town becomes
+City when the player can build an art gallery, a concert hall and at least one
+light rail system. A growing resident population is part of this arc.
+Thresholds, population mechanics and how the phases map onto long-term goals
+are open. [Settlement phase design](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules)
+
+The Jackdaw examples are review scenes. The
+[long-session design previews](long-session-previews.md) describe the experience
+to compare at each stop.
 
 ## Mythic regions
 
