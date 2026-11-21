@@ -18,14 +18,20 @@ cargo tree --color never --workspace --locked -e normal,build,dev --prefix none 
 python3 tools/check_jackdaw_versions.py --tree "$tree"
 step "Format";  cargo fmt -p stubby_audio --check
 step "Clippy";  cargo clippy -p stubby_audio --all-targets --locked -- -D warnings
-step "Test";    cargo test -p stubby_audio --locked
+step "Test";    cargo test -p stubby_audio -p stubby_economy --locked
 step "stubby_audio stands alone"
 deps=$(cargo tree -p stubby_audio -e normal,build --prefix none --format '{p}' --locked \
   | grep -F "$PWD" | grep -v '^stubby_audio ' || true)
 if [ -n "$deps" ]; then echo "stubby_audio depends on workspace crates:"; echo "$deps"; exit 1; fi
 step "Cores never reach the Bevy engine"
-for core in stubby_audio stubby_rack stubby_recipes; do
-  if cargo tree -p "$core" -e normal --prefix none --locked | grep -E '^bevy( |_app |_ecs |_render |_asset )'; then
+for core in stubby_audio stubby_rack stubby_recipes stubby_economy; do
+  edges=normal
+  forbidden='^bevy( |_app |_ecs |_render |_asset )'
+  if [ "$core" = stubby_economy ]; then
+    edges=normal,build,dev
+    forbidden='^bevy([_ ]|$)'
+  fi
+  if cargo tree -p "$core" -e "$edges" --prefix none --locked | grep -E "$forbidden"; then
     echo "$core must not depend on the Bevy engine"; exit 1
   fi
 done

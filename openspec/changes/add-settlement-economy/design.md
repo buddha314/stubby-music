@@ -24,8 +24,20 @@ Ported from `automate-godot` (`docs/research/automate-godot-port.md`):
 - **Labour ledger**: named, atomic, idempotent reservations of Dancers, with a snapshot for
   saving.
 
-Its four smoke tests (apply order, whole conversions, deficits, jump equals steps) are the
-crate's tests.
+The four port checks cover apply order, whole conversions, deficits and jump versus
+stepped time. A ledger check covers atomic resizing and snapshot restore.
+
+The dispatcher takes a schedule in whole simulation seconds from the host.
+Dawn is at zero within the cycle. Midday, dusk and night are distinct offsets.
+The first test uses solar midnight for the night check, after the dusk ration.
+The chosen night offset remains a provisioning rule for the host. Save the
+cursor alongside stock and roster state. If resolving a checkpoint fails, that
+checkpoint stays pending. The caller commits its changes only on success.
+
+The labour ledger tracks named reservations by count at this layer. Roster
+and crew logic will select the individual Dancers. Existing reservations survive
+a capacity drop. Releasing or reducing a reservation remains possible during an
+overcommit, and starting or expanding a reservation requires free capacity.
 
 ### D2. Dancers are individuals (user, 2026-11-20)
 

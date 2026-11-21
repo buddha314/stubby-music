@@ -15,21 +15,21 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [ ] 0.9 Confirm "random" means random placement into cottages of four, not a random capacity per cottage
 
 ## 1. The crate
-- [ ] 1.1 Create `crates/stubby_economy` (edition 2024; `serde`, `rand_chacha`; no Bevy), add it to the workspace, and a `deny.toml` line (wrappers: `stubby_game`, `stubby_jackdaw` and the future settlement system crate)
-- [ ] 1.2 Add it to the cores' no-Bevy `cargo tree` check in `tools/ci_local.sh` and the CI workflow
-- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts
-- [ ] 1.4 AGENTS.md: the crate in the repo map and in the layer table as a core
+- [x] 1.1 (claimed: Codex) Create `crates/stubby_economy` (edition 2024; `serde`; no Bevy), add it to the workspace, and a `deny.toml` line (wrappers: `stubby_game`, `stubby_jackdaw` and the future `stubby_settlement` crate)
+- [x] 1.2 (claimed: Codex) Add it to the cores' no-Bevy `cargo tree` check in `tools/ci_local.sh` and the CI workflow
+- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts. The foundation includes `time`, `rules` and `ledger`
+- [x] 1.4 (claimed: Codex) AGENTS.md: the crate in the repo map and in the layer table as a core
 
 ## 2. Ported from automate-godot (`docs/research/automate-godot-port.md`)
-- [ ] 2.1 `Checkpoint` (dawn, midday, dusk, night) and a monotonic checkpoint index from world time (`stubby_world::calendar` values passed in as numbers, not as a dependency)
-- [ ] 2.2 Dispatcher: advancing to a world time yields each crossed checkpoint once, in order; the last processed index is part of the state
-- [ ] 2.3 Rules: producer, converter, consumer and upkeep with per-unit inputs and outputs, resolved per checkpoint against bound unit counts; producers and converters first; whole conversions; zero-clamped stock with deficits reported
-- [ ] 2.4 Ledger: named reservations of Dancers, atomic and idempotent, resizable, with a versioned snapshot
-- [ ] 2.5 Port the four smoke tests: apply order, whole conversions, deficits, and a jump equal to its steps (spec: "Checkpoints resolve in order", "Rules produce before they consume")
+- [x] 2.1 (claimed: Codex) `Checkpoint` (dawn, midday, dusk, night) and a monotonic checkpoint index from world time (`stubby_world::calendar` values passed in as numbers, not as a dependency)
+- [x] 2.2 (claimed: Codex) Dispatcher: advancing to a world time yields each crossed checkpoint once, in order; the last processed index is part of the state
+- [x] 2.3 (claimed: Codex) Rules: producer, converter, consumer and upkeep with per-unit inputs and outputs, resolved per checkpoint against bound unit counts; producers and converters first; whole conversions; zero-clamped stock with deficits reported
+- [x] 2.4 (claimed: Codex) Ledger: named reservations of Dancers, atomic and idempotent, resizable, with a versioned snapshot
+- [x] 2.5 (claimed: Codex) Port the four smoke tests: apply order, whole conversions, deficits, and a jump equal to its steps (spec: "Checkpoints resolve in order", "Rules produce before they consume")
 
 ## 3. The roster
 - [ ] 3.1 `DancerId` (never reused) and `Dancer`: body shape, skin tone, home, profession, task, clock ID
-- [ ] 3.2 Appearance drawn from the world seed and the Dancer's ID (four shapes, four tones; counts come from rows)
+- [ ] 3.2 Appearance drawn with `rand_chacha` from the world seed and the Dancer's ID (four shapes, four tones; counts come from rows)
 - [ ] 3.3 Counts (population, per profession, idle, homeless) derived from the roster, never stored
 - [ ] 3.4 The settlement state round-trips through serde unchanged (spec: "Dancers are individuals")
 

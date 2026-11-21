@@ -219,6 +219,7 @@ crates/
   stubby_game/            the Bevy app; `tools/run_game.sh --bare` runs it alone, with no scene
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
+  stubby_economy/         settlement time, stock rules and labour accounting (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_rules_server/    tool: the rules designer, a web page on 127.0.0.1 (no Bevy, never the game)
   stubby_jackdaw/         the game: stubby_game plus the scene, the seeded layout and the editor bridge
@@ -261,7 +262,7 @@ Each part of the game is its own crate, and dependencies only point down
 
 | Layer | Crates | May depend on |
 | --- | --- | --- |
-| cores | `stubby_audio`, `stubby_rack`, `stubby_recipes` | other cores; never Bevy |
+| cores | `stubby_audio`, `stubby_rack`, `stubby_recipes`, `stubby_economy` | other cores; never Bevy |
 | services | `stubby_core`, `stubby_ui`, `bevy_stubby_audio` | cores |
 | systems | `bevy_stubby_rack`, `bevy_stubby_recipes`, `stubby_player`, `stubby_life`, `stubby_world`, `stubby_streams` | services, shared cores, their own core |
 | game | `stubby_game`, `stubby_jackdaw` | anything |
