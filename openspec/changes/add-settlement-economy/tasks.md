@@ -54,7 +54,7 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [ ] 6.5 `Task`: working a place, building, hauling, crewing a recipe, idle; exactly one per Dancer, and a query for who is doing what
 
 ## 7. Crewed recipes
-- [ ] 7.1 A crew request (profession, Dancers, seconds) reserves free Dancers through the ledger, takes the inputs and sets their task
+- [ ] 7.1 A crew request (profession, Dancers, seconds: a recipe's `crew`) reserves free Dancers and the inputs through the ledger and sets their task; the station screen that queues it is `add-crafting-durations` 5
 - [ ] 7.2 Not enough free: nothing is taken and the report says how many are missing (spec: "Crewed recipes reserve Dancers")
 - [ ] 7.3 Completion at its world time delivers the outputs and releases the crew, exactly once, across jumps and reloads
 - [ ] 7.4 Crewed recipes only in a settlement at the established tier or above
@@ -64,7 +64,7 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [ ] 8.2 The established scenario (30 Dancers, 8 cottages, the required building) (spec: "Settlement tiers are rows")
 
 ## 9. Rules (`stubby_recipes`; a Rule PR, schema first)
-- [ ] 9.1 Rule types and validation: `dwellings` (capacity), `professions` (building work places), `rations` (need, checkpoint, quantity), `settlement_tiers` (population, dwellings, buildings) and a recipe's optional `crew` (profession, dancers, seconds)
+- [ ] 9.1 Rule types and validation: `dwellings` (capacity), `professions` (building work places), `rations` (need, checkpoint, quantity), `settlement_tiers` (population, dwellings, buildings) and a recipe's optional `crew` (profession, dancers, seconds), beside `by_hand` from `add-crafting-durations`
 - [ ] 9.2 `rules-fmt`: schema regenerated, new IDs in `ids.lock`; the designer's forms follow from the schema
 - [ ] 9.3 Rows: the cottage (4), laborer and builder, the draft rations, Farthest Frontier's four tiers with placeholder buildings, one example crewed recipe
 - [ ] 9.4 `assets/recipes/README.md`: how to add a dwelling, a profession and a crew
