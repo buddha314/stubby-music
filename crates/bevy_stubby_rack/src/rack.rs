@@ -10,6 +10,7 @@
 //! gives it back (simplify-rack-cables: no cable comb). Sound starts when every needed
 //! patch is made: the engine patch is exactly the cables, so a half-patched voice is naturally silent (no CV opens the VCA, or nothing
 //! reaches its input). Completing the last patch sends `MachineConfigured`, once.
+use crate::samples::{RackSamples, SamplePickerPlugin, bind_selections};
 use crate::{
     machine_config::{
         ButtonHit, ButtonLight, JackHit, JackRef, KnobHit, PodMesh, PortNode, Profiles,
@@ -29,7 +30,7 @@ use bevy_stubby_audio::{Synth, module_ids::ModuleIds};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::LazyLock;
-use stubby_audio::{Command, ModuleId, PortRef};
+use stubby_audio::{Command, ModuleId, PortRef, SampleId};
 use stubby_core::{AssetClock, ItemNames, PlacedAsset, Stock};
 use stubby_core::{Screen, ScreenMode};
 use stubby_rack::{Modules, Plan, RackPatch};
@@ -154,8 +155,19 @@ pub struct RackEngine {
     /// (place, part) -> engine module, so a knob reaches the module it turns.
     parts: HashMap<(String, String), ModuleId>,
     configured: bool,
+    sample_players: std::collections::BTreeMap<String, ModuleId>,
 }
 impl RackEngine {
+    pub(crate) fn sample_places(&self) -> impl Iterator<Item = &str> {
+        self.sample_players.keys().map(String::as_str)
+    }
+
+    pub(crate) fn select_clip(&self, synth: &Synth, place: &str, sample: Option<SampleId>) {
+        if let Some(&module) = self.sample_players.get(place) {
+            synth.send(Command::SelectSample { module, sample });
+        }
+    }
+
     /// The place whose module is this engine module, if the rack plays it.
     pub fn place_of(&self, module: ModuleId) -> Option<&str> {
         self.parts
@@ -227,7 +239,7 @@ impl<S> Default for RackPlugin<S> {
 }
 impl<S: Stock> Plugin for RackPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_plugins(stubby_ui::ItemTooltipPlugin)
+        app.add_plugins((stubby_ui::ItemTooltipPlugin, SamplePickerPlugin))
             .init_resource::<ItemNames>()
             .init_resource::<KnobDefaults>()
             .register_type::<RackTargets>()
@@ -238,6 +250,7 @@ impl<S: Stock> Plugin for RackPlugin<S> {
                 (
                     cancel_cable,
                     draw_scope.after(show_knobs).after(patch_engine),
+                    bind_selections.after(patch_engine),
                 ),
             )
             .add_observer(cable_over)
@@ -411,9 +424,9 @@ fn plan(
 fn attach(
     mut commands: Commands,
     profiles: Res<Profiles>,
-    machines: Query<(Entity, &PlacedAsset), Without<RackState>>,
+    machines: Query<(Entity, &PlacedAsset, Option<&RackSamples>), Without<RackState>>,
 ) {
-    for (entity, asset) in &machines {
+    for (entity, asset, saved_samples) in &machines {
         if let Some(config) = profiles.0.get(&asset.asset) {
             commands.entity(entity).insert((
                 RackState {
@@ -429,6 +442,9 @@ fn attach(
                 RackKnobs::default(),
                 RackTargets::default(),
             ));
+            if saved_samples.is_none() {
+                commands.entity(entity).insert(RackSamples::default());
+            }
         }
     }
 }
@@ -457,6 +473,23 @@ fn patch_engine(
             continue;
         };
         let plan = plan(config, state, knobs, clock, &defaults, || ids.allocate());
+        let sample_ids: std::collections::HashSet<_> = plan
+            .commands
+            .iter()
+            .filter_map(|command| match command {
+                Command::AddModule {
+                    id,
+                    kind: stubby_audio::ModuleKind::SamplePlayer,
+                } => Some(*id),
+                _ => None,
+            })
+            .collect();
+        engine.sample_players = plan
+            .parts
+            .iter()
+            .filter(|(_, id)| sample_ids.contains(id))
+            .map(|((place, _), id)| (place.clone(), *id))
+            .collect();
         if let Some(synth) = &synth {
             for id in engine.owned.drain(..) {
                 synth.send(Command::RemoveModule { id });
@@ -579,7 +612,7 @@ fn publish_voice(
     }
 }
 
-fn open_rack(screens: &ScreenMode) -> Option<Entity> {
+pub(crate) fn open_rack(screens: &ScreenMode) -> Option<Entity> {
     match screens.open {
         Some(Screen::MachineConfiguration(e)) => Some(e),
         _ => None,
@@ -1519,12 +1552,16 @@ fn relevant<'a>(
 
 /// Number keys 1-0 insert the matching relevant item, as in Satisfactory.
 fn number_keys<S: Stock>(
+    picker: Res<crate::samples::Picker>,
     keys: Res<ButtonInput<KeyCode>>,
     screens: Res<ScreenMode>,
     profiles: Res<Profiles>,
     mut player: ResMut<S>,
     mut racks: Query<(&PlacedAsset, &mut RackState)>,
 ) {
+    if picker.is_open() {
+        return;
+    }
     const DIGITS: [KeyCode; 10] = [
         KeyCode::Digit1,
         KeyCode::Digit2,
@@ -1984,7 +2021,7 @@ const SNAPS: [&[u8]; 3] = [
 const SNAP_GAIN: f32 = 0.6;
 
 /// A WAV as (sample rate, one buffer per channel), decoded by `hound`.
-fn decode_wav(bytes: &[u8]) -> Option<(u32, Vec<Vec<f32>>)> {
+pub fn decode_wav(bytes: &[u8]) -> Option<(u32, Vec<Vec<f32>>)> {
     let mut reader = hound::WavReader::new(std::io::Cursor::new(bytes)).ok()?;
     let spec = reader.spec();
     let channels = usize::from(spec.channels.max(1));

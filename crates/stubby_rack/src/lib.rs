@@ -50,6 +50,7 @@ pub fn shipped_sources() -> Vec<Source<'static>> {
         module!("mixer"),
         module!("vcf"),
         module!("scope"),
+        module!("sample_player"),
         module!("snail_sequencer"),
         module!("stream_blank"),
         module!("volume"),

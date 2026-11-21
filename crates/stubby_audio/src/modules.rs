@@ -181,6 +181,7 @@ const GAIN_SMOOTH_SECONDS: f64 = 0.005;
 impl ModuleKind {
     pub fn inputs(&self) -> &'static [&'static str] {
         match self {
+            ModuleKind::SamplePlayer => &["trigger"],
             ModuleKind::SineVco { .. }
             | ModuleKind::SquareVco { .. }
             | ModuleKind::SawVco { .. }
@@ -205,7 +206,8 @@ impl ModuleKind {
             | ModuleKind::Constant { .. }
             | ModuleKind::Envelope { .. }
             | ModuleKind::Vca { .. }
-            | ModuleKind::Scope { .. } => &["out"],
+            | ModuleKind::Scope { .. }
+            | ModuleKind::SamplePlayer => &["out"],
             ModuleKind::Mixer { .. } => &["mix"],
             ModuleKind::Vcf { .. } => &["lpf", "hpf"],
             ModuleKind::Clock { .. } => &["gate", "phase"],
@@ -221,7 +223,7 @@ impl ModuleKind {
             | ModuleKind::SawVco { .. }
             | ModuleKind::TriangleVco { .. } => VCO_PARAMS,
             ModuleKind::Clock { .. } => CLOCK_PARAMS,
-            ModuleKind::RandomClock { .. } => &[],
+            ModuleKind::RandomClock { .. } | ModuleKind::SamplePlayer => &[],
             ModuleKind::Constant { .. } => CONSTANT_PARAMS,
             ModuleKind::Envelope { .. } => ENVELOPE_PARAMS,
             ModuleKind::Vca { .. } => VCA_PARAMS,
@@ -251,6 +253,7 @@ impl ModuleKind {
             ModuleKind::Mixer { .. } => "Mixer",
             ModuleKind::Vcf { .. } => "Vcf",
             ModuleKind::Scope { .. } => "Scope",
+            ModuleKind::SamplePlayer => "SamplePlayer",
             ModuleKind::StepSequencer { .. } => "StepSequencer",
         }
     }
@@ -304,6 +307,7 @@ impl ModuleKind {
                 cutoff_hz: get(VCF_PARAMS, "cutoff"),
                 resonance: get(VCF_PARAMS, "res"),
             },
+            "SamplePlayer" => ModuleKind::SamplePlayer,
             "Scope" => ModuleKind::Scope {
                 time: get(SCOPE_PARAMS, "time"),
                 scale: get(SCOPE_PARAMS, "scale"),

@@ -1,0 +1,5 @@
+{
+  "id": "sample_player",
+  "parts": [{ "part": "voice", "kind": "SamplePlayer" }],
+  "jacks": { "trigger": "voice.trigger", "out": "voice.out" }
+}

@@ -478,16 +478,32 @@ fn setup(mut commands: Commands) {
                 BorderColor::all(Color::srgb(0.3, 0.29, 0.27)),
                 Pickable::IGNORE,
             ));
-            panel.spawn((
-                RackActions,
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: px(4),
-                    overflow: Overflow::scroll_y(),
-                    ..at(layout::LEFT)
-                },
-                Pickable::IGNORE,
-            ));
+            panel
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: px(8),
+                        ..at(layout::LEFT)
+                    },
+                    Pickable::IGNORE,
+                ))
+                .with_children(|column| {
+                    column.spawn((
+                        crate::samples::SampleActions,
+                        Node::default(),
+                        Pickable::IGNORE,
+                    ));
+                    column.spawn((
+                        RackActions,
+                        Node {
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(4),
+                            overflow: Overflow::scroll_y(),
+                            ..default()
+                        },
+                        Pickable::IGNORE,
+                    ));
+                });
             panel.spawn((
                 RackInventory,
                 Node {

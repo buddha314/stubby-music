@@ -107,5 +107,5 @@ spike_fundsp` and `-p spike_firewheel` reproduce the tables.
 
 ## Rack sample player
 
-The proposed sampler adds a picker for collected clips and plays each module’s
+The rack sampler adds a picker for collected clips and plays each module’s
 selected clip from a patched trigger. See the [rack sample player proposal](../../openspec/changes/add-rack-sample-player/proposal.md).

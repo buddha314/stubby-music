@@ -40,6 +40,17 @@
         "name": {
           "type": "string"
         },
+        "sample": {
+          "description": "Learning this item unlocks its authored one-shot for the rack sampler.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SampleDefinition"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "uses": {
           "type": "array",
           "items": {
@@ -62,6 +73,24 @@
         "id",
         "name",
         "description"
+      ]
+    },
+    "SampleDefinition": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "Asset-relative PCM WAV under audio/samples/.",
+          "type": "string"
+        },
+        "source": {
+          "description": "The source label shown in the sampler picker.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "source"
       ]
     },
     "SignalUse": {

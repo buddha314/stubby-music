@@ -39,10 +39,14 @@ fn light_the_recorder(
         events.clear();
         return;
     };
-    if events
-        .read()
-        .any(|event| !collected_waveforms(event, &catalog).is_empty())
-    {
+    if events.read().any(|event| {
+        event.yields.iter().any(|stack| {
+            catalog
+                .0
+                .item(&stack.item)
+                .is_some_and(stubby_recipes::ItemDefinition::is_sound)
+        })
+    }) {
         captured.write(stubby_player::recorder::RecorderCaptured);
     }
 }

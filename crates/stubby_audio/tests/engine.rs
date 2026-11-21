@@ -1039,3 +1039,82 @@ fn the_world_meter_hears_the_world_but_not_ui_sounds() {
     rig.render(SR as usize / 10);
     assert!(meter.peak_db() > -12., "{}", meter.peak_db());
 }
+
+#[test]
+fn sample_player_follows_gate_edges_and_keeps_its_patch_when_selection_changes() {
+    let mut rig = Rig::new();
+    let gate = rig.add(100, ModuleKind::Constant { value: 0. });
+    let player = rig.add(101, ModuleKind::SamplePlayer);
+    let filter = rig.add(
+        102,
+        ModuleKind::Vcf {
+            cutoff_hz: 2_000.,
+            resonance: 0.,
+        },
+    );
+    rig.connect(out(gate), PortRef::new(player, "trigger"));
+    rig.connect(out(player), PortRef::new(filter, "in"));
+    rig.connect(PortRef::new(filter, "lpf"), PortRef::output());
+
+    let low = stubby_audio::SampleId(101);
+    let high = stubby_audio::SampleId(102);
+    for (id, level) in [(low, 0.2), (high, 0.6)] {
+        let sound = (0..BLOCK * 8)
+            .map(|frame| level * (frame as f32 * std::f32::consts::TAU / 96.).sin())
+            .collect();
+        rig.engine.load_sample(id, SR, vec![sound]);
+    }
+
+    let gate_value = |value| Command::SetParam {
+        module: gate,
+        param: "value",
+        value,
+    };
+    let select = |sample| Command::SelectSample {
+        module: player,
+        sample,
+    };
+    rig.send(select(Some(low)));
+    rig.flush();
+    rig.render(BLOCK * 2);
+    assert!(peak(&rig.left) < 1e-5);
+
+    rig.send(gate_value(1.));
+    rig.flush();
+    let start = rig.left.len();
+    rig.render(BLOCK * 2);
+    let first = peak(&rig.left[start..]);
+    assert!(first > 0.05);
+
+    rig.send(select(Some(high)));
+    rig.flush();
+    let start = rig.left.len();
+    rig.render(BLOCK * 2);
+    assert!((peak(&rig.left[start..]) - first).abs() < 0.02);
+    rig.render(BLOCK * 10);
+    assert!(
+        peak(&rig.left[rig.left.len() - BLOCK..]) < 1e-5,
+        "held gate must not loop"
+    );
+
+    rig.send(gate_value(0.));
+    rig.flush();
+    rig.render(BLOCK);
+    rig.send(gate_value(1.));
+    rig.flush();
+    let start = rig.left.len();
+    rig.render(BLOCK * 2);
+    assert!(peak(&rig.left[start..]) > first * 2.);
+
+    rig.send(gate_value(0.));
+    rig.send(select(None));
+    rig.flush();
+    rig.render(BLOCK);
+    rig.send(gate_value(1.));
+    rig.flush();
+    rig.render(BLOCK * 2);
+    assert!(
+        peak(&rig.left[rig.left.len() - BLOCK..]) < 1e-5,
+        "cleared selection stops on next edge"
+    );
+}
