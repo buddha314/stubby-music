@@ -127,7 +127,8 @@ pub(crate) const SCOPE_PARAMS: &[ParamSpec] = &[
     ParamSpec {
         name: "time",
         min: 0.002,
-        max: 0.25,
+        // Up to one beat at 24 BPM: the rack sets the window to one beat of its clock.
+        max: 2.5,
         default: 0.02,
         quantum: 0.0,
     },

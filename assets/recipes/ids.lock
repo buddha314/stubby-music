@@ -2,18 +2,24 @@
 # Never remove a line: a renamed or removed ID needs a row in migrations.json.
 build_a_camp
 build_a_campfire
+build_a_check_dam
 build_a_heartbeat
 campfire
 campfire_tuning
 catch_a_spark
+clean_the_water
 clock
 clock_source
+craft_a_purifier_kit
 craft_reed_water_purifier
 cut_reeds
 desert_brush_air
 empty_snail_shell
+find_a_high_pass_filter
+find_an_oscilloscope
 high_pass_filter
 hollow_trunk
+leaf_the_oak
 light_the_fire
 lightning_bug
 mudpit_burbler

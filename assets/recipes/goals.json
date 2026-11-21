@@ -87,6 +87,68 @@
         "kind": "fire_lit",
         "buildable": "campfire"
       }
+    },
+    {
+      "id": "clean_the_water",
+      "name": "Clean the water",
+      "description": "Mud will not grow a grove. Build a check dam of reeds across the stream, tune it, and let clearer water reach an oak.",
+      "scale": "major"
+    },
+    {
+      "id": "find_a_high_pass_filter",
+      "name": "Find a high-pass filter",
+      "description": "Openings in rock and hollow oak trunks pass short waves and stop long ones. Collect one with E (the scanner, B, shows them).",
+      "scale": "minor",
+      "part_of": "clean_the_water",
+      "condition": {
+        "kind": "item_found",
+        "item": "high_pass_filter"
+      }
+    },
+    {
+      "id": "find_an_oscilloscope",
+      "name": "Find an oscilloscope",
+      "description": "Still pools along a sounding stream ripple on the beat. Collect one with E.",
+      "scale": "minor",
+      "part_of": "clean_the_water",
+      "condition": {
+        "kind": "item_found",
+        "item": "oscilloscope"
+      }
+    },
+    {
+      "id": "craft_a_purifier_kit",
+      "name": "Craft a purifier kit",
+      "description": "At a lit campfire, press E and craft a reed water purifier: 20 reeds, the filter and the oscilloscope, with the clock between 96 and 144 BPM.",
+      "scale": "minor",
+      "part_of": "clean_the_water",
+      "condition": {
+        "kind": "item_found",
+        "item": "reed_water_purifier_kit"
+      }
+    },
+    {
+      "id": "build_a_check_dam",
+      "name": "Build a check dam",
+      "description": "Press Q and build the purifier across a laid stream.",
+      "scale": "minor",
+      "part_of": "clean_the_water",
+      "condition": {
+        "kind": "built",
+        "buildable": "reed_water_purifier"
+      }
+    },
+    {
+      "id": "leaf_the_oak",
+      "name": "Leaf the oak",
+      "description": "Patch and tune the dam (E): low VCO to C2, high to C4, cutoff at C5. The water below clears to silty; lead it to an oak until it leafs.",
+      "scale": "minor",
+      "part_of": "clean_the_water",
+      "condition": {
+        "kind": "tree_grown",
+        "mine": "scrub_oak",
+        "level": "leafed"
+      }
     }
   ]
 }

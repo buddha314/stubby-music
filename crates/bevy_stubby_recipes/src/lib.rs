@@ -344,7 +344,16 @@ fn apply_crafts(
             .craft_at(&request.recipe, &mut player.items, request.bpm)
         {
             Ok(outputs) => {
-                player.feedback = format!("Crafted {}.", request.recipe);
+                // What you have made, you know (add-item-found-condition).
+                for stack in &outputs {
+                    player.book.discover(&stack.item);
+                }
+                let name = catalog
+                    .0
+                    .recipes()
+                    .find(|recipe| recipe.id == request.recipe)
+                    .map_or(request.recipe.as_str(), |recipe| recipe.name.as_str());
+                player.feedback = format!("Crafted {name}.");
                 completed.write(CraftCompleted {
                     recipe: request.recipe.clone(),
                     outputs,

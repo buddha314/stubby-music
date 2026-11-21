@@ -131,6 +131,25 @@
           ]
         },
         {
+          "description": "The player's recipe book knows this item: collected or crafted at least once. It\nlatches: using the item up later does not clear it (add-item-found-condition).",
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "x-stubby-ref": "items"
+            },
+            "kind": {
+              "type": "string",
+              "const": "item_found"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "item"
+          ]
+        },
+        {
           "description": "The player holds at least this many of an item.",
           "type": "object",
           "properties": {

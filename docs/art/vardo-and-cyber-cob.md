@@ -76,11 +76,13 @@ steel pylon and piston rod, ankle joint, hoof-shaped foot, one tiny dim cyan ind
 Every added part is skinned to the rig, so every clip moves it. 1.48 m at the withers, 4.5k
 triangles, one skinned level. Previews: `previews/creatures/cyber_cob/`.
 
-**Which foreleg: please confirm.** The rule above says "near-side front leg (visible with the
-horse facing right)". Equestrian "near side" is the horse's left, but with the horse facing
-right a viewer sees its right side, and the study shows the prosthesis on the leg facing the
-viewer. The model follows the study and the parenthetical: the horse's own **right** foreleg.
-`PROSTHESIS_SIDE` in the generator flips it.
+**The prosthesis is on the horse's own right foreleg** (confirmed by the user, 2026-11-20): the
+leg facing the viewer with the horse facing right, as the study shows. ("Near-side" above
+meant the side nearest the viewer, not the equestrian near side.)
+
+**Feathering** (fixed 2026-11-20 after review): long hair from the back and sides of the
+fetlock falls over the top of the hoof, and the hoof's front stays clear; the first pass
+splayed a full ring of cards to the ground and hid the hooves.
 
 **In the game** it stands at the vardo's `Hitch` in `--asset-review vardo`. Its `Idle` clip
 plays in time with the music: phase-locked to the nearest running clock within 30 m, or to
