@@ -20,7 +20,7 @@ The `clearing` stage SHALL have much less fog than `bleak`, a saturated sky and 
 
 ### Requirement: Stages blend without a hard cut
 
-Light quality SHALL blend continuously through the stops listed in the data, and the stops SHALL be data, not code.
+Light quality SHALL blend continuously through the stops listed in the data, and the Rules Designer SHALL expose the ordered light-quality stops from the lighting data through validated fields.
 
 #### Scenario: Light quality between stops
 

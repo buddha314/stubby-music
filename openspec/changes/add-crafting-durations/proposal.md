@@ -17,13 +17,13 @@ steps, and each recipe's time is counted in hammers of about 0.25 s (an iron ing
 ## What Changes
 
 - A recipe row says **how** it can be made: `by_hand` (seconds at a station) and/or `crew`
-  (Dancers of a profession, and seconds of world time). At least one; early recipes are
+  (Dancers of a profession, and a positive whole number of worksite quarter notes). At least one; early recipes are
   by hand only and short (about 0.25 to 1 s).
 - **By hand**: hold Craft or latch it with Space; a bar fills in 0.25 s steps; the inputs
   are taken and the outputs given when it fills; holding on starts the next; letting go
   pauses it.
 - **Delegated**: at a station in an established village, the player queues a crewed recipe
-  for Dancers; it runs in world time with its own bar, on the station's screen and above
+  for Dancers; it advances on worksite quarter notes with its own bar, on the station's screen and above
   the station in the world, while the player is free.
 - **One progress bar widget** in `stubby_ui` for both, and for machines later.
 

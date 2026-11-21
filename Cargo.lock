@@ -6971,6 +6971,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "stubby_economy"
+version = "0.1.0"
+dependencies = [
+ "rand 0.9.5",
+ "rand_chacha",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "stubby_game"
 version = "0.1.0"
 dependencies = [

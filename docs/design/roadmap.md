@@ -103,9 +103,18 @@ Proposed, from the research (rankings in the survey):
 - **Decided (user, 2026-11-20): recipes take time, with a progress bar as Satisfactory's
   bench; early ones almost instant. Two ways to craft: by hand at a station, or delegated
   to Dancers.** `openspec/changes/add-crafting-durations/`.
-- **Dancers arrive on surplus.** Provisioned on the draft schedule (water at dawn and dusk,
-  food at midday, shelter at night). They come when there is spare water, food and
-  shelter, and drift away when short; no deaths (Farthest Frontier, Anno).
+- **Tempo sets work and consumption rates.** Local quarter notes drive food, water, fresh air,
+  construction, and crewed crafts. Faster BPM means faster work and faster resource
+  use. At the standard 120 BPM, a day's food, clean water and fresh air sustain a Dancer working
+  continuously through one full in-game day at normal simulation speed. Shelter is
+  checked at night. Dancers lower air quality as they use it, and plants and algae
+  replenish it.
+- **Springs invoke Dancers.** Dancers descend from the sky and settle locally.
+  A spring's air quality sets its Poisson arrival rate. Each arrival needs a
+  vacancy and seven in-game days of clean water available to reserve at the
+  local tempo. The player can turn invocation on or off per spring. The crafting
+  recipe and rate curve remain open. The Rules Designer will expose the reserve
+  horizon, arrival curve, ration budgets and air replenishment settings. [Spring invocation](../../openspec/changes/add-settlement-economy/design.md#spring-invocation)
 - **The hearth.** The campfire is the centre of each settlement; its reach sets where
   Dancers live (Against the Storm's hearth). It already keeps the clock, so Dancers dance
   to it.
@@ -160,19 +169,26 @@ Proposed, from the research (rankings in the survey):
 
 1. **Save and load**, with world time resuming from the last processed checkpoint (the
    Dancer schedule already assumes it).
-2. **A headless settlement resolver** in a Bevy-free core, in the style of
-   `stubby_recipes`: needs, stock, housing, labour, at the calendar's checkpoints.
-   **Port it from `automate-godot`** into `stubby_economy`, in this repository unless it
-   grows big (user, 2026-11-20; `add-settlement-economy`) (`docs/research/automate-godot-port.md`): its tick
-   dispatcher, rule engine (producer, converter, consumer, upkeep, with deficits) and
-   workforce pool are about 200 lines of GDScript, the generalised form of Burb Sweeper's
-   resolver, and already exactly the shape the Dancer schedule needs. Record intended
-   demand, unmet demand and the binding input, as Burb Sweeper's ledger does.
+2. **A headless settlement resolver** in `stubby_economy`. The checkpoint dispatcher,
+   stock rules and workforce reservations are implemented from the
+   [automate-godot port review](../research/automate-godot-port.md). The core now saves
+   Dancer identities, appearance and housing, and counts residents from the roster.
+   The next slice applies quarter-note rations, records demand and shortfalls per Dancer,
+   and checks whether the settlement can support an arrival.
+   [Settlement economy tasks](../../openspec/changes/add-settlement-economy/tasks.md)
 3. **A balance harness** that runs the resolver for hundreds of days under scripted
    strategies and reports provisioned Dancer-days and the limiting input (Burb Sweeper's
    harness; `docs/design/long-session-previews.md` already sketches the first experiment).
 4. **Measurable phase conditions** (settlement-phase task 2.4) as goal conditions, so the
    goals hub drives the phases.
+
+The Rules Designer is the editing surface for settlement balance. In addition
+to spring and ration settings, expose dwelling capacity, workplaces, leaving
+policy, tier thresholds, recipe and crew timings, air replenishment and
+light-quality stops. The existing cleaner form already exposes radius and
+strength. Add measurable phase targets as goal-condition fields once those
+conditions are defined. Jackdaw continues to author the review scenes.
+[Settlement rule design](../../openspec/changes/add-settlement-economy/design.md#d8-rules-stay-rows)
 
 ## Rules audit (2026-11-20)
 

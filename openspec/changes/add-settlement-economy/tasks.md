@@ -11,40 +11,41 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [x] 0.5 The crate lives in this repository unless it grows big (user, 2026-11-20)
 - [ ] 0.6 Which of our buildings fill the market, school, trading post and trading centre roles (until then, tier rows name placeholder building IDs)
 - [ ] 0.7 Whether Town counts Dancers per village or across the trading villages
-- [ ] 0.8 Arrival and leaving rates; the first professions beyond laborer and builder
+- [ ] 0.8 Tune the spring air-quality rate curve and leaving rates; the first professions beyond laborer and builder
 - [ ] 0.9 Confirm "random" means random placement into cottages of four, not a random capacity per cottage
 
 ## 1. The crate
-- [ ] 1.1 Create `crates/stubby_economy` (edition 2024; `serde`, `rand_chacha`; no Bevy), add it to the workspace, and a `deny.toml` line (wrappers: `stubby_game`, `stubby_jackdaw` and the future settlement system crate)
-- [ ] 1.2 Add it to the cores' no-Bevy `cargo tree` check in `tools/ci_local.sh` and the CI workflow
-- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts
-- [ ] 1.4 AGENTS.md: the crate in the repo map and in the layer table as a core
+- [x] 1.1 (claimed: Codex) Create `crates/stubby_economy` (edition 2024; `serde`; no Bevy), add it to the workspace, and a `deny.toml` line (wrappers: `stubby_game`, `stubby_jackdaw` and the future `stubby_settlement` crate)
+- [x] 1.2 (claimed: Codex) Add it to the cores' no-Bevy `cargo tree` check in `tools/ci_local.sh` and the CI workflow
+- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts. Implemented modules are `time`, `rules`, `ledger`, `roster`, `housing` and `state`
+- [x] 1.4 (claimed: Codex) AGENTS.md: the crate in the repo map and in the layer table as a core
 
 ## 2. Ported from automate-godot (`docs/research/automate-godot-port.md`)
-- [ ] 2.1 `Checkpoint` (dawn, midday, dusk, night) and a monotonic checkpoint index from world time (`stubby_world::calendar` values passed in as numbers, not as a dependency)
-- [ ] 2.2 Dispatcher: advancing to a world time yields each crossed checkpoint once, in order; the last processed index is part of the state
-- [ ] 2.3 Rules: producer, converter, consumer and upkeep with per-unit inputs and outputs, resolved per checkpoint against bound unit counts; producers and converters first; whole conversions; zero-clamped stock with deficits reported
-- [ ] 2.4 Ledger: named reservations of Dancers, atomic and idempotent, resizable, with a versioned snapshot
-- [ ] 2.5 Port the four smoke tests: apply order, whole conversions, deficits, and a jump equal to its steps (spec: "Checkpoints resolve in order", "Rules produce before they consume")
+- [x] 2.1 (claimed: Codex) `Checkpoint` (dawn, midday, dusk, night) and a monotonic checkpoint index from world time (`stubby_world::calendar` values passed in as numbers, not as a dependency)
+- [x] 2.2 (claimed: Codex) Dispatcher: advancing to a world time yields each crossed checkpoint once, in order; the last processed index is part of the state
+- [x] 2.3 (claimed: Codex) Rules: producer, converter, consumer and upkeep with per-unit inputs and outputs, resolved per checkpoint against bound unit counts; producers and converters first; whole conversions; zero-clamped stock with deficits reported
+- [x] 2.4 (claimed: Codex) Ledger: named reservations of Dancers, atomic and idempotent, resizable, with a versioned snapshot
+- [x] 2.5 (claimed: Codex) Port the four smoke tests: apply order, whole conversions, deficits, and a jump equal to its steps (spec: "Checkpoints resolve in order", "Rules produce before they consume")
 
 ## 3. The roster
-- [ ] 3.1 `DancerId` (never reused) and `Dancer`: body shape, skin tone, home, profession, task, clock ID
-- [ ] 3.2 Appearance drawn from the world seed and the Dancer's ID (four shapes, four tones; counts come from rows)
-- [ ] 3.3 Counts (population, per profession, idle, homeless) derived from the roster, never stored
-- [ ] 3.4 The settlement state round-trips through serde unchanged (spec: "Dancers are individuals")
+- [x] 3.1 (claimed: Codex) `DancerId` (never reused) and `Dancer`: body shape, skin tone, home, profession, task, clock ID
+- [x] 3.2 (claimed: Codex) Appearance drawn with `rand_chacha` from the world seed and the Dancer's ID (four shapes, four tones; counts supplied by the host; row integration follows in section 9)
+- [x] 3.3 (claimed: Codex) Counts (population, per profession, idle, homeless) derived from the roster, never stored
+- [x] 3.4 (claimed: Codex) The settlement state round-trips through serde unchanged (spec: "Dancers are individuals")
 
 ## 4. Housing
-- [ ] 4.1 Dwellings: placed instances of a dwelling kind with a capacity from rows
-- [ ] 4.2 A new Dancer goes to a dwelling with a free place, drawn from a seeded stream; same seed and history, same homes (spec: "A cottage houses at most four")
-- [ ] 4.3 A removed dwelling leaves its Dancers homeless until a place frees up; homelessness is the night checkpoint's shelter shortfall
+- [x] 4.1 (claimed: Codex) Dwellings: placed instances of a dwelling kind with a capacity from rows
+- [x] 4.2 (claimed: Codex) A new Dancer goes to a dwelling with a free place, drawn from a seeded stream; same seed and history, same homes (spec: "A cottage houses at most four")
+- [ ] 4.3 A removed dwelling leaves its Dancers homeless until a place frees up; homelessness is the night checkpoint's shelter shortfall. Housing now displaces and rehouses residents; checkpoint reporting follows in 5.1–5.2
 
 ## 5. Provisioning, arrivals and leaving
-- [ ] 5.1 Rations as consumer rules on their checkpoints (water at dawn and dusk, food at midday, a home at night), from rows
-- [ ] 5.2 Record each checkpoint's intended demand, what was met and the shortfall, per need and per Dancer (Burb Sweeper's ledger)
-- [ ] 5.3 Reserves: stock needed for the next day's rations is held back; only the rest counts as surplus (for arrivals now, trade later)
-- [ ] 5.4 Arrivals: only with a free home and the next day's rations covered for everyone; at most one per checkpoint until the rate is decided (spec: "Dancers arrive only to a settlement that can keep them")
+- [ ] 5.1 Food, clean water and fresh air as per-quarter-note consumer rules on each Dancer's local clock, with general recurring consumption on the process clock; draw fresh air from the shared field at each Dancer’s location; shelter at night. Headless Dancer provisioning is exercised in `tests/provisioning.rs`
+- [ ] 5.2 Record each resolution's intended demand, what was met and the shortfall, per need and per Dancer (Burb Sweeper's ledger). Per-note reports are implemented; the history ledger remains open
+- [ ] 5.3 Reserves: reserve the configured horizon of clean water (seven in-game days initially) for each new Dancer at their projected local tempo; exclude commitments from available stock and draw down the reservation as they drink
+- [ ] 5.4 Arrivals: seeded Poisson process per enabled spring from local air quality. Admit and reserve water together only with a free home and the configured reserve of uncommitted clean water for the new Dancer. Test the player toggle, water gate, shared reserves and replay across time jumps
 - [ ] 5.5 Leaving after prolonged shortfall, at a rate from rows, off by default; never death (spec: "Shortfalls never kill")
-- [ ] 5.6 A jump equals its steps with arrivals and shortfalls in play
+- [ ] 5.6 Save per-clock quarter-note cursors and test that a jump equals its steps with arrivals and shortfalls in play. The headless tests cover save/replay, a full ration budget at 120 BPM, and doubled demand and accepted work notes at 240 BPM. Crews and arrivals remain open
+- [ ] 5.7 Connect air draws to the shared sampler, save local depletion, and test drawdown and recovery from plants and algae (`clean-air-by-foliage`)
 
 ## 6. Professions and tasks
 - [ ] 6.1 Professions from rows, with the work places each building kind offers
@@ -54,9 +55,9 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [ ] 6.5 `Task`: working a place, building, hauling, crewing a recipe, idle; exactly one per Dancer, and a query for who is doing what
 
 ## 7. Crewed recipes
-- [ ] 7.1 A crew request (profession, Dancers, seconds: a recipe's `crew`) reserves free Dancers and the inputs through the ledger and sets their task; the station screen that queues it is `add-crafting-durations` 5
+- [ ] 7.1 A crew request (profession, Dancers, quarter notes: a recipe's `crew`) reserves free Dancers and the inputs through the ledger and sets their task; the station screen that queues it is `add-crafting-durations` 5
 - [ ] 7.2 Not enough free: nothing is taken and the report says how many are missing (spec: "Crewed recipes reserve Dancers")
-- [ ] 7.3 Completion at its world time delivers the outputs and releases the crew, exactly once, across jumps and reloads
+- [ ] 7.3 Completion on the final required worksite quarter note delivers the outputs and releases the crew, exactly once, across jumps and reloads
 - [ ] 7.4 Crewed recipes only in a settlement at the established tier or above
 
 ## 8. Settlement tiers
@@ -64,10 +65,12 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [ ] 8.2 The established scenario (30 Dancers, 8 cottages, the required building) (spec: "Settlement tiers are rows")
 
 ## 9. Rules (`stubby_recipes`; a Rule PR, schema first)
-- [ ] 9.1 Rule types and validation: `dwellings` (capacity), `professions` (building work places), `rations` (need, checkpoint, quantity), `settlement_tiers` (population, dwellings, buildings) and a recipe's optional `crew` (profession, dancers, seconds), beside `by_hand` from `add-crafting-durations`
+- [ ] 9.1 Rule types and validation: `dwellings` (capacity), `professions` (building work places), `rations` (need, daily budget at 120 BPM, stock item for food and water), spring invocation profiles (water reserve days and ordered air-quality curve points), `settlement_tiers` (population, dwellings, buildings) and a recipe's optional `crew` (profession, dancers, quarter_notes), beside `by_hand` from `add-crafting-durations`
 - [ ] 9.2 `rules-fmt`: schema regenerated, new IDs in `ids.lock`; the designer's forms follow from the schema
 - [ ] 9.3 Rows: the cottage (4), laborer and builder, the draft rations, Farthest Frontier's four tiers with placeholder buildings, one example crewed recipe
 - [ ] 9.4 `assets/recipes/README.md`: how to add a dwelling, a profession and a crew
+
+- [ ] 9.5 Expose spring profiles, ration budgets, cleaner replenishment, dwelling capacity, profession workplaces, leaving policy, crew settings and tier thresholds in the schema-driven Rules Designer. Verify load, edit, validation and save through the existing editor and use the same loaded rows in the headless harness
 
 ## 10. A headless simulation tool
 - [ ] 10.1 `cargo run -p stubby_economy --bin economy-sim -- <scenario.json>`: runs a scenario (seed, rows, starting stock, dwellings, scripted actions at world times) for N days and writes one row per checkpoint (population, stock, shortfalls, tasks)
@@ -80,6 +83,6 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 
 ## 12. Follow-up changes (opened separately, not tasks here)
 - [ ] 12.1 `add-settlement-system`: the Bevy system crate driving the core from the calendar, saving and loading it, and the professions panel (Farthest Frontier's P screen)
-- [ ] 12.2 `add-dancers`: models, the 16 appearances, clock-driven animation, and only nearby Dancers drawn
+- [ ] 12.2 `add-dancers`: spring recipe and invocation controls, descent into the local region, models, editable appearance profiles for the 16 initial combinations, clock-driven animation, and only nearby Dancers drawn
 - [ ] 12.3 `add-first-crop`: fields, water demand and the Camp → Village transition
 - [ ] 12.4 `add-village-trade`: routes between villages and the Village → Town transition

@@ -14,3 +14,5 @@
 
 - [ ] 3.1 The keys reader (3.4) handles any number of moods and the listed stops
 - [ ] 3.2 The blend (3.6) uses the stops either side of light quality; sweep light quality in a bounded review to check for jumps
+
+- [ ] Expose and validate ordered light-quality stops in the Rules Designer using the existing lighting data.

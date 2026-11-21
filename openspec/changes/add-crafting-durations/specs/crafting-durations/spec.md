@@ -2,12 +2,20 @@
 
 ### Requirement: Recipes say how they are made and how long it takes
 A recipe row SHALL allow at least one way to make it: `by_hand` with a duration in seconds,
-and/or `crew` with a profession, a number of Dancers and a duration in seconds of world
-time. A recipe with neither, or a duration that is not positive, SHALL fail to load.
+and/or `crew` with a profession, a number of Dancers and a positive whole number of worksite quarter notes. A recipe with neither, or a duration that is not positive, SHALL fail to load.
 
 #### Scenario: A recipe with no way to make it
 - **WHEN** a recipe row has neither `by_hand` nor `crew`
 - **THEN** loading the rules reports that recipe and field as an error
+
+### Requirement: Craft settings are editable with the recipe
+The recipe form in the Rules Designer SHALL expose hand-craft seconds and, when
+present, the crew profession, Dancer count and worksite quarter notes. It SHALL
+show units and validation errors from the shared recipe schema and loader.
+
+#### Scenario: Tune a crewed recipe
+- **WHEN** a designer saves a valid change to the crew size or worksite quarter notes
+- **THEN** subsequent jobs use the saved recipe settings
 
 ### Requirement: Crafting by hand fills a bar while the button is held
 At a crafting station, holding the craft button on a recipe made by hand SHALL fill a
@@ -33,13 +41,13 @@ inputs last, counting the crafts made.
 
 ### Requirement: Crafts can be delegated to Dancers
 At a station in an established village, a recipe with a crew SHALL be queueable for
-Dancers; each queued craft SHALL run in world time once its crew and inputs are reserved,
+Dancers; each queued craft SHALL advance on worksite quarter notes once its crew and inputs are reserved,
 showing its progress on the station's screen and above the station in the world, and SHALL
 deliver its outputs once.
 
 #### Scenario: Delegated while away
 - **WHEN** the player queues a crewed recipe and walks away
-- **THEN** the job runs at world speed and its outputs are delivered when its time is up
+- **THEN** the job advances at the worksite BPM and delivers its outputs once the required quarter notes have elapsed
 
 #### Scenario: Not enough Dancers
 - **WHEN** a queued craft needs four Dancers of its profession and two are free
