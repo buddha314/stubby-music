@@ -150,8 +150,11 @@ oscilloscope, craft the purifier kit at the lit campfire, build the check dam (Q
 until an oak leafs on the clearer water; the build menu's notice says where a missing kit is
 crafted. Find and craft steps use `item_found` (the recipe book knows it; latches when the item
 is used up), never `item_held` (add-item-found-condition). **The rack's scope needs no
-adjusting** (user, 2026-11-20): a triggered scope that shows two cycles of the incoming wave,
-refreshed once a beat of the rack's clock and scaled to fit (`bevy_stubby_rack::rack::triggered_cycles`). **Streams
+adjusting** (user, 2026-11-20): it draws the wave the machine actually emits (the samples
+leaving the scope module, which is the normalled outlet; raw, offset included, a point per
+sample up to 1024), two cycles of its fundamental from just before its largest excursion,
+taken where the wave is (never the silence after a closed gate), refreshed once a beat of the
+rack's clock and scaled to fit; flat after two silent beats (`bevy_stubby_rack::rack::triggered_cycles`). **Streams
 accumulate a composition** (`add-stream-layers`): the heartbeat puts a note on the staff on
 every beat. The player builds a campfire from reeds (Q, 25 reeds, `buildables.json`), places
 it, then configures it (E): placed within 5 m of a stream it snaps beside it and joins it there,
