@@ -100,6 +100,9 @@ Proposed, from the research (rankings in the survey):
   150 for Town; 300 for City), adjusted as we go. Once a village is established, many
   recipes need a crew of Dancers, and each Dancer's task is tracked, as in Farthest
   Frontier.** `openspec/changes/add-settlement-economy/`.
+- **Decided (user, 2026-11-20): recipes take time, with a progress bar as Satisfactory's
+  bench; early ones almost instant. Two ways to craft: by hand at a station, or delegated
+  to Dancers.** `openspec/changes/add-crafting-durations/`.
 - **Dancers arrive on surplus.** Provisioned on the draft schedule (water at dawn and dusk,
   food at midday, shelter at night). They come when there is spare water, food and
   shelter, and drift away when short; no deaths (Farthest Frontier, Anno).

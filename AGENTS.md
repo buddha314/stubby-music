@@ -72,7 +72,10 @@ conditions and civic construction criteria are open in
 a time. A cottage holds at most four, filled at random (seeded); larger dwellings come
 later. Settlement size starts from Farthest Frontier's population metrics (30 Dancers and 8
 cottages for an established village, 150 for Town, 300 for City), adjusted as we go. Once a
-village is established, many recipes need a crew of Dancers; professions are set by count,
+village is established, many recipes need a crew of Dancers. **Recipes take time and
+there are two ways to craft** (user, 2026-11-20): by hand at a station, holding Craft while a
+bar fills (Satisfactory's bench; early recipes almost instant), or delegated to Dancers, who
+make it in world time while the player is free (`add-crafting-durations`); professions are set by count,
 as in Farthest Frontier. The model is a Bevy-free core, `stubby_economy`, in this
 repository unless it grows big, ported in part from `automate-godot`
 (`openspec/changes/add-settlement-economy/`).
