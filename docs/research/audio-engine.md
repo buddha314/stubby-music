@@ -104,3 +104,8 @@ spike_fundsp` and `-p spike_firewheel` reproduce the tables.
 - knyst — https://docs.rs/crate/knyst/latest (0.5.1; API-stability warning in README)
 - firewheel, bevy_seedling, kira, cpal, rtrb, triple_buffer, basedrop,
   assert_no_alloc — crates.io listings, versions as of 2026-10-31
+
+## Rack sample player
+
+The proposed sampler adds a picker for collected clips and plays each module’s
+selected clip from a patched trigger. See the [rack sample player proposal](../../openspec/changes/add-rack-sample-player/proposal.md).
