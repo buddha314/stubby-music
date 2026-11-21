@@ -17,7 +17,7 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 ## 1. The crate
 - [x] 1.1 (claimed: Codex) Create `crates/stubby_economy` (edition 2024; `serde`; no Bevy), add it to the workspace, and a `deny.toml` line (wrappers: `stubby_game`, `stubby_jackdaw` and the future `stubby_settlement` crate)
 - [x] 1.2 (claimed: Codex) Add it to the cores' no-Bevy `cargo tree` check in `tools/ci_local.sh` and the CI workflow
-- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts. The foundation includes `time`, `rules` and `ledger`
+- [ ] 1.3 Module layout: `time`, `rules`, `ledger`, `roster`, `housing`, `provision`, `labour`, `crews`, `tiers`, `state` (the whole settlement as one serialisable value); crate docs name `automate-godot` as the source of the ported parts. Implemented modules are `time`, `rules`, `ledger`, `roster`, `housing` and `state`
 - [x] 1.4 (claimed: Codex) AGENTS.md: the crate in the repo map and in the layer table as a core
 
 ## 2. Ported from automate-godot (`docs/research/automate-godot-port.md`)
@@ -28,15 +28,15 @@ adding `(claimed: <agent>)` to its line in the PR with its first commit. Tests s
 - [x] 2.5 (claimed: Codex) Port the four smoke tests: apply order, whole conversions, deficits, and a jump equal to its steps (spec: "Checkpoints resolve in order", "Rules produce before they consume")
 
 ## 3. The roster
-- [ ] 3.1 `DancerId` (never reused) and `Dancer`: body shape, skin tone, home, profession, task, clock ID
-- [ ] 3.2 Appearance drawn with `rand_chacha` from the world seed and the Dancer's ID (four shapes, four tones; counts come from rows)
-- [ ] 3.3 Counts (population, per profession, idle, homeless) derived from the roster, never stored
-- [ ] 3.4 The settlement state round-trips through serde unchanged (spec: "Dancers are individuals")
+- [x] 3.1 (claimed: Codex) `DancerId` (never reused) and `Dancer`: body shape, skin tone, home, profession, task, clock ID
+- [x] 3.2 (claimed: Codex) Appearance drawn with `rand_chacha` from the world seed and the Dancer's ID (four shapes, four tones; counts supplied by the host; row integration follows in section 9)
+- [x] 3.3 (claimed: Codex) Counts (population, per profession, idle, homeless) derived from the roster, never stored
+- [x] 3.4 (claimed: Codex) The settlement state round-trips through serde unchanged (spec: "Dancers are individuals")
 
 ## 4. Housing
-- [ ] 4.1 Dwellings: placed instances of a dwelling kind with a capacity from rows
-- [ ] 4.2 A new Dancer goes to a dwelling with a free place, drawn from a seeded stream; same seed and history, same homes (spec: "A cottage houses at most four")
-- [ ] 4.3 A removed dwelling leaves its Dancers homeless until a place frees up; homelessness is the night checkpoint's shelter shortfall
+- [x] 4.1 (claimed: Codex) Dwellings: placed instances of a dwelling kind with a capacity from rows
+- [x] 4.2 (claimed: Codex) A new Dancer goes to a dwelling with a free place, drawn from a seeded stream; same seed and history, same homes (spec: "A cottage houses at most four")
+- [ ] 4.3 A removed dwelling leaves its Dancers homeless until a place frees up; homelessness is the night checkpoint's shelter shortfall. Housing now displaces and rehouses residents; checkpoint reporting follows in 5.1–5.2
 
 ## 5. Provisioning, arrivals and leaving
 - [ ] 5.1 Rations as consumer rules on their checkpoints (water at dawn and dusk, food at midday, a home at night), from rows

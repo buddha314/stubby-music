@@ -36,6 +36,13 @@ cover daily rations, shelter, silhouette variants and local clocks. The
 [Burb Sweeper economy audit](../research/burb-sweeper-economy.md) records
 precedents for housing, shared labour, crop inputs and long-run balance.
 
+The headless economy now handles calendar checkpoints, stock and shortages,
+workforce reservations, and the saved Dancer roster and housing. Dancers have
+stable IDs, seeded body and skin variants, and references to local clocks.
+Cottage placement gives displaced residents first claim on new vacancies.
+Provisioning and automatic arrivals are the next part of the simulation.
+[Settlement economy design](../../openspec/changes/add-settlement-economy/design.md)
+
 The Jackdaw examples are review scenes. The
 [long-session design previews](long-session-previews.md) describe the experience
 to compare at each stop.

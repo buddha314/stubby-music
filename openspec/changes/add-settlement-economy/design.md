@@ -44,13 +44,17 @@ overcommit, and starting or expanding a reservation requires free capacity.
 Each Dancer has: a stable ID; a body shape and a skin tone, drawn from a seed and kept
 across reloads (`add-settlement-phase-reviews`: four of each to start); a home dwelling; a
 profession; a current task; and a local clock ID. The roster is the source of truth;
-counts (population, laborers, idle) are derived from it, never stored beside it.
+counts (population, laborers, idle, homeless) are derived from it. The host supplies
+the appearance variant counts and the local clock ID on admission. The save carries
+the chosen appearance and the next unused resident ID.
 
 ### D3. Housing: cottages of at most four, filled at random (user, 2026-11-20)
 
 A dwelling is a rule row with a capacity. The **cottage** holds at most **4**. A new Dancer
 is housed in a dwelling with a free place chosen at random from a seeded stream (the world
 seed and the Dancer's ID), so the same game houses the same Dancers in the same places.
+Each available dwelling has an equal chance of selection. Displaced residents get
+first claim on vacancies in arrival order, including when another resident leaves.
 Larger dwellings are rows added later; FF's chain (shelter, homestead, large house,
 manor) is the model for upgrading.
 

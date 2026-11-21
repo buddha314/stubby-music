@@ -160,14 +160,13 @@ Proposed, from the research (rankings in the survey):
 
 1. **Save and load**, with world time resuming from the last processed checkpoint (the
    Dancer schedule already assumes it).
-2. **A headless settlement resolver** in a Bevy-free core, in the style of
-   `stubby_recipes`: needs, stock, housing, labour, at the calendar's checkpoints.
-   **Port it from `automate-godot`** into `stubby_economy`, in this repository unless it
-   grows big (user, 2026-11-20; `add-settlement-economy`) (`docs/research/automate-godot-port.md`): its tick
-   dispatcher, rule engine (producer, converter, consumer, upkeep, with deficits) and
-   workforce pool are about 200 lines of GDScript, the generalised form of Burb Sweeper's
-   resolver, and already exactly the shape the Dancer schedule needs. Record intended
-   demand, unmet demand and the binding input, as Burb Sweeper's ledger does.
+2. **A headless settlement resolver** in `stubby_economy`. The checkpoint dispatcher,
+   stock rules and workforce reservations are implemented from the
+   [automate-godot port review](../research/automate-godot-port.md). The core now saves
+   Dancer identities, appearance and housing, and counts residents from the roster.
+   The next slice applies daily rations, records demand and shortfalls per Dancer,
+   and checks whether the settlement can support an arrival.
+   [Settlement economy tasks](../../openspec/changes/add-settlement-economy/tasks.md)
 3. **A balance harness** that runs the resolver for hundreds of days under scripted
    strategies and reports provisioned Dancer-days and the limiting input (Burb Sweeper's
    harness; `docs/design/long-session-previews.md` already sketches the first experiment).
