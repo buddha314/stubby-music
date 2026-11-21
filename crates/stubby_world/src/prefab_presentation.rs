@@ -937,6 +937,7 @@ fn find_materials(
             continue;
         };
         if !(tinted
+            || is_lamp(&name.0)
             || asset.asset.starts_with("scrub_oak_")
             || asset.asset.starts_with("reed_clump_")
             || asset.asset.starts_with("desert_")
@@ -976,7 +977,14 @@ fn color_between(colors: &serde_json::Value, from: &str, to: &str, level: f32) -
     let color = hex(&colors[from])?.lerp(hex(&colors[to])?, level.clamp(0., 1.));
     Some(Color::srgb(color.x, color.y, color.z))
 }
+/// A model's lamps: materials named `<Kind>_Window` or `<Kind>_Lantern…` (the cottage's and
+/// the vardo's windows, the vardo's lantern) are lit at night and dim by day, with the sun.
+fn is_lamp(name: &str) -> bool {
+    name.ends_with("_Window") || name.contains("_Lantern")
+}
+
 fn shade_materials(
+    calendar: Option<Res<crate::calendar::Calendar>>,
     profiles: Res<FloraProfiles>,
     bus: Res<PulseBus>,
     roots: Query<(
@@ -995,6 +1003,19 @@ fn shade_materials(
         let Some(mut material) = materials.get_mut(&part.handle) else {
             continue;
         };
+        if is_lamp(&part.name) {
+            let night = 1.
+                - calendar
+                    .as_ref()
+                    .map_or(1., |c| crate::calendar::daylight(c.elapsed.as_secs_f32()));
+            material.emissive = part.rest.emissive * night;
+            // Dark glass by day, warm from dusk.
+            let rest = part.rest.base_color.to_linear();
+            let k = 0.2 + 0.8 * night;
+            material.base_color =
+                Color::linear_rgba(rest.red * k, rest.green * k, rest.blue * k, rest.alpha);
+            continue;
+        }
         if let Some(tint) = tint.filter(|tint| tint.material == part.name) {
             let [r, g, b] = tint.srgb;
             material.base_color = Color::srgb(r, g, b);
@@ -1064,6 +1085,24 @@ fn shade_materials(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn windows_and_lanterns_are_lamps() {
+        for name in [
+            "Cottage_Window",
+            "Vardo_Window",
+            "Vardo_Lantern",
+            "Vardo_LanternHalo",
+        ] {
+            assert!(is_lamp(name), "{name}");
+        }
+        assert!(!is_lamp("Cottage_FungusCap"));
+        // Noon is day, midnight is night.
+        let noon = crate::calendar::seconds_at_solar_hour(12.);
+        let midnight = crate::calendar::seconds_at_solar_hour(0.);
+        assert!(crate::calendar::daylight(noon) > 0.99);
+        assert!(crate::calendar::daylight(midnight) < 0.01);
+    }
 
     #[test]
     fn idle_clips_land_on_the_beat() {

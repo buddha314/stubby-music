@@ -231,6 +231,11 @@ fn fog_light(sun: Vec3) -> f32 {
     0.15 + 0.85 * t * t * (3. - 2. * t)
 }
 /// 0 below the horizon, 1 once a body is about 7 degrees up.
+/// How much day it is, 0 at night to 1 by day, with the sun's light: lamps and windows
+/// light as it falls.
+pub fn daylight(elapsed_seconds: f32) -> f32 {
+    above_horizon(sun_direction(elapsed_seconds))
+}
 fn above_horizon(direction: Vec3) -> f32 {
     let t = (direction.y / 0.12).clamp(0., 1.);
     t * t * (3. - 2. * t)
