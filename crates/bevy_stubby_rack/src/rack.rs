@@ -1164,15 +1164,20 @@ fn draw_scope(
 
         // A 0.1 s capture at near full resolution, read once a beat.
         let now = time.elapsed_secs();
+        let beat_s = beat.unwrap_or(0.5);
         let entry = held
             .entry(panel)
-            .or_insert_with(|| (f32::NEG_INFINITY, vec![0.0; screen.samples.max(2)], 0.5));
-        if now - entry.0 >= beat.unwrap_or(0.5) {
+            .or_insert_with(|| (f32::NEG_INFINITY, vec![0.0; 2], 0.5));
+        if now - entry.0 >= beat_s {
             samples.resize(SCOPE_CAPTURE_POINTS, 0.0);
             let id = rack.parts.get(&(view.place.clone(), part.part.clone()));
             let ok = id.is_some_and(|id| thread.read_scope(*id, &mut samples));
-            if ok && let Some((cycles, scale)) = triggered_cycles(&samples, screen.samples.max(2)) {
+            let points = screen.samples.max(SCOPE_TRACE_POINTS);
+            if ok && let Some((cycles, scale)) = triggered_cycles(&samples, points) {
                 *entry = (now, cycles, scale);
+            } else if now - entry.0 > 2.0 * beat_s {
+                // Held through a closed gate; after two silent beats, nothing is coming.
+                *entry = (now - beat_s, vec![0.0; 2], entry.2);
             }
         }
         let (_, shown, scale) = entry.clone();
@@ -1227,20 +1232,67 @@ fn draw_scope(
 const SCOPE_CAPTURE_S: f32 = 0.1;
 const SCOPE_CAPTURE_POINTS: usize = 4800; // 0.1 s at 48 kHz: every sample
 
-/// Two cycles of the wave in `capture`, starting on a rising zero crossing, resampled to
-/// `points`, with the scale that fits its peak to 0.45 of the screen either side; `None` when
-/// the capture is silent or has no steady period (then the scope keeps what it showed).
+/// The most points a trace is drawn with: enough that a cycle's sharp edges survive.
+const SCOPE_TRACE_POINTS: usize = 1024;
+
+/// What the scope draws from a `capture` of the emitted wave (the samples leaving the scope
+/// module, which is what the machine sends out): two cycles of it, starting where it rises
+/// through its mean level, as the **raw samples** (offset and all), at up to `points` points;
+/// or, when it has no steady period (noise, a chord), the latest stretch as it came. With the
+/// scale that fits its peak to 0.45 of the screen either side. `None` when silent.
 pub fn triggered_cycles(capture: &[f32], points: usize) -> Option<(Vec<f32>, f32)> {
     let n = capture.len();
-    let mean = capture.iter().sum::<f32>() / n.max(1) as f32;
-    let x: Vec<f32> = capture.iter().map(|s| s - mean).collect();
-    let peak = x.iter().fold(0f32, |m, s| m.max(s.abs()));
-    if n < 64 || peak < 1e-3 {
+    if n < 64 {
         return None;
     }
-    // The period: after the autocorrelation first falls below zero, the shortest lag that
-    // matches nearly as well as the best (normalised per overlap, so long lags are fair):
-    // the fundamental, not a partial's echo.
+    // Finding the period and the trigger works on a copy with its mean removed; what is
+    // drawn is the capture itself.
+    let mean = capture.iter().sum::<f32>() / n as f32;
+    let x: Vec<f32> = capture.iter().map(|s| s - mean).collect();
+    let peak = capture.iter().fold(0f32, |m, s| m.max(s.abs()));
+    if peak < 1e-3 {
+        return None;
+    }
+    // Where the wave is: up to its last sample above a whisper (a closed gate leaves the
+    // capture's tail silent, and two cycles must not run into that silence).
+    let floor = 0.02 * x.iter().fold(0f32, |m, s| m.max(s.abs()));
+    let end = x.iter().rposition(|s| s.abs() > floor).map_or(n, |i| i + 1);
+    let (start, span) = steady_period(&x[..end])
+        .and_then(|period| {
+            let span = 2 * period;
+            let latest = end.checked_sub(span + 1)?;
+            let earliest = latest.saturating_sub(period);
+            // Trigger on the same feature each beat: the cycle's largest excursion either way
+            // (the purifier's saw reset), found in the last period of starts that leave room
+            // for two cycles, and start a twentieth of a period before it, so every beat
+            // draws the wave in the same place.
+            let feature = (earliest..=latest).max_by(|&a, &b| x[a].abs().total_cmp(&x[b].abs()))?;
+            Some((feature.saturating_sub(period / 20), span))
+        })
+        // No steady period: the latest stretch of the wave, as it came.
+        .unwrap_or_else(|| {
+            let span = end.min(2048).max(2) - 1;
+            (end - 1 - span, span)
+        });
+    let points = points.clamp(2, span + 1);
+    let shown: Vec<f32> = (0..points)
+        .map(|k| {
+            let at = start as f64 + span as f64 * k as f64 / (points - 1) as f64;
+            let i = (at.floor() as usize).min(n - 1);
+            let f = (at - i as f64) as f32;
+            capture[i] * (1.0 - f) + capture[(i + 1).min(n - 1)] * f
+        })
+        .collect();
+    let shown_peak = shown.iter().fold(0f32, |m, s| m.max(s.abs())).max(1e-3);
+    Some((shown, (0.45 / shown_peak).clamp(0.1, 4.0)))
+}
+
+/// The wave's fundamental period in samples, if it has a steady one: the lag at which it
+/// repeats best (autocorrelation normalised per overlap, after it first falls below zero),
+/// or the shortest lag of which that is a whole multiple and that matches almost as well; so
+/// a partial's echo (the purifier's C4 inside its C2) is not taken for the wave's period.
+fn steady_period(x: &[f32]) -> Option<usize> {
+    let n = x.len();
     let r = |lag: usize| {
         x[..n - lag]
             .iter()
@@ -1259,25 +1311,19 @@ pub fn triggered_cycles(capture: &[f32], points: usize) -> Option<(Vec<f32>, f32
     if best / r0 < 0.3 {
         return None;
     }
-    let period = scores
+    let best_lag = scores.iter().find(|s| s.1 == best)?.0;
+    // The shortest lag that repeats almost as well as the best and that the best is a whole
+    // multiple of: an exact multiple of the period matches as well as the period itself, while
+    // a partial's echo (the purifier's C4 inside its C2) matches less well.
+    scores
         .windows(3)
-        .find(|w| w[1].1 >= w[0].1 && w[1].1 >= w[2].1 && w[1].1 >= 0.9 * best)
-        .map(|w| w[1].0)?;
-    // The latest rising zero crossing that leaves room for two cycles.
-    let span = 2 * period;
-    let start = (1..n.saturating_sub(span))
-        .rev()
-        .find(|&i| x[i - 1] < 0.0 && x[i] >= 0.0)?;
-    let cycles: Vec<f32> = (0..points)
-        .map(|k| {
-            let at = start as f32 + span as f32 * k as f32 / (points - 1) as f32;
-            let i = at.floor() as usize;
-            let f = at - i as f32;
-            x[i.min(n - 1)] * (1.0 - f) + x[(i + 1).min(n - 1)] * f
+        .filter(|w| w[1].1 >= w[0].1 && w[1].1 >= w[2].1 && w[1].1 >= 0.97 * best)
+        .map(|w| w[1].0)
+        .find(|&l| {
+            let ratio = best_lag as f32 / l as f32;
+            (ratio - ratio.round()).abs() * l as f32 <= 2.0
         })
-        .collect();
-    let shown_peak = cycles.iter().fold(0f32, |m, s| m.max(s.abs())).max(1e-3);
-    Some((cycles, (0.45 / shown_peak).clamp(0.1, 4.0)))
+        .or(Some(best_lag))
 }
 
 fn waveform_ribbon(samples: &[f32], width: f32, height: f32, scale: f32) -> Vec<[f32; 3]> {
@@ -2569,6 +2615,58 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_scope_draws_the_emitted_samples_themselves() {
+        // A saw of period 100 riding on a +0.3 offset: drawn at one point per sample, the
+        // trace is the capture itself from the trigger on, offset included.
+        let capture: Vec<f32> = (0..4800)
+            .map(|i| 0.3 + ((i % 100) as f32 / 50.0) - 1.0)
+            .collect();
+        let (shown, _) = triggered_cycles(&capture, 201).expect("a steady wave");
+        assert_eq!(shown.len(), 201);
+        let start = (0..capture.len())
+            .find(|&i| {
+                (capture[i] - shown[0]).abs() < 1e-6 && (capture[i + 1] - shown[1]).abs() < 1e-6
+            })
+            .expect("the trace starts on a captured sample");
+        for (k, value) in shown.iter().enumerate() {
+            assert!((value - capture[start + k]).abs() < 1e-6, "point {k}");
+        }
+        assert!(
+            shown.iter().sum::<f32>() / 201.0 > 0.2,
+            "the offset is kept"
+        );
+        // Noise has no steady period: the latest stretch is shown as it came.
+        let mut seed = 7u32;
+        let noise: Vec<f32> = (0..4800)
+            .map(|_| {
+                seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+                (seed >> 8) as f32 / (1u32 << 24) as f32 - 0.5
+            })
+            .collect();
+        let (shown, _) = triggered_cycles(&noise, 2048).expect("not silent");
+        assert_eq!(shown.last(), noise.last());
+        // A gate closing near the end: the two cycles are taken from where the wave is,
+        // never running into the silence after it.
+        let gated: Vec<f32> = (0..4800)
+            .map(|i| {
+                if i < 3600 {
+                    ((i % 100) as f32 / 50.0) - 1.0
+                } else {
+                    0.0
+                }
+            })
+            .collect();
+        let (shown, _) = triggered_cycles(&gated, 201).expect("a steady wave");
+        let flat = shown
+            .windows(2)
+            .filter(|w| w[0] == 0.0 && w[1] == 0.0)
+            .count();
+        assert_eq!(flat, 0, "no silence in the trace");
+        let low = shown.iter().cloned().fold(f32::MAX, f32::min);
+        assert!(low < -0.9, "the trace holds whole cycles: {low}");
+    }
+
+    #[test]
     fn the_scope_triggers_on_two_cycles_of_the_wave() {
         // A saw of period 100 samples, behind a silent stretch (a closed gate).
         let capture: Vec<f32> = (0..4096)
@@ -2581,9 +2679,11 @@ mod tests {
             })
             .collect();
         let (cycles, scale) = triggered_cycles(&capture, 256).expect("a steady wave");
-        assert_eq!(cycles.len(), 256);
-        // It starts on a rising zero crossing and spans two periods: zero again mid-screen.
-        assert!(cycles[0].abs() < 0.05, "{}", cycles[0]);
+        // Two periods are 200 samples: one point each, never more points than samples.
+        assert_eq!(cycles.len(), 201);
+        // It starts just before the cycle's largest excursion (the saw's reset): a twentieth
+        // of a period later the trace is at full swing.
+        assert!(cycles[5].abs() > 0.9, "{}", cycles[5]);
         assert!((scale - 0.45).abs() < 0.05, "{scale}");
         assert!(triggered_cycles(&vec![0.0; 4096], 256).is_none());
     }
