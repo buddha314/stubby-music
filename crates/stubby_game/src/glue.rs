@@ -386,6 +386,7 @@ impl Plugin for PrefabGluePlugin {
                         || asset == "ripple_pool"
                         || asset == "campfire"
                         || asset == "cottage"
+                        || asset == "vardo"
                         || asset == crate::purifier::PURIFIER
                 },
                 install: |_, _, _, _| Ok(()),
