@@ -54,6 +54,10 @@ upcoming needs before treating goods as trade surplus. The schedule, clean
 water cutoff, reserve horizon and consequences of prolonged shortages are
 open balance decisions.
 
+The [Burb Sweeper economy review](../../../docs/research/burb-sweeper-economy.md)
+records precedents for unmet demand, housing capacity, shared labour and
+long-run balance tests. Consider these when prototyping the schedule.
+
 ## Dancer appearance and clocks
 
 Use mostly silhouetted figures with simplified faces and clear poses. Take

@@ -65,6 +65,11 @@ Each Dancer follows an explicit local clock for musical motion. Provisioning
 follows the settlement calendar. See the
 [draft consumption schedule and art brief](openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule).
 
+**Owned reference repository.** The user confirms that the team owns
+[VerdantAI/burb-sweeper](https://github.com/VerdantAI/burb-sweeper), checked out at
+`/home/buddha/src/burb-sweeper`. See the [economy rule review](docs/research/burb-sweeper-economy.md)
+for population, upkeep, construction and balance-testing precedents.
+
 ### Resources and recipes: the builder-game model
 
 - Treat this as a factory builder: discovering a waveform resource is akin to
