@@ -49,6 +49,27 @@ Music is how the world gets better; it is never just decoration. **All machines 
 instruments**: every machine is a rack the player patches and plays, controlled by
 audio, as the burbler is.
 
+### Settlement progression
+
+**Draft progression rules (user direction):** Camp becomes Village when there is
+enough clean water to plant a crop. Village becomes Town when three villages trade
+goods with one another. Town becomes City when the player can build an art gallery,
+a concert hall and at least one light rail system. The resident
+population is called **Dancers**, with growth inspired by Farthest Frontier. Crop water thresholds, trade
+conditions, civic construction criteria and population mechanics are open in
+[the settlement phase design](openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules).
+
+Dancers are mostly silhouettes, with 3–5 body shapes and 3–5 skin tones from
+a solarpunk rainbow palette. Body shape and skin tone combine independently.
+Each Dancer follows an explicit local clock for musical motion. Provisioning
+follows the settlement calendar. See the
+[draft consumption schedule and art brief](openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule).
+
+**Owned reference repository.** The user confirms that the team owns
+[VerdantAI/burb-sweeper](https://github.com/VerdantAI/burb-sweeper), checked out at
+`/home/buddha/src/burb-sweeper`. See the [economy rule review](docs/research/burb-sweeper-economy.md)
+for population, upkeep, construction and balance-testing precedents.
+
 ### Resources and recipes: the builder-game model
 
 - Treat this as a factory builder: discovering a waveform resource is akin to

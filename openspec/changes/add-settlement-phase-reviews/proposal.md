@@ -1,6 +1,6 @@
 ## Why
 
-Camp, Grove, Village and City give the mudflat-to-city arc four review stops.
+Camp, Village, Town and City give the mudflat-to-city arc four review stops.
 A repeatable route lets us examine what each phase adds to the player's work
 and how the same place looks after the world responds.
 

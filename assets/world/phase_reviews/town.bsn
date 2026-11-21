@@ -1,0 +1,163 @@
+// Jackdaw settlement review. Distances are in metres.
+bevy_ecs::hierarchy::Children [
+    #"Burbler at channel head"
+    jackdaw::prefab::components::IsA { source: "machines/mudpit_burbler/mudpit_burbler.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 7.000000, y: 0.000000, z: 4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"First campfire"
+    jackdaw::prefab::components::IsA { source: "structures/campfire/campfire.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.000000, y: 0.000000, z: 1.400000 } }
+    --
+    #"First mud segment"
+    jackdaw::prefab::components::IsA { source: "streams/stream_segment/stream_segment.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 9.600000, y: 0.000000, z: 4.000000 } }
+    --
+    #"Window rock on south bank"
+    jackdaw::prefab::components::IsA { source: "props/rocks/rock_formation_2/rock_formation_2.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 12.000000, y: 0.000000, z: 10.400000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"Reeds below the camp"
+    jackdaw::prefab::components::IsA { source: "flora/reeds/reed_clump_0/reed_clump_0.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.100000, y: 0.000000, z: 5.600000 } }
+    --
+    #"First purifier"
+    jackdaw::prefab::components::IsA { source: "machines/reed_water_purifier/reed_water_purifier.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 13.600000, y: 0.000000, z: 4.000000 } }
+    --
+    #"Grove water study"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.000000, y: 0.022500, z: 4.000000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 3.4000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 3.4000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 0.0225 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 0.0225 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 0.6000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 0.6000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"Oak by the first dam"
+    jackdaw::prefab::components::IsA { source: "flora/scrub_oak/scrub_oak_0/scrub_oak_0.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.300000, y: 0.000000, z: 1.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.173648, z: 0.000000, w: 0.984808 } }
+    bevy_stubby_recipes::MineNode { mine: "scrub_oak", instance: "phase_oak_0" }
+    stubby_core::AssetState { growth: 0.60, water_quality: 0.67 }
+    --
+    #"South-bank oak"
+    jackdaw::prefab::components::IsA { source: "flora/scrub_oak/scrub_oak_1/scrub_oak_1.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.000000, y: 0.000000, z: 6.600000 }, rotation: glam::Quat { x: 0.000000, y: 0.461749, z: 0.000000, w: 0.887011 } }
+    bevy_stubby_recipes::MineNode { mine: "scrub_oak", instance: "phase_oak_1" }
+    stubby_core::AssetState { growth: 0.74, water_quality: 0.67 }
+    --
+    #"Oak at the grove bend"
+    jackdaw::prefab::components::IsA { source: "flora/scrub_oak/scrub_oak_2/scrub_oak_2.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.100000, y: 0.000000, z: 1.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.819152, z: 0.000000, w: 0.573576 } }
+    bevy_stubby_recipes::MineNode { mine: "scrub_oak", instance: "phase_oak_2" }
+    stubby_core::AssetState { growth: 0.87, water_quality: 0.67 }
+    --
+    #"Reeds on the north bank"
+    jackdaw::prefab::components::IsA { source: "flora/reeds/reed_clump_1/reed_clump_1.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.300000, y: 0.000000, z: 3.000000 } }
+    --
+    #"Reeds at the bend"
+    jackdaw::prefab::components::IsA { source: "flora/reeds/reed_clump_2/reed_clump_2.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: 4.900000 } }
+    --
+    #"Town canal reach"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.200000, y: 0.022500, z: 4.000000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 3.8000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 3.8000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 0.0225 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 0.0225 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 0.6000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 0.6000 }, material: "#GroveWater", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"Commons paving"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.800000, y: 0.060000, z: 0.200000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 3.5000 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 3.5000 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 0.0600 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 0.0600 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.0000 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.0000 }, material: "#Paving", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"Town workshop mass"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.000000, y: 1.500000, z: -5.600000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.0500 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 2.0500 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 1.5000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 1.5000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.5000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.5000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"Workshop shade roof"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.000000, y: 3.090000, z: -5.600000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.3500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 2.3500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 0.0900 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 0.0900 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.8000 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.8000 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"North-bank house mass"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 28.500000, y: 1.300000, z: -4.000000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.0000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 2.0000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 1.3000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 1.3000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.0000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.0000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"North-bank house roof"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 28.500000, y: 2.690000, z: -4.000000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.2500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 2.2500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 0.0900 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 0.0900 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.2500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.2500 }, material: "#Shade", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #"South-bank storehouse mass"
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 25.400000, y: 1.700000, z: 10.200000 } }
+    jackdaw_scene_types::types::Brush { faces: [
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, distance: 2.3500 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, distance: 2.3500 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 1.000000, z: 0.000000 }, distance: 1.7000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 }, distance: 1.7000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: 1.000000 }, distance: 2.4000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: 1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+        jackdaw_geometry::BrushFaceData { plane: jackdaw_geometry::BrushPlane { normal: glam::Vec3 { x: 0.000000, y: 0.000000, z: -1.000000 }, distance: 2.4000 }, material: "#Adobe", uv_scale: glam::Vec2 { x: 1.0, y: 1.0 }, uv_u_axis: glam::Vec3 { x: -1.000000, y: 0.000000, z: 0.000000 }, uv_v_axis: glam::Vec3 { x: 0.000000, y: -1.000000, z: 0.000000 } },
+    ] }
+    --
+    #GroveWater
+    bevy_pbr::pbr_material::StandardMaterial { base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.22, green: 0.41, blue: 0.38, alpha: 1.0 }), perceptual_roughness: 0.8 }
+    --
+    #Paving
+    bevy_pbr::pbr_material::StandardMaterial { base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.45, green: 0.44, blue: 0.36, alpha: 1.0 }), perceptual_roughness: 0.8 }
+    --
+    #Adobe
+    bevy_pbr::pbr_material::StandardMaterial { base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.59, green: 0.38, blue: 0.25, alpha: 1.0 }), perceptual_roughness: 0.8 }
+    --
+    #Shade
+    bevy_pbr::pbr_material::StandardMaterial { base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.26, green: 0.4, blue: 0.39, alpha: 1.0 }), perceptual_roughness: 0.8 }
+]

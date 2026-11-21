@@ -141,7 +141,7 @@ def main():
                         help='Start by an unpatched purifier on a running stream (standalone only)')
     parser.add_argument('--purifier-e2e', action='store_true',
                         help='Play the purifier loop itself: tempo, craft, build, patch, tune, clear (standalone only)')
-    parser.add_argument('--phase-review', choices=('camp', 'grove', 'village', 'city'),
+    parser.add_argument('--phase-review', choices=('camp', 'village', 'town', 'city'),
                         help='Review a settlement phase scene (standalone only)')
     parser.add_argument('--prefabs', action='store_true', help='Review placed prefab runtime behaviour')
     parser.add_argument('--streams', action='store_true', help='Review laying a stream and its bar lines')

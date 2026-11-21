@@ -17,4 +17,4 @@ previews in `previews/`. Shared `audio/`, `hud/`, `lighting/`, `recipes/` (the r
 generates its meshes and mud textures at startup, and the sky is Bevy's atmosphere.
 
 The [settlement phase scene index](world/phase_reviews/README.md) maps Camp,
-Grove, Village and City to their shared prefabs and future building families.
+Village, Town and City to their shared prefabs and future building families.

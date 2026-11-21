@@ -14,15 +14,19 @@ are tracked in [OpenSpec](../../openspec/changes/add-settlement-phase-reviews/de
 | Review stop | What Omar sees and hears | What the player has made possible |
 | --- | --- | --- |
 | Camp | The vardo sits above a mud channel. A campfire plays on the backbeat. From the far bank, haze still hides most of the camp. | A running heartbeat carries a first stream. The player can follow it by ear back to a machine they patched. |
-| Grove | Mud enters the first check dam. Water downstream lightens in steps, and the first oak has leafed out. Closer to the grove the sky reads differently, even at the same solar hour. | The player found the ingredients, laid the route, and tuned the filters. From the channel and the sound, they can tell which dam is working. |
-| Village | Returning to camp at dusk, Omar can follow a stream toward a lived-in place. Its music changes along the way, and there are still hazy stretches beyond tended ground. | Earlier work remains legible. The player can walk upstream and recognize the burbler and first dam underneath a larger arrangement. |
+| Village | Mud enters the first check dam. Water downstream lightens in steps, and the first oak has leafed out. Closer to the grove the sky reads differently, even at the same solar hour. | The player found the ingredients, laid the route, and tuned the filters. From the channel and the sound, they can tell which dam is working. |
+| Town | Returning to camp at dusk, Omar can follow a stream toward a lived-in place. Its music changes along the way, and there are still hazy stretches beyond tended ground. | Earlier work remains legible. The player can walk upstream and recognize the burbler and first dam underneath a larger arrangement. |
 | City | From an overlook he can still pick out the route of the first stream, now part of a city that lights up at night. Walking the route brings individual patches into earshot. | The settlement feels like an accumulation of the player's decisions. Its water, sound and light tell a coherent story from the overlook and from the street. |
 
-The grove is the first scenario the current systems can substantiate.
-Village and City use authored architectural blockouts. Preserve a
+Village is the first scenario the current systems can substantiate.
+Town and City use authored architectural blockouts. Preserve a
 recognizable landmark, the early route, and a matching camera at each stop so
 the transformation stays legible. Pair a fixed view at the same solar hour
 with a short walk at normal speed to judge how the world sounds and feels.
+
+The [draft Dancer schedule](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule)
+adds food, clean water and shelter to the settlement reviews. For population
+and production scenarios, see the [Burb Sweeper economy audit](../research/burb-sweeper-economy.md).
 
 ## First experiment
 
