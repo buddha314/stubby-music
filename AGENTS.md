@@ -221,6 +221,7 @@ crates/
   stubby_game/            the Bevy app; `tools/run_game.sh --bare` runs it alone, with no scene
   stubby_rack/            rack modules as data (module.json) and the engine patch they plan (no Bevy, ever)
   stubby_recipes/         rules files, inventory, recipe book, crafting, goals (no Bevy, ever)
+  stubby_economy/         settlement time, stock rules and labour accounting (no Bevy, ever)
   bevy_stubby_recipes/    the crafting system as a thin Bevy plugin over stubby_recipes
   stubby_rules_server/    tool: the rules designer, a web page on 127.0.0.1 (no Bevy, never the game)
   stubby_jackdaw/         the game: stubby_game plus the scene, the seeded layout and the editor bridge
@@ -263,7 +264,7 @@ Each part of the game is its own crate, and dependencies only point down
 
 | Layer | Crates | May depend on |
 | --- | --- | --- |
-| cores | `stubby_audio`, `stubby_rack`, `stubby_recipes` | other cores; never Bevy |
+| cores | `stubby_audio`, `stubby_rack`, `stubby_recipes`, `stubby_economy` | other cores; never Bevy |
 | services | `stubby_core`, `stubby_ui`, `bevy_stubby_audio` | cores |
 | systems | `bevy_stubby_rack`, `bevy_stubby_recipes`, `stubby_player`, `stubby_life`, `stubby_world`, `stubby_streams` | services, shared cores, their own core |
 | game | `stubby_game`, `stubby_jackdaw` | anything |
@@ -446,6 +447,11 @@ testable by asserting identical output for identical seeds.
   validates them.
 - **Preview new assets in an asset review scene** (`assets/world/asset_reviews/`, at noon):
   `python3 tools/jackdaw_timed_test.py --asset-review <name>` (`homestead`: the cottage and its props).
+- **Idle clips keep time** (user, 2026-11-20): a placed model with an `Idle` clip and no clock of
+  its own plays it phase-locked to the nearest running clock within 30 m, else to the master
+  clock (`stubby_world::prefab_presentation::idle_phase`). Name a creature's rest loop `Idle`.
+- **Rigged creatures may start from CC0 bases** (Quaternius, Kenney, Poly Haven), kept under
+  `assets-src/third_party/<source>/` with their licence; the generator restyles and extends them.
 - **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by
   name (`AcousticOccluder::preset`: rock, brick, wood, glass, metal, ...), set as glTF extras
   `"acoustic"` on large near-level meshes by the generator, and listed in the profile

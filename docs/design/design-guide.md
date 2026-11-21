@@ -32,9 +32,19 @@ Thresholds, population mechanics and how the phases map onto long-term goals
 are open. [Settlement phase design](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules)
 
 The [Dancer consumption schedule and character brief](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-dancer-consumption-schedule)
-cover daily rations, shelter, silhouette variants and local clocks. The
+cover quarter-note food, water and fresh-air needs, shelter, silhouette variants and local clocks. The
 [Burb Sweeper economy audit](../research/burb-sweeper-economy.md) records
 precedents for housing, shared labour, crop inputs and long-run balance.
+
+The headless economy now handles calendar checkpoints, stock and shortages,
+workforce reservations, and the saved Dancer roster and housing. Dancers have
+stable IDs, seeded body and skin variants, and references to local clocks.
+Cottage placement gives displaced residents first claim on new vacancies.
+A crafted spring serves as an invocation site. With invocation enabled, Dancers
+descend from the sky at a Poisson rate set by local air quality, provided the
+region has a free home and can reserve seven in-game days of clean water for the
+newcomer. The player can switch invocation off at each spring.
+[Settlement economy design](../../openspec/changes/add-settlement-economy/design.md)
 
 The Jackdaw examples are review scenes. The
 [long-session design previews](long-session-previews.md) describe the experience

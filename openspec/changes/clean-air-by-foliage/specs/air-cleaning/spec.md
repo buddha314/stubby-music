@@ -1,7 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Foliage cleans the air within a radius
-Each air-cleaning asset SHALL clean the air within its authored radius, with a strength that follows its growth and bloom. Light quality at a point SHALL be computed from the cleaners around it so that overlapping cleaners add up without exceeding 1, and a point beyond every cleaner's radius SHALL be 0 (bleak).
+Each air-cleaning asset SHALL clean the air within its authored radius, with a strength that follows its growth and bloom. Overlapping cleaners SHALL define the undepleted air quality at a point, up to 1.
+A point beyond every cleaner's radius SHALL be 0 (bleak). Plants and algae with
+authored air-cleaner rules SHALL replenish local air quality toward that undepleted
+level. Dancer consumption SHALL lower the same local value sampled by lights,
+materials and mines. Air quality SHALL stay within 0 to 1.
 
 #### Scenario: A blooming tree clears its ground
 - **WHEN** a scrub oak with an 18 m radius reaches full bloom
@@ -16,7 +20,9 @@ Each air-cleaning asset SHALL clean the air within its authored radius, with a s
 - **THEN** light quality there eases back toward 0
 
 ### Requirement: Cleaning is data
-Each air-cleaning asset kind SHALL declare its cleaning radius and strength as a rule (`assets/recipes/air.json`), and code SHALL NOT name asset kinds to decide what cleans.
+Each air-cleaning asset kind SHALL declare its cleaning radius and strength as a rule (`assets/recipes/air.json`), and code SHALL NOT name asset kinds to decide what cleans. The Rules Designer SHALL expose
+the cleaner's radius, strength and growth binding, and its replenishment rate
+when shared air depletion is enabled.
 
 #### Scenario: A new plant cleans
 - **WHEN** a designer adds an `air` rule for a new flora asset

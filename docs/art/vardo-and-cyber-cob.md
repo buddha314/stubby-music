@@ -61,3 +61,28 @@ trim, roof and wheels `wood`, iron `metal`, windows `glass`). Sockets: `Door`, `
 `Hitch` (where the cob stands, for the pair review). In the game:
 `python3 tools/jackdaw_timed_test.py --asset-review vardo`.
 
+## The cyber-cob model (2026-11-20)
+
+Built on a rigged, animated CC0 base rather than from scratch (user, 2026-11-20): "Horse" by
+Quaternius (Ultimate Animated Animals, CC0 1.0; `assets-src/third_party/quaternius/`). Its
+50-joint rig and gentle clips are kept (Idle, Idle_2, Idle_Headlow, Eating, Walk, Gallop; no
+attacks or deaths); `tools/blender/create_cyber_cob.py` restyles and extends the mesh:
+piebald coat (black head with a white blaze, white lower legs), a black-and-cream mane and
+tail, a body widened through the barrel and shoulders into a cob, feathered fetlocks,
+muddy hooves, a worn leather halter with a rope lead, a collar with brass hames, a back pad,
+belly band and brass shaft tugs, a few dim cyan fibre-optic strands in mane and tail, and
+one prosthetic foreleg (leather cuff with brass straps on the stump, brass knee housing,
+steel pylon and piston rod, ankle joint, hoof-shaped foot, one tiny dim cyan indicator).
+Every added part is skinned to the rig, so every clip moves it. 1.48 m at the withers, 4.5k
+triangles, one skinned level. Previews: `previews/creatures/cyber_cob/`.
+
+**Which foreleg: please confirm.** The rule above says "near-side front leg (visible with the
+horse facing right)". Equestrian "near side" is the horse's left, but with the horse facing
+right a viewer sees its right side, and the study shows the prosthesis on the leg facing the
+viewer. The model follows the study and the parenthetical: the horse's own **right** foreleg.
+`PROSTHESIS_SIDE` in the generator flips it.
+
+**In the game** it stands at the vardo's `Hitch` in `--asset-review vardo`. Its `Idle` clip
+plays in time with the music: phase-locked to the nearest running clock within 30 m, or to
+the master clock (user, 2026-11-20), as any placed model with an `Idle` clip now does.
+
