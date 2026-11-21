@@ -67,3 +67,16 @@ with two sampler places and a mixer. Both samplers have clock and mixer
 cables prepatched. Three CC0 impact clips are available in this review bank.
 The normal recipe book loads samples from authored item rows after collection.
 A live collection source and a sampler unlock are still open.
+
+From this worktree, build `stubby_jackdaw`, then run
+`python3 tools/jackdaw_timed_test.py --standalone --sampler-review --name sampler`.
+In the left rack column, choose a sound for each sampler. Type to filter, use
+the arrow keys to move the selection, and press Enter to assign the selected
+clip. Preview auditions a clip and Escape dismisses the picker.
+
+The 20-second standalone review opened both wired sampler panels and showed
+their selectors beside the rack. Headless checks exercised independent
+assignments, clearing, serializing the two assignments, loading a real WAV
+after discovery, and running a triggered voice through a filter. Live
+pointer and keyboard navigation and reopening the rack with live selections
+still need playtest coverage.
