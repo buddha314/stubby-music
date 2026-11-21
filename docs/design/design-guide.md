@@ -40,6 +40,9 @@ The Jackdaw examples are review scenes. The
 [long-session design previews](long-session-previews.md) describe the experience
 to compare at each stop.
 
+The [roadmap](roadmap.md) outlines what each phase adds, the pillars proposals are
+checked against, the foundations to build first and an audit of the rules (2026-11-20).
+
 ## Mythic regions
 
 **Decided (user, 2026-11-18):** the map is procedural and has regions, each the home of

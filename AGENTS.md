@@ -25,6 +25,15 @@ Evidence and detailed history: `docs/research/jackdaw-live-listen.md` and
 
 ## What we are building
 
+**Direction (user, 2026-11-20):** music and mythology restore the world, and a new society
+is built on art and science together, in phases from one human to a large civilisation
+(Camp → Village → Town → City). **Satisfactory meets Farthest Frontier meets VCV Rack**:
+discovery and building by hand, a settlement that grows, and every machine an instrument.
+Read `docs/design/roadmap.md` before proposing a feature: its pillars, the phase outline,
+the foundations still to build (save/load; a settlement resolver ported from
+`/home/buddha/src/automate-godot`, see `docs/research/automate-godot-port.md`) and the
+rules audit. Mechanics from other games: `docs/research/game-mechanics-survey.md`.
+
 The story is `NARRATIVE.md` (the user's: from desolate mudflat to solarpunk city); design
 notes that serve it (mythic regions, the vardo base, styling) are `docs/design/design-guide.md`.
 The player character is **Omar** (`docs/art/omar.md`); for now only his gloves (the
