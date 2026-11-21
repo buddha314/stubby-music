@@ -1,7 +1,7 @@
 # Cottage prompt
 
 The first Dancer dwelling (`add-settlement-economy`: a cottage houses at most four).
-Brief: `docs/art/cottage.md` · Images: `docs/art/cottage/` (none yet).
+Brief: `docs/art/cottage.md` · Images: `docs/art/cottage/`.
 
 ## Prompt
 
@@ -53,3 +53,4 @@ Brief: `docs/art/cottage.md` · Images: `docs/art/cottage/` (none yet).
 | Date | Generator | Change | Chosen |
 | --- | --- | --- | --- |
 | 2026-11-20 | — | written | — |
+| 2026-11-20 | ChatGPT | as written | [design-sheet-chatgpt-2026-11-20.png](../cottage/design-sheet-chatgpt-2026-11-20.png): hero adopted; elevations drift (see the brief) |

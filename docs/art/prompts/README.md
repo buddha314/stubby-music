@@ -21,6 +21,26 @@ Generators drift between views (window counts, door sides, wheel sizes). Ask for
 multi-view sheet, or generate the hero view first and use it as the reference for each
 elevation, then check the views agree before choosing.
 
+## Generating locally
+
+The workstation has a license-reviewed local pipeline in `~/ComfyUI` (its
+`character_turnaround/LICENSES.md`; every weight Apache-2.0):
+
+- **Qwen-Image 2512** (FP8) with the two-step Turbo LoRA: text to image, good at design
+  sheets and lettering. Run a prompt from this folder as is.
+- **Qwen-Image-Edit 2511** (FP8) with the four-step Lightning LoRA: edits an image from an
+  instruction. Use it to fix a sheet ("remove the second water tank") and to derive each
+  orthographic view from a chosen hero, so the views agree.
+- `~/ComfyUI/character_turnaround/build_workflow.py` already chains the two for characters
+  (a canonical front, then right, back, left and three-quarter views, and a contact sheet)
+  through ComfyUI's API. A building version swaps the character prompt and A-pose framing
+  for the building's prompt and elevation framing, and adds a top view.
+
+The GPU is a Radeon RX 7700S (8 GB, ROCm); the 20B models run with offloading, so expect
+minutes per image rather than seconds. Ollama (`qwen2.5`, `phi3`; its service is disabled
+until started) can expand or vary prompts; a vision model such as `qwen2.5vl` could check a
+sheet against a brief's checklist, but none is installed.
+
 ## Shared blocks
 
 Paste these into every prompt; change them here, not in one asset's file.
