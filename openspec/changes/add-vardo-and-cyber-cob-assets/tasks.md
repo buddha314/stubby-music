@@ -4,7 +4,7 @@ All tasks are art and asset pipeline unless explicitly noted. The asset guide an
 
 - [x] 1.1 Transcribe the supplied decisions into `docs/art/vardo-and-cyber-cob.md` and add the curated reference studies.
 - [x] 1.2 (claimed: Claude; 2026-11-20: previews/structures/vardo/ side, front, rear, three-quarters) Review the wagon silhouette with consistent front, rear, side, and three-quarter views; fix towing end, entrance end, wheel ratio, and shared geometry.
-- [ ] 1.3 Review the cyber-cob from side and three-quarter views; verify one near-side front prosthesis and three natural legs, plus subtle optical strands in mane and tail.
+- [x] 1.3 (claimed: Claude; previews/creatures/cyber_cob/; prosthesis on the horse's own right foreleg, to confirm: see the art guide) Review the cyber-cob from side and three-quarter views; verify one near-side front prosthesis and three natural legs, plus subtle optical strands in mane and tail.
 
 ## 2. Vardo asset
 
@@ -14,12 +14,12 @@ All tasks are art and asset pipeline unless explicitly noted. The asset guide an
 
 ## 3. Cyber-cob asset
 
-- [ ] 3.1 Create a reproducible headless Blender generator and source scene under `assets-src/blender/creatures/`.
-- [ ] 3.2 Export `assets/creatures/cyber_cob/cyber_cob.glb` with a family profile, appropriate collider, Jackdaw metadata/prefab, and model-owned LODs.
-- [ ] 3.3 Create matching side and three-quarter previews; inspect limb count, prosthesis articulation/readability, coat pattern, feathering, mane and tail strands, tack, PBR materials, and emissive strength.
+- [x] 3.1 (claimed: Claude; `tools/blender/create_cyber_cob.py` on the CC0 Quaternius horse, `assets-src/third_party/quaternius/`) Create a reproducible headless Blender generator and source scene under `assets-src/blender/creatures/`.
+- [x] 3.2 (claimed: Claude; one skinned level, no LOD metadata: Jackdaw's LOD runtime would flatten the skin; no static collider for a moving creature yet) Export `assets/creatures/cyber_cob/cyber_cob.glb` with a family profile, appropriate collider, Jackdaw metadata/prefab, and model-owned LODs.
+- [x] 3.3 (claimed: Claude) Create matching side and three-quarter previews; inspect limb count, prosthesis articulation/readability, coat pattern, feathering, mane and tail strands, tack, PBR materials, and emissive strength.
 
 ## 4. Pair review
 
-- [ ] 4.1 Review the pony and wagon together at game scale; verify the shafts and practical harness meet without intersecting or obscuring the pony.
-- [ ] 4.2 Run the asset layout and prefab checks, confirm both models load in the game/editor, and record the review in the art guide changelog.
+- [x] 4.1 (claimed: Claude; at the vardo's `Hitch` the cob is 0.22-0.27 m wide at shaft height against shafts 0.42-0.44 m out; traces not modelled yet) Review the pony and wagon together at game scale; verify the shafts and practical harness meet without intersecting or obscuring the pony.
+- [x] 4.2 (claimed: Claude; `--asset-review vardo`) Run the asset layout and prefab checks, confirm both models load in the game/editor, and record the review in the art guide changelog.
 - [ ] 4.3 Add the vardo and cyber-cob to the style sheet or an equivalent paired asset review sheet.

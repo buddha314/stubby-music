@@ -446,6 +446,11 @@ testable by asserting identical output for identical seeds.
   validates them.
 - **Preview new assets in an asset review scene** (`assets/world/asset_reviews/`, at noon):
   `python3 tools/jackdaw_timed_test.py --asset-review <name>` (`homestead`: the cottage and its props).
+- **Idle clips keep time** (user, 2026-11-20): a placed model with an `Idle` clip and no clock of
+  its own plays it phase-locked to the nearest running clock within 30 m, else to the master
+  clock (`stubby_world::prefab_presentation::idle_phase`). Name a creature's rest loop `Idle`.
+- **Rigged creatures may start from CC0 bases** (Quaternius, Kenney, Poly Haven), kept under
+  `assets-src/third_party/<source>/` with their licence; the generator restyles and extends them.
 - **Every material declares an acoustic class** (user, 2026-11-20): a Steam Audio preset by
   name (`AcousticOccluder::preset`: rock, brick, wood, glass, metal, ...), set as glTF extras
   `"acoustic"` on large near-level meshes by the generator, and listed in the profile

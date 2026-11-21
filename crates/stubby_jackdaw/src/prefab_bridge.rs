@@ -64,6 +64,7 @@ fn bridge(
                     | "campfire"
                     | "cottage"
                     | "vardo"
+                    | "cyber_cob"
                     | "reed_water_purifier"
                     | "ripple_pool"
             ))
