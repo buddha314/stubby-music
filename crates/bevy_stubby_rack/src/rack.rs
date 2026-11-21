@@ -1102,27 +1102,45 @@ struct ScopeTrace(Handle<Mesh>);
 
 /// The rack view owns the display mesh. The audio tap belongs to the engine part
 /// playing in this place, which may be replaced when the rack is repatched.
+///
+/// The scope needs no adjusting (user, 2026-11-20): it is a triggered scope that shows the
+/// incoming wave's shape, refreshed once a beat of the rack's clock. Each beat it finds the
+/// wave's period in a 0.1 s capture, starts on a rising zero crossing and shows two cycles,
+/// scaled to fit, holding them until the next beat (and through a closed gate). Its TIME and
+/// SCALE knobs turn to show the capture and the fit, as the rack plays what it shows.
+#[allow(clippy::type_complexity)] // The rack's engine parts, clock and knobs.
 fn draw_scope(
     mut commands: Commands,
     synth: Option<Res<Synth>>,
     screens: Res<ScreenMode>,
     catalog: Res<ModuleCatalog>,
-    racks: Query<&RackEngine>,
+    mut racks: Query<(&RackEngine, Option<&AssetClock>, Option<&mut RackKnobs>)>,
     views: Query<(Entity, &RackModuleView, &SynthModule, &ModuleParams)>,
     children: Query<&Children>,
     panels: Query<(&Name, Option<&ScopeTrace>)>,
     assets: Option<(ResMut<Assets<Mesh>>, ResMut<Assets<StandardMaterial>>)>,
     mut samples: Local<Vec<f32>>,
+    mut held: Local<HashMap<Entity, (f32, Vec<f32>, f32)>>,
+    time: Res<Time<Real>>,
 ) {
     let Some(thread) = synth.as_ref().and_then(|synth| synth.thread()) else {
         return;
     };
-    let Some(rack) = open_rack(&screens).and_then(|machine| racks.get(machine).ok()) else {
+    let Some((rack, clock, mut knobs)) =
+        open_rack(&screens).and_then(|machine| racks.get_mut(machine).ok())
+    else {
         return;
     };
     let Some((mut meshes, mut materials)) = assets else {
         return;
     };
+    // One beat of the rack's clock: its own, else its clock place's BPM knob.
+    let bpm = clock.map(|c| c.bpm).or_else(|| {
+        knobs
+            .as_ref()
+            .and_then(|k| k.0.iter().find(|((_, p), _)| p == "bpm").map(|(_, v)| *v))
+    });
+    let beat = bpm.filter(|b| *b > 0.).map(|b| 60. / b);
     for (root, view, module, params) in &views {
         let Some(screen) = catalog
             .0
@@ -1144,13 +1162,33 @@ fn draw_scope(
             continue;
         };
 
-        samples.resize(screen.samples.max(2), 0.0);
-        let id = rack.parts.get(&(view.place.clone(), part.part.clone()));
-        if !id.is_some_and(|id| thread.read_scope(*id, &mut samples)) {
-            samples.fill(0.0);
+        // A 0.1 s capture at near full resolution, read once a beat.
+        let now = time.elapsed_secs();
+        let entry = held
+            .entry(panel)
+            .or_insert_with(|| (f32::NEG_INFINITY, vec![0.0; screen.samples.max(2)], 0.5));
+        if now - entry.0 >= beat.unwrap_or(0.5) {
+            samples.resize(SCOPE_CAPTURE_POINTS, 0.0);
+            let id = rack.parts.get(&(view.place.clone(), part.part.clone()));
+            let ok = id.is_some_and(|id| thread.read_scope(*id, &mut samples));
+            if ok && let Some((cycles, scale)) = triggered_cycles(&samples, screen.samples.max(2)) {
+                *entry = (now, cycles, scale);
+            }
         }
-        let scale = params.0.get("scale").copied().unwrap_or(0.5);
-        let positions = waveform_ribbon(&samples, screen.width_metres, screen.height_metres, scale);
+        let (_, shown, scale) = entry.clone();
+        if let Some(knobs) = knobs.as_mut() {
+            let mut set = |param: &str, value: f32| {
+                let key = (view.place.clone(), param.to_owned());
+                let old = knobs.0.get(&key).copied().unwrap_or(f32::NAN);
+                if !(old.is_finite() && ((old - value) / value).abs() < 0.05) {
+                    knobs.0.insert(key, value);
+                }
+            };
+            set("time", SCOPE_CAPTURE_S);
+            set("scale", scale);
+        }
+        let _ = params;
+        let positions = waveform_ribbon(&shown, screen.width_metres, screen.height_metres, scale);
         if let Some(ScopeTrace(handle)) = trace {
             if let Some(mut mesh) = meshes.get_mut(handle) {
                 mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
@@ -1185,17 +1223,88 @@ fn draw_scope(
     }
 }
 
+/// The scope's capture: how long and at how many points it is read.
+const SCOPE_CAPTURE_S: f32 = 0.1;
+const SCOPE_CAPTURE_POINTS: usize = 4800; // 0.1 s at 48 kHz: every sample
+
+/// Two cycles of the wave in `capture`, starting on a rising zero crossing, resampled to
+/// `points`, with the scale that fits its peak to 0.45 of the screen either side; `None` when
+/// the capture is silent or has no steady period (then the scope keeps what it showed).
+pub fn triggered_cycles(capture: &[f32], points: usize) -> Option<(Vec<f32>, f32)> {
+    let n = capture.len();
+    let mean = capture.iter().sum::<f32>() / n.max(1) as f32;
+    let x: Vec<f32> = capture.iter().map(|s| s - mean).collect();
+    let peak = x.iter().fold(0f32, |m, s| m.max(s.abs()));
+    if n < 64 || peak < 1e-3 {
+        return None;
+    }
+    // The period: after the autocorrelation first falls below zero, the shortest lag that
+    // matches nearly as well as the best (normalised per overlap, so long lags are fair):
+    // the fundamental, not a partial's echo.
+    let r = |lag: usize| {
+        x[..n - lag]
+            .iter()
+            .zip(&x[lag..])
+            .map(|(a, b)| a * b)
+            .sum::<f32>()
+            / (n - lag) as f32
+    };
+    let r0 = r(0).max(1e-12);
+    let mut lag = 2;
+    while lag < n / 3 && r(lag) > 0.0 {
+        lag += 1;
+    }
+    let scores: Vec<(usize, f32)> = (lag..n / 3).map(|l| (l, r(l))).collect();
+    let best = scores.iter().map(|s| s.1).fold(f32::MIN, f32::max);
+    if best / r0 < 0.3 {
+        return None;
+    }
+    let period = scores
+        .windows(3)
+        .find(|w| w[1].1 >= w[0].1 && w[1].1 >= w[2].1 && w[1].1 >= 0.9 * best)
+        .map(|w| w[1].0)?;
+    // The latest rising zero crossing that leaves room for two cycles.
+    let span = 2 * period;
+    let start = (1..n.saturating_sub(span))
+        .rev()
+        .find(|&i| x[i - 1] < 0.0 && x[i] >= 0.0)?;
+    let cycles: Vec<f32> = (0..points)
+        .map(|k| {
+            let at = start as f32 + span as f32 * k as f32 / (points - 1) as f32;
+            let i = at.floor() as usize;
+            let f = at - i as f32;
+            x[i.min(n - 1)] * (1.0 - f) + x[(i + 1).min(n - 1)] * f
+        })
+        .collect();
+    let shown_peak = cycles.iter().fold(0f32, |m, s| m.max(s.abs())).max(1e-3);
+    Some((cycles, (0.45 / shown_peak).clamp(0.1, 4.0)))
+}
+
 fn waveform_ribbon(samples: &[f32], width: f32, height: f32, scale: f32) -> Vec<[f32; 3]> {
-    let half_stroke = 0.001;
+    let half_stroke = 0.0022;
     let vertical_limit = (height * 0.5 - half_stroke).max(0.0);
     let step = width / (samples.len() - 1) as f32;
-    samples
+    let points: Vec<Vec2> = samples
         .iter()
         .enumerate()
-        .flat_map(|(i, sample)| {
-            let x = i as f32 * step - width * 0.5;
-            let y = (sample * scale * height).clamp(-vertical_limit, vertical_limit);
-            [[x, y - half_stroke, 0.0], [x, y + half_stroke, 0.0]]
+        .map(|(i, sample)| {
+            Vec2::new(
+                i as f32 * step - width * 0.5,
+                (sample * scale * height).clamp(-vertical_limit, vertical_limit),
+            )
+        })
+        .collect();
+    // Widen across the line, not only up and down, so steep edges keep their width.
+    (0..points.len())
+        .flat_map(|i| {
+            let a = points[i.saturating_sub(1)];
+            let b = points[(i + 1).min(points.len() - 1)];
+            let normal = (b - a).perp().normalize_or(Vec2::Y) * half_stroke;
+            let p = points[i];
+            [
+                [p.x - normal.x, p.y - normal.y, 0.0],
+                [p.x + normal.x, p.y + normal.y, 0.0],
+            ]
         })
         .collect()
 }
@@ -2458,6 +2567,26 @@ fn draw_cables(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_scope_triggers_on_two_cycles_of_the_wave() {
+        // A saw of period 100 samples, behind a silent stretch (a closed gate).
+        let capture: Vec<f32> = (0..4096)
+            .map(|i| {
+                if i < 1000 {
+                    0.0
+                } else {
+                    ((i % 100) as f32 / 50.0) - 1.0
+                }
+            })
+            .collect();
+        let (cycles, scale) = triggered_cycles(&capture, 256).expect("a steady wave");
+        assert_eq!(cycles.len(), 256);
+        // It starts on a rising zero crossing and spans two periods: zero again mid-screen.
+        assert!(cycles[0].abs() < 0.05, "{}", cycles[0]);
+        assert!((scale - 0.45).abs() < 0.05, "{scale}");
+        assert!(triggered_cycles(&vec![0.0; 4096], 256).is_none());
+    }
     use stubby_audio::ModuleKind;
 
     fn machine_clock(engine: ModuleId) -> AssetClock {

@@ -101,9 +101,8 @@
       "scale": "minor",
       "part_of": "clean_the_water",
       "condition": {
-        "kind": "item_held",
-        "item": "high_pass_filter",
-        "quantity": 1
+        "kind": "item_found",
+        "item": "high_pass_filter"
       }
     },
     {
@@ -113,9 +112,8 @@
       "scale": "minor",
       "part_of": "clean_the_water",
       "condition": {
-        "kind": "item_held",
-        "item": "oscilloscope",
-        "quantity": 1
+        "kind": "item_found",
+        "item": "oscilloscope"
       }
     },
     {
@@ -125,9 +123,8 @@
       "scale": "minor",
       "part_of": "clean_the_water",
       "condition": {
-        "kind": "item_held",
-        "item": "reed_water_purifier_kit",
-        "quantity": 1
+        "kind": "item_found",
+        "item": "reed_water_purifier_kit"
       }
     },
     {

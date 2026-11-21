@@ -66,6 +66,12 @@ pub enum Condition {
         #[schemars(extend("x-stubby-ref" = "buildables"))]
         buildable: String,
     },
+    /// The player's recipe book knows this item: collected or crafted at least once. It
+    /// latches: using the item up later does not clear it (add-item-found-condition).
+    ItemFound {
+        #[schemars(extend("x-stubby-ref" = "items"))]
+        item: String,
+    },
     /// The player holds at least this many of an item.
     ItemHeld {
         #[schemars(extend("x-stubby-ref" = "items"))]
@@ -268,6 +274,9 @@ pub fn validate_goals(
                     format!("{mine} has no growth level {level:?} (mines.json `growth`)"),
                 ));
             }
+            Some(Condition::ItemFound { item }) if !items.contains(item.as_str()) => {
+                errors.push(err(&goal.id, "condition", format!("unknown item {item}")));
+            }
             Some(Condition::ItemHeld { item, quantity })
                 if *quantity == 0 || !items.contains(item.as_str()) =>
             {
@@ -443,8 +452,9 @@ impl GoalProgress {
         ))
     }
 
-    fn holds(&self, condition: &Condition, inventory: &Inventory) -> bool {
+    fn holds(&self, condition: &Condition, inventory: &Inventory, book: &RecipeBook) -> bool {
         match condition {
+            Condition::ItemFound { item } => book.knows(item),
             Condition::ItemHeld { item, quantity } => inventory.quantity(item) >= *quantity,
             Condition::TreeGrown { mine, level } => self.holding.iter().any(|held| {
                 matches!(held, Condition::TreeGrown { mine: m, level: l } if m == mine && l >= level)
@@ -780,7 +790,7 @@ fn settle(
             progress.is_open(rules, goal)
                 && match goal.scale {
                     Scale::Minor => match &goal.condition {
-                        Some(condition) => progress.holds(condition, inventory),
+                        Some(condition) => progress.holds(condition, inventory, recipe_book),
                         None => goal.requires.iter().all(|stack| {
                             let total: u32 = goal
                                 .requires
@@ -980,6 +990,30 @@ mod tests {
             item: item.into(),
             quantity,
         }
+    }
+
+    #[test]
+    fn a_found_item_meets_its_step_after_it_is_used_up() {
+        let mut world = World::new();
+        world.rules.goals = vec![
+            major("water"),
+            when(
+                "find_filter",
+                "water",
+                Condition::ItemFound {
+                    item: "high_pass_filter".into(),
+                },
+            ),
+        ];
+        world.apply(GoalEvent::Refresh);
+        assert_eq!(world.step(), Some("find_filter"));
+        // Found and already spent (crafted into a kit) before the step is looked at again.
+        world.book.discover("high_pass_filter");
+        assert_eq!(world.inventory.quantity("high_pass_filter"), 0);
+        assert_eq!(
+            world.apply(GoalEvent::Refresh),
+            [done("find_filter"), done("water")]
+        );
     }
 
     #[test]

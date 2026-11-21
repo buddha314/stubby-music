@@ -148,7 +148,10 @@ lights it; it dies to embers when the clock stops (`stubby_game::campfire`). The
 **Clean the water** (2026-11-20), walks the purifier loop: find a high-pass filter, find an
 oscilloscope, craft the purifier kit at the lit campfire, build the check dam (Q), and tune it
 until an oak leafs on the clearer water; the build menu's notice says where a missing kit is
-crafted. **Streams
+crafted. Find and craft steps use `item_found` (the recipe book knows it; latches when the item
+is used up), never `item_held` (add-item-found-condition). **The rack's scope needs no
+adjusting** (user, 2026-11-20): a triggered scope that shows two cycles of the incoming wave,
+refreshed once a beat of the rack's clock and scaled to fit (`bevy_stubby_rack::rack::triggered_cycles`). **Streams
 accumulate a composition** (`add-stream-layers`): the heartbeat puts a note on the staff on
 every beat. The player builds a campfire from reeds (Q, 25 reeds, `buildables.json`), places
 it, then configures it (E): placed within 5 m of a stream it snaps beside it and joins it there,
