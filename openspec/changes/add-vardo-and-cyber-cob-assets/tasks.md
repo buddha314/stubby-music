@@ -20,6 +20,6 @@ All tasks are art and asset pipeline unless explicitly noted. The asset guide an
 
 ## 4. Pair review
 
-- [x] 4.1 (claimed: Claude; at the vardo's `Hitch` the cob is 0.22-0.27 m wide at shaft height against shafts 0.42-0.44 m out; traces not modelled yet) Review the pony and wagon together at game scale; verify the shafts and practical harness meet without intersecting or obscuring the pony.
+- [x] 4.1 (claimed: Claude; at the vardo's `Hitch` the cob is 0.22-0.27 m wide at shaft height against shafts 0.42-0.44 m out; 2026-11-21: the shafts ride in the cob's brass tugs, and leather traces run from the hames to the swingletree) Review the pony and wagon together at game scale; verify the shafts and practical harness meet without intersecting or obscuring the pony.
 - [x] 4.2 (claimed: Claude; `--asset-review vardo`) Run the asset layout and prefab checks, confirm both models load in the game/editor, and record the review in the art guide changelog.
-- [ ] 4.3 Add the vardo and cyber-cob to the style sheet or an equivalent paired asset review sheet.
+- [x] 4.3 (claimed: Claude; `tools/blender/render_vardo_pair.py`: previews/structures/vardo/pair_sheet.png, side, three-quarter and harness) Add the vardo and cyber-cob to the style sheet or an equivalent paired asset review sheet.
