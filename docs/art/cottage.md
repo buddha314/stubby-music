@@ -3,7 +3,29 @@
 **Draft (2026-11-20).** The first Dancer dwelling: an off-grid homesteader cottage for a
 family of four (`add-settlement-economy`: a cottage houses at most four). It appears in
 Village, the first building Dancers live in. Prompt: [prompts/cottage.md](prompts/cottage.md).
-Images will go in `docs/art/cottage/`; where they disagree with these rules, the rules win.
+Images are in `docs/art/cottage/`; where they disagree with these rules, the rules win.
+
+## Concept (2026-11-20)
+
+![Design sheet](cottage/design-sheet-chatgpt-2026-11-20.png)
+
+**The hero view is adopted** (user: "not bad"). Its dimensions match the brief (6 × 8 m,
+5.5 m ridge, 2 m door). The elevations beneath it drift from the hero and from each other,
+so model from the hero and these rules:
+
+- **Massing:** a gable roof running front to back; one great grown-wood rib sweeps from the
+  ridge down past the front-left corner to the ground, the signature of the silhouette;
+  the porch, with its reed-mat shade, runs along the right side.
+- **Placement, one of each:** the rain tank (an IBC-style cage tote) at the front-left
+  corner; the battery cabinet left of the door; the turbine mast at the rear-left corner;
+  the chimney at the rear-right of the ridge; the solar row on the left roof slope; the
+  corrugated patch at the front-left eave and lower left wall. The sheet's right and left
+  elevations both show a tank, and the turbine wanders; keep the hero's.
+- **Front:** one door, a ground-floor window left of it, a gable window above; the wind
+  chimes hang under the front eave between them.
+- **Not part of the cottage model:** the table, stools, barrels, buckets, pots, hammock and
+  loose rocks. They make a small homestead prop kit placed beside it, so the cottage stays
+  one clean glb and its porch can be dressed or left bare.
 
 ## Continuity rules
 
