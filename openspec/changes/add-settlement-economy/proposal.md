@@ -37,6 +37,9 @@ change ports what fits into a Bevy-free core and adds the people.
 - **Settlement tiers** as rule rows, starting from Farthest Frontier's Town Center table.
 - New rule types in `stubby_recipes`: dwellings, professions, recipe crews, settlement
   tiers, rations. Each lands with its schema, validator and rows.
+- **A headless simulation tool** (`economy-sim`) that runs scenarios for many days and
+  reports population, stock, shortfalls and tasks per checkpoint: the start of the balance
+  harness the roadmap calls for.
 
 Out of scope here: the Bevy system and its screens (a professions panel, Dancer models and
 animation), crops, trade and the Dancers' art, which follow as their own changes.
@@ -45,6 +48,7 @@ animation), crops, trade and the Dancers' art, which follow as their own changes
 
 - New crate `crates/stubby_economy` (core layer), a `deny.toml` line, and the cores check
   in `tools/ci_local.sh`.
-- `stubby_recipes`: new rule types and rows; recipes gain an optional crew.
+- `stubby_recipes`: new rule types and rows; recipes gain an optional crew with a
+  duration (recipes are instant today).
 - `openspec/changes/add-settlement-phase-reviews`: its population task (2.5) and
   transition conditions (2.4) take their starting values from here.
