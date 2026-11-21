@@ -10,3 +10,5 @@
 - [x] 2.3 Record the draft crop water, three-village trade and city construction guidelines.
 - [ ] 2.4 Define measurable transition conditions with the designer before proposing runtime progression rules.
 - [ ] 2.5 Develop the population model, including how food and housing support arrivals and how residents sustain trade and civic life.
+- [x] 2.6 Outline Dancer provisioning, mix-and-match silhouettes and local clock association.
+- [ ] 2.7 Review ration timing and shortages against a small test settlement. Compare every draft body and skin combination in daylight and at night, then review two groups following different local clocks.

@@ -27,7 +27,7 @@ Village → Town → City. The silent mudflat is the opening before Camp.
 **Draft progression.** Camp becomes Village when there is enough clean water to
 plant a crop. Village becomes Town when three villages trade goods. Town becomes
 City when the player can build an art gallery, a concert hall and at least one
-light rail system. A growing resident population is part of this arc.
+light rail system. The growing resident population is called **Dancers**.
 Thresholds, population mechanics and how the phases map onto long-term goals
 are open. [Settlement phase design](../../openspec/changes/add-settlement-phase-reviews/design.md#draft-progression-rules)
 
