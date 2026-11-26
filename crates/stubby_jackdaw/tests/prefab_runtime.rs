@@ -54,7 +54,7 @@ fn saved_prefabs_become_live_runtime_assets() {
         .init_asset::<StandardMaterial>()
         .init_asset::<bevy::gltf::Gltf>()
         .init_asset::<AnimationClip>()
-        .init_asset::<bevy::animation::graph::AnimationGraph>()
+        .init_asset::<bevy::animation::graph::BlendGraph>()
         .init_asset::<bevy::world_serialization::WorldAsset>()
         .insert_resource(AuthoredLevel)
         .insert_resource(WorldSeed(42))

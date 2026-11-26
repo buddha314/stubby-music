@@ -699,7 +699,7 @@ mod prefab_tests {
         .init_asset::<StandardMaterial>()
         .init_asset::<bevy::gltf::Gltf>()
         .init_asset::<AnimationClip>()
-        .init_asset::<bevy::animation::graph::AnimationGraph>()
+        .init_asset::<bevy::animation::graph::BlendGraph>()
         .init_asset::<bevy::world_serialization::WorldAsset>()
         .insert_resource(AuthoredLevel)
         .insert_resource(stubby_world::WorldSeed(42))

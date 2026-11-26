@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "jackdaw": {
-    "revision": "82bfd6e18da95667bd7dadbea62e19e2a9330331",
-    "upstream_revision": "e763f34127b33fafeee2c5c3984b282eeaa36e51",
+    "revision": "39af09e36a272ece810353604ce85823067f596a",
+    "upstream_revision": "b7267d0dbf8c4ec5cae08ec7253551dd76404302",
     "version": "0.21.0-dev",
     "origin": "https://github.com/buddha314/jackdaw.git",
     "upstream": "https://github.com/jbuehler23/jackdaw.git",
@@ -11,7 +11,7 @@
   },
   "bevy": {
     "version": "0.20.0-dev",
-    "source": "git+https://github.com/bevyengine/bevy?branch=main#c9c397ba1a73e6cfffe957318e0359330b701865",
+    "source": "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0d0380db98e287e4b5e0b3",
     "line": "main"
   },
   "rust": "1.99.0"
