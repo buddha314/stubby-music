@@ -185,7 +185,7 @@ def main():
     if args.standalone and (args.command or args.play or args.review or args.streams or args.sky):
         parser.error('--standalone cannot be combined with editor-only review flags')
     if not args.command:
-        check = [sys.executable, str(ROOT / 'tools/check_jackdaw_versions.py')]
+        check = [sys.executable, str(ROOT / 'tools/check_engine_pins.py')]
         if not args.standalone:
             check.append('--binaries')
         subprocess.run(check, check=True)

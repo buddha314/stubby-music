@@ -281,7 +281,7 @@ commit ID or checksum cannot reconstruct content that was never retained.
 From that worktree:
 
 ```bash
-python3 tools/check_jackdaw_versions.py --binaries
+python3 tools/check_engine_pins.py --binaries
 git status --short
 world_review_dir="$(mktemp -d /tmp/stubby-worldgen-review.XXXXXX)"
 git rev-parse HEAD > "$world_review_dir/game-revision.txt"

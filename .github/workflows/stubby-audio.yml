@@ -16,7 +16,7 @@ on:
       - "jackdaw.toml"
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
-      - "tools/*jackdaw_versions.py"
+      - "tools/*engine_pins.py"
       - "deny.toml"
       - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
@@ -32,7 +32,7 @@ on:
       - "jackdaw.toml"
       - "crates/stubby_game/Cargo.toml"
       - "crates/bevy_stubby_recipes/Cargo.toml"
-      - "tools/*jackdaw_versions.py"
+      - "tools/*engine_pins.py"
       - "deny.toml"
       - "crates/*/Cargo.toml"
       - ".github/workflows/stubby-audio.yml"
@@ -65,7 +65,7 @@ jobs:
             echo "::warning::Jackdaw pin $pinned is behind buddha314/jackdaw main ($head). Run tools/jackdaw.sh sync."
           fi
       - name: Version consistency
-        run: python3 tools/check_jackdaw_versions.py
+        run: python3 tools/check_engine_pins.py
       - name: Install ALSA headers (cpal)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - uses: dtolnay/rust-toolchain@master
@@ -77,7 +77,7 @@ jobs:
           key: stubby-audio
           workspaces: game -> target
       - name: Version-check regression tests
-        run: python3 tools/test_jackdaw_versions.py
+        run: python3 tools/test_engine_pins.py
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny@0.20.2
@@ -86,7 +86,7 @@ jobs:
       - name: Active Bevy graph
         run: |
           cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$RUNNER_TEMP/bevy-tree.txt"
-          python3 tools/check_jackdaw_versions.py --tree "$RUNNER_TEMP/bevy-tree.txt"
+          python3 tools/check_engine_pins.py --tree "$RUNNER_TEMP/bevy-tree.txt"
       - name: Format
         run: cargo fmt -p stubby_audio --check
       - name: Clippy

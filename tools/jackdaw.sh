@@ -1,29 +1,46 @@
 #!/usr/bin/env bash
-# Build and launch the compatibility set selected by the shared Jackdaw revision.
+# The game's one entry point to the shared Jackdaw editor and the engine pins.
 #
-#   tools/jackdaw.sh [open]   open this project in the shared editor (~/src/jackdaw)
-#   tools/jackdaw.sh prepare  export the mudflat preview, build the shared editor, record it
-#   tools/jackdaw.sh sync     Bevy main -> jbuehler23 main -> our fork -> this game, then prepare
+#   tools/jackdaw.sh [open]   open this project in the shared editor (../jackdaw)
+#   tools/jackdaw.sh prepare  build the shared editor at the pin and record its hashes
+#   tools/jackdaw.sh sync     Bevy main -> avian forks -> our Jackdaw fork -> this game,
+#                             then prepare (tools/engine_sync.py; docs/ENGINE-UPDATES.md)
+#   tools/jackdaw.sh ceiling  newest Bevy main commit this game's avian forks build on
+#   tools/jackdaw.sh smoke    one bounded 20-second Play in the editor (tools/timed_play.py)
 #   tools/jackdaw.sh build|run|doctor   the editor's `jd` for this project
 #   tools/jackdaw.sh link|unlink        build against the local editor checkout, or the pin
-#   tools/jackdaw.sh check    nothing (used by scripts to source the environment)
+#   tools/jackdaw.sh check    the pins and the shared checkout agree (changes nothing)
+#
+# JACKDAW_SOURCE overrides the shared checkout (default: ../jackdaw beside this repo).
+#
+# This file is shared, byte for byte, by every game made from the template
+# (VerdantAI/us-outpost-31; tools/update_engine_tools.sh copies it). A game's own
+# steps go in tools/game_hooks.sh, which may define:
+#   game_env      before anything builds or runs the game (prepare, build, run,
+#                 doctor, open, smoke): export environment, build native SDKs
+#   game_prepare  in `prepare`, before the shared editor is built: generated assets
+#   game_ready    in `open`; return non-zero when `prepare` must run first
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="${JACKDAW_SOURCE:-${repo_dir}/../jackdaw}"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 cli_path="${source_dir}/target/debug/jd"
-project_dir="${repo_dir}"
 cd "$repo_dir"
 command_name="${1:-open}"
-prepare_audio_environment() {
-    local steam_audio_lib
-    steam_audio_lib="$("${repo_dir}/tools/build_steam_audio_sdk.sh")"
-    export STEAMAUDIO_LIB_DIR="$steam_audio_lib"
-    export LD_LIBRARY_PATH="$steam_audio_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-}
-# The game takes Jackdaw from the fork at the pinned revision (Cargo.toml). `link` builds it
-# against the shared checkout instead, through an untracked .cargo/config.toml [patch];
-# `unlink` returns to the pin. Neither edits a tracked file except Cargo.lock.
+check() { python3 "${repo_dir}/tools/check_engine_pins.py" --source "$source_dir" "$@"; }
+game_env() { :; }
+game_prepare() { :; }
+game_ready() { return 0; }
+if [[ -f "${repo_dir}/tools/game_hooks.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${repo_dir}/tools/game_hooks.sh"
+fi
+
+# The game takes Jackdaw from the fork at the pinned revision (Cargo.toml). `link`
+# builds it against the shared checkout instead, through an untracked
+# .cargo/config.toml [patch]; `unlink` returns to the pin. Neither edits a tracked
+# file except Cargo.lock, and the pin check fails while linked, so it cannot be
+# committed by accident.
 link_config="${repo_dir}/.cargo/config.toml"
 case "$command_name" in
     link)
@@ -55,22 +72,28 @@ PYLINK
             rmdir --ignore-fail-on-non-empty "${repo_dir}/.cargo"
         fi
         cargo metadata --format-version 1 >/dev/null
-        python3 "${repo_dir}/tools/check_jackdaw_versions.py"
+        check
         exit 0
         ;;
+    ceiling)
+        shift
+        exec python3 "${source_dir}/scripts/bevy_ceiling.py" ceiling \
+            --forks "${repo_dir}/bevy_main_forks.json" "$@"
+        ;;
 esac
-# The shared editor must match the pin before anything uses it. `sync` is exempt: moving
-# the editor to the newest fork revision and re-pinning is its job, so drift is expected.
+
+# The shared editor must match the pin before anything uses it. `sync` is exempt:
+# moving the editor to the newest fork revision and re-pinning is its job.
 if [[ "$command_name" != sync ]]; then
-    python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
+    check --editor
 fi
 case "$command_name" in
     check)
         exit 0
         ;;
     prepare)
-        prepare_audio_environment
-        # A shared binary update must not replace an editor the user is running.
+        game_env
+        # A shared binary update must not replace an editor someone is running.
         python3 - "$source_dir" <<'PYIDLE'
 import os, pathlib, sys
 expected = str((pathlib.Path(sys.argv[1]) / 'target/debug/jackdaw').resolve())
@@ -84,11 +107,11 @@ for process in pathlib.Path('/proc').iterdir():
     if executable == expected:
         sys.exit('Shared Jackdaw is running; close it before rebuilding shared binaries.')
 PYIDLE
-        cargo run --manifest-path "${repo_dir}/Cargo.toml" -p stubby_game --locked -- --export="${project_dir}/assets/generated"
-        rust_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["rust"])' "${project_dir}/compatibility.json")"
+        game_prepare
+        rust_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["rust"])' "${repo_dir}/compatibility.json")"
         cargo "+${rust_version}" build --manifest-path "${source_dir}/Cargo.toml" -p jackdaw -p jd --locked
-        python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --editor
-        python3 - "$project_dir" "$source_dir" <<'PYRECEIPT'
+        check --editor
+        python3 - "$repo_dir" "$source_dir" <<'PYRECEIPT'
 import hashlib, json, pathlib, sys
 project, source = map(pathlib.Path, sys.argv[1:])
 record = json.loads((project / 'compatibility.json').read_text())
@@ -100,33 +123,39 @@ path = project / '.jackdaw/editor-build.json'
 path.parent.mkdir(parents=True, exist_ok=True)
 path.write_text(json.dumps(receipt, indent=2) + '\n')
 PYRECEIPT
-        mkdir -p "${project_dir}/.jackdaw/target"
-        if [[ ! -e "${project_dir}/.jackdaw/target/game" ]]; then
-            ln -s ../../target "${project_dir}/.jackdaw/target/game"
+        # Play builds the game into .jackdaw/target/game; share the workspace target
+        # so the editor's first Play does not compile Bevy a second time.
+        mkdir -p "${repo_dir}/.jackdaw/target"
+        if [[ ! -e "${repo_dir}/.jackdaw/target/game" ]]; then
+            ln -s ../../target "${repo_dir}/.jackdaw/target/game"
         fi
         ;;
     sync)
-        # Bevy main -> jbuehler23 main -> our fork -> this game; see tools/jackdaw_sync.py.
-        JACKDAW_SOURCE="$source_dir" python3 "${repo_dir}/tools/jackdaw_sync.py"
+        JACKDAW_SOURCE="$source_dir" python3 "${repo_dir}/tools/engine_sync.py"
         "$0" prepare
         ;;
+    smoke)
+        shift
+        game_env
+        exec python3 "${repo_dir}/tools/timed_play.py" --source "$source_dir" "$@"
+        ;;
     build|doctor|run)
-        prepare_audio_environment
-        python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --binaries
-        exec "$cli_path" "$command_name" --project "$project_dir"
+        game_env
+        check --binaries
+        exec "$cli_path" "$command_name" --project "$repo_dir"
         ;;
     open)
-        prepare_audio_environment
-        python3 "${repo_dir}/tools/check_jackdaw_versions.py" --source "$source_dir" --binaries
-        if [[ ! -f "${project_dir}/assets/generated/mudflat.glb" ]]; then
+        game_env
+        if [[ ! -f "${repo_dir}/.jackdaw/editor-build.json" ]] || ! game_ready; then
             "$0" prepare
         fi
-        export JACKDAW_OPEN_PROJECT="$project_dir"
+        check --binaries
+        export JACKDAW_OPEN_PROJECT="$repo_dir"
         cd "$source_dir"
         exec "${source_dir}/target/debug/jackdaw"
         ;;
     *)
-        echo "Usage: $0 [check|prepare|sync|link|unlink|doctor|build|run|open]" >&2
+        echo "Usage: $0 [open|prepare|sync|ceiling|smoke|build|run|doctor|link|unlink|check]" >&2
         exit 2
         ;;
 esac

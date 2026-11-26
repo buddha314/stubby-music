@@ -7,15 +7,15 @@ step() { printf '\n== %s\n' "$*"; }
 step "LOD authoring policy"; python3 tools/jackdaw_lods.py --check
 python3 tools/test_jackdaw_lods.py
 step "Runtime asset references"; python3 tools/check_asset_layout.py
-step "Version consistency";        python3 tools/check_jackdaw_versions.py
-step "Version-check regression";   python3 tools/test_jackdaw_versions.py
+step "Version consistency";        python3 tools/check_engine_pins.py
+step "Version-check regression";   python3 tools/test_engine_pins.py
 step "cargo-deny: layering, licenses, advisories, sources (deny.toml)"
 command -v cargo-deny >/dev/null || { echo "install it: cargo install cargo-deny --locked --version 0.20.2"; exit 1; }
 cargo deny --log-level error check
 step "Active Bevy graph"
 tree="$(mktemp)"; trap 'rm -f "$tree"' EXIT
 cargo tree --color never --workspace --locked -e normal,build,dev --prefix none --format '{p}' > "$tree"
-python3 tools/check_jackdaw_versions.py --tree "$tree"
+python3 tools/check_engine_pins.py --tree "$tree"
 step "Format";  cargo fmt -p stubby_audio --check
 step "Clippy";  cargo clippy -p stubby_audio --all-targets --locked -- -D warnings
 step "Test";    cargo test -p stubby_audio -p stubby_economy --locked
