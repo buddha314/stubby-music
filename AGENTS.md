@@ -241,7 +241,7 @@ assets/                   the one asset folder: scene.bsn, asset families (model
 jackdaw.toml              the Jackdaw project is the repo root (package = stubby_jackdaw)
 assets-src/blender/       source .blend files — never loaded at runtime
 tools/blender/            headless Blender export scripts
-tools/                    run_game.sh, jackdaw.sh, build_steam_audio_sdk.sh, ci_local.sh,
+tools/                    run_game.sh, jackdaw.sh (+ game_hooks.sh), build_steam_audio_sdk.sh, ci_local.sh,
                           jackdaw_timed_test.py (the 20 s watchdog), icons/, audio/, assets/
 previews/                 asset previews, mirroring assets/ (never loaded by the game)
 spikes/                   throwaway experiments, their own Cargo workspaces
@@ -866,17 +866,29 @@ unlink` before committing; the check refuses a linked `Cargo.lock`. The shared e
 checkout must still equal the pin to launch, because Play talks to the game over Jackdaw's
 PIE protocol.
 
-Run `python3 tools/check_jackdaw_versions.py` before work involving the editor (it checks
+Run `python3 tools/check_engine_pins.py` before work involving the editor (it checks
 the repository; `--editor` also checks the shared checkout, as `tools/jackdaw.sh` does).
+
+**The engine tools are shared with the game template** (VerdantAI/us-outpost-31, since
+2026-11-26): `tools/jackdaw.sh`, `engine_sync.py`, `check_engine_pins.py` (+
+`test_engine_pins.py`), `bevy_main_forks.py`, `timed_play.py`, `update_engine_tools.sh`
+and `docs/ENGINE-UPDATES.md` are byte-identical copies. **Never edit them here.** Improve
+them in the template, then run `tools/update_engine_tools.sh` (it copies them from
+`../us-outpost-31` and runs the pin tests). This game's own steps (the Steam Audio SDK, the
+mudflat export) live in `tools/game_hooks.sh`, which the update never touches.
+`docs/ENGINE-UPDATES.md` is the full process.
 
 **We follow the chain Bevy main → jbuehler23/jackdaw main → our fork's main → this game**
 (user direction, 2026-11-03: use the latest Jackdaw features as they are published).
-**`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/jackdaw_sync.py`): it merges
-upstream main into the fork (temporary worktree, `sync/<date>` PR on buddha314; stops on a
-conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
+**`tools/jackdaw.sh sync` reconciles the whole chain** (`tools/engine_sync.py`). **Avian
+first:** if upstream moved Bevy, it probes that commit against our avian forks and refuses
+to merge when they do not build there (`tools/jackdaw.sh ceiling` shows how far Bevy could
+go). Otherwise it merges upstream main into the fork (temporary worktree, `sync/<date>` PR on
+buddha314; stops on a conflict), fast-forwards the shared checkout, rebuilds our Bevy-main forks of third-party
 crates, re-pins `compatibility.json`, `jackdaw.toml` pins, `rust-toolchain.toml`, the
 Jackdaw `rev` in `Cargo.toml` and Cargo.lock's Jackdaw and Bevy revisions, then builds the
-game and adapter and the shared editor (`prepare`). Commit the pins, `Cargo.toml` and lock
+adapter (`jackdaw.toml` `package`), checks every workspace target, and builds the shared
+editor (`prepare`). Commit the pins, `Cargo.toml` and lock
 on a branch. If the game stops building on a new Bevy, fix the game (or a fork) and rerun.
 CI warns when the pin lags the fork.
 
@@ -890,7 +902,9 @@ the player's movement slides along `Solid` colliders (`controls::slide`); nothin
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and
 glam_matrix_extras, each a `bevy-main` branch on buddha314 = the published release plus one
 commit pointing its Bevy dependencies at Bevy's git main. The root `[patch.crates-io]` uses
-them. Add a crate there (not by hand) when a new dependency needs Bevy main.
+them. Add a crate there (not by hand) when a new dependency needs Bevy main. **That file is
+shared with every buddha314 game and must stay identical across them**: the branches are
+force-pushed, and `ensure` refuses to replace one generated from a different `base`.
 
 `tools/jackdaw.sh prepare` builds the selected shared editor/CLI and records local
 binary hashes; managed launches verify that receipt. This does not install a

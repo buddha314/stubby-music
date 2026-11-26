@@ -165,3 +165,33 @@ scene, and logged no panics, errors or warnings. The first attempt only reached
 `building`, because Play compiles the game when pre-build is off. Run
 `tools/jackdaw.sh build` before the timed test after a re-pin. Rollback: shared checkout to
 `b6e169ad` and revert this PR.
+
+## Engine tools shared with the game template (2026-11-26)
+
+The update mechanism now comes from the game template, VerdantAI/us-outpost-31, which
+generalised it from this repository's scripts. `tools/jackdaw.sh`, `engine_sync.py` (was
+`jackdaw_sync.py`), `check_engine_pins.py` + `test_engine_pins.py` (were
+`check_jackdaw_versions.py` + `test_jackdaw_versions.py`), `bevy_main_forks.py`,
+`timed_play.py`, `update_engine_tools.sh` and `docs/ENGINE-UPDATES.md` are byte-identical
+copies. Improve them in the template and run `tools/update_engine_tools.sh` here. Never
+edit them in this repository. This game's own steps moved into `tools/game_hooks.sh`:
+`game_env` sets up Steam Audio, `game_prepare` exports the mudflat preview, and
+`game_ready` makes `open` prepare first when the preview is missing.
+
+What changed in behaviour:
+
+- `sync` probes upstream's Bevy against our avian forks before merging upstream Jackdaw,
+  and stops past the avian ceiling.
+- `bevy_main_forks.py ensure` refuses to force-push over a fork branch generated from
+  another `base`, which would mean another game's manifest disagrees.
+  `bevy_main_forks.json` is now the template's file (same forks, generic comment).
+- The pin check requires one avian in `Cargo.lock`, rather than forbidding Jackdaw's
+  Physics module, which `add-prefab-colliders` may adopt once its avian is patched to ours.
+- New commands: `tools/jackdaw.sh ceiling` and `tools/jackdaw.sh smoke` (a generic bounded
+  Play). `jackdaw_timed_test.py` stays for this game's reviews.
+
+Checked: a no-op `sync` end to end, with the hooks firing (Steam Audio, the mudflat
+export); `tools/ci_local.sh` (cargo-deny, one Bevy, clippy, tests, `jd doctor`);
+`jackdaw.sh build` (628 components); one 20 s Play via `jackdaw_timed_test.py --play`,
+which reached `running` with no panics. Pins unchanged: Jackdaw `39af09e3`, Bevy
+`526f9e40`.
