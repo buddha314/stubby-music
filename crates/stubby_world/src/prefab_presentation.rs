@@ -1,7 +1,7 @@
 //! Named-node presentation and interaction hooks shared by authored assets.
 use crate::prefabs::{AssetClock, AssetState, PlacedAsset, PrefabError};
 use bevy::{
-    animation::graph::{AnimationGraph, AnimationGraphHandle, AnimationNodeIndex},
+    animation::graph::{BlendGraph, BlendGraphHandle, BlendNodeIndex},
     gltf::{Gltf, GltfExtras},
     prelude::*,
 };
@@ -32,7 +32,7 @@ struct AnimationSource(Handle<Gltf>);
 #[derive(Component)]
 struct ClockAnimations {
     root: Entity,
-    clips: Vec<(AnimationNodeIndex, f32, f32)>,
+    clips: Vec<(BlendNodeIndex, f32, f32)>,
 }
 #[derive(Resource)]
 struct FloraProfiles {
@@ -514,7 +514,7 @@ fn prepare_animations(
     mut commands: Commands,
     gltfs: Res<Assets<Gltf>>,
     clips: Res<Assets<AnimationClip>>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut graphs: ResMut<Assets<BlendGraph>>,
     players: Query<Entity, (With<AnimationPlayer>, Without<ClockAnimations>)>,
     parents: Query<&ChildOf>,
     roots: Query<&AnimationSource, With<AssetClock>>,
@@ -546,7 +546,7 @@ fn prepare_animations(
             continue;
         }
         let (graph, indices) =
-            AnimationGraph::from_clips(named.iter().map(|(_, clip)| (*clip).clone()));
+            BlendGraph::from_clips(named.iter().map(|(_, clip)| (*clip).clone()));
         let binding = named
             .into_iter()
             .zip(indices)
@@ -562,7 +562,7 @@ fn prepare_animations(
             })
             .collect();
         commands.entity(player).insert((
-            AnimationGraphHandle(graphs.add(graph)),
+            BlendGraphHandle(graphs.add(graph)),
             ClockAnimations {
                 root,
                 clips: binding,
@@ -597,7 +597,7 @@ pub const IDLE_CLOCK_REACH_M: f32 = 30.0;
 #[derive(Component)]
 struct IdleClip {
     root: Entity,
-    node: AnimationNodeIndex,
+    node: BlendNodeIndex,
     duration: f32,
 }
 /// Marks a player already looked at (with or without an `Idle` clip).
@@ -627,7 +627,7 @@ fn loop_idle_clips(
     assets: Res<AssetServer>,
     gltfs: Res<Assets<Gltf>>,
     clips: Res<Assets<AnimationClip>>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut graphs: ResMut<Assets<BlendGraph>>,
     players: Query<
         Entity,
         (
@@ -659,13 +659,13 @@ fn loop_idle_clips(
             continue;
         };
         let duration = clips.get(idle).map_or(1., AnimationClip::duration);
-        let (graph, node) = AnimationGraph::from_clip(idle.clone());
+        let (graph, node) = BlendGraph::from_clip(idle.clone());
         info!(
             "{}: its {name} clip plays in time with the nearest clock",
             asset.instance
         );
         commands.entity(player).insert((
-            AnimationGraphHandle(graphs.add(graph)),
+            BlendGraphHandle(graphs.add(graph)),
             IdleClip {
                 root,
                 node,

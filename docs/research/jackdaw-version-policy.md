@@ -140,3 +140,28 @@ Checked: the brush regression test, game, adapter and editor builds, prefab test
 merged runtime, build the game: `cargo check -p jackdaw_runtime --features pie` alone fails on
 Bevy features the game turns on (`winit`, gizmos). Rollback: shared checkout to 706f2437 and
 revert stubby-music#110.
+
+## Bevy main c9c397ba → 526f9e40, the avian ceiling (2026-11-26)
+
+Jackdaw's fork moved to Bevy `526f9e40` in buddha314/jackdaw#15 (merge `39af09e3`), which
+also adds Jackdaw's `docs/upgrading-bevy.md` and `scripts/bevy_ceiling.py`. **Bevy upgrades
+now start from avian:** the newest Bevy main commit that avian and its helpers build
+against is the ceiling, and nothing pins past it. `526f9e40` is that ceiling today. Bevy's
+glam 0.34 bump (`098a4bfb1`) breaks `glam_matrix_extras` and parry/glamx. To check this
+game's forks against a Bevy commit, run
+`scripts/bevy_ceiling.py probe <rev> --forks ../stubby-music/bevy_main_forks.json` from
+the Jackdaw checkout.
+
+`tools/jackdaw.sh sync` stopped once, as designed. The game used Bevy's renamed animation
+graph: `AnimationGraph`, `AnimationGraphHandle` and `AnimationNodeIndex` are now
+`BlendGraph`, `BlendGraphHandle` and `BlendNodeIndex` (bevy#26367), in
+`stubby_world::prefab_presentation`, `stubby_game::glue` and the `prefab_runtime` test.
+After the rename the sync completed. The buddha314 forks needed no change ("current"),
+and upstream had no new commits to merge.
+
+Checked: `cargo check --workspace --all-targets` with no warnings; `prefab_runtime` 2/2 and
+`stubby_world` 33/33; one 20-second 60 Hz Play reached `running`, served and spawned the
+scene, and logged no panics, errors or warnings. The first attempt only reached
+`building`, because Play compiles the game when pre-build is off. Run
+`tools/jackdaw.sh build` before the timed test after a re-pin. Rollback: shared checkout to
+`b6e169ad` and revert this PR.

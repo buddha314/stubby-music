@@ -5,7 +5,7 @@ package = "stubby_jackdaw"
 version = "0.21.0-dev"
 bevy = "main"
 channel = "bleeding-edge"
-bevy_rev = "c9c397ba1a73e6cfffe957318e0359330b701865"
+bevy_rev = "526f9e40253348a52a0d0380db98e287e4b5e0b3"
 
 [[run]]
 name = "Desert opening"
