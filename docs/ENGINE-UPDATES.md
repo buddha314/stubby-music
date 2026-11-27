@@ -94,9 +94,10 @@ changes nothing. Use it before asking for a Jackdaw re-pin, or to check whether
 upstream avian or parry has caught up. Moving the Jackdaw fork itself is done in the
 Jackdaw checkout (its `docs/upgrading-bevy.md`), never from a game.
 
-## The avian forks
+## The Bevy-main forks
 
-`bevy_main_forks.json` lists the crates with no Bevy-main release. For each one,
+`bevy_main_forks.json` lists the crates with no Bevy-main release: avian and its
+helpers, the character controller, and the networking stack. For each one,
 `tools/bevy_main_forks.py ensure` takes the published release (`base`), points its
 Bevy dependencies at Bevy's git main in one generated commit, and **force-pushes**
 the fork's `bevy-main` branch. Those branches are **shared by every buddha314 game**
@@ -117,8 +118,22 @@ the fork's `bevy-main` branch. Those branches are **shared by every buddha314 ga
   point `avian3d` and its helpers at our forks, so both resolve to one.
 - **A fork that needs a real code change** (say, when Bevy moves glam) is done once,
   for every game: on its own branch under buddha314, recorded as that fork's `base`.
-  Never commit by hand on `bevy-main`; the next `ensure` replaces it. See the Jackdaw
-  checkout's `docs/upgrading-bevy.md`, step 3.
+  The convention is a `bevy-main-base` branch holding the release plus the port
+  (lightyear and bevy_replicon have one; `docs/MULTIPLAYER.md`). Never commit by
+  hand on `bevy-main`; the next `ensure` replaces it. See the Jackdaw checkout's
+  `docs/upgrading-bevy.md`, step 3.
+- **Several crates from one repository** (lightyear's 21) are one entry each, with
+  the same `fork`, `upstream` and `base`. `ensure` builds each repository once and
+  refuses entries that disagree. They are separate entries only so that `patch`
+  prints a line for each crate.
+- **An optional dependency still counts.** Cargo locks every optional dependency of
+  the crates in the graph, compiled or not, and the pin check wants one Bevy in
+  `Cargo.lock`. A crate on released Bevy that only appears that way still needs its
+  fork and patch line (`avian2d`, `leafwing-input-manager`).
+- **Adding a dependency can move Bevy.** The game takes Bevy from git `main`, so
+  when Cargo re-resolves (a new crate from the Jackdaw fork, say) it may lock a
+  newer Bevy commit than the pin, which then needs a newer compiler. Put it back:
+  `cargo update -p bevy@0.20.0-dev --precise <compatibility.json bevy rev>`.
 
 ## Game-specific steps: `tools/game_hooks.sh`
 

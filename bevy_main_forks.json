@@ -11,6 +11,13 @@
       "base": "v0.8.0"
     },
     {
+      "crate": "avian2d",
+      "version": "0.8.0",
+      "upstream": "https://github.com/avianphysics/avian",
+      "fork": "https://github.com/buddha314/avian",
+      "base": "v0.8.0"
+    },
+    {
       "crate": "bevy_heavy",
       "version": "0.6.0",
       "upstream": "https://github.com/Jondolf/bevy_heavy",
@@ -58,6 +65,181 @@
       "upstream": "https://github.com/simgine/bevy_enhanced_input",
       "fork": "https://github.com/buddha314/bevy_enhanced_input",
       "base": "v0.27.2"
+    },
+    {
+      "crate": "lightyear",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_aeronet",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_avian3d",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_connection",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_core",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_frame_interpolation",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_inputs",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_inputs_bei",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_interpolation",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_link",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_messages",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_netcode",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_p2p",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_prediction",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_replication",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_serde",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_steam",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_sync",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_transport",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_udp",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "lightyear_utils",
+      "version": "0.31.0",
+      "upstream": "https://github.com/cBournhonesque/lightyear",
+      "fork": "https://github.com/buddha314/lightyear",
+      "base": "c1c10bca97e56b6db8f1718c709d57b77ec6daeb"
+    },
+    {
+      "crate": "aeronet_io",
+      "version": "0.22.0",
+      "upstream": "https://github.com/aecsocket/aeronet",
+      "fork": "https://github.com/buddha314/aeronet",
+      "base": "v0.22.0"
+    },
+    {
+      "crate": "aeronet_steam",
+      "version": "0.22.0",
+      "upstream": "https://github.com/aecsocket/aeronet",
+      "fork": "https://github.com/buddha314/aeronet",
+      "base": "v0.22.0"
+    },
+    {
+      "crate": "bevy_replicon",
+      "version": "0.45.8",
+      "upstream": "https://github.com/simgine/bevy_replicon",
+      "fork": "https://github.com/buddha314/bevy_replicon",
+      "base": "39611b114775f8a40f933c70486baf5eeef37b35"
+    },
+    {
+      "crate": "leafwing-input-manager",
+      "version": "0.22.0",
+      "upstream": "https://github.com/leafwing-studios/leafwing-input-manager",
+      "fork": "https://github.com/buddha314/leafwing-input-manager",
+      "base": "f404e667409e29731dc9a41874bcae8ff3dd2e35"
     }
   ]
 }
