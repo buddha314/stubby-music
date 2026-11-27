@@ -1,7 +1,10 @@
 //! The contracts several stubby-music systems share, and nothing else: which screen is
 //! open, the key bindings, the HUD camera marker, what E would act on, and the system
-//! sets others order against. No behaviour lives here (split-game-into-systems).
+//! sets others order against, and the multiplayer settings sessions will be configured
+//! by. No behaviour lives here (split-game-into-systems).
 use bevy::prelude::*;
+
+pub mod multiplayer;
 
 /// Opening composition: east is +X (90 degrees); sunrise is 15 degrees to the right.
 pub const OPENING_HEADING_DEGREES: f32 = 75.;

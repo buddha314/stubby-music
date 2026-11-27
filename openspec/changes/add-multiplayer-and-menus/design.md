@@ -74,7 +74,10 @@ for the menus; the two-machine Steam test by hand.
 
 1. **Inventory:** per player (Satisfactory) or one shared settlement store? Default:
    per player, with the settlement's stock shared.
-2. **Players per session:** template default is 8.
+2. ~~Players per session~~ **Settled (user, 2026-11-27): the template's multiplayer
+   settings**, in `stubby_core::multiplayer`: 8 players, friends-only Steam lobbies,
+   Steam app 480 until stubby has its own id, UDP port 5888, a 64 Hz tick, protocol id
+   `stubby01`.
 3. **Who may configure a machine's rack** (anyone, or its builder)? Default: anyone.
 4. **Music sync tolerance:** is "same bar, tens of milliseconds apart" enough, or must
    peers be sample-aligned (much harder over the internet)?

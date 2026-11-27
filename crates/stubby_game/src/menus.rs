@@ -70,6 +70,7 @@ impl Plugin for MenusPlugin {
             );
         if app.world().contains_resource::<StartAtMenu>() {
             app.add_systems(Startup, |mut screens: ResMut<ScreenMode>| {
+                info!("Starting at the main menu (loading first)");
                 screens.open = Some(Screen::Loading);
             });
         }
@@ -115,6 +116,7 @@ fn finish_loading(
         warn!("No world after {LOADING_TIMEOUT_SECS} s; showing the menu anyway");
     }
     if ready || timed_out {
+        info!("World ready after {:.1} s: main menu", time.elapsed_secs());
         screens.open = Some(Screen::MainMenu);
     }
 }
