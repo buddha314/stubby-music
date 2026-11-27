@@ -1,7 +1,10 @@
 //! The contracts several stubby-music systems share, and nothing else: which screen is
 //! open, the key bindings, the HUD camera marker, what E would act on, and the system
-//! sets others order against. No behaviour lives here (split-game-into-systems).
+//! sets others order against, and the multiplayer settings sessions will be configured
+//! by. No behaviour lives here (split-game-into-systems).
 use bevy::prelude::*;
+
+pub mod multiplayer;
 
 /// Opening composition: east is +X (90 degrees); sunrise is 15 degrees to the right.
 pub const OPENING_HEADING_DEGREES: f32 = 75.;
@@ -41,6 +44,20 @@ pub enum Screen {
     Build,
     /// A craft bench's crafting screen (Satisfactory's Craft Bench): the bench machine.
     Crafting(Entity),
+    /// The main menu at launch (add-multiplayer-and-menus).
+    MainMenu,
+    /// While the world generates and the scene spawns.
+    Loading,
+    /// Window, graphics and volume settings, from the main menu or the pause menu.
+    Settings,
+}
+
+impl Screen {
+    /// The menus around play (main menu, loading, settings) handle their own keys:
+    /// Escape and Tab do not close them or open the inventory over them.
+    pub fn is_menu(self) -> bool {
+        matches!(self, Screen::MainMenu | Screen::Loading | Screen::Settings)
+    }
 }
 
 /// On a machine: E opens its crafting screen instead of its rack (a lit campfire,

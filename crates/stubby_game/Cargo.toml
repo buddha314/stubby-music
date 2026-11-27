@@ -28,8 +28,9 @@ stubby_streams = { path = "../stubby_streams" }
 serde = { version = "~1.0", features = ["derive"] }
 bevy.workspace = true
 # bevy_remote: dev builds serve Bevy's remote protocol on 127.0.0.1 for the rules designer
-# (add-crafting-designer 3.8); release builds never add the plugin.
-bevy.features = ["3d", "ui", "mesh_picking", "bevy_remote"]
+# (add-crafting-designer 3.8); release builds never add the plugin. bevy_settings saves
+# the player's settings (src/settings.rs, add-multiplayer-and-menus).
+bevy.features = ["3d", "ui", "mesh_picking", "bevy_remote", "bevy_settings"]
 avian3d.workspace = true
 half = "~2.7.1"
 serde_json = "~1.0"

@@ -1,7 +1,8 @@
 //! The pause menu, Satisfactory's escape menu (user, 2026-11-17): in the world, the
 //! first Escape frees the cursor and a second opens it (`controls::toggle_screens`). The
 //! world dims behind it, and a column on the left offers Resume Game and Exit to Desktop
-//! (there is no main menu or server to manage yet). Escape or Resume Game closes it.
+//! Settings and Exit to Main Menu (add-multiplayer-and-menus). Escape or Resume Game
+//! closes it.
 //! The world keeps running behind it, as Satisfactory's does in multiplayer.
 use bevy::picking::events::{PointerClick, PointerOut, PointerOver};
 use bevy::prelude::*;
@@ -23,6 +24,8 @@ struct PauseRoot;
 #[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
 enum Choice {
     Resume,
+    Settings,
+    ExitToMainMenu,
     ExitToDesktop,
 }
 
@@ -80,6 +83,8 @@ fn spawn(mut commands: Commands) {
                 ));
                 for (choice, label) in [
                     (Choice::Resume, "Resume Game"),
+                    (Choice::Settings, "Settings"),
+                    (Choice::ExitToMainMenu, "Exit to Main Menu"),
                     (Choice::ExitToDesktop, "Exit to Desktop"),
                 ] {
                     panel
@@ -130,14 +135,23 @@ fn choose(
     choices: Query<&Choice>,
     mut screens: ResMut<ScreenMode>,
     mut exit: MessageWriter<AppExit>,
+    mut commands: Commands,
 ) {
     if screens.open != Some(Screen::Pause) {
         return;
     }
     match choices.get(click.entity) {
         Ok(Choice::Resume) => screens.close(),
+        Ok(Choice::Settings) => {
+            crate::menus::open_settings(&mut screens, Screen::Pause, &mut commands);
+        }
+        Ok(Choice::ExitToMainMenu) => {
+            info!("Exit to Main Menu chosen from the pause menu");
+            crate::menus::restart_to_menu(&mut exit, &mut commands);
+        }
         Ok(Choice::ExitToDesktop) => {
             info!("Exit to Desktop chosen from the pause menu");
+            crate::settings::save_now(&mut commands);
             exit.write(AppExit::Success);
         }
         Err(_) => {}

@@ -29,7 +29,7 @@ pub use clock::{MASTER_BPM, MAX_BPM, MasterLockedClock, PeriodicClock, PulseCloc
 pub use engine::{Engine, EngineConfig, OfflineRenderer, WorldMeter};
 pub use modules::{ParamSpec, SEMITONE_VOLTS, StepState};
 pub use protocol::{
-    AcousticMaterial, AcousticSceneGeometry, Command, EngineError, Event, ListenerPose, ModuleId,
-    ModuleKind, PortRef, SEQUENCER_STEPS, SampleId,
+    AcousticMaterial, AcousticSceneGeometry, Bus, Command, EngineError, Event, ListenerPose,
+    ModuleId, ModuleKind, PortRef, SEQUENCER_STEPS, SampleId,
 };
 pub use thread::{AudioThread, Notice};

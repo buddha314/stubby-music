@@ -613,6 +613,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   2.2, 2.4, 2b, 3.1).
   **Claude (2026-11-19):** the filter sources' art (`add-high-pass-sources` 1.x, `add-ripple-pool`
   1.x) and the purifier's check dam (`add-reed-water-purifier` 3.x).
+  **Claude (2026-11-27, by the user's request):** menus and multiplayer, `add-multiplayer-and-menus`
+  (crates: `stubby_game` menus and settings, the coming `stubby_net` and `stubby_steam`).
   Update this line when you claim work.
 - **Opening composition (2026-11-16):** spawn at x=0, z=6, bearing 75 degrees,
   so the eastward sunrise is 15 degrees to the right (about 20 degrees at the
