@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Keep our Bevy-main forks of third-party crates current (bevy_main_forks.json).
 
-For each fork: start from the published release commit (`base`), rewrite every Bevy
+For each fork repository: start from the published release commit (`base`), rewrite every Bevy
 engine dependency (`bevy`, `bevy_*` at the configured Bevy minor) to Bevy's git main,
 commit, and push the result to the fork's branch when its tree changed. The root
 Cargo.toml patches crates.io to these branches; Cargo.lock decides the Bevy revision.
@@ -43,8 +43,21 @@ def port_manifest(text, minor):
                   r'\1 = { ' + BEVY_GIT + ' }', text)
 
 
-def ensure(config, rebase_shared=False):
+def repositories(config):
+    """One entry per fork repository. Crates from one upstream workspace (lightyear's
+    twenty) share a fork, a branch and a base; they are listed separately only so that
+    `patch` can name each crate."""
+    repos = {}
     for fork in config['forks']:
+        first = repos.setdefault(fork['fork'], fork)
+        if (first['upstream'], first['base']) != (fork['upstream'], fork['base']):
+            sys.exit(f"{fork['crate']} and {first['crate']} share {fork['fork']} but disagree on "
+                     "upstream or base; one fork repository has one base")
+    return list(repos.values())
+
+
+def ensure(config, rebase_shared=False):
+    for fork in repositories(config):
         owner_repo = fork['fork'].removeprefix('https://github.com/')
         name = owner_repo.split('/')[1]
         if subprocess.run(['gh', 'repo', 'view', owner_repo], capture_output=True).returncode:
