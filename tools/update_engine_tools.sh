@@ -17,7 +17,13 @@ shared=(
     tools/bevy_main_forks.py
     tools/timed_play.py
     tools/update_engine_tools.sh
+    tools/check_skills.py
     docs/ENGINE-UPDATES.md
+    # Stack-level agent skills (true of every game on this stack; AGENTS.md *Agents*).
+    .agents/skills/updating-the-engine/SKILL.md
+    .agents/skills/adding-a-dependency/SKILL.md
+    .agents/skills/updating-from-the-template/SKILL.md
+    .agents/skills/sharing-tool-changes/SKILL.md
 )
 if [[ "$template" == "$repo_dir" ]]; then
     echo "This is the template itself; nothing to copy." >&2

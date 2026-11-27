@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jackdaw": {
+      "command": "tools/jackdaw.sh",
+      "args": ["mcp"]
+    }
+  }
+}
