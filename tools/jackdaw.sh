@@ -8,6 +8,7 @@
 #   tools/jackdaw.sh ceiling  newest Bevy main commit this game's avian forks build on
 #   tools/jackdaw.sh smoke    one bounded 20-second Play in the editor (tools/timed_play.py)
 #   tools/jackdaw.sh build|run|doctor   the editor's `jd` for this project
+#   tools/jackdaw.sh mcp      the editor's MCP server for agents (stdio; .mcp.json starts it)
 #   tools/jackdaw.sh link|unlink        build against the local editor checkout, or the pin
 #   tools/jackdaw.sh check    the pins and the shared checkout agree (changes nothing)
 #
@@ -84,7 +85,9 @@ esac
 
 # The shared editor must match the pin before anything uses it. `sync` is exempt:
 # moving the editor to the newest fork revision and re-pinning is its job.
-if [[ "$command_name" != sync ]]; then
+if [[ "$command_name" == mcp ]]; then
+    check --editor >&2   # stdout is the MCP channel
+elif [[ "$command_name" != sync ]]; then
     check --editor
 fi
 case "$command_name" in
@@ -138,6 +141,10 @@ PYRECEIPT
         shift
         game_env
         exec python3 "${repo_dir}/tools/timed_play.py" --source "$source_dir" "$@"
+        ;;
+    mcp)
+        # Stdout is the MCP channel: nothing else may print there.
+        exec "$cli_path" mcp --project "$repo_dir"
         ;;
     build|doctor|run)
         game_env

@@ -1,0 +1,7 @@
+# Codex: project MCP servers (loaded once this project is trusted in Codex).
+# Claude Code reads the same server from .mcp.json. See AGENTS.md, *Agents*.
+
+# The running Jackdaw editor: scene, operators, screenshots (tools/jackdaw.sh mcp).
+[mcp_servers.jackdaw]
+command = "bash"
+args = ["-c", "exec \"$(git rev-parse --show-toplevel)/tools/jackdaw.sh\" mcp"]

@@ -1,0 +1,18 @@
+name: Agent skills
+
+# The task guides agents read (.agents/skills, linked as .claude/skills) must be valid
+# for both Claude Code and Codex. Python only: seconds of CI.
+on:
+  push:
+    branches: [main]
+    paths: [".agents/**", ".claude/**", "tools/check_skills.py", ".github/workflows/agent-skills.yml"]
+  pull_request:
+    paths: [".agents/**", ".claude/**", "tools/check_skills.py", ".github/workflows/agent-skills.yml"]
+
+jobs:
+  skills:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Skills valid for Claude Code and Codex; .claude/skills links to .agents/skills
+        run: python3 tools/check_skills.py

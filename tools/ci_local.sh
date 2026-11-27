@@ -7,6 +7,7 @@ step() { printf '\n== %s\n' "$*"; }
 step "LOD authoring policy"; python3 tools/jackdaw_lods.py --check
 python3 tools/test_jackdaw_lods.py
 step "Runtime asset references"; python3 tools/check_asset_layout.py
+step "Agent skills (.agents/skills, .claude/skills link)"; python3 tools/check_skills.py
 step "Version consistency";        python3 tools/check_engine_pins.py
 step "Version-check regression";   python3 tools/test_engine_pins.py
 step "cargo-deny: layering, licenses, advisories, sources (deny.toml)"
