@@ -3,11 +3,11 @@ as the us-outpost-31 template does. Owner: Claude, by the user's direct request.
 Port from the template (VerdantAI/us-outpost-31) rather than writing anew (D1).
 
 ## 1. Screens (single-player first)
-- [ ] 1.1 Main menu at launch in stubby's style (Play, Settings, Quit now; Host, Join, Host on Steam once 2 and 5 exist), on `ScreenMode` (claimed: Claude)
-- [ ] 1.2 Loading screen over world generation and scene spawn, with a timeout (claimed: Claude)
-- [ ] 1.3 Settings screen (window mode and size, anti-aliasing, shadows, UI scale, vsync; master, effects, music volume) saved with `bevy_settings`; reachable from the main menu and the pause menu (claimed: Claude)
-- [ ] 1.4 Pause menu: Settings and Exit to main menu (restart into the menu); no camera jump when a menu frees the mouse (claimed: Claude)
-- [ ] 1.5 Tests: the menu flow headless; screenshots of each screen (claimed: Claude)
+- [x] 1.1 Main menu at launch in stubby's style (Play, Settings, Quit now; Host, Join, Host on Steam once 2 and 5 exist), on `ScreenMode` (claimed: Claude). Host, Join and Host on Steam shown as coming; they light up with 2 and 5.
+- [x] 1.2 Loading screen over world generation and scene spawn, with a timeout (claimed: Claude). (`menus::AwaitScene`/`WorldReady` from stubby_jackdaw's scene events; 20 s timeout)
+- [x] 1.3 Settings screen (window mode and size, anti-aliasing, shadows, UI scale, vsync; master, effects, music volume) saved with `bevy_settings`; reachable from the main menu and the pause menu (claimed: Claude). Volumes need the engine's new bus stages (`Command::SetBusVolume`: master, world after the world meter, interface). Window size and anti-aliasing left out (stubby sets its own window).
+- [x] 1.4 Pause menu: Settings and Exit to main menu (restart into the menu); no camera jump when a menu frees the mouse (claimed: Claude). (restarts with the same arguments; stubby's look already turns only while captured, so no jump)
+- [x] 1.5 Tests: the menu flow headless; screenshots of each screen (claimed: Claude). (`menus` tests, `controls::escape_and_tab_leave_the_menus_to_themselves`, `stubby_audio/tests/volume.rs`; screenshots reviewed)
 
 ## 2. Networking core
 - [ ] 2.1 `stubby_net` service crate; lightyear and BEI forks added (`adding-a-dependency`: re-pin Bevy, lock drift, `deny.toml`); layering bans updated

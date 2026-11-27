@@ -186,6 +186,25 @@ pub enum Command {
         sample: SampleId,
         gain: f32,
     },
+    /// The player's volume for one bus, linear (0..1; values up to 2 boost). Applies to
+    /// what is already playing.
+    SetBusVolume {
+        bus: Bus,
+        volume: f32,
+    },
+}
+
+/// Where a sound is heard from, for the player's volume settings. Every sound passes
+/// one of the first two, then `Master`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Bus {
+    /// Everything.
+    Master,
+    /// The world: machines, nature, every emitter (after the world meter, so the
+    /// player's volume never changes what the field recorder hears).
+    World,
+    /// Interface sounds (`PortRef::ui_output`, `Command::PlaySample`).
+    Interface,
 }
 
 /// Something that happened on the audio thread, stamped with the audio clock.

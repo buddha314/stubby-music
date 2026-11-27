@@ -41,6 +41,20 @@ pub enum Screen {
     Build,
     /// A craft bench's crafting screen (Satisfactory's Craft Bench): the bench machine.
     Crafting(Entity),
+    /// The main menu at launch (add-multiplayer-and-menus).
+    MainMenu,
+    /// While the world generates and the scene spawns.
+    Loading,
+    /// Window, graphics and volume settings, from the main menu or the pause menu.
+    Settings,
+}
+
+impl Screen {
+    /// The menus around play (main menu, loading, settings) handle their own keys:
+    /// Escape and Tab do not close them or open the inventory over them.
+    pub fn is_menu(self) -> bool {
+        matches!(self, Screen::MainMenu | Screen::Loading | Screen::Settings)
+    }
 }
 
 /// On a machine: E opens its crafting screen instead of its rack (a lit campfire,

@@ -29,9 +29,14 @@ fn main() {
             }),
             ..default()
         });
-    App::new()
-        .insert_resource(config)
+    let mut app = App::new();
+    // A plain launch opens the main menu (add-multiplayer-and-menus).
+    if stubby_game::menus::StartAtMenu::wanted(std::env::args()) {
+        app.insert_resource(stubby_game::menus::StartAtMenu);
+    }
+    app.insert_resource(config)
         .add_plugins(default_plugins)
+        .add_plugins(stubby_game::settings::SettingsPersistencePlugin)
         .add_plugins(stubby_game::DesertPlugin { seed })
         .add_plugins(stubby_game::audio::SynthAudioPlugin {
             demo: std::env::args().any(|a| a == "--audio-demo"),

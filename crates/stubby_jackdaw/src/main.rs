@@ -30,8 +30,27 @@ fn main() -> AppExit {
     if phase_review {
         app.add_systems(Startup, phase_review_daylight);
     }
+    // A plain launch opens the main menu; loading lasts until the scene is in
+    // (add-multiplayer-and-menus).
+    if !phase_review && stubby_jackdaw::menus::StartAtMenu::wanted(std::env::args()) {
+        app.insert_resource(stubby_jackdaw::menus::StartAtMenu);
+    }
+    if !legacy_review {
+        app.insert_resource(stubby_jackdaw::menus::AwaitScene)
+            .add_observer(
+                |_: On<jackdaw_runtime::JackdawSceneSpawned>, mut commands: Commands| {
+                    commands.insert_resource(stubby_jackdaw::menus::WorldReady);
+                },
+            )
+            .add_observer(
+                |_: On<jackdaw_runtime::JackdawSceneSpawnFailed>, mut commands: Commands| {
+                    commands.insert_resource(stubby_jackdaw::menus::WorldReady);
+                },
+            );
+    }
     app.insert_resource(config)
         .add_plugins(plugins)
+        .add_plugins(stubby_game::settings::SettingsPersistencePlugin)
         .add_plugins(jackdaw_runtime::JackdawPlugin)
         .add_plugins(stubby_jackdaw::DesertPlugin { seed })
         .add_plugins(prefab_bridge::PrefabBridgePlugin)

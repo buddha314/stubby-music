@@ -17,7 +17,7 @@ use crate::modules::{
 #[cfg(feature = "omg_audio")]
 use crate::omg_spatial::{OmgSpatialNode, trace_snapshot};
 use crate::protocol::{
-    AcousticSceneGeometry, Command, EngineError, Event, ListenerPose, ModuleId, ModuleKind,
+    AcousticSceneGeometry, Bus, Command, EngineError, Event, ListenerPose, ModuleId, ModuleKind,
     PortRef, SampleId,
 };
 use crate::random_clock::RandomClockNode;
@@ -143,6 +143,9 @@ pub struct Engine {
     /// The world bus: every module output and emitter is heard through it, then the
     /// speakers. One-shot UI samples skip it, so its meter hears only the world.
     world: NodeID,
+    /// The player's volume stages: world bus -> `world_gain` -> `master`, interface
+    /// sounds -> `interface` -> `master` -> speakers.
+    volumes: Volumes,
     world_meter: WorldMeter,
     scopes: ScopeCaptures,
 }
@@ -217,6 +220,22 @@ fn firewheel_config() -> FirewheelConfig {
     }
 }
 
+/// The player's volume stages, one per [`Bus`].
+struct Volumes {
+    nodes: [(Bus, NodeID); 3],
+    levels: [VolumeNode; 3],
+}
+
+impl Volumes {
+    fn index(&self, bus: Bus) -> usize {
+        self.nodes.iter().position(|(b, _)| *b == bus).unwrap_or(0)
+    }
+
+    fn node(&self, bus: Bus) -> NodeID {
+        self.nodes[self.index(bus)].1
+    }
+}
+
 impl Engine {
     fn new() -> Result<Self, EngineError> {
         let graph = |e: String| EngineError::Graph(format!("world bus: {e}"));
@@ -228,8 +247,35 @@ impl Engine {
             )
             .map_err(|e| graph(e.to_string()))?;
         let out = cx.graph_out_node_id();
-        cx.connect(world, out, &[(0, 0), (1, 1)], false)
-            .map_err(|e| graph(e.to_string()))?;
+        let stage = |cx: &mut FirewheelContext| {
+            cx.add_node(
+                VolumeNode::from_linear(1.0),
+                Some(VolumeNodeConfig {
+                    channels: NonZeroChannelCount::STEREO,
+                }),
+            )
+            .map_err(|e| graph(e.to_string()))
+        };
+        let master = stage(&mut cx)?;
+        let world_gain = stage(&mut cx)?;
+        let interface = stage(&mut cx)?;
+        for (from, to) in [
+            (world, world_gain),
+            (world_gain, master),
+            (interface, master),
+            (master, out),
+        ] {
+            cx.connect(from, to, &[(0, 0), (1, 1)], false)
+                .map_err(|e| graph(e.to_string()))?;
+        }
+        let volumes = Volumes {
+            nodes: [
+                (Bus::Master, master),
+                (Bus::World, world_gain),
+                (Bus::Interface, interface),
+            ],
+            levels: [VolumeNode::from_linear(1.0); 3],
+        };
         let world_meter = WorldMeter(
             cx.node_state::<firewheel::nodes::peak_meter::PeakMeterState<2>>(world)
                 .ok_or_else(|| graph("no meter state".into()))?
@@ -237,6 +283,7 @@ impl Engine {
         );
         Ok(Self {
             world,
+            volumes,
             world_meter,
             scopes: ScopeCaptures::default(),
             cx,
@@ -347,6 +394,19 @@ impl Engine {
         Ok(())
     }
 
+    fn set_bus_volume(&mut self, bus: Bus, volume: f32) -> Result<(), EngineError> {
+        if !volume.is_finite() {
+            return Err(EngineError::Config("bus volume must be finite"));
+        }
+        let index = self.volumes.index(bus);
+        let old = self.volumes.levels[index];
+        let new = VolumeNode::from_linear(volume.clamp(0.0, 2.0));
+        let node = self.volumes.nodes[index].1;
+        new.diff(&old, PathBuilder::default(), &mut self.cx.event_queue(node));
+        self.volumes.levels[index] = new;
+        Ok(())
+    }
+
     /// Validate a command and apply it to the graph. Takes effect on the audio
     /// thread at the next [`flush`](Self::flush). Never blocks.
     pub fn send(&mut self, command: Command) -> Result<(), EngineError> {
@@ -354,6 +414,7 @@ impl Engine {
             Command::SelectSample { module, sample } => self.select_sample(module, sample),
             Command::AddModule { id, kind } => self.add_module(id, kind),
             Command::PlaySample { sample, gain } => self.play_sample(sample, gain),
+            Command::SetBusVolume { bus, volume } => self.set_bus_volume(bus, volume),
             Command::RemoveModule { id } => self.remove_module(id),
             Command::SetEmitter {
                 output,
@@ -843,7 +904,7 @@ impl Engine {
         self.cx
             .queue_event_for(id, SamplerNode::set_sample_event(channels));
         self.cx.queue_event_for(id, node.sync_play_event());
-        let out = self.cx.graph_out_node_id();
+        let out = self.volumes.node(Bus::Interface);
         self.cx
             .connect(id, out, &[(0, 0), (1, 1)], false)
             .map_err(|e| EngineError::Graph(e.to_string()))?;
@@ -1177,7 +1238,7 @@ impl Engine {
         }
         if to == PortRef::ui_output() {
             if self.to_ui.insert(from) {
-                let out = self.cx.graph_out_node_id();
+                let out = self.volumes.node(Bus::Interface);
                 self.cx
                     .connect(src, out, &[(src_port, 0), (src_port, 1)], false)
                     .map_err(map_edge_error)?;
@@ -1217,7 +1278,7 @@ impl Engine {
             if !self.to_ui.remove(&from) {
                 return Err(EngineError::NotConnected { from, to });
             }
-            let out = self.cx.graph_out_node_id();
+            let out = self.volumes.node(Bus::Interface);
             self.cx
                 .disconnect(src, out, &[(src_port, 0), (src_port, 1)]);
             return Ok(());

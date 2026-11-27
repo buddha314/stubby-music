@@ -77,6 +77,10 @@ pub fn toggle_screens(
     // Without a look capture (tests, tools) the cursor counts as captured.
     let captured = capture.is_none_or(|capture| capture.captured());
     let was = screens.open;
+    if was.is_some_and(Screen::is_menu) {
+        screens.closed_this_frame = false;
+        return;
+    }
     if keys.just_pressed(INVENTORY) && screens.open != Some(Screen::Pause) {
         screens.open = match screens.open {
             Some(Screen::Inventory) => None,
@@ -321,6 +325,30 @@ mod tests {
             .press(KeyCode::Escape);
         app.update();
         assert!(!app.world().resource::<LookCapture>().0);
+    }
+
+    #[test]
+    fn escape_and_tab_leave_the_menus_to_themselves() {
+        let mut app = App::new();
+        app.init_resource::<ButtonInput<KeyCode>>()
+            .insert_resource(LookCapture(false))
+            .init_resource::<ScreenMode>()
+            .add_systems(Update, toggle_screens);
+        for menu in [Screen::MainMenu, Screen::Loading, Screen::Settings] {
+            app.world_mut().resource_mut::<ScreenMode>().open = Some(menu);
+            for key in [KeyCode::Escape, INVENTORY] {
+                let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+                keys.release_all();
+                keys.clear();
+                keys.press(key);
+                app.update();
+                assert_eq!(
+                    app.world().resource::<ScreenMode>().open,
+                    Some(menu),
+                    "{key:?} on {menu:?}"
+                );
+            }
+        }
     }
 
     #[test]

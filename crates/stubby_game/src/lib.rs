@@ -19,6 +19,7 @@ mod crafting_screen;
 pub mod designer;
 mod hud;
 mod inventory_screen;
+pub mod menus;
 mod pause_menu;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
@@ -38,6 +39,7 @@ pub mod resources;
 mod review;
 mod sample_library;
 mod sampler_review;
+pub mod settings;
 // Stream laying (stubby_streams), under its old module name.
 pub use stubby_streams as streams;
 mod purifier;
@@ -88,6 +90,7 @@ impl Plugin for DesertPlugin {
             goals_hub::GoalsHubPlugin,
             goal_banner::GoalBannerPlugin,
             pause_menu::PauseMenuPlugin,
+            (settings::SettingsPlugin, menus::MenusPlugin),
             build::BuildPlugin,
             campfire::CampfirePlugin,
             crafting_screen::CraftingScreenPlugin,

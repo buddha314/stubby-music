@@ -603,6 +603,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-settings"
+version = "0.20.0-dev"
+source = "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0d0380db98e287e4b5e0b3"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs 0.20.0-dev",
+ "bevy_ecs_macros 0.20.0-dev",
+ "bevy_log",
+ "bevy_platform 0.20.0-dev",
+ "bevy_reflect 0.20.0-dev",
+ "bevy_tasks 0.20.0-dev",
+ "bevy_time",
+ "serde",
+ "thiserror 2.0.20",
+ "toml",
+ "web-sys",
+]
+
+[[package]]
 name = "bevy_a11y"
 version = "0.20.0-dev"
 source = "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0d0380db98e287e4b5e0b3"
@@ -1113,6 +1132,7 @@ version = "0.20.0-dev"
 source = "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0d0380db98e287e4b5e0b3"
 dependencies = [
  "accesskit",
+ "bevy-settings",
  "bevy_a11y",
  "bevy_app",
  "bevy_asset",
@@ -1332,6 +1352,7 @@ name = "bevy_internal"
 version = "0.20.0-dev"
 source = "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0d0380db98e287e4b5e0b3"
 dependencies = [
+ "bevy-settings",
  "bevy_a11y",
  "bevy_android",
  "bevy_animation",
