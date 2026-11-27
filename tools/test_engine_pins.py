@@ -84,7 +84,10 @@ class EnginePinTests(unittest.TestCase):
         self.assertError('origin must be')
 
     def test_second_bevy_in_lockfile_is_rejected(self):
-        self.edit('Cargo.lock', self.record['bevy']['version'], '0.0.0')
+        # Aim at the `bevy` package itself: other packages' dependency lists also carry
+        # the version (`"bevy_ecs 0.20.0-dev"`) whenever two copies are locked.
+        version = self.record['bevy']['version']
+        self.edit('Cargo.lock', f'name = "bevy"\nversion = "{version}"', 'name = "bevy"\nversion = "0.0.0"')
         self.assertError('Cargo.lock must resolve one Bevy')
 
     def test_member_with_its_own_bevy_or_lockfile_is_rejected(self):

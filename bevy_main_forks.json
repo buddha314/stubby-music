@@ -37,6 +37,27 @@
       "upstream": "https://github.com/komadori/bevy_mod_outline",
       "fork": "https://github.com/buddha314/bevy_mod_outline",
       "base": "v0.14.0"
+    },
+    {
+      "crate": "bevy_ahoy",
+      "version": "0.3.0",
+      "upstream": "https://github.com/janhohenheim/bevy_ahoy",
+      "fork": "https://github.com/buddha314/bevy_ahoy",
+      "base": "v0.3.0"
+    },
+    {
+      "crate": "avian_pickup",
+      "version": "0.7.0",
+      "upstream": "https://github.com/janhohenheim/avian_pickup",
+      "fork": "https://github.com/buddha314/avian_pickup",
+      "base": "v0.7.0"
+    },
+    {
+      "crate": "bevy_enhanced_input",
+      "version": "0.27.2",
+      "upstream": "https://github.com/simgine/bevy_enhanced_input",
+      "fork": "https://github.com/buddha314/bevy_enhanced_input",
+      "base": "v0.27.2"
     }
   ]
 }
