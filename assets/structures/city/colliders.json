@@ -1,0 +1,1392 @@
+{
+  "about": "Static collider proxies for the City kit, written by create_city_kit.py index from each piece's simple shapes. Same form as the other families' colliders.json (model coordinates, Bevy axes, Y up, metres; AvianCollider(ColliderConstructor) on a child entity at `translation`, no RigidBody). Two additions, not yet read by any code: `tilt_about_x_radians` (stairs and ramps collide as a tilted slab, rotate the child about its local X) and `walkable` (a surface the player should stand on; the controller does not support standing on colliders yet).",
+  "models": {
+    "structures/city/city_balcony/city_balcony.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.12,
+            0.75
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.25,
+          "z_length": 1.5,
+          "walkable": true
+        },
+        {
+          "translation": [
+            2,
+            0.45,
+            1.3
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.9,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_bench/city_bench.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.23,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 2.0,
+          "y_length": 0.46,
+          "z_length": 0.5
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_bollard/city_bollard.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.5,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.16,
+          "height": 1.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_bridge_abutment/city_bridge_abutment.glb": {
+      "colliders": [
+        {
+          "translation": [
+            -0.2,
+            0.38,
+            1.6
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.4,
+          "y_length": 0.76,
+          "z_length": 1.9
+        },
+        {
+          "translation": [
+            4.2,
+            0.38,
+            1.6
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.4,
+          "y_length": 0.76,
+          "z_length": 1.9
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_bank_4/city_canal_bank_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            -0.15,
+            2.3
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 3.4,
+          "walkable": true
+        },
+        {
+          "translation": [
+            2.0,
+            -1.04,
+            0.25
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 2.32,
+          "z_length": 0.75
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_bank_8/city_canal_bank_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4.0,
+            -0.15,
+            2.3
+          ],
+          "shape": "Cuboid",
+          "x_length": 8.0,
+          "y_length": 0.3,
+          "z_length": 3.4,
+          "walkable": true
+        },
+        {
+          "translation": [
+            4.0,
+            -1.04,
+            0.25
+          ],
+          "shape": "Cuboid",
+          "x_length": 8.0,
+          "y_length": 2.32,
+          "z_length": 0.75
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_corner_inner/city_canal_corner_inner.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.15,
+            2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_corner_outer/city_canal_corner_outer.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -1.04,
+            2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 2.32,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_end/city_canal_end.glb": {
+      "colliders": [
+        {
+          "translation": [
+            1.7,
+            -0.15,
+            2.3
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 3.4,
+          "walkable": true
+        },
+        {
+          "translation": [
+            6.3,
+            -0.15,
+            2.3
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 3.4,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_steps/city_canal_steps.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.4,
+            1.6
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 3.0,
+          "tilt_about_x_radians": 0.3029,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_column/city_column.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.85,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.3,
+          "height": 3.7
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_curb_4/city_curb_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.07,
+            0.15
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.44,
+          "z_length": 0.3
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_arcade/city_facade_arcade.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.25,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.5,
+          "y_length": 4,
+          "z_length": 0.4
+        },
+        {
+          "translation": [
+            3.75,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.5,
+          "y_length": 4,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_blank/city_facade_blank.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            2.0,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 4.0,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_corner/city_facade_corner.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.2,
+            2.0,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.0,
+          "y_length": 4.0,
+          "z_length": 1.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_door/city_facade_door.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.55,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.1,
+          "y_length": 4,
+          "z_length": 0.4
+        },
+        {
+          "translation": [
+            3.45,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.1,
+          "y_length": 4,
+          "z_length": 0.4
+        },
+        {
+          "translation": [
+            2,
+            3.35,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.8,
+          "y_length": 1.3,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_end/city_facade_end.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.9,
+          "y_length": 4,
+          "z_length": 0.9
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_green_b/city_facade_green_b.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            2.0,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 4.0,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_window/city_facade_window.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            2.0,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 4.0,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_facade_window_b/city_facade_window_b.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            2.0,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 4.0,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_footbridge_8/city_footbridge_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.5,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 9.3,
+          "walkable": true
+        },
+        {
+          "translation": [
+            0.15,
+            0.7,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 1.2,
+          "z_length": 9.3
+        },
+        {
+          "translation": [
+            3.85,
+            0.7,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 1.2,
+          "z_length": 9.3
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_footbridge_planted_8/city_footbridge_planted_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.5,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 9.3,
+          "walkable": true
+        },
+        {
+          "translation": [
+            0.15,
+            0.7,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 1.2,
+          "z_length": 9.3
+        },
+        {
+          "translation": [
+            3.85,
+            0.7,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 1.2,
+          "z_length": 9.3
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_fountain/city_fountain.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.28,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 3.0,
+          "height": 0.56
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_gallery_display_wall/city_gallery_display_wall.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            2,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 4,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_gallery_entrance/city_gallery_entrance.glb": {
+      "colliders": [
+        {
+          "translation": [
+            1,
+            4.5,
+            -1
+          ],
+          "shape": "Cuboid",
+          "x_length": 2,
+          "y_length": 9,
+          "z_length": 2
+        },
+        {
+          "translation": [
+            7,
+            4.5,
+            -1
+          ],
+          "shape": "Cuboid",
+          "x_length": 2,
+          "y_length": 9,
+          "z_length": 2
+        },
+        {
+          "translation": [
+            4,
+            0.3,
+            0.1
+          ],
+          "shape": "Cuboid",
+          "x_length": 5.2,
+          "y_length": 0.6,
+          "z_length": 2.2,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_gallery_plinth/city_gallery_plinth.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.45,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.2,
+          "y_length": 0.9,
+          "z_length": 1.2
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_garden_deck/city_garden_deck.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.11,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.38,
+          "z_length": 4.0,
+          "walkable": true
+        },
+        {
+          "translation": [
+            2,
+            0.35,
+            -0.35
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.7,
+          "z_length": 0.7
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_guardrail_4/city_guardrail_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.55,
+            -0.05
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 1.1,
+          "z_length": 0.1
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_hall_rib/city_hall_rib.glb": {
+      "colliders": [
+        {
+          "translation": [
+            -4.5,
+            1.5,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.4,
+          "height": 3.0
+        },
+        {
+          "translation": [
+            4.5,
+            1.5,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.4,
+          "height": 3.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_hall_seating/city_hall_seating.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            0.9,
+            -1.8
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "tilt_about_x_radians": 0.4636,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_hall_shell/city_hall_shell.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            6,
+            -9.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 22,
+          "y_length": 12,
+          "z_length": 1.0
+        },
+        {
+          "translation": [
+            -10.5,
+            4,
+            -4.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.0,
+          "y_length": 8,
+          "z_length": 9
+        },
+        {
+          "translation": [
+            10.5,
+            4,
+            -4.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.0,
+          "y_length": 8,
+          "z_length": 9
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_hall_stage/city_hall_stage.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.5,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 16,
+          "y_length": 1.0,
+          "z_length": 8,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_instrument_pedestal/city_instrument_pedestal.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.55,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.8,
+          "y_length": 1.1,
+          "z_length": 0.8
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_lift/city_lift.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            2,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 2.4,
+          "y_length": 4,
+          "z_length": 2.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_monument/city_monument.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            3.0,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 3.6,
+          "height": 6.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_monument_base/city_monument_base.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            0.45,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.9,
+          "z_length": 8,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_mud_relic/city_mud_relic.glb": {
+      "colliders": [
+        {
+          "translation": [
+            1.7,
+            -0.15,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "walkable": true
+        },
+        {
+          "translation": [
+            6.3,
+            -0.15,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_parapet_4/city_parapet_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.59,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 1.18,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_parapet_corner/city_parapet_corner.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.2,
+            0.8,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.0,
+          "y_length": 1.6,
+          "z_length": 1.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_parapet_step_4/city_parapet_step_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.59,
+            -0.2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 1.18,
+          "z_length": 0.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_paving_4/city_paving_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.15,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_paving_8/city_paving_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            -0.15,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.3,
+          "z_length": 8,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_pergola/city_pergola.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.3,
+            1.4,
+            -0.3
+          ],
+          "shape": "Cylinder",
+          "radius": 0.12,
+          "height": 2.8
+        },
+        {
+          "translation": [
+            0.3,
+            1.4,
+            -3.7
+          ],
+          "shape": "Cylinder",
+          "radius": 0.12,
+          "height": 2.8
+        },
+        {
+          "translation": [
+            3.7,
+            1.4,
+            -0.3
+          ],
+          "shape": "Cylinder",
+          "radius": 0.12,
+          "height": 2.8
+        },
+        {
+          "translation": [
+            3.7,
+            1.4,
+            -3.7
+          ],
+          "shape": "Cylinder",
+          "radius": 0.12,
+          "height": 2.8
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_planter_4/city_planter_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.26,
+            -0.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.52,
+          "z_length": 1.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_plaza_steps_4/city_plaza_steps_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.35,
+            -1
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 2.2,
+          "tilt_about_x_radians": 0.4636,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_pump_house/city_pump_house.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.6,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 3.4,
+          "y_length": 3.2,
+          "z_length": 3.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_rail_canopy_8/city_rail_canopy_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.6,
+            1.9,
+            -4.45
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 3.1,
+          "z_length": 0.3
+        },
+        {
+          "translation": [
+            4.6,
+            1.9,
+            -4.45
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 3.1,
+          "z_length": 0.3
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_rail_car/city_rail_car.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.85,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 12,
+          "y_length": 2.9,
+          "z_length": 2.65
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_rail_pier/city_rail_pier.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            3.4,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.75,
+          "height": 6.75
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_rail_platform_8/city_rail_platform_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            0.17,
+            -3.25
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.35,
+          "z_length": 3.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_rail_track_8/city_rail_track_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            -0.4,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 1.0,
+          "z_length": 3.2
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_ramp_8/city_ramp_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            0.15,
+            -1
+          ],
+          "shape": "Cuboid",
+          "x_length": 8.02,
+          "y_length": 0.2,
+          "z_length": 2.0,
+          "tilt_about_x_radians": 0.0624,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_roof_cap_4/city_roof_cap_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.12,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.36,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_roof_planted_4/city_roof_planted_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.1,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.8,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_shade_sail/city_shade_sail.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.0,
+            2.1,
+            -3.392
+          ],
+          "shape": "Cylinder",
+          "radius": 0.08,
+          "height": 4.2
+        },
+        {
+          "translation": [
+            -2.938,
+            1.65,
+            1.696
+          ],
+          "shape": "Cylinder",
+          "radius": 0.08,
+          "height": 3.3
+        },
+        {
+          "translation": [
+            2.938,
+            1.8,
+            1.696
+          ],
+          "shape": "Cylinder",
+          "radius": 0.08,
+          "height": 3.6
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_sign/city_sign.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.1,
+            0
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.8,
+          "y_length": 2.2,
+          "z_length": 0.24
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_skybridge_8/city_skybridge_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            -0.1,
+            -1.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.2,
+          "z_length": 3,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_slab_4/city_slab_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.15,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_solar_canopy/city_solar_canopy.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.8,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.2,
+          "height": 3.6
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_stair_flight/city_stair_flight.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            0.9,
+            -1
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.47,
+          "y_length": 0.3,
+          "z_length": 2.0,
+          "tilt_about_x_radians": 0.4636,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_stair_landing/city_stair_landing.glb": {
+      "colliders": [
+        {
+          "translation": [
+            1,
+            1,
+            -2
+          ],
+          "shape": "Cuboid",
+          "x_length": 2,
+          "y_length": 2,
+          "z_length": 4,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_tree/city_tree.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.5,
+            0
+          ],
+          "shape": "Cylinder",
+          "radius": 0.3,
+          "height": 3.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_walk_bay/city_walk_bay.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.15,
+            -1.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 3.0,
+          "walkable": true
+        },
+        {
+          "translation": [
+            0.35,
+            1.85,
+            -0.35
+          ],
+          "shape": "Cylinder",
+          "radius": 0.3,
+          "height": 3.7
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_walk_end/city_walk_end.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0,
+            1.7,
+            -1.8
+          ],
+          "shape": "Cuboid",
+          "x_length": 0.3,
+          "y_length": 3.4,
+          "z_length": 2.4
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_walk_open/city_walk_open.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            -0.15,
+            -1.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 3.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_walk_roof/city_walk_roof.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2,
+            3.85,
+            -1.5
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.3,
+          "z_length": 3.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_water_gate/city_water_gate.glb": {
+      "colliders": [
+        {
+          "translation": [
+            0.6,
+            1.8,
+            0.15
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.2,
+          "y_length": 3.6,
+          "z_length": 1.0
+        },
+        {
+          "translation": [
+            0.6,
+            1.8,
+            -8.15
+          ],
+          "shape": "Cuboid",
+          "x_length": 1.2,
+          "y_length": 3.6,
+          "z_length": 1.0
+        }
+      ],
+      "rigid_body": "none (static)"
+    }
+  }
+}

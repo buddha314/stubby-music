@@ -128,6 +128,7 @@ been made once (2026-10-31, `accents[0]`).
 | Vardo | Forest green `#2f4a33`, Plank groove `#1e2e21`, Burgundy trim `#6b2a28`; folk motifs in Brass `#c4aa76`, lace in Print inverted `#e7e5dd`, wool in Rust `#9c3b2a`, dark iron in Ridges `#2e2b33`; accents: Cyan, Magenta (bloomed) |
 | Dancers (skin, draft) | Solar amber `#D89B54`, Clay coral `#C96D74`, Leaf teal `#4F9D88`, Dusk violet `#8878AB` |
 | Cyber-cob | Coat black `#1d1a1c`, Coat white `#e0d8c8`, Muzzle `#6e5a58`; mane cream in Bone `#cfc6b2`, hooves in Mud plate `#3e2f22`, leather in Cattail `#4a3222`, steel in Titanium, brass in Brass, fibres Cyan (dim) |
+| City (Phase 4, `docs/art/city-kit.md`) | Plaster `#d6c2a8`, Relief `#bba187`, Stone `#c9b9a3`, Stone dark `#9c8a74`, Clay `#a85b43`, Monument `#eadbd2`; Water `#2f8a84`, Bed `#5b7254`; Agave `#6f8f7a`, Bloom: Clay coral `#c96d74`; Bulb `#ecd8e3` for lanterns; flora glow in the bloomed accents, machines amber |
 | Homestead | Door paint: Verdigris `#3f7a6e`; Canvas: Bone `#cfc6b2`; Rope: reed Blade dry `#8a7552`; Sawn wood: Heartwood `#8a7a62` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
@@ -295,6 +296,13 @@ Before an asset ships:
 - [ ] Colours from the palette; any new colour added here.
 
 ## Changelog
+
+- **2026-11-28** — The City kit (Phase 4): 86 modular pieces on a 4 m grid in pale lime
+  plaster, carved relief (strata, stepped mesas, ripples, sun rays: original motifs), grown
+  timber and titanium; a canal kit that keeps the camp's mud stream as a relic at its head;
+  terraces, light rail, gallery, concert hall, the pale sun-gate monument, luminous flora and
+  the floating staff. A reference district and test strip in day, dusk and night. City colours
+  added to the palette. Brief: `docs/art/city-kit.md`; kit: `docs/art/city-kit/README.md`.
 
 - **2026-11-18** — Omar, the protagonist: orange tagelmust, wraparound goggles, dark-mint
   frog-fastened coat, midnight-navy gloves, sand trousers, heavy boots; restrained cyan,

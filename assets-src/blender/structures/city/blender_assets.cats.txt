@@ -1,0 +1,19 @@
+# Blender asset catalogs for the City kit (create_city_kit.py)
+VERSION 1
+
+6d0c4f1e-1a11-4c1b-9a01-c17c00000001:City/Foundation:City-Foundation
+6d0c4f1e-1a11-4c1b-9a01-c17c00000002:City/Facade:City-Facade
+6d0c4f1e-1a11-4c1b-9a01-c17c00000003:City/Floor-And-Roof:City-Floor-And-Roof
+6d0c4f1e-1a11-4c1b-9a01-c17c00000004:City/Outdoor-Hallway:City-Outdoor-Hallway
+6d0c4f1e-1a11-4c1b-9a01-c17c00000005:City/Vertical-Circulation:City-Vertical-Circulation
+6d0c4f1e-1a11-4c1b-9a01-c17c00000006:City/Canal:City-Canal
+6d0c4f1e-1a11-4c1b-9a01-c17c00000007:City/Footbridge:City-Footbridge
+6d0c4f1e-1a11-4c1b-9a01-c17c00000008:City/Planting:City-Planting
+6d0c4f1e-1a11-4c1b-9a01-c17c00000009:City/Terrace:City-Terrace
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000a:City/Light-Rail:City-Light-Rail
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000b:City/Civic:City-Civic
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000c:City/Luminous-Flora:City-Luminous-Flora
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000d:City/Music-Staff:City-Music-Staff
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000e:City/Street:City-Street
+6d0c4f1e-1a11-4c1b-9a01-c17c0000000f:City/Infrastructure:City-Infrastructure
+6d0c4f1e-1a11-4c1b-9a01-c17c00000010:City/Growth:City-Growth

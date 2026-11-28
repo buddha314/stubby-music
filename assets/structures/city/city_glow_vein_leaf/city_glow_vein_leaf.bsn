@@ -1,0 +1,6 @@
+#"City Glow Vein Leaf"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "structures/city/city_glow_vein_leaf/city_glow_vein_leaf.glb", scene_index: 0 }
