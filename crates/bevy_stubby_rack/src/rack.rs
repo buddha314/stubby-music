@@ -240,17 +240,16 @@ impl<S> Default for RackPlugin<S> {
 impl<S: Stock> Plugin for RackPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_plugins((stubby_ui::ItemTooltipPlugin, SamplePickerPlugin))
+            .add_plugins(RackEnginePlugin)
             .init_resource::<ItemNames>()
-            .init_resource::<KnobDefaults>()
-            .register_type::<RackTargets>()
             .init_resource::<PatchSelection>()
             .init_resource::<HoveredCable>()
             .add_systems(
                 Update,
                 (
                     cancel_cable,
-                    draw_scope.after(show_knobs).after(patch_engine),
-                    bind_selections.after(patch_engine),
+                    draw_scope.after(show_knobs).after(RackEngineSystems),
+                    bind_selections.after(RackEngineSystems),
                 ),
             )
             .add_observer(cable_over)
@@ -258,7 +257,6 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .add_observer(drag_from_jack::<S>)
             .add_observer(drop_on_jack::<S>)
             .init_resource::<DraggedJack>()
-            .add_message::<MachineConfigured>()
             .add_observer(click_jack::<S>)
             .add_observer(press_mount::<S>)
             .add_observer(start_item_drag)
@@ -279,9 +277,6 @@ impl<S: Stock> Plugin for RackPlugin<S> {
             .add_systems(
                 Update,
                 (
-                    attach,
-                    apply_knobs,
-                    check_targets,
                     show_knobs,
                     mount_buttons::<S>,
                     number_keys::<S>,
@@ -292,15 +287,45 @@ impl<S: Stock> Plugin for RackPlugin<S> {
                     snap_on_plug,
                     rack_ghost,
                     clear_feedback_on_open::<S>,
-                    patch_engine,
                     step_lights,
-                    publish_voice,
                     pods,
                     draw_cables,
                     live_cable,
                     snap_release::<S>,
                 )
                     .chain()
+                    .after(RackEngineSystems),
+            );
+    }
+}
+
+/// The engine side of every machine's rack, without its screen: racks attached to machines,
+/// knobs applied, targets checked, the engine patched and the voice published. Every
+/// peer of a shared world runs it, each into its own engine (add-multiplayer-and-menus
+/// 4.1), and a peer without a screen (a server, a test) needs only this.
+pub struct RackEnginePlugin;
+
+/// [`RackEnginePlugin`]'s systems: the rack screen runs after them.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct RackEngineSystems;
+
+impl Plugin for RackEnginePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<KnobDefaults>()
+            .init_resource::<ModuleIds>()
+            .register_type::<RackTargets>()
+            .add_message::<MachineConfigured>()
+            .add_systems(
+                Update,
+                (
+                    attach,
+                    apply_knobs,
+                    check_targets,
+                    patch_engine,
+                    publish_voice,
+                )
+                    .chain()
+                    .in_set(RackEngineSystems)
                     .after(stubby_core::MachineInteractionSet),
             );
     }

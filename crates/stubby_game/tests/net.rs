@@ -29,6 +29,7 @@ use stubby_game::{
         collecting::CollectingPlugin,
         inventory::{InventoriesPlugin, Pack},
         joining::{CatchingUp, JoiningPlugin},
+        music::{MusicPlugin, MusicSync},
         racks::{Racks, RacksPlugin},
         streams::StreamsPlugin,
         time::{HostClock, TimePlugin},
@@ -47,13 +48,27 @@ use stubby_game::{
 const SERVER_ADDR: SocketAddr = SocketAddr::new(core::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 5888);
 const TICK: Duration = Duration::from_micros(15_625); // 64 Hz
 
+/// The racks of the campfire and the burbler, as their assets describe them.
 fn campfire_profiles() -> stubby_game::machine_config::Profiles {
-    let asset: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../assets/structures/campfire/asset.json"
-    ))
-    .unwrap();
-    let config = serde_json::from_value(asset["configure"].clone()).unwrap();
-    std::collections::HashMap::from([("campfire".to_owned(), config)]).into()
+    let rack = |asset: &str| {
+        let asset: serde_json::Value = serde_json::from_str(asset).unwrap();
+        serde_json::from_value(asset["configure"].clone()).unwrap()
+    };
+    std::collections::HashMap::from([
+        (
+            "campfire".to_owned(),
+            rack(include_str!(
+                "../../../assets/structures/campfire/asset.json"
+            )),
+        ),
+        (
+            "mudpit_burbler".to_owned(),
+            rack(include_str!(
+                "../../../assets/machines/mudpit_burbler/asset.json"
+            )),
+        ),
+    ])
+    .into()
 }
 
 /// The shipped world with `seed`.
@@ -135,9 +150,11 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
-            (RacksPlugin, TimePlugin, JoiningPlugin),
+            (RacksPlugin, TimePlugin, JoiningPlugin, MusicPlugin),
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
+            // Each machine's rack plays into this peer's own engine (4.1).
+            stubby_game::rack::RackEnginePlugin,
         ));
         server
     }
@@ -161,9 +178,11 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
-            (RacksPlugin, TimePlugin, JoiningPlugin),
+            (RacksPlugin, TimePlugin, JoiningPlugin, MusicPlugin),
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
+            // Each machine's rack plays into this peer's own engine (4.1).
+            stubby_game::rack::RackEnginePlugin,
         ));
         client.finish();
         client.cleanup();
@@ -1187,17 +1206,20 @@ fn spawn_campfire(app: &mut App, at: Vec3) -> Entity {
         .id()
 }
 
+/// The campfire's rack on a peer.
 fn rack(app: &mut App) -> bevy_stubby_rack::record::RackRecord {
     let world = app.world_mut();
-    let (state, knobs, samples) = world
+    let (_, state, knobs, samples) = world
         .query::<(
+            &PlacedAsset,
             &stubby_game::rack::RackState,
             &stubby_game::rack::RackKnobs,
-            &bevy_stubby_rack::samples::RackSamples,
+            Option<&bevy_stubby_rack::samples::RackSamples>,
         )>()
-        .single(world)
+        .iter(world)
+        .find(|(p, ..)| p.asset == "campfire")
         .unwrap();
-    bevy_stubby_rack::record::RackRecord::of(state, knobs, Some(samples))
+    bevy_stubby_rack::record::RackRecord::of(state, knobs, samples)
 }
 
 /// Anyone may configure any machine's rack (3.5): a client's edit, made on its own screen,
@@ -1567,4 +1589,162 @@ fn a_shared_world_survives_a_lossy_link_and_a_late_joiner_finds_it_all() {
     );
     assert_eq!(rack(&mut session.clients[late]), configured, "the rack");
     assert!((calendar_s(&session.clients[late]) - calendar_s(&session.server)).abs() < 1.5);
+}
+
+/// A peer's audio engine, faked: its master clock is real time from where this engine
+/// started, plus the peer's master offset, as `bevy_stubby_audio` reads it.
+#[derive(Resource)]
+struct FakeEngine {
+    started_at_beats: f64,
+}
+
+fn fake_master_clock(
+    engine: Res<FakeEngine>,
+    time: Res<Time<Real>>,
+    offset: Res<bevy_stubby_audio::MasterOffset>,
+    mut clock: ResMut<bevy_stubby_audio::MasterClock>,
+) {
+    *clock = bevy_stubby_audio::MasterClock::at_beats(
+        engine.started_at_beats + (time.elapsed_secs_f64() + offset.0) / 60.,
+    );
+}
+
+fn with_engine(app: &mut App, started_at_beats: f64) {
+    app.insert_resource(FakeEngine { started_at_beats })
+        .init_resource::<bevy_stubby_audio::MasterClock>()
+        .add_systems(
+            PreUpdate,
+            fake_master_clock.in_set(bevy_stubby_audio::MasterClockRead),
+        );
+}
+
+fn master_beats(app: &App) -> f64 {
+    app.world()
+        .resource::<bevy_stubby_audio::MasterClock>()
+        .beats()
+        .unwrap()
+}
+
+/// Music together (4.2): engines started an hour apart; after joining, a client's master
+/// clock (which every machine's clock derives from) is the host's to within 12 ms, over a
+/// clean link and a laggy, lossy one. The measured drift is printed: this is the report.
+#[test]
+fn a_clients_music_follows_the_hosts_clock() {
+    for conditions in [None, Some(lossy())] {
+        let lossy = conditions.is_some();
+        let mut session = Session::new(false);
+        with_engine(&mut session.server, 100.);
+        let a = session.join(conditions);
+        with_engine(&mut session.clients[a], 37.3);
+        joined(&mut session, a);
+        session.seconds(4.0);
+        let error_ms =
+            (master_beats(&session.server) - master_beats(&session.clients[a])) * 60_000.;
+        let sync = *session.clients[a].world().resource::<MusicSync>();
+        eprintln!(
+            "music drift, lossy={lossy}: now {error_ms:+.2} ms; last measured {:+.2} ms, \
+             worst after the first correction {:.2} ms, {} measurements, {} corrections",
+            sync.error_s * 1000.,
+            sync.worst_s * 1000.,
+            sync.measurements,
+            sync.corrections
+        );
+        assert!(sync.corrections >= 1 && sync.measurements >= 4);
+        assert!(error_ms.abs() < 12., "lossy={lossy}: {error_ms} ms apart");
+    }
+}
+
+/// Whether the burbler sounds on this peer: its engine patch plans a voice, every needed
+/// cable patched.
+fn burbler_sounds(app: &mut App) -> bool {
+    let world = app.world_mut();
+    world
+        .query::<(&PlacedAsset, &stubby_game::rack::RackEngine)>()
+        .iter(world)
+        .any(|(p, engine)| p.asset == "mudpit_burbler" && engine.sounding && engine.voice.is_some())
+}
+
+/// Music together (4.1): a burbler configured by one client sounds in every peer's own
+/// engine (the host's, the client's, a late joiner's): each plans the same patch from the
+/// shared rack. Audio never crosses the network.
+#[test]
+fn a_machine_configured_by_one_player_plays_for_everyone() {
+    let mut session = Session::new(false);
+    let a = session.join(None);
+    let body = joined(&mut session, a);
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host) + Vec3::X * 2.;
+    for app in [&mut session.server, &mut session.clients[a]] {
+        spawn_burbler(app, at);
+    }
+    let pack = pack_on_host(&mut session, a);
+    session
+        .server
+        .world_mut()
+        .get_mut::<Pack>(pack)
+        .unwrap()
+        .items
+        .grant(&[stubby_recipes::Stack {
+            item: "square_wave".into(),
+            quantity: 1,
+        }])
+        .unwrap();
+    session.until(3.0, "A's square wave and the burbler's rack", |s| {
+        held(&s.clients[a], "square_wave") == 1
+            && s.clients[a]
+                .world_mut()
+                .query::<&stubby_game::rack::RackState>()
+                .iter(s.clients[a].world())
+                .count()
+                == 1
+    });
+    assert!(
+        !burbler_sounds(&mut session.server),
+        "silent until configured"
+    );
+
+    // A mounts the square wave as the VCO and patches the two cables the voice needs.
+    let config = campfire_profiles().0["mudpit_burbler"].clone();
+    let module = config
+        .places
+        .iter()
+        .find(|p| p.place == "vco")
+        .and_then(|p| p.accepts.first())
+        .unwrap()
+        .module
+        .clone();
+    let burbler = burbler(&mut session.clients[a]).0;
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .open = Some(stubby_core::Screen::MachineConfiguration(burbler));
+    session.frames(2);
+    {
+        let world = session.clients[a].world_mut();
+        let mut player = world.remove_resource::<PlayerInventory>().unwrap();
+        let mut state = world
+            .get_mut::<stubby_game::rack::RackState>(burbler)
+            .unwrap();
+        assert!(state.mount(&mut player, "vco", "square_wave", &module));
+        for cable in config.cables.iter().filter(|c| !c.optional) {
+            assert!(player.items.take("patch_cable", 1).is_ok());
+            state.own.push((cable.from.clone(), cable.to.clone()));
+        }
+        world.insert_resource(player);
+    }
+    session.frames(2);
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .close();
+    session.until(3.0, "the burbler sounding at A and at the host", |s| {
+        burbler_sounds(&mut s.clients[a]) && burbler_sounds(&mut s.server)
+    });
+
+    let late = session.join(None);
+    joined(&mut session, late);
+    spawn_burbler(&mut session.clients[late], at);
+    session.until(3.0, "the burbler sounding at the late joiner", |s| {
+        burbler_sounds(&mut s.clients[late])
+    });
 }

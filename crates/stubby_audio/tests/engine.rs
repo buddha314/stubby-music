@@ -807,6 +807,31 @@ fn clock_at_120_bpm_ticks_every_24000_samples_on_its_gate() {
     assert_eq!(ticks, edges);
 }
 
+/// Two engines agree on the beat by a master offset (add-multiplayer-and-menus 4.2): a
+/// quarter beat ahead, a 120 BPM clock ticks a quarter beat early on the engine's own
+/// counter, every beat.
+#[test]
+fn a_master_offset_shifts_every_clock_by_it() {
+    let mut rig = Rig::new();
+    rig.engine
+        .send(Command::SetMasterOffset { samples: 6_000 })
+        .unwrap();
+    let clock = rig.add(1, ModuleKind::Clock { bpm: 120.0 });
+    rig.connect(PortRef::new(clock, "gate"), PortRef::output());
+    rig.flush();
+    rig.render(4 * SR as usize);
+    let ticks: Vec<u64> = rig
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            Event::ClockTick { sample_time, .. } => Some(sample_time),
+            _ => None,
+        })
+        .filter(|&t| t < 4 * SR as u64)
+        .collect();
+    assert_eq!(ticks[..3], [18_000, 42_000, 66_000]);
+}
+
 #[test]
 fn clock_phase_ramps_once_per_beat() {
     let mut rig = Rig::new();
