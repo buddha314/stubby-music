@@ -20,4 +20,4 @@ Art and asset pipeline. Source of truth: `docs/art/city-residential.md`.
 - [x] 4.1 (claimed: Claude) Street wall, rounded corner block, stepped garden tower and taller tower from one generator; furnished homes; inland street and courtyards; skyline.
 - [x] 4.2 (claimed: Claude) Assembly test row (every bay type on one grid) and a small mixed block with both corner types.
 - [x] 4.3 (claimed: Claude) Residential review cameras (street looking up, canal stack, balcony, overview, corner) in day, dusk and night.
-- [ ] 4.4 Measure frame time and draw calls for the district in the game, once the pieces are bound (`add-city-kit` 5.1).
+- [x] 4.4 (claimed: Claude; 2026-11-28, `breq`, vsync on, temporary diagnostics plugins as `docs/research/performance-profiling.md` describes) Measure in the game: homestead review ~3,900 entities at 60 fps; the validation bay ~6,900 at 60 fps; the full district ~82,000 at 30-35 fps with dips to 7-10. One building is free; the whole district as one scene is not (`add-city-kit` 5.5).
