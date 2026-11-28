@@ -6,8 +6,8 @@ use stubby_recipes::SignalUse;
 // from here so the rest of the game is unchanged.
 pub use super::recipes_plugin::{
     CraftCompleted, CraftRequest, HarvestRequest, MineNode, PlayerInventory, RecipeCatalog,
-    RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode, SharedStorage, SourceLedger,
-    StorageRequest,
+    RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode, SourceLedger, StorageMove,
+    StorageRequest, Store,
 };
 
 /// The opening's placed lightning bug, as a source (`lightning_bug-<index>`).
@@ -458,6 +458,15 @@ mod tests {
                 icons.join(format!("{}.png", item.id)).is_file(),
                 "{} has no icon: add it to tools/icons/make_item_icons.py",
                 item.id
+            );
+        }
+        // The build menu shows each buildable's icon too (2026-11-27: the storage barrel
+        // had none).
+        for buildable in &rules.definition.buildables {
+            assert!(
+                icons.join(format!("{}.png", buildable.id)).is_file(),
+                "{} has no icon: add it to tools/icons/make_item_icons.py",
+                buildable.id
             );
         }
     }

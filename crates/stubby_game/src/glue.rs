@@ -386,6 +386,7 @@ impl Plugin for PrefabGluePlugin {
                         || asset.starts_with("dancer_")
                         || asset == "ripple_pool"
                         || asset == "campfire"
+                        || asset == "storage_barrel"
                         || asset == "cottage"
                         || asset == "vardo"
                         || asset == "cyber_cob"

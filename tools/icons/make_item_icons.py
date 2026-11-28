@@ -112,6 +112,14 @@ def reed_water_purifier(d):
     d.line(px((64, 76), (64, 88)), fill=AMBER, width=4 * SS)
 
 
+def storage_barrel(d):
+    """A barrel with two hoops: the build menu's storage barrel."""
+    d.rounded_rectangle(px((34, 18), (94, 110)), radius=14 * SS, fill=BONE)
+    for y in (40, 88):
+        d.line(px((32, y), (96, y)), fill=AMBER, width=6 * SS)
+    d.line(px((64, 22), (64, 106)), fill=TILE, width=2 * SS)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in {"square_wave": square_wave, "patch_cable": patch_cable,
@@ -119,7 +127,8 @@ def main():
                        "stream_segment": stream_segment, "snail_shell": snail_shell,
                        "oscilloscope": oscilloscope, "high_pass_filter": high_pass_filter,
                        "reed_water_purifier": reed_water_purifier,
-                       "reed_water_purifier_kit": reed_water_purifier}.items():
+                       "reed_water_purifier_kit": reed_water_purifier,
+                       "storage_barrel": storage_barrel}.items():
         img, d = canvas()
         draw(d)
         img.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / f"{name}.png")

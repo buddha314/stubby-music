@@ -50,6 +50,8 @@ pub enum Screen {
     Loading,
     /// Window, graphics and volume settings, from the main menu or the pause menu.
     Settings,
+    /// A storage barrel's contents beside the player's (add-multiplayer-and-menus 3.3).
+    Storage(Entity),
 }
 
 impl Screen {

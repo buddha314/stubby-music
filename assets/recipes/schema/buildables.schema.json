@@ -63,6 +63,15 @@
           "description": "How its hologram finds its place.",
           "$ref": "#/$defs/Placement",
           "default": "ground"
+        },
+        "store_boxes": {
+          "description": "Built, it is a store of this many boxes, which every player may use (a storage\nbarrel; add-multiplayer-and-menus 3.2).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
         }
       },
       "additionalProperties": false,

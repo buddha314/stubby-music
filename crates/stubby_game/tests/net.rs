@@ -17,13 +17,15 @@ use avian3d::prelude::*;
 use bevy::{ecs::relationship::Relationship, prelude::*, state::app::StatesPlugin};
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
-use stubby_core::{GroundHeight, LookCapture, ScreenMode};
+use stubby_core::{GroundHeight, LookCapture, PlacedAsset, ScreenMode};
 use stubby_game::{
+    build::BuildRequest,
     controls::Player,
     movement::{MoveBody, MoveControls, MovementPlugin, NetworkedMovement, Sprint},
     multiplayer::{
         ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin, WorldHandshakePlugin,
         WorldMismatch,
+        building::BuildingPlugin,
         collecting::CollectingPlugin,
         inventory::{InventoriesPlugin, Pack},
     },
@@ -33,7 +35,7 @@ use stubby_game::{
     },
     resources::{
         CraftCompleted, CraftRequest, HarvestRequest, PlayerInventory, RecipesPlugin, ResourceNode,
-        SharedStorage, SourceLedger, StorageRequest, lightning_bug_node,
+        SourceLedger, StorageMove, StorageRequest, Store, lightning_bug_node,
     },
     world_generation::WorldConfig,
 };
@@ -62,6 +64,8 @@ fn peer(mode: NetMode) -> App {
         bevy::scene::ScenePlugin,
         net::physics_plugins(mode),
     ))
+    // Built things load their model as a world asset.
+    .init_asset::<bevy::world_serialization::WorldAsset>()
     .init_resource::<GroundHeight>()
     .insert_resource(LookCapture(true))
     .init_resource::<ScreenMode>()
@@ -99,6 +103,7 @@ impl Session {
             RecipesPlugin::default(),
             CollectingPlugin,
             InventoriesPlugin,
+            BuildingPlugin,
         ));
         server
     }
@@ -120,6 +125,7 @@ impl Session {
             RecipesPlugin::default(),
             CollectingPlugin,
             InventoriesPlugin,
+            BuildingPlugin,
         ));
         client.finish();
         client.cleanup();
@@ -682,17 +688,40 @@ fn held(app: &App, item: &str) -> u32 {
         .quantity(item)
 }
 
-fn stored(app: &App, item: &str) -> u32 {
-    app.world().resource::<SharedStorage>().0.quantity(item)
+/// The barrel a test builds, everywhere.
+fn barrel(app: &mut App) -> Option<(Entity, String)> {
+    let world = app.world_mut();
+    world
+        .query::<(Entity, &PlacedAsset, Has<Store>)>()
+        .iter(world)
+        .find(|(_, placed, store)| placed.asset == "storage_barrel" && *store)
+        .map(|(e, placed, _)| (e, placed.instance.clone()))
 }
 
-/// Each player carries their own inventory, kept by the host and seen only by its owner;
-/// storage is one, shared, and only the host moves things in and out of it (3.2).
+fn stored(app: &mut App, item: &str) -> u32 {
+    barrel(app).map_or(0, |(e, _)| {
+        app.world().get::<Store>(e).unwrap().0.quantity(item)
+    })
+}
+
+fn moving(store: &str, direction: StorageMove, quantity: u32) -> StorageRequest {
+    StorageRequest {
+        store: store.into(),
+        item: "square_wave".into(),
+        quantity,
+        direction,
+    }
+}
+
+/// Each player carries their own inventory, kept by the host and seen only by its owner.
+/// A client builds a storage barrel through the host (paid from its pack, shown to
+/// everyone, a late joiner too), and anyone may store in it and take from it; the host
+/// decides every move (3.2, 3.3).
 #[test]
-fn the_host_keeps_each_inventory_and_the_shared_storage() {
+fn a_built_barrel_is_shared_storage_the_host_keeps() {
     let mut session = Session::new(true);
     let (a, b) = (session.join(None), session.join(None));
-    joined(&mut session, a);
+    let body = joined(&mut session, a);
     joined(&mut session, b);
     session.seconds(0.5);
     for client in [a, b] {
@@ -700,6 +729,27 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
         let packs = world.query::<&Pack>().iter(world).count();
         assert_eq!(packs, 1, "a client sees its own pack, no one else's");
     }
+
+    // A builds a barrel beside itself, paid with its reeds.
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host) + Vec3::X * 2.0;
+    let reeds = held(&session.clients[a], "reed");
+    session.clients[a].world_mut().write_message(BuildRequest {
+        buildable: "storage_barrel".into(),
+        place: Transform::from_translation(at),
+        segment: None,
+    });
+    session.until(3.0, "the barrel everywhere", |s| {
+        barrel(&mut s.server).is_some()
+            && barrel(&mut s.clients[a]).is_some()
+            && barrel(&mut s.clients[b]).is_some()
+    });
+    assert_eq!(
+        held(&session.clients[a], "reed"),
+        reeds - 15,
+        "paid from A's pack"
+    );
+    let (_, store) = barrel(&mut session.server).unwrap();
 
     // The host gives A three square waves (a harvest, say): A sees them.
     let pack = pack_on_host(&mut session, a);
@@ -719,47 +769,47 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
         held(&s.clients[a], "square_wave") == before + 3
     });
 
-    // A stores two: everyone sees them in storage.
+    // A stores two: everyone sees them in the barrel.
     session.clients[a]
         .world_mut()
-        .write_message(StorageRequest::Store {
-            item: "square_wave".into(),
-            quantity: 2,
-        });
+        .write_message(moving(&store, StorageMove::Store, 2));
     session.until(3.0, "the stored square waves everywhere", |s| {
-        stored(&s.server, "square_wave") == 2
-            && stored(&s.clients[a], "square_wave") == 2
-            && stored(&s.clients[b], "square_wave") == 2
+        stored(&mut s.server, "square_wave") == 2
+            && stored(&mut s.clients[a], "square_wave") == 2
+            && stored(&mut s.clients[b], "square_wave") == 2
             && held(&s.clients[a], "square_wave") == before + 1
     });
 
-    // B takes one; the host's own player takes the other.
-    session.clients[b]
-        .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 1,
-        });
+    // The host's own player takes one. B, sent off 15 m on the host, is out of reach:
+    // refused.
+    let b_body = local_body(&mut session.clients[b]).unwrap();
+    let b_on_host = server_body(&mut session.server, peer_of(&session.clients[b], b_body));
     session
         .server
         .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 1,
-        });
-    session.until(3.0, "the storage emptied by B and the host", |s| {
-        stored(&s.clients[a], "square_wave") == 0
-            && held(&s.clients[b], "square_wave") == 1
-            && held(&s.server, "square_wave") == 1
+        .get_mut::<Position>(b_on_host)
+        .unwrap()
+        .0 += Vec3::NEG_X * 15.0;
+    session
+        .server
+        .world_mut()
+        .write_message(moving(&store, StorageMove::Take, 1));
+    session.clients[b]
+        .world_mut()
+        .write_message(moving(&store, StorageMove::Take, 1));
+    session.until(3.0, "the host's take, and B's refusal", |s| {
+        stored(&mut s.clients[a], "square_wave") == 1
+            && s.clients[b]
+                .world()
+                .resource::<PlayerInventory>()
+                .feedback
+                .contains("Too far")
     });
 
     // Taking what is not there is refused, and nothing moves.
     session.clients[a]
         .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 5,
-        });
+        .write_message(moving(&store, StorageMove::Take, 5));
     session.until(3.0, "the host's refusal at A", |s| {
         s.clients[a]
             .world()
@@ -768,7 +818,14 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
             .contains("need 5")
     });
     assert_eq!(held(&session.clients[a], "square_wave"), before + 1);
-    assert_eq!(stored(&session.server, "square_wave"), 0);
+    assert_eq!(stored(&mut session.server, "square_wave"), 1);
+
+    // A late joiner finds the barrel and what is in it.
+    let late = session.join(None);
+    joined(&mut session, late);
+    session.until(3.0, "the barrel at a late joiner", |s| {
+        stored(&mut s.clients[late], "square_wave") == 1
+    });
 }
 
 /// Crafts reported at a peer.

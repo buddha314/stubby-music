@@ -147,6 +147,10 @@ pub struct BuildableDefinition {
     /// A line shown once it is built (Satisfactory's hints are the baseline).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub built_hint: Option<String>,
+    /// Built, it is a store of this many boxes, which every player may use (a storage
+    /// barrel; add-multiplayer-and-menus 3.2).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub store_boxes: Option<u32>,
 }
 
 /// How a buildable's hologram finds its place (add-reed-water-purifier D6).
@@ -213,10 +217,6 @@ pub enum RecipeError {
 pub const INVENTORY_BOXES: u32 = 16;
 /// How many of one kind of item a box holds.
 pub const BOX_STACK: u32 = 100;
-/// Boxes in the settlement's shared storage: three players' worth, until storage is
-/// something built (then each store sets its own).
-pub const STORAGE_BOXES: u32 = 48;
-
 /// Items in boxes: a player's (16 boxes) or a store's. Serializable as is: a shared
 /// world sends it, and every field is always written.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
