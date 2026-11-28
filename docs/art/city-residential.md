@@ -87,9 +87,11 @@ and the canal pieces. New pieces carry priority `RES` in the manifest
 3. **Not walkable in the game yet**: homes, balconies, stairs and roofs carry collision
    proxies (`colliders.json`), but the game cannot stand on colliders yet
    (`add-prefab-colliders`). The furnished homes are review sets, not playable rooms.
-4. **The game does not bind the pieces** (`city_` in the prefab bridge and model-part
-   bindings), so acoustics and sockets (`Interact`, `Door`, `Seat*`) are data only.
-   These are tasks 5.x in `add-city-kit`.
+4. **City pieces stay unbridged scenery.** Bridging the district's placements to
+   `PlacedAsset` stalled its first frame past 20 s. Acoustic extras reach Steam Audio
+   anyway (`prefab_presentation` reads node extras on any model), and walls are solid
+   through `city_colliders.rs`. Sockets with behaviour (`Interact`, `Door`, `Seat*`) are
+   anchors with no game logic yet.
 5. **Ground level**: the validation bay's review scene stands on the game's ground. Its paving
    sits exactly at ground level, so the mudflat shows through it in the game.
 
@@ -109,7 +111,18 @@ From the manifest and `docs/art/city-kit/district_layout.json` (near level, befo
 The 63 new pieces total 20,446 triangles. Their range: interior sets 200 to 450, furniture 100
 to 900, facade bays 150 to 600, the stair tower 1,600. Planting is the largest share
 of the district; its far levels (`city_tree`, `city_shrub`) and Jackdaw's LOD switching are
-what will hold it down. FPS and draw calls have not been measured in the game: the pieces are
-not bound yet (`add-city-kit` 5.1), and a 20-second review run does not measure it. Eevee
-renders a 1280 x 720 review view in about 30 s on `breq`; that is a preview cost, not a
-runtime one.
+what will hold it down.
+
+In the game (2026-11-28, `breq`: RX 7700S on mains power, vsync on, the repository's
+optimized dev build, Bevy's frame-time diagnostics added temporarily):
+
+| Review scene | Entities | Frames per second |
+| --- | --- | --- |
+| `homestead` (baseline) | ~3,900 | 60 (the vsync cap) |
+| `city_mixed_bay`, one building | ~6,900 | 60 (the vsync cap) |
+| `city`, the whole district | ~82,000 | 30-35, dipping to 7-10 |
+
+One mixed-use building costs nothing noticeable; the whole district as a single scene is over
+budget. The fix is structural (merge each building into one model with its own levels of
+detail, load the district by regions), tracked as `add-city-kit` 5.5. Draw calls were not
+counted. Eevee renders a 1280 x 720 review view in about 30 s; that is a preview cost.

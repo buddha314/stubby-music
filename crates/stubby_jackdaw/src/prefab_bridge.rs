@@ -4,6 +4,8 @@ use bevy_stubby_audio::pulse::PulseFollower;
 use jackdaw_prefab::components::{IsA, PrefabEntityId};
 use jackdaw_runtime::{GltfSource, HiddenInGame};
 use jackdaw_scene_types::SceneNodeId;
+#[path = "city_colliders.rs"]
+mod city_colliders;
 #[path = "model_part_bindings.rs"]
 mod model_part_bindings;
 use stubby_jackdaw::{
@@ -14,7 +16,8 @@ pub struct PrefabBridgePlugin;
 impl Plugin for PrefabBridgePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreUpdate, (bridge, removed_sources).chain())
-            .add_plugins(model_part_bindings::ModelPartBindingsPlugin);
+            .add_plugins(model_part_bindings::ModelPartBindingsPlugin)
+            .add_plugins(city_colliders::CityCollidersPlugin);
     }
 }
 #[allow(clippy::type_complexity)] // glTF sources may carry either finite or mine authoring metadata.
