@@ -58,7 +58,13 @@ pub struct Stash(pub StorageRequest);
 pub struct Craft {
     pub recipe: String,
     pub bpm: Option<f32>,
+    /// The bench's placed instance.
+    pub bench: Option<String>,
 }
+
+/// How far from a bench the host lets a player craft at it: the game's 3 m reach, plus
+/// room for the body's height and a moment's lag.
+pub const BENCH_REACH: f32 = 4.5;
 
 /// The host crafted for this client.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -189,18 +195,36 @@ fn serve_crafts(
     )>,
     remotes: Query<&RemoteId>,
     mut packs: Query<&mut Pack>,
+    bodies: Query<(&ControlledBy, &avian3d::prelude::Position), With<NetPlayer>>,
+    benches: Query<(&stubby_core::PlacedAsset, &GlobalTransform)>,
     catalog: Option<Res<RecipeCatalog>>,
 ) {
     let Some(catalog) = catalog else {
         return;
     };
     for (link, mut receiver, mut crafted, mut says) in &mut links {
-        for Craft { recipe, bpm } in receiver.receive() {
+        for Craft { recipe, bpm, bench } in receiver.receive() {
+            // Crafting is at a bench, in reach.
+            let at = bodies
+                .iter()
+                .find(|(owner, _)| owner.owner == link)
+                .map(|(_, position)| position.0);
+            let near = bench.as_ref().zip(at).is_some_and(|(bench, at)| {
+                benches.iter().any(|(placed, place)| {
+                    placed.instance == *bench && place.translation().distance(at) <= BENCH_REACH
+                })
+            });
+            if !near {
+                says.send::<HostChannel>(HostSays::Line("Too far from the bench.".into()));
+                continue;
+            }
             let Some(mut pack) = pack_of(link, &remotes, &mut packs) else {
                 continue;
             };
             let Pack { items, book, .. } = &mut *pack;
-            // The tempo is the client's to report until benches are shared (3.4).
+            // The tempo is still the client's: the host checks it against its own bench
+            // once rack configurations (which light the fire and set its clock) are
+            // shared (3.5).
             match crate::recipes_plugin::craft(&catalog.0, &recipe, bpm, items, book) {
                 Ok((done, line)) => {
                     crafted.send::<HostChannel>(Crafted {
@@ -247,6 +271,7 @@ fn ask_to_craft(
         sender.send::<HostChannel>(Craft {
             recipe: request.recipe.clone(),
             bpm: request.bpm,
+            bench: request.bench.clone(),
         });
     }
 }

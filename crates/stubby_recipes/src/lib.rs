@@ -108,7 +108,20 @@ pub struct RecipeDefinition {
     /// to make (add-campfire-craft-bench). None: any tempo, or none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bpm: Option<BpmRange>,
+    /// Made by hand at a bench, taking this long (add-crafting-durations). None: at once.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub by_hand: Option<ByHand>,
 }
+
+/// How long a recipe takes by hand: the bench's progress bar fills over `seconds`, in
+/// quarter-second steps (add-crafting-durations D1).
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ByHand {
+    pub seconds: f32,
+}
+/// Validated finite and positive, so equality is total.
+impl Eq for ByHand {}
 
 /// Tempos are multiples of this many BPM for now (user, 2026-11-17): 120 and 144 are on
 /// the grid, and matching a recipe's tempo stays easy.

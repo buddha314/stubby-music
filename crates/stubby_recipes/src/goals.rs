@@ -922,6 +922,7 @@ mod tests {
             inputs: vec![stack("reed", 6)],
             outputs: vec![stack("patch_cable", 1)],
             bpm: None,
+            by_hand: None,
         });
         assert_eq!(
             validate_goals(&rules.definition, &BTreeSet::new(), &rules.goals),

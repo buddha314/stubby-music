@@ -876,6 +876,33 @@ fn a_client_crafts_from_the_pack_the_host_keeps() {
     });
     let before = held(&session.clients[0], &output);
     let host_before = held(&session.server, &output);
+    // A campfire beside the player, on both peers.
+    let body = local_body(&mut session.clients[0]).unwrap();
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[0], body));
+    let fire_at = position(&session.server, on_host) + Vec3::X * 2.;
+    for app in [&mut session.server, &mut session.clients[0]] {
+        app.world_mut().spawn((
+            PlacedAsset {
+                asset: "campfire".into(),
+                model: String::new(),
+                instance: "campfire-built-1".into(),
+            },
+            Transform::from_translation(fire_at),
+        ));
+    }
+    // Without a bench, or away from it, the host refuses.
+    session.clients[0].world_mut().write_message(CraftRequest {
+        recipe: recipe.id.clone(),
+        bpm,
+        bench: None,
+    });
+    session.until(3.0, "the refusal without a bench", |s| {
+        s.clients[0]
+            .world()
+            .resource::<PlayerInventory>()
+            .feedback
+            .contains("bench")
+    });
     session.clients[0]
         .init_resource::<Crafts>()
         .add_systems(Update, count_crafts);
@@ -883,6 +910,7 @@ fn a_client_crafts_from_the_pack_the_host_keeps() {
     session.clients[0].world_mut().write_message(CraftRequest {
         recipe: recipe.id.clone(),
         bpm,
+        bench: Some("campfire-built-1".into()),
     });
     session.until(3.0, "the craft at the client", |s| {
         held(&s.clients[0], &output) == before + recipe.outputs[0].quantity

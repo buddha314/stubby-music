@@ -2,8 +2,12 @@
 //! Craft Bench. E at a burning campfire opens it (`stubby_core::CraftBench`): a framed
 //! window with a title bar (the bench and the tempo it hears), the recipes on the left,
 //! and on the right the selected one: its tempo range against the bench's, each input as
-//! `have / need` (amber when enough), the output, a craft button (click makes one, holding
-//! repeats, `x N` counts the hold) and a pin for the goals hub. A Rack tab opens the
+//! `have / need` (amber when enough), the output, a craft button and a pin for the goals
+//! hub. A recipe made by hand (`by_hand`, add-crafting-durations) fills a progress bar while
+//! CRAFT is held or Space latches it, in quarter-second steps; a full bar makes one and
+//! starts again while held and the inputs last. Letting go pauses; changing recipe or
+//! closing empties it, as does a craft becoming impossible. A recipe made at once crafts on
+//! the click, and holding repeats. `x N` counts the hold. A Rack tab opens the
 //! bench's rack, so the music can still be changed; E or Escape closes it. The screen only
 //! sends `CraftRequest` with the bench's tempo: the rules live in `stubby_recipes`.
 use bevy::picking::events::{PointerClick, PointerOut, PointerOver, PointerPress};
@@ -22,8 +26,10 @@ const REPEAT_EVERY_S: f32 = 0.2;
 pub struct CraftingScreenPlugin;
 impl Plugin for CraftingScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Crafting>()
-            .add_systems(Update, (count_crafts, hold_to_craft, rebuild).chain());
+        app.init_resource::<Crafting>().add_systems(
+            Update,
+            (count_crafts, latch, hold_to_craft, rebuild, show_bar).chain(),
+        );
     }
 }
 
@@ -36,7 +42,34 @@ struct Crafting {
     held: Option<f32>,
     /// Crafts made in this hold (`x N`).
     made: u32,
+    /// How far the selected hand craft has got, in seconds.
+    progress: f32,
+    /// Space keeps a hand craft going without holding the button.
+    latched: bool,
 }
+
+/// Quarter-second steps of the craft bar (add-crafting-durations D2).
+const BAR_STEP_S: f32 = 0.25;
+
+/// One frame of a hand craft taking `seconds`: how far it has got, and whether it made one.
+/// `working`: CRAFT held or Space latched; `can`: the inputs (and the tempo) are there.
+fn advance(progress: f32, dt: f32, working: bool, can: bool, seconds: f32) -> (f32, bool) {
+    if !can {
+        return (0., false); // impossible now: stop, empty
+    }
+    if !working {
+        return (progress, false); // paused
+    }
+    let now = progress + dt;
+    if now >= seconds {
+        (0., true) // made one; holding on starts the next
+    } else {
+        (now, false)
+    }
+}
+
+#[derive(Component)]
+struct CraftBarFill;
 
 #[derive(Component)]
 struct CraftRoot;
@@ -86,45 +119,131 @@ fn send_craft(
     crafting: &Crafting,
     bench: Entity,
     clocks: &Query<&AssetClock>,
+    placed: &Query<&PlacedAsset>,
     crafts: &mut MessageWriter<CraftRequest>,
 ) {
     if let Some(recipe) = &crafting.selected {
         crafts.write(CraftRequest {
             recipe: recipe.clone(),
             bpm: bench_bpm(clocks, bench),
+            bench: placed.get(bench).ok().map(|p| p.instance.clone()),
         });
+    }
+}
+
+/// The selected recipe's hand-craft time, if it is made by hand.
+fn hand_seconds(crafting: &Crafting, catalog: Option<&RecipeCatalog>) -> Option<f32> {
+    let id = crafting.selected.as_deref()?;
+    catalog?
+        .0
+        .recipes()
+        .find(|r| r.id == id)?
+        .by_hand
+        .map(|hand| hand.seconds)
+}
+
+/// Space latches a hand craft on and off while the bench is open.
+fn latch(
+    keys: Res<ButtonInput<KeyCode>>,
+    screens: Res<ScreenMode>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut crafting: ResMut<Crafting>,
+) {
+    if bench(&screens).is_none() {
+        if crafting.latched || crafting.progress > 0. {
+            crafting.latched = false;
+            crafting.progress = 0.;
+        }
+        return;
+    }
+    // Opened with nothing chosen, the first recipe is, as Satisfactory's bench does.
+    if crafting.selected.is_none()
+        && let Some(first) = catalog.as_ref().and_then(|c| c.0.recipes().next())
+    {
+        crafting.selected = Some(first.id.clone());
+    }
+    if keys.just_pressed(KeyCode::Space) && hand_seconds(&crafting, catalog.as_deref()).is_some() {
+        crafting.latched = !crafting.latched;
+        if crafting.latched {
+            crafting.made = 0;
+        }
+    }
+}
+
+fn show_bar(
+    crafting: Res<Crafting>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut fills: Query<&mut Node, With<CraftBarFill>>,
+) {
+    let Some(seconds) = hand_seconds(&crafting, catalog.as_deref()) else {
+        return;
+    };
+    for mut fill in &mut fills {
+        stubby_ui::show_progress(&mut fill, crafting.progress, seconds, Some(BAR_STEP_S));
     }
 }
 
 /// `x N`: crafts of the selected recipe made during this hold.
 fn count_crafts(mut crafting: ResMut<Crafting>, mut done: MessageReader<CraftCompleted>) {
     for craft in done.read() {
-        if crafting.held.is_some() && crafting.selected.as_deref() == Some(craft.recipe.as_str()) {
+        if (crafting.held.is_some() || crafting.latched)
+            && crafting.selected.as_deref() == Some(craft.recipe.as_str())
+        {
             crafting.made += 1;
         }
     }
 }
 
-/// Holding the craft button crafts again after a moment, then steadily; letting go stops.
+/// Holding the craft button: a hand craft fills its bar and makes one when it is full;
+/// a craft made at once repeats after a moment, then steadily. Letting go stops (a hand
+/// craft pauses, unless Space latched it).
+#[allow(clippy::too_many_arguments)]
 fn hold_to_craft(
     time: Res<Time<Real>>,
     buttons: Res<ButtonInput<MouseButton>>,
     screens: Res<ScreenMode>,
     clocks: Query<&AssetClock>,
+    placed: Query<&PlacedAsset>,
+    catalog: Option<Res<RecipeCatalog>>,
+    player: Res<PlayerInventory>,
     mut crafting: ResMut<Crafting>,
     mut crafts: MessageWriter<CraftRequest>,
 ) {
-    let Some(held) = crafting.held else {
+    let Some(bench) = bench(&screens) else {
+        crafting.held = None;
         return;
     };
-    let Some(bench) = bench(&screens).filter(|_| buttons.pressed(MouseButton::Left)) else {
+    if crafting.held.is_some() && !buttons.pressed(MouseButton::Left) {
         crafting.held = None;
+    }
+    if let Some(seconds) = hand_seconds(&crafting, catalog.as_deref()) {
+        let can = catalog
+            .as_ref()
+            .and_then(|c| {
+                let id = crafting.selected.as_deref()?;
+                c.0.recipes().find(|r| r.id == id)
+            })
+            .is_some_and(|recipe| makeable(recipe, &player, bench_bpm(&clocks, bench)));
+        let working = crafting.held.is_some() || crafting.latched;
+        let (progress, made) = advance(crafting.progress, time.delta_secs(), working, can, seconds);
+        if progress != crafting.progress {
+            crafting.progress = progress;
+        }
+        if !can && crafting.latched {
+            crafting.latched = false;
+        }
+        if made {
+            send_craft(&crafting, bench, &clocks, &placed, &mut crafts);
+        }
+        return;
+    }
+    let Some(held) = crafting.held else {
         return;
     };
     let now = held + time.delta_secs();
     let repeats = |t: f32| ((t - REPEAT_AFTER_S) / REPEAT_EVERY_S).floor().max(-1.) as i32;
     if now >= REPEAT_AFTER_S && repeats(now) > repeats(held) {
-        send_craft(&crafting, bench, &clocks, &mut crafts);
+        send_craft(&crafting, bench, &clocks, &placed, &mut crafts);
     }
     crafting.held = Some(now);
 }
@@ -400,6 +519,26 @@ fn rebuild(
                                         ));
                                     })
                                     .observe(press_craft);
+                                    if let Some(hand) = recipe.by_hand {
+                                        row.spawn(Node {
+                                            flex_direction: FlexDirection::Column,
+                                            row_gap: px(4),
+                                            ..default()
+                                        })
+                                        .with_children(
+                                            |bar| {
+                                                stubby_ui::progress_bar(bar, 160., CraftBarFill);
+                                                bar.spawn(text(
+                                                    format!(
+                                                        "{} s by hand: hold CRAFT or Space",
+                                                        hand.seconds
+                                                    ),
+                                                    12.,
+                                                    MUTED,
+                                                ));
+                                            },
+                                        );
+                                    }
                                     if crafting.made > 0 {
                                         row.spawn(text(format!("x {}", crafting.made), 18., AMBER));
                                     }
@@ -499,6 +638,10 @@ fn unhover(out: On<PointerOut>, mut borders: Query<&mut BorderColor, Without<Rec
 
 fn choose(click: On<PointerClick>, buttons: Query<&RecipeButton>, mut crafting: ResMut<Crafting>) {
     if let Ok(RecipeButton(id)) = buttons.get(click.entity) {
+        if crafting.selected.as_deref() != Some(id.as_str()) {
+            crafting.progress = 0.;
+            crafting.latched = false;
+        }
         crafting.selected = Some(id.clone());
         crafting.made = 0;
     }
@@ -513,6 +656,8 @@ fn press_craft(
     _: On<PointerPress>,
     screens: Res<ScreenMode>,
     clocks: Query<&AssetClock>,
+    placed: Query<&PlacedAsset>,
+    catalog: Option<Res<RecipeCatalog>>,
     mut crafting: ResMut<Crafting>,
     mut crafts: MessageWriter<CraftRequest>,
 ) {
@@ -521,7 +666,10 @@ fn press_craft(
     };
     crafting.made = 0;
     crafting.held = Some(0.);
-    send_craft(&crafting, bench, &clocks, &mut crafts);
+    // A hand craft starts filling its bar; one made at once is made now.
+    if hand_seconds(&crafting, catalog.as_deref()).is_none() {
+        send_craft(&crafting, bench, &clocks, &placed, &mut crafts);
+    }
 }
 
 fn pin(_: On<PointerClick>, crafting: Res<Crafting>, mut goals: MessageWriter<GoalRequest>) {
@@ -542,6 +690,32 @@ fn open_rack(click: On<PointerClick>, tabs: Query<&RackTab>, mut screens: ResMut
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// add-crafting-durations 3.5: holding fills the bar, letting go pauses it, holding
+    /// again resumes, a full bar makes one and starts over, and an impossible craft empties.
+    #[test]
+    fn a_hand_craft_fills_pauses_resumes_and_makes_one() {
+        let seconds = 0.75;
+        let (p, made) = advance(0., 0.5, true, true, seconds);
+        assert_eq!((p, made), (0.5, false), "held: it fills");
+        let (p, made) = advance(p, 1.0, false, true, seconds);
+        assert_eq!((p, made), (0.5, false), "let go: it waits");
+        let (p, made) = advance(p, 0.25, true, true, seconds);
+        assert_eq!(
+            (p, made),
+            (0., true),
+            "held again: full, one made, the next begins"
+        );
+        let (p, made) = advance(0.5, 0.1, true, false, seconds);
+        assert_eq!((p, made), (0., false), "inputs gone: it stops and empties");
+        // The bar shows whole quarter seconds: 0.6 s of 0.75 s shows 0.5 s.
+        let mut fill = Node::default();
+        stubby_ui::show_progress(&mut fill, 0.6, seconds, Some(BAR_STEP_S));
+        let Val::Percent(shown) = fill.width else {
+            panic!("a percentage: {:?}", fill.width);
+        };
+        assert!((shown - 200. / 3.).abs() < 1e-3, "two thirds: {shown}");
+    }
 
     /// A recipe is makeable with its inputs held and the bench's tempo in its range.
     #[test]
