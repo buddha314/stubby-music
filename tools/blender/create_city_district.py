@@ -31,6 +31,10 @@ import sys
 import bpy
 from mathutils import Euler, Matrix, Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from city_layout import Frame, Layout  # noqa: E402
+from city_mixed import furnished_home, mixed_block  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "assets-src/blender/structures/city"
 MANIFEST = json.loads((ROOT / "docs/art/city-kit/manifest.json").read_text())
@@ -50,43 +54,6 @@ def srgb(h):
 
 
 # ====================================================================== layout
-
-
-class Layout:
-    """Placements: (asset id, world position, rotation about Z in degrees, group)."""
-
-    def __init__(self):
-        self.items = []
-        self.masses = []      # blockout boxes: (name, min, max, group)
-        self.dancers = []     # (shape, tone, pos, rot, clip)
-        self.rng = random.Random(4)
-
-    def put(self, aid, pos, rot=0.0, group="District", frame=None):
-        if aid not in MANIFEST:
-            raise KeyError(aid)
-        if frame:
-            pos, rot = frame.world(pos, rot)
-        self.items.append({"id": aid, "pos": [round(c, 4) for c in pos], "rot": round(rot % 360, 4), "group": group})
-
-    def mass(self, name, mn, mx, frame=None, group="Blockout"):
-        if frame:
-            a, _ = frame.world(mn, 0)
-            b, _ = frame.world(mx, 0)
-            mn = [min(a[i], b[i]) for i in range(3)]
-            mx = [max(a[i], b[i]) for i in range(3)]
-        self.masses.append((name, list(mn), list(mx), group))
-
-
-class Frame:
-    def __init__(self, origin, rot):
-        self.o = Vector(origin)
-        self.rot = rot
-
-    def world(self, pos, rot):
-        r = math.radians(self.rot)
-        x, y, z = pos
-        return (self.o.x + x * math.cos(r) - y * math.sin(r), self.o.y + x * math.sin(r) + y * math.cos(r),
-                self.o.z + z), self.rot + rot
 
 
 # ---------------------------------------------------------------------- buildings
@@ -339,8 +306,10 @@ def build_layout():
         L.put("city_glow_bell", (x, y, 0))
     for k, (x, y) in enumerate(((119, 2), (119, 10), (119, 30))):
         L.put("city_glow_vein_leaf", (x, y, 0.52), 180)
-    L.put("city_pergola", (92, -12, 0))
+    L.put("city_pergola", (116, -8, 0))
     L.put("city_pergola", (120, 40, 0), 90)
+
+    residential(L, occupy)
 
     # Keep the plaza's features clear of the greening below.
     occupy(96, 4, 100, 28)       # seating
@@ -391,6 +360,58 @@ def build_layout():
     # ---------------------------------------------------------- planting at sockets
     dress(L)
     return L
+
+
+def residential(L, occupy):
+    """The mixed-use neighbourhood (docs/art/city-residential.md): shops on the street,
+    offices above, homes above those, shared roof gardens. Four building types from one
+    kit, on ground the first district left as open paving."""
+    g = "Residential"
+    # 1. The street wall on the canal: north bank, between Block E and the gallery.
+    F = Frame((40, 13, 0), 0)
+    demo = [(3, 0, 2), (4, 2, 1), (5, 0, 3)]
+    mixed_block(L, F, 4, 3, ["shop", "office", "office", "home", "home", "home", "home", "home"],
+                seed=21, group=g, lobby=3, core=("back", 1), demo=demo)
+    for s, i0, n in demo:
+        furnished_home(L, F, s, i0, n, 3, group=g, seed=s)
+    occupy(40, 13, 56, 29)
+    # 2. The rounded-corner block facing the plaza and the canal's bend, a courtyard behind.
+    F = Frame((100, -12, 0), 180)
+    mixed_block(L, F, 5, 4, ["shop", "office", "home", "home", "home", "home", "home", "home"],
+                seed=22, group=g, corners="round", lobby=2, core="east")
+    occupy(76, -28, 100, -12)
+    for k, (x, y) in enumerate(((84, -32), (92, -32))):
+        L.put("city_raised_beds", (x, y, 0), 0, g)
+    L.put("city_communal_table", (88, -29.5, 0), 0, g)
+    for x in (80.5, 97.5):
+        L.put("city_tree", (x, -32.5, 0), x * 7, g)
+    L.put("city_pergola", (78, -36, 0), 0, g)
+    # 3. The stepped garden tower and 4. the taller tower, on a new inland street (y 31-36)
+    # with a shared courtyard between them.
+    F = Frame((4, 36, 0), 0)
+    mixed_block(L, F, 3, 3, ["shop", "office"] + ["home"] * 8, seed=23, group=g, lobby=0,
+                setbacks={4: 1, 7: 2}, core="east")
+    F = Frame((24, 36, 0), 0)
+    mixed_block(L, F, 3, 3, ["shop", "office", "office"] + ["home"] * 9, seed=24, group=g, lobby=2,
+                core="west", balcony_rate=0.7)
+    occupy(4, 36, 36, 48)
+    for x, y in ((18, 38.5), (21.5, 38.5)):
+        L.put("city_raised_beds", (x, y, 0), 90, g)
+    L.put("city_communal_table", (20, 41.5, 0), 0, g)
+    for x in (2, 14, 30, 38):
+        L.put("city_tree", (x, 33.6, 0), x * 13, g)
+    for x in (8, 26, 34):
+        L.put("city_bench", (x, 32.2, 0), 0, g)
+    for x in (11, 37):
+        L.put("city_glow_bell", (x, 33.4, 0), x, g)
+    L.put("city_sign", (1.5, 33.5, 0), 90, g)
+    # A distant skyline of ordinary towers (cheap far storeys), beyond the district.
+    rng = random.Random(9)
+    for x, y in ((-70, 130), (10, 160), (95, 140), (180, 95), (215, -30), (170, -125), (60, -150),
+                 (-40, -140), (-130, 30), (-120, -60)):
+        for s in range(rng.randint(10, 20)):
+            L.put("city_far_tower_storey", (x, y, 4.0 * s), 0, "Skyline")
+        L.put("city_roof_planted_4", (x - 2, y - 2, 4.0 * (s + 1)), 0, "Skyline")
 
 
 ACCEPT = {"small": ("city_grass", "city_agave", "city_grass", "city_shrub"),
@@ -462,6 +483,19 @@ def test_strip(L):
         L.put("city_paving_4", (x, -4, 0), 0, g, Fs)
     L.put("city_curb_corner", (0, -4, 0), 0, g, Fs)
     L.put("city_plaza_steps_4", (12, -4, -1), 0, g, Fs)
+    # Mixed use: every ground and upper bay type in one row (interchangeable on the same grid),
+    # then a small block with a pier corner and a rounded corner, stacked shop/office/homes.
+    Fm = Frame((F0[0] + 70, F0[1] - 6, 0), 0)
+    row = ("city_shop_glazed", "city_shop_cafe", "city_res_entry", "city_office_glazed", "city_office_service",
+           "city_res_slider", "city_res_slider_b", "city_res_loggia", "city_res_window_pair",
+           "city_res_window_pair_b", "city_res_privacy", "city_res_door")
+    for i, aid in enumerate(row):
+        L.put("city_slab_4", (4 * i, 0, 0), 0, g, Fm)
+        L.put(aid, (4 * i, 0, 0), 0, g, Fm)
+    L.put("city_facade_end", (0, 0, 0), 0, g, Fm)
+    L.put("city_facade_end", (4 * len(row), 0, 0), 0, g, Fm)
+    mixed_block(L, Frame((F0[0] + 70, F0[1] + 4, 0), 0), 3, 2, ["shop", "office", "home", "home"],
+                seed=5, group=g, corners="round", lobby=1, core="east")
 
 
 # ====================================================================== Blender scene
@@ -598,6 +632,12 @@ CAMERAS = {
     "Rooftop-Overview": ((125.0, -85.0, 62.0), (45.0, 8.0, 0.0), 30),
     "Night-View": ((49.0, 6.2, 1.65), (90.0, 14.0, 5.0), 28),
     "Test-Strip": ((22.0, -136.0, 28.0), (27.0, -95.0, 1.0), 28),
+    "Res-Street-Up": ((9.0, 31.4, 1.65), (11.0, 48.0, 13.0), 16),
+    "Res-Canal-Stack": ((47.0, -10.5, 1.65), (48.0, 16.0, 15.0), 18),
+    "Res-Balcony": ((25.0, 34.6, 25.6), (10.0, 38.0, 21.0), 24),
+    "Res-Overview": ((-34.0, -30.0, 62.0), (44.0, 20.0, 8.0), 28),
+    "Res-Corner": ((104.0, 2.0, 1.65), (90.0, -14.0, 12.0), 22),
+    "Res-Test-Strip": ((86.0, -130.0, 14.0), (100.0, -100.0, 5.0), 28),
 }
 
 
@@ -694,12 +734,11 @@ def glare(scene):
         return False
 
 
-def write_bsn(L):
+def write_bsn(L, name="city", lift=JACKDAW_LIFT, header=None):
     """The layout as a Jackdaw review scene, every piece an IsA of its prefab."""
-    lines = ["// Asset review: the City kit's reference district (create_city_district.py). Not a level.",
-             f"// Lifted {JACKDAW_LIFT} m so the canal's bed sits on the ground; the canal is below the",
-             "// promenade, and the game's ground has no cut for it yet.",
-             "bevy_ecs::hierarchy::Children ["]
+    lines = (header or ["// Asset review: the City kit's reference district (create_city_district.py). Not a level.",
+                        f"// Lifted {lift} m so the canal's bed sits on the ground; the canal is below the",
+                        "// promenade, and the game's ground has no cut for it yet."]) + ["bevy_ecs::hierarchy::Children ["]
     entries = []
     for k, it in enumerate(L.items):
         if it["group"] == "Test-Strip":
@@ -710,7 +749,7 @@ def write_bsn(L):
             f'    #"{it["id"]} {k}"',
             f'    jackdaw::prefab::components::IsA {{ source: "structures/city/{it["id"]}/{it["id"]}.bsn", deleted: [] }}',
             "    jackdaw::prefab::components::PrefabEntityId(0)",
-            f"    bevy_transform::components::transform::Transform {{ translation: glam::Vec3 {{ x: {x:.6f}, y: {z + JACKDAW_LIFT:.6f}, z: {-y:.6f} }}, "
+            f"    bevy_transform::components::transform::Transform {{ translation: glam::Vec3 {{ x: {x:.6f}, y: {z + lift:.6f}, z: {-y:.6f} }}, "
             f"rotation: glam::Quat {{ x: 0.000000, y: {math.sin(a / 2):.6f}, z: 0.000000, w: {math.cos(a / 2):.6f} }} }}",
         ])
     for k, (shape, tone, (x, y, z), r, clip) in enumerate(L.dancers):
@@ -720,7 +759,7 @@ def write_bsn(L):
             f'    #"Dancer {shape} {tone} {k}"',
             f'    jackdaw::prefab::components::IsA {{ source: "characters/dancers/dancer_{shape}/dancer_{shape}.bsn", deleted: [] }}',
             "    jackdaw::prefab::components::PrefabEntityId(0)",
-            f"    bevy_transform::components::transform::Transform {{ translation: glam::Vec3 {{ x: {x:.6f}, y: {z + JACKDAW_LIFT:.6f}, z: {-y:.6f} }}, "
+            f"    bevy_transform::components::transform::Transform {{ translation: glam::Vec3 {{ x: {x:.6f}, y: {z + lift:.6f}, z: {-y:.6f} }}, "
             f"rotation: glam::Quat {{ x: 0.000000, y: {math.sin(a / 2):.6f}, z: 0.000000, w: {math.cos(a / 2):.6f} }} }}",
             f'    stubby_world::prefab_presentation::MaterialTint {{ material: "Dancer_Skin", srgb: [{rgb}] }}',
         ])
@@ -729,7 +768,7 @@ def write_bsn(L):
         body += e
         if i < len(entries) - 1:
             body.append("    --")
-    (ROOT / "assets/world/asset_reviews/city.bsn").write_text("\n".join(lines + body + ["]"]) + "\n")
+    (ROOT / f"assets/world/asset_reviews/{name}.bsn").write_text("\n".join(lines + body + ["]"]) + "\n")
 
 
 def main():
@@ -755,7 +794,7 @@ def main():
     root = scene.collection
     kit = link_kit({it["id"] for it in L.items})
     groups = {}
-    for g in ("District", "Planting", "Test-Strip"):
+    for g in ("District", "Planting", "Test-Strip", "Residential", "Skyline"):
         c = bpy.data.collections.new(g)
         root.children.link(c)
         groups[g] = c
@@ -768,7 +807,7 @@ def main():
         instance(f"Dancer-{shape}-{tone}", dancers[(shape, tone)], pos, r, dcoll)
     ctx = context_ground(root)
     blk = blockout(L, root)
-    shared = [groups["District"], groups["Planting"], groups["Test-Strip"], dcoll, ctx, blk]
+    shared = [groups[g] for g in ("District", "Planting", "Test-Strip", "Residential", "Skyline")] + [dcoll, ctx, blk]
     for c in list(root.children):
         if c in shared:
             root.children.unlink(c)
@@ -787,7 +826,10 @@ def main():
     PREVIEWS.mkdir(parents=True, exist_ok=True)
     plan = [("Approach-Reveal", "Day"), ("Approach-Reveal", "Dusk"), ("Canal-Eye", "Day"), ("Canal-Eye", "Dusk"),
             ("Civic-Plaza", "Day"), ("Civic-Plaza", "Night"), ("Rooftop-Overview", "Day"),
-            ("Night-View", "Night"), ("Test-Strip", "Day")]
+            ("Night-View", "Night"), ("Test-Strip", "Day"),
+            ("Res-Canal-Stack", "Day"), ("Res-Canal-Stack", "Dusk"), ("Res-Canal-Stack", "Night"),
+            ("Res-Street-Up", "Day"), ("Res-Street-Up", "Dusk"), ("Res-Balcony", "Day"), ("Res-Balcony", "Night"),
+            ("Res-Overview", "Day"), ("Res-Overview", "Dusk"), ("Res-Corner", "Day"), ("Res-Test-Strip", "Day")]
     only = [a for a in args if a != "norender"]
     for cam, light in plan:
         if only and cam not in only:

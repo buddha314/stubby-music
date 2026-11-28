@@ -72,7 +72,7 @@ PALETTE = {
     "Timber": "#8a7a62",       # sawn heartwood decks and doors
     "Titanium": "#b8bcc2",
     "Graphene": "#1a1c1f",
-    "Glass": "#7fa6a3",
+    "Glass": "#b9d3cf",      # clear, faintly green: rooms behind it must read
     "Soil": "#302116",
     "Moss": "#3f5a24",
     "Leaf": "#4f6a2a",
@@ -91,6 +91,18 @@ PALETTE = {
     "Green": "#8cd933",
     "Bulb": "#ecd8e3",         # pale lantern bulbs (the fairy-light language)
     "Amber": "#ffb350",        # machine signal: machines only
+    # Domestic and commercial (the residential expansion, docs/art/city-residential.md)
+    "InteriorWall": "#e9dfcf", # warm limewash inside rooms
+    "Linen": "#e8dcc6",        # curtains, bedding
+    "Coral": "#c96d74",        # textile tints: the Dancers' skin palette, reused for cloth
+    "Teal": "#4f9d88",
+    "Violet": "#8878ab",
+    "Ochre": "#b8892f",        # the cable palette's ochre, verdigris and slate
+    "Verdigris": "#3f7a6e",
+    "Slate": "#4b5a78",
+    "Rust": "#9c3b2a",
+    "Railing": "#2b2a2e",      # dark forged balcony rails
+    "Hearth": "#ffd2a1",       # warm domestic lamplight: paler than the amber signal
 }
 
 
@@ -202,7 +214,7 @@ class Piece:
     def timber(self): return self.mat("Timber", "wood", roughness=0.75)
     def titanium(self): return self.mat("Titanium", "metal", metallic=1.0, roughness=0.32)
     def graphene(self): return self.mat("Graphene", "metal", metallic=0.7, roughness=0.15)
-    def glass(self): return self.mat("Glass", "glass", metallic=0.0, roughness=0.05, alpha=0.35)
+    def glass(self): return self.mat("Glass", "glass", metallic=0.0, roughness=0.05, alpha=0.18)
     def soil(self): return self.mat("Soil", "gravel", roughness=1.0)
     def moss(self): return self.mat("Moss", "gravel", roughness=0.95)
     def leaf(self): return self.mat("Leaf", None, roughness=0.75, double=True)
@@ -216,6 +228,87 @@ class Piece:
     def mud(self): return self.mat("Mud", "gravel", roughness=0.95, double=True)
     def crust(self): return self.mat("Crust", "gravel", roughness=1.0)
     def canvas(self): return self.mat("Canvas", "carpet", roughness=0.9, double=True)
+
+    def interior(self): return self.mat("InteriorWall", "brick", roughness=0.9)
+    def railing(self): return self.mat("Railing", "metal", metallic=0.6, roughness=0.5)
+
+    def fabric(self, colour, acoustic="carpet"):
+        """Cloth (curtains, awnings, upholstery, bedding): double-sided, carpet acoustically."""
+        return self.mat(f"Fabric{colour}", acoustic, roughness=0.95, color=PALETTE[colour], double=True)
+
+    def hearth(self):
+        """Warm domestic lamplight: a core and its halo, authored at peak, dimmed by the game
+        by day. Paler than the machine amber, which stays the signal colour."""
+        core = self.mat("Hearth", None, roughness=0.4, emission=PALETTE["Hearth"], strength=14.0)
+        halo = self.mat("HearthHalo", None, roughness=0.3, emission=PALETTE["Hearth"], strength=1.6,
+                        alpha=0.22, color=PALETTE["Hearth"])
+        self.lights[core.name] = "warm domestic lamplight, emissive at peak; the game dims it by day"
+        self.lights[halo.name] = "its halo shell (alpha 0.22)"
+        return core, halo
+
+    def curved_wall(self, name, centre, r_out, r_in, a0, a1, z0, z1, mat, openings=(), glass=None,
+                    seg=12, frame=None):
+        """A wall on an arc about `centre` (XY), from angle a0 to a1 (radians), z0..z1, with
+        openings [(t0, t1, zb, zt)] given as fractions of the arc. Glass sits mid-wall."""
+        cx, cy = centre
+
+        def pt(r, a, z):
+            return (cx + r * math.cos(a), cy + r * math.sin(a), z)
+
+        def fill(bm):
+            for i in range(seg):
+                t0, t1 = i / seg, (i + 1) / seg
+                aa, ab = a0 + (a1 - a0) * t0, a0 + (a1 - a0) * t1
+                holes = sorted((zb, zt) for s0, s1, zb, zt in openings if s0 <= (t0 + t1) / 2 <= s1)
+                spans, z = [], z0
+                for zb, zt in holes:
+                    if zb > z:
+                        spans.append((z, zb))
+                    z = max(z, zt)
+                if z < z1:
+                    spans.append((z, z1))
+                for za, zb in spans:
+                    o = [bm.verts.new(pt(r_out, a, zz)) for a, zz in ((aa, za), (ab, za), (ab, zb), (aa, zb))]
+                    n = [bm.verts.new(pt(r_in, a, zz)) for a, zz in ((aa, za), (ab, za), (ab, zb), (aa, zb))]
+                    bm.faces.new(o)
+                    bm.faces.new(n[::-1])
+                    bm.faces.new((o[0], o[1], n[1], n[0]))
+                    bm.faces.new((o[3], n[3], n[2], o[2]))
+                for k, (zb, zt) in enumerate(holes):   # opening reveals: sill and head
+                    pass
+            for ends, a in ((0, a0), (1, a1)):
+                o = [bm.verts.new(pt(r, a, zz)) for r, zz in ((r_out, z0), (r_in, z0), (r_in, z1), (r_out, z1))]
+                bm.faces.new(o)
+        self.mesh(name, fill, mat)
+        if glass is not None:
+            rg = (r_out + r_in) / 2
+            for k, (s0, s1, zb, zt) in enumerate(openings):
+                def pane(bm, s0=s0, s1=s1, zb=zb, zt=zt):
+                    n = max(2, int(seg * (s1 - s0)) + 1)
+                    rows = []
+                    for i in range(n + 1):
+                        a = a0 + (a1 - a0) * (s0 + (s1 - s0) * i / n)
+                        rows.append((bm.verts.new(pt(rg, a, zb)), bm.verts.new(pt(rg, a, zt))))
+                    for (p0, p1), (q0, q1) in zip(rows, rows[1:]):
+                        bm.faces.new((p0, q0, q1, p1))
+                self.mesh(f"{name}Glass{k}", pane, glass)
+                if frame is not None:
+                    for i in range(max(2, int(seg * (s1 - s0))) + 1):
+                        a = a0 + (a1 - a0) * (s0 + (s1 - s0) * i / max(2, int(seg * (s1 - s0))))
+                        self.tube(f"{name}Mullion{k}_{i}", [pt(rg, a, zb), pt(rg, a, zt)], 0.03, frame,
+                                  sides=4, small=True)
+
+    def sector(self, name, centre, r_out, r_in, a0, a1, z0, z1, mat, seg=12, **kw):
+        """An annular sector (r_in may be 0 for a pie slice) extruded z0..z1."""
+        cx, cy = centre
+        outer = [(cx + r_out * math.cos(a0 + (a1 - a0) * i / seg), cy + r_out * math.sin(a0 + (a1 - a0) * i / seg))
+                 for i in range(seg + 1)]
+        if r_in > 1e-6:
+            inner = [(cx + r_in * math.cos(a0 + (a1 - a0) * i / seg), cy + r_in * math.sin(a0 + (a1 - a0) * i / seg))
+                     for i in range(seg, -1, -1)]
+        else:
+            inner = [(cx, cy)]
+        return self.plan(name, outer + inner, z0, z1, mat, **kw)
 
     def glow(self, colour, what="breathes with the audio clock"):
         """A luminous core (opaque, emissive at peak) and its halo shell material."""
