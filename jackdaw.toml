@@ -11,6 +11,17 @@ bevy_rev = "526f9e40253348a52a0d0380db98e287e4b5e0b3"
 name = "Desert opening"
 args = ["--seed=42"]
 
+# Multiplayer over local UDP (add-multiplayer-and-menus): start Host, then Join (two
+# clients), for a three-player session on this machine. Every peer uses the same seed.
+[[run]]
+name = "Host"
+args = ["--seed=42", "--host"]
+
+[[run]]
+name = "Join"
+instances = 2
+args = ["--seed=42", "--join", "127.0.0.1"]
+
 [[run]]
 name = "Desert opening + audio demo"
 args = ["--seed=42", "--audio-demo"]

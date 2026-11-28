@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 default-members = ["crates/stubby_jackdaw"]
-members = ["crates/stubby_audio", "crates/stubby_core", "crates/stubby_ui", "crates/bevy_stubby_audio", "crates/stubby_player", "crates/stubby_life", "crates/bevy_stubby_rack", "crates/stubby_world", "crates/stubby_streams", "crates/stubby_rack", "crates/stubby_game", "crates/stubby_recipes", "crates/stubby_economy", "crates/bevy_stubby_recipes", "crates/stubby_jackdaw", "crates/stubby_rules_server"]
+members = ["crates/stubby_audio", "crates/stubby_core", "crates/stubby_net", "crates/stubby_ui", "crates/bevy_stubby_audio", "crates/stubby_player", "crates/stubby_life", "crates/bevy_stubby_rack", "crates/stubby_world", "crates/stubby_streams", "crates/stubby_rack", "crates/stubby_game", "crates/stubby_recipes", "crates/stubby_economy", "crates/bevy_stubby_recipes", "crates/stubby_jackdaw", "crates/stubby_rules_server"]
 # Both game entry points and the crafting adapter follow shared Jackdaw.
 exclude = ["spikes"]
 
@@ -20,6 +20,10 @@ avian3d = { version = "~0.8.0", default-features = false, features = ["3d", "par
 # Bevy-main release: [patch.crates-io] swaps in our forks (bevy_main_forks.json).
 bevy_enhanced_input = "0.27.2"
 bevy_ahoy = "0.3.0"
+# Multiplayer (add-multiplayer-and-menus): host-server and clients with prediction, as the
+# us-outpost-31 template uses it. Every lightyear crate comes from our Bevy-main fork of its
+# workspace ([patch.crates-io]). Steam's transport joins with phase 5.
+lightyear = { version = "0.31.0", default-features = false, features = ["std", "client", "server", "replication", "prediction", "interpolation", "frame_interpolation", "udp", "netcode", "crossbeam", "input_bei", "avian3d"] }
 
 # Jackdaw crates from the buddha314 fork, at the revision compatibility.json records
 # (tools/jackdaw.sh sync rewrites `rev`; tools/jackdaw.sh link builds against ~/src/jackdaw).
@@ -46,5 +50,29 @@ bevy_transform_interpolation = { git = "https://github.com/buddha314/bevy_transf
 bevy_enhanced_input = { git = "https://github.com/buddha314/bevy_enhanced_input", branch = "bevy-main" }
 bevy_ahoy = { git = "https://github.com/buddha314/bevy_ahoy", branch = "bevy-main" }
 avian_pickup = { git = "https://github.com/buddha314/avian_pickup", branch = "bevy-main" }
+avian2d = { git = "https://github.com/buddha314/avian", branch = "bevy-main" }
+lightyear = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_aeronet = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_avian3d = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_connection = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_core = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_frame_interpolation = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_inputs = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_inputs_bei = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_interpolation = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_link = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_messages = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_netcode = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_p2p = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_prediction = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_replication = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_serde = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_sync = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_transport = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_udp = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+lightyear_utils = { git = "https://github.com/buddha314/lightyear", branch = "bevy-main" }
+bevy_replicon = { git = "https://github.com/buddha314/bevy_replicon", branch = "bevy-main" }
+aeronet_io = { git = "https://github.com/buddha314/aeronet", branch = "bevy-main" }
+leafwing-input-manager = { git = "https://github.com/buddha314/leafwing-input-manager", branch = "bevy-main" }
 glam_matrix_extras = { git = "https://github.com/buddha314/glam_matrix_extras", branch = "bevy-main" }
 bevy_mod_outline = { git = "https://github.com/buddha314/bevy_mod_outline", branch = "bevy-main" }

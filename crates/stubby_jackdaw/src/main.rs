@@ -32,9 +32,26 @@ fn main() -> AppExit {
     }
     // A plain launch opens the main menu; loading lasts until the scene is in
     // (add-multiplayer-and-menus).
-    if !phase_review && stubby_jackdaw::menus::StartAtMenu::wanted(std::env::args()) {
+    let start_at_menu =
+        !phase_review && stubby_jackdaw::menus::StartAtMenu::wanted(std::env::args());
+    if start_at_menu {
         app.insert_resource(stubby_jackdaw::menus::StartAtMenu);
     }
+    // `--host [PORT]` or `--join ADDR`; the menu loads both roles so it can start either.
+    use stubby_jackdaw::net::NetMode;
+    let fallback = if start_at_menu {
+        NetMode::Menu
+    } else {
+        NetMode::Offline
+    };
+    let mode = match NetMode::from_args(std::env::args(), fallback) {
+        Ok(mode) => mode,
+        Err(error) => {
+            eprintln!("{error}");
+            return AppExit::error();
+        }
+    };
+    app.insert_resource(mode);
     if !legacy_review {
         app.insert_resource(stubby_jackdaw::menus::AwaitScene)
             .add_observer(
@@ -50,6 +67,7 @@ fn main() -> AppExit {
     }
     app.insert_resource(config)
         .add_plugins(plugins)
+        .add_plugins(stubby_jackdaw::net::physics_plugins(mode))
         .add_plugins(stubby_game::settings::SettingsPersistencePlugin)
         .add_plugins(jackdaw_runtime::JackdawPlugin)
         .add_plugins(stubby_jackdaw::DesertPlugin { seed })

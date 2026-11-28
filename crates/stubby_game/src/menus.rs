@@ -30,6 +30,8 @@ impl StartAtMenu {
     pub fn wanted(args: impl IntoIterator<Item = String>) -> bool {
         !args.into_iter().skip(1).any(|arg| {
             arg == "--play"
+                || arg == "--host"
+                || arg == "--join"
                 || arg == "--purifier-review"
                 || arg == "--sampler-review"
                 || arg.starts_with("--export=")
@@ -142,6 +144,7 @@ struct Panel(Screen);
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 enum Action {
     Play,
+    Host,
     Settings,
     Quit,
     Back,
@@ -267,8 +270,9 @@ fn spawn_main_menu(mut commands: Commands) {
     );
     commands.entity(column).with_children(|column| {
         button(column, Action::Play, "Play", 20.);
+        button(column, Action::Host, "Host a Game", 20.);
         column.spawn(text(
-            "Host, Join and Host on Steam: coming with multiplayer",
+            "Join: start with --join ADDRESS for now. Steam: coming.",
             14.,
             MUTED,
         ));
@@ -430,6 +434,7 @@ fn choose(
     mut graphics: ResMut<GraphicsSettings>,
     mut audio: ResMut<AudioSettings>,
     mut exit: MessageWriter<AppExit>,
+    mode: Option<Res<stubby_net::NetMode>>,
     mut commands: Commands,
 ) {
     let Ok(&action) = actions.get(click.entity) else {
@@ -437,7 +442,23 @@ fn choose(
     };
     let on = |screen| screens.open == Some(screen);
     match action {
-        Action::Play if on(Screen::MainMenu) => screens.close(),
+        Action::Play if on(Screen::MainMenu) => {
+            // A networked build plays on a host only this machine can reach.
+            if mode.is_some_and(|m| m.is_networked()) {
+                stubby_net::play_solo(&mut commands);
+            }
+            screens.close();
+        }
+        Action::Host if on(Screen::MainMenu) => {
+            if mode.is_some_and(|m| m.is_networked()) {
+                stubby_net::host(&mut commands, stubby_core::multiplayer::DEFAULT_PORT);
+                info!(
+                    "Hosting on port {}: others join with --join <this machine's address>",
+                    stubby_core::multiplayer::DEFAULT_PORT
+                );
+            }
+            screens.close();
+        }
         Action::Settings if on(Screen::MainMenu) => {
             open_settings(&mut screens, Screen::MainMenu, &mut commands);
         }

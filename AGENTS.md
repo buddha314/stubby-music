@@ -929,6 +929,17 @@ sampled from `GroundHeight` across the whole 1600 m world and is stopped by coll
 sensors (interaction markers) never block. Tune ahoy with `movement::tune`, never by
 replacing `CharacterController` (ahoy keeps its own filter state in it).
 
+**Multiplayer** (`add-multiplayer-and-menus`, ported from the us-outpost-31 template): a host
+runs lightyear's server and its own client; others join (`--host [PORT]`, `--join ADDR`, the
+main menu's Host, the editor's Host/Join runs; every peer must use the same `--seed` until
+2.5 sends it). `stubby_net` is the session (a service: systems never import lightyear);
+`stubby_game::multiplayer` registers what is replicated and spawns players' bodies. Rules for
+anything new that changes the world: the host decides (clients ask); one-off effects skip
+rollback replays (`stubby_net::Replaying`); add a two-peer test to
+`crates/stubby_game/tests/net.rs`; change `stubby_core::multiplayer::PROTOCOL_ID` when what is
+replicated or sent changes. An action with no keys is sent only with lightyear's
+`InputMarker` (`multiplayer::send_look`).
+
 **Crates without a Bevy-main release are generated forks** (`bevy_main_forks.json`,
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and
 glam_matrix_extras, each a `bevy-main` branch on buddha314 = the published release plus one

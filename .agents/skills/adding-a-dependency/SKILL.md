@@ -21,6 +21,9 @@ Adding or upgrading any dependency.
 ## Pitfalls (seen in this project)
 - Resolving can move part of Bevy to a newer commit that needs a newer Rust (seen 2026-11-27: `bevy_ecs` requiring Rust 1.100); always re-pin.
 - Collateral drift seen: `glam` for avian's `obvhs`, `windows` for `gpu-allocator`/`gilrs-core`.
+- `git diff Cargo.lock` misleads: the lock is sorted, so new packages shift their neighbours and look like removals. Compare package sets instead: `python3 -c "import tomllib,subprocess; k=lambda p:(p['name'],p['version']); n={k(p) for p in tomllib.load(open('Cargo.lock','rb'))['package']}; o={k(p) for p in tomllib.loads(subprocess.run(['git','show','HEAD:Cargo.lock'],capture_output=True,text=True).stdout)['package']}; print('removed', sorted(o-n)); print('added', len(n-o))"`.
+- A `[patch.crates-io]` entry nothing uses makes Cargo warn on every build: add a fork's patch when its crate comes in (lightyear's Steam crates arrive with the Steam feature).
+- A game with crate-layering bans in `deny.toml` (stubby-music) needs a `wrappers` rule for a new crate of its own, and its new users added to the rules of the crates it uses.
 
 ## Done when
 `python3 tools/check_engine_pins.py`, `cargo deny check` and `tools/ci_local.sh` pass; the lock diff is only the new crate and its own dependencies.
