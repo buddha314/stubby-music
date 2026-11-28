@@ -13,6 +13,7 @@ use bevy::prelude::*;
 use stubby_core::{Screen, ScreenMode};
 use stubby_ui::style::{AMBER, BACKDROP, EDGE, INK, MUTED, PANEL};
 
+use crate::multiplayer;
 use crate::settings::{self, AudioSettings, GraphicsSettings};
 
 const BUTTON: Color = Color::srgba(0.09, 0.085, 0.075, 1.0);
@@ -32,6 +33,9 @@ impl StartAtMenu {
             arg == "--play"
                 || arg == "--host"
                 || arg == "--join"
+                || arg == "--steam"
+                || arg == "--steam-host"
+                || arg == "+connect_lobby"
                 || arg == "--purifier-review"
                 || arg == "--sampler-review"
                 || arg.starts_with("--export=")
@@ -72,6 +76,7 @@ impl Plugin for MenusPlugin {
                     menu_keys,
                     show_panels,
                     show_notice,
+                    show_steam_status,
                     show_values.run_if(resource_exists::<GraphicsSettings>),
                 ),
             );
@@ -149,6 +154,28 @@ struct Panel(Screen);
 #[derive(Component)]
 struct JoinAddress;
 
+/// Under the Steam button: whether Steam is here, and if not, why (the template's
+/// disabled button with its reason).
+#[derive(Component)]
+struct SteamStatus;
+
+fn show_steam_status(
+    steam: Option<Res<multiplayer::steam::SteamSession>>,
+    unavailable: Option<Res<multiplayer::steam::SteamUnavailable>>,
+    mut lines: Query<&mut Text, With<SteamStatus>>,
+) {
+    let said = match (steam, unavailable) {
+        (Some(_), _) => "Friends join from your invite, or from the Steam overlay.".to_string(),
+        (None, Some(why)) => format!("Steam is not available: {}", why.0),
+        (None, None) => "Steam starts with a networked launch.".to_string(),
+    };
+    for mut line in &mut lines {
+        if line.0 != said {
+            line.0.clone_from(&said);
+        }
+    }
+}
+
 /// The main menu's message line (a mistyped address, say).
 #[derive(Component)]
 struct MenuNotice;
@@ -170,6 +197,7 @@ fn show_notice(notice: Res<Notice>, mut lines: Query<&mut Text, With<MenuNotice>
 enum Action {
     Play,
     Host,
+    HostSteam,
     Join,
     Settings,
     Quit,
@@ -330,7 +358,9 @@ fn spawn_main_menu(mut commands: Commands) {
                 button(row, Action::Join, "Join", 18.);
             });
         column.spawn((text("", 14., AMBER), MenuNotice));
-        column.spawn(text("Host on Steam: coming.", 14., MUTED));
+        // Over Steam: a lobby friends join from an invite (5.2). Without Steam, why not.
+        button(column, Action::HostSteam, "Host on Steam", 20.);
+        column.spawn((text("", 13., MUTED), SteamStatus));
         button(column, Action::Settings, "Settings", 20.);
         button(column, Action::Quit, "Exit to Desktop", 20.);
     });
@@ -492,6 +522,7 @@ fn choose(
     mode: Option<Res<stubby_net::NetMode>>,
     addresses: Query<&bevy::text::EditableText, With<JoinAddress>>,
     mut notice: ResMut<Notice>,
+    mut steam: Option<ResMut<multiplayer::steam::SteamSession>>,
     mut commands: Commands,
 ) {
     let Ok(&action) = actions.get(click.entity) else {
@@ -526,6 +557,15 @@ fn choose(
                 }
             }
         }
+        Action::HostSteam if on(Screen::MainMenu) => match steam.as_mut() {
+            Some(session) if session.role == multiplayer::steam::Role::Idle => {
+                session.host_lobby(&stubby_core::multiplayer::SteamLobbySettings::default());
+                notice.0.clear();
+                screens.close();
+            }
+            Some(_) => notice.0 = "Already in a Steam game.".into(),
+            None => notice.0 = "Steam is not running here.".into(),
+        },
         Action::Host if on(Screen::MainMenu) => {
             if mode.is_some_and(|m| m.is_networked()) {
                 stubby_net::host(&mut commands, stubby_core::multiplayer::DEFAULT_PORT);

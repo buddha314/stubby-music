@@ -128,13 +128,12 @@ dependencies = [
 [[package]]
 name = "aeronet_steam"
 version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83aa5e2bd69b2edf2fc33756d73c433f37e3cbe311d4675dc653620c266c7f69"
+source = "git+https://github.com/buddha314/aeronet?branch=bevy-main#b0991728e3df27960153817421f0a754948ba321"
 dependencies = [
  "aeronet_io",
- "bevy_app 0.20.1",
- "bevy_ecs 0.20.1",
- "bevy_platform 0.20.1",
+ "bevy_app 0.20.0-dev",
+ "bevy_ecs 0.20.0-dev",
+ "bevy_platform 0.20.0-dev",
  "blocking",
  "bytes",
  "derive_more",
@@ -9203,6 +9202,7 @@ dependencies = [
  "stubby_player",
  "stubby_rack",
  "stubby_recipes",
+ "stubby_steam",
  "stubby_streams",
  "stubby_ui",
  "stubby_world",
@@ -9295,6 +9295,13 @@ dependencies = [
  "serde_json",
  "stubby_recipes",
  "tiny_http",
+]
+
+[[package]]
+name = "stubby_steam"
+version = "0.1.0"
+dependencies = [
+ "steamworks",
 ]
 
 [[package]]
