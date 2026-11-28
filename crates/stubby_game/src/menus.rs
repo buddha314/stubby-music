@@ -38,6 +38,7 @@ impl StartAtMenu {
                 || arg == "+connect_lobby"
                 || arg == "--purifier-review"
                 || arg == "--sampler-review"
+                || arg.starts_with("--load=")
                 || arg.starts_with("--export=")
                 || arg.starts_with("--screenshot=")
                 || arg.starts_with("--pulse-preview=")
@@ -115,6 +116,7 @@ fn finish_loading(
     time: Res<Time<Real>>,
     ready: Option<Res<WorldReady>>,
     awaiting: Option<Res<AwaitScene>>,
+    restoring: Option<Res<crate::saves::PendingRestore>>,
     mut frames: Local<u32>,
     mut screens: ResMut<ScreenMode>,
 ) {
@@ -122,7 +124,8 @@ fn finish_loading(
         return;
     }
     *frames += 1;
-    let ready = ready.is_some() || (awaiting.is_none() && *frames > 5);
+    // A save being opened holds the loading screen until the player stands in it.
+    let ready = (ready.is_some() || (awaiting.is_none() && *frames > 5)) && restoring.is_none();
     let timed_out = time.elapsed_secs() > LOADING_TIMEOUT_SECS;
     if timed_out && !ready {
         warn!("No world after {LOADING_TIMEOUT_SECS} s; showing the menu anyway");
@@ -195,6 +198,7 @@ fn show_notice(notice: Res<Notice>, mut lines: Query<&mut Text, With<MenuNotice>
 /// What a button does.
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 enum Action {
+    Continue,
     Play,
     Host,
     HostSteam,
@@ -322,7 +326,16 @@ fn spawn_main_menu(mut commands: Commands) {
         "STUBBY",
         "The music of nature brings light to the world.",
     );
+    let newest = crate::saves::newest();
     commands.entity(column).with_children(|column| {
+        if let Some((_, save)) = &newest {
+            button(
+                column,
+                Action::Continue,
+                &format!("Continue: {}", save.name),
+                20.,
+            );
+        }
         button(column, Action::Play, "Play", 20.);
         button(column, Action::Host, "Host a Game", 20.);
         // Join: the host's address (IP, or IP:port), then Join.
@@ -530,6 +543,16 @@ fn choose(
     };
     let on = |screen| screens.open == Some(screen);
     match action {
+        Action::Continue if on(Screen::MainMenu) => {
+            if let Some((path, save)) = crate::saves::newest() {
+                info!(
+                    "Continue chosen: opening {:?} ({})",
+                    save.name,
+                    path.display()
+                );
+                crate::saves::relaunch_into(&path, &mut exit, &mut commands);
+            }
+        }
         Action::Play if on(Screen::MainMenu) => {
             // A networked build plays on a host only this machine can reach.
             if mode.is_some_and(|m| m.is_networked()) {

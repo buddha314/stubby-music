@@ -316,6 +316,40 @@
       ],
       "rigid_body": "none (static)"
     },
+    "structures/city/city_canal_water_4/city_canal_water_4.glb": {
+      "colliders": [
+        {
+          "translation": [
+            2.0,
+            -2.1,
+            -2.0
+          ],
+          "shape": "Cuboid",
+          "x_length": 4.0,
+          "y_length": 0.2,
+          "z_length": 4.0,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
+    "structures/city/city_canal_water_8/city_canal_water_8.glb": {
+      "colliders": [
+        {
+          "translation": [
+            4,
+            -2.1,
+            -4
+          ],
+          "shape": "Cuboid",
+          "x_length": 8,
+          "y_length": 0.2,
+          "z_length": 8,
+          "walkable": true
+        }
+      ],
+      "rigid_body": "none (static)"
+    },
     "structures/city/city_column/city_column.glb": {
       "colliders": [
         {

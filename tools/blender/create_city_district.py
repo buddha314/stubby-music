@@ -771,6 +771,47 @@ def write_bsn(L, name="city", lift=JACKDAW_LIFT, header=None):
     (ROOT / f"assets/world/asset_reviews/{name}.bsn").write_text("\n".join(lines + body + ["]"]) + "\n")
 
 
+# The neighbourhood: the canal-side mixed-use quarter, plaza and hall, cut from the district
+# as its own scene (about half the placements), with the monument kept for the skyline.
+NEIGHBOURHOOD = (20.0, -36.0, 124.0, 50.0)      # Blender x0, y0, x1, y1
+CITY_SAVE = {   # where the shipped save stands: the south promenade, looking across the canal
+    "feet_blender": (46.0, -6.0, 0.0), "yaw_degrees": -15.0, "solar_hour": 17.6,
+}
+
+
+def write_neighbourhood(L):
+    """The neighbourhood as a Jackdaw scene, and the shipped save that opens standing in it."""
+    x0, y0, x1, y1 = NEIGHBOURHOOD
+    N = Layout()
+    keep = lambda p: x0 <= p[0] <= x1 and y0 <= p[1] <= y1  # noqa: E731
+    N.items = [it for it in L.items if it["group"] not in ("Skyline", "Test-Strip")
+               and (keep(it["pos"]) or it["id"] in ("city_monument", "city_monument_base"))]
+    N.dancers = [d for d in L.dancers if keep(d[2])]
+    write_bsn(N, name="city_neighbourhood", header=[
+        "// The City neighbourhood (create_city_district.py): the canal-side mixed-use quarter, the",
+        "// plaza and the concert hall, cut from the reference district. Opened by the shipped save",
+        f"// assets/saves/city_neighbourhood.json. Lifted {JACKDAW_LIFT} m so the canal sits above the ground."])
+    fx, fy, fz = CITY_SAVE["feet_blender"]
+    hour = CITY_SAVE["solar_hour"]
+    day_hours = (hour - 6.0) % 24.0      # stubby_world::calendar::seconds_at_solar_hour
+    seconds = day_hours / 12.0 * 2700.0 if day_hours < 12.0 else 2700.0 + (day_hours - 12.0) / 12.0 * 900.0
+    save = {
+        "version": 1,
+        "name": "The City",
+        "scene": "world/asset_reviews/city_neighbourhood.bsn",
+        "seed": "42",
+        "seeded_layout": False,
+        "player": {"feet": [fx, fz + JACKDAW_LIFT, -fy], "yaw_degrees": CITY_SAVE["yaw_degrees"],
+                   "pitch_degrees": 0.0},
+        "calendar_seconds": round(seconds, 1),
+        "saved_at": 0,
+    }
+    out = ROOT / "assets/saves/city_neighbourhood.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(save, indent=2) + "\n")
+    print("neighbourhood", len(N.items), "placements;", len(N.dancers), "Dancers")
+
+
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     L = build_layout()
@@ -786,6 +827,7 @@ def main():
          "dancers": [{"shape": s, "tone": t, "pos": p, "rot": r, "clip": c} for s, t, p, r, c in L.dancers],
          "placements": L.items}, indent=0) + "\n")
     write_bsn(L)
+    write_neighbourhood(L)
 
     # Fresh file: drop the startup objects.
     for o in list(bpy.data.objects):

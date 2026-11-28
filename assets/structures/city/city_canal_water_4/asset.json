@@ -48,11 +48,27 @@
   ],
   "kit": {
     "sockets": {},
-    "colliders": [],
+    "colliders": [
+      {
+        "shape": "box",
+        "centre": [
+          2.0,
+          2.0,
+          -2.1
+        ],
+        "size": [
+          4.0,
+          4.0,
+          0.2
+        ],
+        "rotation_z": 0.0,
+        "slope": 0.0,
+        "walkable": true
+      }
+    ],
     "materials": [
       "City_Bed",
       "City_Water"
     ]
-  },
-  "validation": "ok: glTF checks passed (check_city_kit.py)"
+  }
 }

@@ -122,11 +122,11 @@ repository, or are blocked on runtime work that belongs to the crates:
    model), and `stubby_jackdaw/src/city_colliders.rs` makes their walls solid from
    `colliders.json` by the model's `GltfSource` path. The flattened monument is the one piece
    whose acoustics are not read.
-4. **Colliders: walls block, decks wait.** `colliders.json` follows the other families'
-   format, plus `tilt_about_x_radians` and `walkable`. Non-walkable shapes become static
-   `Solid` colliders in the game; walkable ones are skipped, because the player controller
-   cannot stand on a collider yet (`add-prefab-colliders`), so decks, bridges and stairs are
-   not walkable in the game.
+4. **Colliders: walls block, floors are stood on.** `colliders.json` follows the other
+   families' format, plus `tilt_about_x_radians` (stairs and ramps as tilted slabs) and
+   `walkable`. Every shape becomes a static `Solid` collider in the game
+   (`city_colliders.rs`); the player's body (bevy_ahoy) stands on colliders, so the raised
+   City's paving, decks, bridges and stairs are walked on. The canal bed is a floor too.
 5. **The ground has no cut for canals.** The canal sits below the promenade. The game's ground
    would cover it, so the Jackdaw review scene (`assets/world/asset_reviews/city.bsn`) stands
    the district 2.3 m up. A terrain cut or a raised city podium is runtime and level work.

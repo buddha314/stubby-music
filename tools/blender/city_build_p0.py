@@ -722,6 +722,7 @@ def canal_water_4():
     p.mesh("Water", surface, p.water())
     p.notes.append("the water surface is a single translucent quad (glTF alpha blend); ripples, "
                    "reflection and flow are runtime shader work, not baked")
+    p.collider("box", (BAY / 2, BAY / 2, BED_Z - 0.1), (BAY, BAY, 0.2), walkable=True)
     return p
 
 
@@ -734,6 +735,7 @@ def canal_water_8():
         v = [bm.verts.new(c) for c in ((0, 0, WATER_Z), (8, 0, WATER_Z), (8, 8, WATER_Z), (0, 8, WATER_Z))]
         bm.faces.new(v)
     p.mesh("Water", surface, p.water())
+    p.collider("box", (4, 4, BED_Z - 0.1), (8, 8, 0.2), walkable=True)
     return p
 
 

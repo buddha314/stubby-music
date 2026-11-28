@@ -24,6 +24,7 @@ struct PauseRoot;
 #[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
 enum Choice {
     Resume,
+    Save,
     Settings,
     ExitToMainMenu,
     ExitToDesktop,
@@ -83,6 +84,7 @@ fn spawn(mut commands: Commands) {
                 ));
                 for (choice, label) in [
                     (Choice::Resume, "Resume Game"),
+                    (Choice::Save, "Save Game"),
                     (Choice::Settings, "Settings"),
                     (Choice::ExitToMainMenu, "Exit to Main Menu"),
                     (Choice::ExitToDesktop, "Exit to Desktop"),
@@ -142,6 +144,12 @@ fn choose(
     }
     match choices.get(click.entity) {
         Ok(Choice::Resume) => screens.close(),
+        Ok(Choice::Save) => commands.queue(
+            |world: &mut World| match crate::saves::write_quicksave(world) {
+                Ok(path) => info!("Saved the game to {}", path.display()),
+                Err(error) => error!("Could not save the game: {error}"),
+            },
+        ),
         Ok(Choice::Settings) => {
             crate::menus::open_settings(&mut screens, Screen::Pause, &mut commands);
         }

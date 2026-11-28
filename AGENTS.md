@@ -168,7 +168,7 @@ up; only the campfire's version plays downstream. Its rack shows the inherited m
 burbler's clock and VCO), then a 2HP **stream blank** divider (`assets/modules/stream_blank/`),
 then its own (sequencer and VCA). Anything downstream inherits the latest
 version; splitting a stream comes later. WASD and Shift retain movement/sprint roles. Space/C are jump/hold-to-crouch. The grounded player uses free mouse look;
-Escape or focus loss releases the cursor, and left click recaptures it; a second Escape opens the pause menu (Satisfactory's escape menu: Resume Game, Exit to Desktop; `stubby_game::pause_menu`), and Escape closes any open screen. E opens a machine's rack and E again closes it.
+Escape or focus loss releases the cursor, and left click recaptures it; a second Escape opens the pause menu (Satisfactory's escape menu: Resume Game, Exit to Desktop; `stubby_game::pause_menu`), and Escape closes any open screen. **Saves** (`add-save-slots`, first slice): the pause menu's Save Game writes the place, facing, scene, seed and time to `quicksave`; the main menu's Continue relaunches into the newest save; `--load=<slot>` starts in one (`stubby_game::saves`). `assets/saves/city_neighbourhood.json` ships, opening in the City. E opens a machine's rack and E again closes it.
 
 ### The opening
 

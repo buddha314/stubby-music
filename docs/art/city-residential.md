@@ -84,13 +84,13 @@ and the canal pieces. New pieces carry priority `RES` in the manifest
 1. **Layout**: the pieces join the City family (`assets/structures/city/`, sources in
    `assets-src/blender/structures/city/`), not a new folder tree.
 2. **Acoustics**: as in the City kit, on materials (verified per glb) and on large meshes.
-3. **Not walkable in the game yet**: homes, balconies, stairs and roofs carry collision
-   proxies (`colliders.json`), but the game cannot stand on colliders yet
-   (`add-prefab-colliders`). The furnished homes are review sets, not playable rooms.
+3. **Walkable outside, not inside**: promenades, bridges, stairs, balconies and roofs carry
+   collision proxies the player stands on and walls the player cannot pass. There is no way
+   into a building, so the furnished homes are seen through windows, not visited.
 4. **City pieces stay unbridged scenery.** Bridging the district's placements to
    `PlacedAsset` stalled its first frame past 20 s. Acoustic extras reach Steam Audio
    anyway (`prefab_presentation` reads node extras on any model), and walls are solid
-   through `city_colliders.rs`. Sockets with behaviour (`Interact`, `Door`, `Seat*`) are
+   and floors stood on through `city_colliders.rs`. Sockets with behaviour (`Interact`, `Door`, `Seat*`) are
    anchors with no game logic yet.
 5. **Ground level**: the validation bay's review scene stands on the game's ground. Its paving
    sits exactly at ground level, so the mudflat shows through it in the game.

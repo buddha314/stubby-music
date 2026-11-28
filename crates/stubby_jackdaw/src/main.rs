@@ -9,7 +9,19 @@ fn main() -> AppExit {
         ..default()
     });
     let plugins = jackdaw_runtime::maybe_windowless(plugins);
-    let config = match stubby_jackdaw::world_generation::WorldConfig::from_args(std::env::args()) {
+    // `--load=<slot>`: the save names the scene and seed (add-save-slots).
+    let save = match stubby_jackdaw::saves::SaveGame::from_args(std::env::args()) {
+        Some(Ok(save)) => Some(save),
+        Some(Err(error)) => {
+            eprintln!("Could not load the save: {error}");
+            return AppExit::error();
+        }
+        None => None,
+    };
+    let args: Vec<String> = std::env::args()
+        .chain(save.iter().flat_map(|s| s.world_args()))
+        .collect();
+    let config = match stubby_jackdaw::world_generation::WorldConfig::from_args(args) {
         Ok(config) => config,
         Err(error) => {
             eprintln!("Invalid world configuration: {error}");
@@ -24,6 +36,12 @@ fn main() -> AppExit {
     stubby_jackdaw::designer::launch();
     let legacy_review = std::env::args().any(|arg| arg.starts_with("--replenishment-review="));
     let mut app = App::new();
+    if let Some(save) = save {
+        if !save.seeded_layout {
+            app.insert_resource(stubby_jackdaw::saves::SkipSeededLayout);
+        }
+        app.insert_resource(stubby_jackdaw::saves::PendingRestore(save));
+    }
     if !legacy_review {
         app.insert_resource(stubby_jackdaw::prefabs::AuthoredLevel);
     }

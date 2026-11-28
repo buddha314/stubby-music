@@ -16,7 +16,11 @@ use stubby_jackdaw::world_generation::{PlacementKey, WorldConfig, model_stem};
 pub struct SeededLayoutPlugin;
 impl Plugin for SeededLayoutPlugin {
     fn build(&self, app: &mut App) {
-        if !std::env::args().any(|arg| arg == "--no-seeded-layout") {
+        if !std::env::args().any(|arg| arg == "--no-seeded-layout")
+            && !app
+                .world()
+                .contains_resource::<stubby_jackdaw::saves::SkipSeededLayout>()
+        {
             app.add_observer(spawn_seeded_layout);
         }
         app.add_systems(Update, (place_stream_features, clear_stream_features));
