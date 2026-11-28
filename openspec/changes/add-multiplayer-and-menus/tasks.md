@@ -18,17 +18,17 @@ Port from the template (VerdantAI/us-outpost-31) rather than writing anew (D1).
 - [x] 2.5 World config from the host; determinism test (two generations compare equal); seeded and authored entities paired by stable keys (D3) (claimed: Claude). The host replicates its `WorldConfig` (`HostWorld`, as JSON: its serde skips empty fields, which lightyear's binary format cannot carry); a client with another world restarts with `--world-config` and rejoins (checked with two processes, seeds 42 and 7). `stubby_net::Shared` and `NetKey` (scene id, or FNV-1a of a placement's key) with the template's adoption bridge; tests for the handshake, adoption, a menu host's own entities, and determinism. Found: the template's bridge froze a menu-launched host's own entities (fixed there too)
 
 ## 3. Shared world state (host decides, D4)
-- [ ] 3.1 Collecting and sources (lightning bugs, plants, mines)
-- [ ] 3.2 Inventory (per D4 and open question 1)
+- [x] 3.1 Collecting and sources (lightning bugs, plants, mines) (claimed: Claude). A joined client's harvest is a request on `stubby_net::HostChannel`; the host checks reach (`HOST_REACH`) and availability, depletes the source in the world's `SourceLedger` (moved out of the player's inventory: depletion is the world's) and sends the yields to that client alone (`GrantHarvest`). Depleted sources replicate to everyone, late joiners included, and return on the host's clock. Mines are machine production, so they come with 3.3. Until 3.2, a client's inventory is its own: it checks for room before asking
+- [ ] 3.2 Inventory per player and shared storage, moves between them as host-checked requests (open question 1, settled)
 - [ ] 3.3 Building: streams and placed machines
 - [ ] 3.4 Crafting, benches and durations
-- [ ] 3.5 Rack configurations (modules, cables, knobs) as replicated data
+- [ ] 3.5 Rack configurations (modules, cables, knobs) as replicated data; anyone may configure (open question 3, settled)
 - [ ] 3.6 Simulation time, calendar and sky from the host (D6)
-- [ ] 3.7 A two-peer test per feature, including a lossy link
+- [ ] 3.7 A two-peer test per feature, including a lossy link; a late joiner receives the world so far behind the loading screen (open question 5, settled)
 
 ## 4. Music together (D7)
 - [ ] 4.1 Each peer's engine plays the replicated machines
-- [ ] 4.2 Clock following against lightyear's synchronized tick; measure the drift (open question 4)
+- [ ] 4.2 Clock following against lightyear's synchronized tick, so music tied to a location is in time for everyone; measure and report the drift (open question 4, settled)
 
 ## 5. Steam
 - [ ] 5.1 `stubby_steam` from the template's `outpost_steam`: lobby, invites, rich presence, build and protocol gating

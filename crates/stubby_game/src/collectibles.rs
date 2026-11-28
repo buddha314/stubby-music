@@ -9,7 +9,7 @@
 //! Art decides what is collectible by tagging the socket; nothing here names a kind.
 //! (Restored sockets of flattened models carry their extras too: `model_part_bindings`.)
 use bevy::{gltf::GltfExtras, prelude::*};
-use bevy_stubby_recipes::{PlayerInventory, RecipeCatalog, ResourceNode};
+use bevy_stubby_recipes::{RecipeCatalog, ResourceNode, SourceLedger};
 use stubby_core::PlacedAsset;
 
 pub struct CollectiblesPlugin;
@@ -32,7 +32,7 @@ struct SocketChecked;
 fn collectible_sockets(
     mut commands: Commands,
     catalog: Res<RecipeCatalog>,
-    player: Option<Res<PlayerInventory>>,
+    ledger: Option<Res<SourceLedger>>,
     nodes: Query<
         (Entity, &GltfExtras, Option<&Name>),
         (
@@ -65,9 +65,9 @@ fn collectible_sockets(
             continue;
         };
         let instance = format!("{}/{}", asset.instance, name.map_or("socket", Name::as_str));
-        let collected = player
+        let collected = ledger
             .as_ref()
-            .is_some_and(|player| player.collected.collected(&instance));
+            .is_some_and(|ledger| ledger.0.collected(&instance));
         debug!("collectible socket: {instance} gives {resource}");
         commands.entity(entity).insert(ResourceNode {
             resource,

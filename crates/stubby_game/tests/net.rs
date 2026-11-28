@@ -6,7 +6,8 @@
 //!
 //! What they check: a joining client gets its own body, predicted and bound to its keys;
 //! its inputs move the server's copy and prediction agrees, also over a laggy, lossy link;
-//! a host plays on its own server and each sees the other's body.
+//! a host plays on its own server and each sees the other's body; the host's world and
+//! shared entities reach clients; collecting goes through the host (3.1).
 
 use core::net::{Ipv4Addr, SocketAddr};
 use std::time::{Duration, Instant};
@@ -21,11 +22,15 @@ use stubby_game::{
     movement::{MoveBody, MoveControls, MovementPlugin, NetworkedMovement, Sprint},
     multiplayer::{
         ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin, WorldHandshakePlugin,
-        WorldMismatch,
+        WorldMismatch, collecting::CollectingPlugin,
     },
     net::{
         self, NetMode, NetPlayer,
         lightyear::{crossbeam::CrossbeamIo, link::RecvLinkConditioner, prelude::*},
+    },
+    resources::{
+        HarvestRequest, PlayerInventory, RecipesPlugin, ResourceNode, SourceLedger,
+        lightning_bug_node,
     },
     world_generation::WorldConfig,
 };
@@ -88,6 +93,8 @@ impl Session {
             WorldHandshakePlugin,
             ServerPlayersPlugin,
             MovementPlugin,
+            RecipesPlugin::default(),
+            CollectingPlugin,
         ));
         server
     }
@@ -106,6 +113,8 @@ impl Session {
             WorldHandshakePlugin,
             ClientPlayersPlugin,
             MovementPlugin,
+            RecipesPlugin::default(),
+            CollectingPlugin,
         ));
         client.finish();
         client.cleanup();
@@ -547,4 +556,99 @@ fn the_same_world_generates_the_same_placements_and_keys() {
         layout(7).placements,
         "another seed, another world"
     );
+}
+
+/// The opening's lightning bug `index` at `at`, on one peer (every peer builds its own
+/// copy of the world; the instance name pairs them).
+fn spawn_bug(app: &mut App, index: usize, at: Vec3) {
+    app.world_mut()
+        .spawn((lightning_bug_node(index), Transform::from_translation(at)));
+}
+
+fn bug(app: &mut App, index: usize) -> ResourceNode {
+    let name = lightning_bug_node(index).instance;
+    let world = app.world_mut();
+    world
+        .query::<&ResourceNode>()
+        .iter(world)
+        .find(|node| node.instance == name)
+        .cloned()
+        .expect("the bug is in this world")
+}
+
+fn square_waves(app: &App) -> u32 {
+    app.world()
+        .resource::<PlayerInventory>()
+        .items
+        .quantity("square_wave")
+}
+
+/// Collecting in a shared world (3.1): a client's harvest is the host's decision. In
+/// reach, the source is depleted for everyone (a late joiner too) and only the collector
+/// gets the yields; out of reach, nothing happens; the host returns it to everyone.
+#[test]
+fn a_client_collects_through_the_host() {
+    let mut session = Session::new(false);
+    session.join(None);
+    let body = joined(&mut session, 0);
+    let peer = peer_of(&session.clients[0], body);
+    let on_host = server_body(&mut session.server, peer);
+    let at = position(&session.server, on_host);
+    for app in [&mut session.server, &mut session.clients[0]] {
+        spawn_bug(app, 0, at + Vec3::X);
+        spawn_bug(app, 1, at + Vec3::X * 50.0);
+    }
+    let (client_before, host_before) = (
+        square_waves(&session.clients[0]),
+        square_waves(&session.server),
+    );
+
+    for index in [0, 1] {
+        let source = bug(&mut session.clients[0], index).source_object();
+        session.clients[0]
+            .world_mut()
+            .write_message(HarvestRequest {
+                source,
+                now: Default::default(),
+            });
+    }
+    session.until(3.0, "the bug's yields at the client", |s| {
+        square_waves(&s.clients[0]) == client_before + 2
+    });
+    session.seconds(0.5);
+    assert_eq!(
+        square_waves(&session.clients[0]),
+        client_before + 2,
+        "once, and not the far bug"
+    );
+    assert_eq!(
+        square_waves(&session.server),
+        host_before,
+        "the yields are the collector's"
+    );
+    assert!(
+        bug(&mut session.server, 0).collected,
+        "depleted in the host's world"
+    );
+    assert!(
+        !bug(&mut session.server, 1).collected,
+        "out of reach: refused"
+    );
+    assert!(
+        bug(&mut session.clients[0], 0).collected,
+        "and in the client's"
+    );
+
+    let late = session.join(None);
+    joined(&mut session, late);
+    spawn_bug(&mut session.clients[late], 0, at + Vec3::X);
+    session.until(3.0, "the depleted bug at a late joiner", |s| {
+        bug(&mut s.clients[late], 0).collected
+    });
+
+    // The host's clock returns it (here, by hand): everyone sees it back.
+    session.server.world_mut().resource_mut::<SourceLedger>().0 = Default::default();
+    session.until(3.0, "the bug back at every client", |s| {
+        !bug(&mut s.clients[0], 0).collected && !bug(&mut s.clients[late], 0).collected
+    });
 }

@@ -250,11 +250,24 @@ impl NetKey {
     }
 }
 
-/// Shared entities: registered identically by every peer, in both roles.
+/// Requests to the host and its answers (design D4: the host decides): reliable and in
+/// order, both ways. Register a request with
+/// `app.register_message::<M>().add_direction(NetworkDirection::ClientToServer)`; the host
+/// reads it from the client's link (`MessageReceiver<M>`, with `RemoteId`), checks it,
+/// applies it, and answers on that link's `MessageSender<A>` or through replication.
+pub struct HostChannel;
+
+/// Shared entities and the host channel: registered identically by every peer, in both
+/// roles.
 pub struct SharedEntitiesPlugin;
 
 impl Plugin for SharedEntitiesPlugin {
     fn build(&self, app: &mut App) {
+        app.add_channel::<HostChannel>(ChannelSettings {
+            mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
+            ..default()
+        })
+        .add_direction(NetworkDirection::Bidirectional);
         app.component::<NetKey>().replicate();
         app.add_observer(key_scene_entities)
             .add_observer(joined_a_host)

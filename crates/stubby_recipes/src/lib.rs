@@ -299,6 +299,18 @@ impl HarvestLedger {
     pub fn collected(&self, instance: &str) -> bool {
         self.instances.contains(instance)
     }
+    /// Every depleted source, in order.
+    pub fn depleted(&self) -> impl Iterator<Item = &str> {
+        self.instances.iter().map(String::as_str)
+    }
+    /// A copy of another peer's depleted sources (a shared world's host), without return
+    /// times: whoever holds those returns the sources.
+    pub fn mirror(depleted: impl IntoIterator<Item = String>) -> Self {
+        Self {
+            instances: depleted.into_iter().collect(),
+            returns: BTreeMap::new(),
+        }
+    }
 }
 
 /// Learning an ingredient survives consuming its inventory quantity in a recipe.

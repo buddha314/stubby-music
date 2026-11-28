@@ -455,8 +455,8 @@ fn install_bug(
         .0
         .insert(engine.0, logical);
     let harvested = world
-        .get_resource::<bevy_stubby_recipes::PlayerInventory>()
-        .is_some_and(|player| player.collected.collected(&definition.instance));
+        .get_resource::<bevy_stubby_recipes::SourceLedger>()
+        .is_some_and(|ledger| ledger.0.collected(&definition.instance));
     let node = ResourceNode {
         resource: "lightning_bug".into(),
         instance: definition.instance.clone(),
@@ -584,8 +584,8 @@ fn install_reeds(
     _binding: &mut Bound,
 ) -> Result<(), String> {
     let harvested = world
-        .get_resource::<bevy_stubby_recipes::PlayerInventory>()
-        .is_some_and(|player| player.collected.collected(&definition.instance));
+        .get_resource::<bevy_stubby_recipes::SourceLedger>()
+        .is_some_and(|ledger| ledger.0.collected(&definition.instance));
     world.entity_mut(entity).insert(ResourceNode {
         resource: "reed_clump".into(),
         instance: definition.instance.clone(),
@@ -638,8 +638,8 @@ fn install_shell(
     _binding: &mut Bound,
 ) -> Result<(), String> {
     let collected = world
-        .get_resource::<bevy_stubby_recipes::PlayerInventory>()
-        .is_some_and(|player| player.collected.collected(&definition.instance));
+        .get_resource::<bevy_stubby_recipes::SourceLedger>()
+        .is_some_and(|ledger| ledger.0.collected(&definition.instance));
     let at = world
         .get::<Transform>(entity)
         .map_or(Vec3::ZERO, |transform| transform.translation);

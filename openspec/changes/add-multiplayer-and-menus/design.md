@@ -77,17 +77,24 @@ for the menus; the two-machine Steam test by hand.
 
 ## Open questions (for the user)
 
-1. **Inventory:** per player (Satisfactory) or one shared settlement store? Default:
-   per player, with the settlement's stock shared.
+All but saves are settled (2026-11-27).
+
+1. ~~Inventory~~ **Settled (user, 2026-11-27): per player, with shared storage.** Each
+   player carries their own inventory; storage in the world is shared by everyone. Both
+   are host state (D4): a client requests a move between them and the host applies it.
 2. ~~Players per session~~ **Settled (user, 2026-11-27): the template's multiplayer
    settings**, in `stubby_core::multiplayer`: 8 players, friends-only Steam lobbies,
    Steam app 480 until stubby has its own id, UDP port 5888, a 64 Hz tick, protocol id
    `stubby01`.
-3. **Who may configure a machine's rack** (anyone, or its builder)? Default: anyone.
-4. **Music sync tolerance:** is "same bar, tens of milliseconds apart" enough, or must
-   peers be sample-aligned (much harder over the internet)?
-5. **Joining mid-session:** the world state since the start must reach a late joiner;
-   is a short wait on the loading screen acceptable? Default: yes.
+3. ~~Rack permissions~~ **Settled (user, 2026-11-27): anyone** may configure any
+   machine's rack.
+4. ~~Music sync tolerance~~ **Settled (user, 2026-11-27): music is tied to locations,
+   so it is universally synced.** What plays where is world state (the machines and
+   their racks), the same for everyone; every peer follows the host's musical clock
+   (D7), so two players at one place hear the same music in time. Phase 4 measures how
+   close the clocks get and reports it.
+5. ~~Joining mid-session~~ **Settled (user, 2026-11-27): yes**, a late joiner waits
+   briefly on the loading screen while the world state since the start arrives.
 6. **Saves:** a hosted world is saved by the host only (with `add-saved-settings-and-saves`
    in the template, not yet built).
 
