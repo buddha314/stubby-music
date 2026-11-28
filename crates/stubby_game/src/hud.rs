@@ -326,7 +326,7 @@ fn spawn(
 #[allow(clippy::type_complexity)] // The card's texts.
 fn show_sky(
     calendar: Option<Res<Calendar>>,
-    time: Res<Time<Virtual>>,
+    sim: Option<Res<stubby_core::SimSpeed>>,
     mut arcs: Option<ResMut<Assets<SunArcMaterial>>>,
     nodes: Query<&MaterialNode<SunArcMaterial>>,
     mut titles: Query<&mut Text, (With<SkyTitle>, Without<SkyEnds>, Without<ClockSpeed>)>,
@@ -360,7 +360,7 @@ fn show_sky(
         };
         set(&mut text, name);
     }
-    let speed = time.relative_speed();
+    let speed = sim.map_or(1., |sim| sim.0);
     let speed = if (speed - 1.).abs() < 1e-3 {
         String::new()
     } else {

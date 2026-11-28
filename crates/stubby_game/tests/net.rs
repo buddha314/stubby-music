@@ -28,8 +28,10 @@ use stubby_game::{
         building::BuildingPlugin,
         collecting::CollectingPlugin,
         inventory::{InventoriesPlugin, Pack},
+        joining::{CatchingUp, JoiningPlugin},
         racks::{Racks, RacksPlugin},
         streams::StreamsPlugin,
+        time::{HostClock, TimePlugin},
     },
     net::{
         self, NetMode, NetPlayer,
@@ -85,6 +87,9 @@ fn peer(mode: NetMode) -> App {
     .insert_resource(stubby_streams::SegmentCost(vec![("reed".into(), 6)]))
     // The campfire's rack, as its asset describes it.
     .insert_resource(campfire_profiles())
+    // The calendar, the speed keys and the game's speed.
+    .add_plugins(stubby_game::calendar::CalendarPlugin)
+    .init_resource::<GlobalAmbientLight>()
     .init_resource::<GroundHeight>()
     .insert_resource(LookCapture(true))
     .init_resource::<ScreenMode>()
@@ -102,7 +107,13 @@ struct Session {
     server: App,
     clients: Vec<App>,
     server_entity: Entity,
+    /// One session at a time: frames run in real time (netcode's timeouts are real), so
+    /// sessions running side by side starve each other and prediction drifts (seen
+    /// 2026-11-28 once the suite grew). Held until the session ends.
+    _serial: std::sync::MutexGuard<'static, ()>,
 }
+
+static ONE_AT_A_TIME: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 impl Session {
     /// A server app with the game's networking, before it listens.
@@ -124,7 +135,7 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
-            RacksPlugin,
+            (RacksPlugin, TimePlugin, JoiningPlugin),
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
@@ -150,7 +161,7 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
-            RacksPlugin,
+            (RacksPlugin, TimePlugin, JoiningPlugin),
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
@@ -161,6 +172,10 @@ impl Session {
 
     /// A server, plus (with `host`) a player of its own.
     fn new(host: bool) -> Self {
+        // A failed test poisons the lock; the next session still runs.
+        let serial = ONE_AT_A_TIME
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let mut server = Self::server_app(host);
         let server_entity = server.world_mut().spawn(net::server_endpoint(false)).id();
         server.finish();
@@ -188,6 +203,7 @@ impl Session {
             server,
             clients: Vec::new(),
             server_entity,
+            _serial: serial,
         }
     }
 
@@ -567,6 +583,10 @@ fn a_host_keeps_simulating_its_own_shared_entities() {
 /// not.
 #[test]
 fn the_same_world_generates_the_same_placements_and_keys() {
+    // Heavy: it would starve a session running beside it.
+    let _serial = ONE_AT_A_TIME
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let layout = |seed: u64| {
         world(seed)
             .resolve_layout(&[])
@@ -1289,4 +1309,262 @@ fn a_rack_configured_by_a_client_is_everyones() {
         rack(&mut s.clients[a]) == configured
     });
     assert_eq!(rack(&mut session.server), configured);
+}
+
+fn calendar_s(app: &App) -> f64 {
+    app.world()
+        .resource::<stubby_game::calendar::Calendar>()
+        .elapsed()
+        .as_secs_f64()
+}
+
+/// A key pressed and let go, as the keyboard sends it (`ButtonInput::press` alone is
+/// cleared before systems see it).
+fn tap(app: &mut App, key: KeyCode) {
+    use bevy::input::{
+        ButtonState,
+        keyboard::{Key, KeyboardInput},
+    };
+    for state in [ButtonState::Pressed, ButtonState::Released] {
+        app.world_mut().write_message(KeyboardInput {
+            key_code: key,
+            logical_key: Key::Unidentified(bevy::input::keyboard::NativeKey::Unidentified),
+            state,
+            text: None,
+            repeat: false,
+            window: Entity::PLACEHOLDER,
+        });
+        if state == ButtonState::Pressed {
+            app.update();
+        }
+    }
+}
+
+fn sim_speed(app: &App) -> f32 {
+    app.world()
+        .get_resource::<stubby_core::SimSpeed>()
+        .map_or(1., |sim| sim.0)
+}
+
+/// The host keeps time (3.6): its calendar is everyone's, a late joiner's too. Speeding
+/// time is for a world of one: alone the host's calendar runs at 4x; a player joining
+/// slows it to 1x, and the speed keys are off in company.
+#[test]
+fn the_host_keeps_time_and_company_runs_at_one() {
+    let mut session = Session::new(true);
+    session
+        .server
+        .world_mut()
+        .resource_mut::<stubby_game::calendar::Calendar>()
+        .elapsed = Duration::from_secs(3600);
+    // Alone, the speed keys speed the world up (] twice: 2x, then 4x).
+    for _ in 0..2 {
+        tap(&mut session.server, KeyCode::BracketRight);
+        session.frames(2);
+    }
+    assert_eq!(sim_speed(&session.server), 4., "alone, the host runs at 4x");
+    let before = calendar_s(&session.server);
+    session.seconds(1.0);
+    assert!(
+        calendar_s(&session.server) - before > 2.5,
+        "the calendar runs at 4x: {} s in a second",
+        calendar_s(&session.server) - before
+    );
+
+    let a = session.join(None);
+    joined(&mut session, a);
+    session.until(3.0, "the host's calendar at A, at 1x", |s| {
+        (calendar_s(&s.clients[a]) - calendar_s(&s.server)).abs() < 1.5
+            && sim_speed(&s.server) == 1.
+    });
+    assert_eq!(
+        session
+            .server
+            .world()
+            .resource::<Time<Virtual>>()
+            .relative_speed(),
+        1.,
+        "company slowed the host"
+    );
+    assert_eq!(
+        sim_speed(&session.clients[a]),
+        1.,
+        "the client's game runs at 1x"
+    );
+
+    // The speed keys are off in company.
+    tap(&mut session.server, KeyCode::BracketRight);
+    session.frames(2);
+    assert_eq!(sim_speed(&session.server), 1.);
+
+    // A late joiner takes the host's calendar too.
+    let late = session.join(None);
+    joined(&mut session, late);
+    session.until(3.0, "the host's calendar at the late joiner", |s| {
+        (calendar_s(&s.clients[late]) - calendar_s(&s.server)).abs() < 1.5
+    });
+    assert_eq!(
+        session
+            .server
+            .world_mut()
+            .query::<&HostClock>()
+            .iter(session.server.world())
+            .count(),
+        1
+    );
+}
+
+fn lossy() -> LinkConditionerConfig {
+    LinkConditionerConfig {
+        incoming_latency: Duration::from_millis(50),
+        incoming_jitter: Duration::from_millis(10),
+        good_loss: 0.03,
+        ..default()
+    }
+}
+
+/// 3.7: everything a player shares, over a laggy, lossy link, and a late joiner (lossy
+/// too) who waits on the loading screen until the world so far is in, then finds it as it
+/// is: a depleted bug, a barrel and what is in it, a stream from the burbler, a configured
+/// rack and the host's calendar.
+#[test]
+fn a_shared_world_survives_a_lossy_link_and_a_late_joiner_finds_it_all() {
+    let mut session = Session::new(false);
+    let a = session.join(Some(lossy()));
+    let body = joined(&mut session, a);
+    session.seconds(0.8);
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host);
+    let fire = spawn_campfire(&mut session.clients[a], at - Vec3::X * 2.);
+    spawn_campfire(&mut session.server, at - Vec3::X * 2.);
+    for app in [&mut session.server, &mut session.clients[a]] {
+        spawn_bug(app, 0, at + Vec3::X);
+        spawn_burbler(app, at + Vec3::Z * 2.);
+    }
+    let pack = pack_on_host(&mut session, a);
+    session
+        .server
+        .world_mut()
+        .get_mut::<Pack>(pack)
+        .unwrap()
+        .items
+        .grant(&[
+            stubby_recipes::Stack {
+                item: "snail_shell".into(),
+                quantity: 1,
+            },
+            // The barrel (15) and two segments (12) are more than the 25 a player starts with.
+            stubby_recipes::Stack {
+                item: "reed".into(),
+                quantity: 20,
+            },
+        ])
+        .unwrap();
+    session.until(3.0, "A's snail shell", |s| {
+        held(&s.clients[a], "snail_shell") == 1
+    });
+
+    // Collect the bug.
+    let source = bug(&mut session.clients[a], 0).source_object();
+    session.clients[a]
+        .world_mut()
+        .write_message(HarvestRequest {
+            source,
+            now: Default::default(),
+        });
+    session.until(5.0, "the bug collected", |s| {
+        bug(&mut s.server, 0).collected
+    });
+
+    // Build a barrel and store a square wave in it.
+    session.clients[a].world_mut().write_message(BuildRequest {
+        buildable: "storage_barrel".into(),
+        place: Transform::from_translation(at + Vec3::X * 2.),
+        segment: None,
+    });
+    session.until(5.0, "the barrel at A", |s| {
+        barrel(&mut s.clients[a]).is_some()
+    });
+    let (_, store) = barrel(&mut session.clients[a]).unwrap();
+    session.clients[a]
+        .world_mut()
+        .write_message(moving(&store, StorageMove::Store, 1));
+    session.until(5.0, "the square wave stored", |s| {
+        stored(&mut s.server, "square_wave") == 1
+    });
+
+    // Lay a stream from the burbler.
+    let (from_burbler, _) = burbler(&mut session.clients[a]);
+    session.clients[a]
+        .world_mut()
+        .write_message(stubby_streams::LayRequest {
+            path: straight(at + Vec3::Z * 2., at + Vec3::Z * 10.),
+            segments: 2,
+            upstream: stubby_streams::PortOwner::Burbler(from_burbler),
+            joins: false,
+        });
+    session.until(5.0, "the stream at the host", |s| {
+        streams(&mut s.server).len() == 1
+    });
+
+    // Configure the campfire's rack.
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .open = Some(stubby_core::Screen::MachineConfiguration(fire));
+    session.frames(2);
+    {
+        let world = session.clients[a].world_mut();
+        let mut player = world.remove_resource::<PlayerInventory>().unwrap();
+        let mut state = world.get_mut::<stubby_game::rack::RackState>(fire).unwrap();
+        assert!(state.mount(&mut player, "seq", "snail_shell", "snail_sequencer"));
+        world.insert_resource(player);
+    }
+    session.frames(2);
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .close();
+    let configured = rack(&mut session.clients[a]);
+    session.until(5.0, "the rack at the host", |s| {
+        rack(&mut s.server) == configured
+    });
+
+    // A late joiner, over a lossy link, waits on the loading screen, then finds it all.
+    let late = session.join(Some(lossy()));
+    spawn_campfire(&mut session.clients[late], at - Vec3::X * 2.);
+    spawn_bug(&mut session.clients[late], 0, at + Vec3::X);
+    spawn_burbler(&mut session.clients[late], at + Vec3::Z * 2.);
+    session.until(5.0, "the late joiner on the loading screen", |s| {
+        s.clients[late].world().contains_resource::<CatchingUp>()
+            && s.clients[late].world().resource::<ScreenMode>().open
+                == Some(stubby_core::Screen::Loading)
+    });
+    session.until(8.0, "the late joiner caught up", |s| {
+        !s.clients[late].world().contains_resource::<CatchingUp>()
+    });
+    assert_eq!(
+        session.clients[late].world().resource::<ScreenMode>().open,
+        None,
+        "it plays"
+    );
+    assert!(
+        bug(&mut session.clients[late], 0).collected,
+        "the bug is gone"
+    );
+    assert_eq!(
+        stored(&mut session.clients[late], "square_wave"),
+        1,
+        "the barrel and its wave"
+    );
+    assert_eq!(
+        streams(&mut session.clients[late]),
+        streams(&mut session.server)
+    );
+    assert!(
+        burbler(&mut session.clients[late]).1,
+        "the burbler is taken"
+    );
+    assert_eq!(rack(&mut session.clients[late]), configured, "the rack");
+    assert!((calendar_s(&session.clients[late]) - calendar_s(&session.server)).abs() < 1.5);
 }

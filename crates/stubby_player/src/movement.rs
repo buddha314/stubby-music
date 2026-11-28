@@ -335,10 +335,19 @@ fn switch_controls(
 /// simulation speed.
 fn steer(
     virtual_time: Res<Time<Virtual>>,
+    networked: Option<Res<NetworkedMovement>>,
     sprints: Query<(&ActionOf<MoveControls>, &Action<Sprint>)>,
     mut bodies: Query<(Entity, &mut CharacterController), With<MoveControls>>,
 ) {
-    let speed = virtual_time.effective_speed();
+    // Offline the virtual time is the world's speed and the fixed step runs at it, so the
+    // body is tuned back to real time. In a session lightyear sets the virtual time's speed
+    // for its timeline sync, which must not change the body (found 2026-11-27: a client
+    // tuned its body to lightyear's 1.08x, the host to 1x).
+    let speed = if networked.is_some() {
+        1.
+    } else {
+        virtual_time.effective_speed()
+    };
     for (entity, mut controller) in &mut bodies {
         let running = sprints
             .iter()
