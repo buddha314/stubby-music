@@ -24,7 +24,8 @@ Art and asset pipeline unless noted. Source of truth: `docs/art/city-kit.md`.
 
 ## 5. Game support (Codex: crates)
 
-- [ ] 5.1 Add the `city_` prefix to `stubby_jackdaw/src/prefab_bridge.rs` and a no-op scenery `AssetBinder` in `stubby_game/src/glue.rs`.
-- [ ] 5.2 Add `city_` to `model_part_bindings.rs` so the pieces' `acoustic` node extras reach Steam Audio, and their sockets (`Interact`, `Audio_*`, `Display_0`, `Recording_source`) are recreated.
-- [ ] 5.3 Author the colliders in `assets/structures/city/colliders.json` on the prefabs once `add-prefab-colliders` lands; support standing on `walkable` shapes and tilted stair slabs.
+- [x] 5.1 (claimed: Claude; decided against, 2026-11-28) ~~Bridge `city_` pieces to `PlacedAsset` with a no-op binder.~~ Measured: bridging the district's ~4,900 placements stalled the first frame past 20 s; without it the district runs. City pieces are scenery and stay unbridged; what needs the placement (collision) reads the `GltfSource` path instead.
+- [x] 5.2 (claimed: Claude; 2026-11-28) Acoustics: single-level pieces (143 of 149) already reach Steam Audio through `prefab_presentation`'s node-extras reader, which names no kind, and their sockets stay as named nodes. Not covered: the flattened monument's acoustic rock (it would need bridging; left out, see 5.1).
+- [ ] 5.3 (claimed: Claude; part done 2026-11-28: `stubby_jackdaw/src/city_colliders.rs` gives every placed City model its non-walkable shapes from `colliders.json` as static `Solid` children, so walls, piers and columns block) Support standing on `walkable` shapes and tilted stair slabs once the controller can (`add-prefab-colliders`).
 - [ ] 5.4 Give canals a ground cut (or a raised city podium) so a district can sit at ground level.
+- [ ] 5.5 Bring the full district within frame budget: measured 2026-11-28 on `breq` (RX 7700S, vsync, optimized dev build) at about 82,000 entities and 30-35 fps with dips to 7-10, against 60 fps for one building (the validation bay). Candidates: merge each building into one model with its own levels of detail (far buildings as `city_far_*` proxies), and split the district into regions that load separately.

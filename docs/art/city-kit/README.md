@@ -113,10 +113,12 @@ is a flat PBR colour, with 1 to 9 material slots per piece. FPS has not been mea
 
 ## Known limitations
 
-- **The game does not bind the kit yet.** The pieces are not in the prefab bridge or a
-  binder, so their acoustic node extras do not reach Steam Audio. Their colliders are data
-  only, and the player cannot stand on decks. These are listed as crate tasks in
-  `openspec/changes/add-city-kit/tasks.md`.
+- **Scenery, not placeables.** City pieces are not bridged to `PlacedAsset` (it stalled
+  the district's first frame past 20 s). Acoustics reach Steam Audio through node extras;
+  walls are solid via `crates/stubby_jackdaw/src/city_colliders.rs`; decks, bridges and
+  stairs are not walkable yet (`add-prefab-colliders`).
+- **The whole district is over frame budget**: about 82,000 entities at 30-35 fps with dips
+  (one building holds 60). See `add-city-kit` task 5.5.
 - **No canal cut in the ground** (see *Reviewing in the game*).
 - **Interiors are empty** behind the translucent glass.
 - **Stair landings float**: a landing at storey height sits on a 2 m pier, open beneath it.

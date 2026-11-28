@@ -115,15 +115,18 @@ repository, or are blocked on runtime work that belongs to the crates:
 2. **Acoustic extras.** The prompt asked for material extras. The game reads node extras on
    large near-level meshes (`model_part_bindings.rs`), so the kit writes both. Materials
    without a class say `"none"`; their profiles say `null`, as the other families do.
-3. **The game does not read these yet.** A new placeable kind needs three lines of game code
-   (AGENTS.md): its stem in `stubby_jackdaw/src/prefab_bridge.rs`, a no-op `AssetBinder` in
-   `stubby_game/src/glue.rs`, and its kind in `model_part_bindings.rs` so the acoustic extras
-   reach Steam Audio. These are crate tasks (Codex), listed in the change. Until then the
-   pieces load as plain Jackdaw models without acoustics.
-4. **Colliders are data only.** `colliders.json` follows the other families' format, plus two
-   fields no code reads yet: `tilt_about_x_radians` and `walkable`. The player controller
-   cannot stand on a collider today (`add-prefab-colliders`), so decks, bridges and stairs
-   are not walkable in the game yet.
+3. **City pieces are scenery, not bridged placeables.** AGENTS.md's three lines for a new
+   placeable kind were tried and measured: bridging the district's ~4,900 placements to
+   `PlacedAsset` stalled its first frame past 20 s. Without it, the single-level pieces'
+   acoustic node extras still reach Steam Audio (`prefab_presentation` reads them on any
+   model), and `stubby_jackdaw/src/city_colliders.rs` makes their walls solid from
+   `colliders.json` by the model's `GltfSource` path. The flattened monument is the one piece
+   whose acoustics are not read.
+4. **Colliders: walls block, decks wait.** `colliders.json` follows the other families'
+   format, plus `tilt_about_x_radians` and `walkable`. Non-walkable shapes become static
+   `Solid` colliders in the game; walkable ones are skipped, because the player controller
+   cannot stand on a collider yet (`add-prefab-colliders`), so decks, bridges and stairs are
+   not walkable in the game.
 5. **The ground has no cut for canals.** The canal sits below the promenade. The game's ground
    would cover it, so the Jackdaw review scene (`assets/world/asset_reviews/city.bsn`) stands
    the district 2.3 m up. A terrain cut or a raised city podium is runtime and level work.
