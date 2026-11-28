@@ -193,8 +193,9 @@ pub struct StreamInlet {
     pub snap_m: f32,
 }
 
-/// A static collider the player cannot walk through (a boulder's collision mesh). Movement
-/// slides along anything with it; other colliders (the interaction markers) are ignored.
+/// A static collider the player walks on or cannot walk through (a boulder's collision
+/// mesh, the ground's heightfield). The player's body (`stubby_player::movement`, bevy_ahoy)
+/// is stopped by colliders; sensors, such as the interaction markers, never block it.
 #[derive(Component, Clone, Copy, Debug, Default)]
 pub struct Solid;
 

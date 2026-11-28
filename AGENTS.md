@@ -921,8 +921,13 @@ CI warns when the pin lags the fork.
 **Physics colliders on prefabs are planned in `add-prefab-colliders`:** Avian already runs on
 our fork, and `jackdaw_avian_integration` compiles once a one-line Jackdaw workspace bug is
 fixed. Meanwhile **boulders are solid** (2026-11-18): each gets static trimesh colliders from
-its own LOD0 meshes (`model_part_bindings::solid_boulders`), marked `stubby_core::Solid`, and
-the player's movement slides along `Solid` colliders (`controls::slide`); nothing else blocks yet.
+its own LOD0 meshes (`model_part_bindings::solid_boulders`), marked `stubby_core::Solid`.
+**The player moves with `bevy_ahoy`** (user, 2026-11-27, after the movement spike in
+`add-multiplayer-and-menus` 2.3): `stubby_player::movement`, a body in the fixed step driven
+by input actions, which the camera (`controls::Player`) follows. It walks on a heightfield
+sampled from `GroundHeight` across the whole 1600 m world and is stopped by colliders;
+sensors (interaction markers) never block. Tune ahoy with `movement::tune`, never by
+replacing `CharacterController` (ahoy keeps its own filter state in it).
 
 **Crates without a Bevy-main release are generated forks** (`bevy_main_forks.json`,
 `tools/bevy_main_forks.py`): avian3d and its bevy_heavy, bevy_transform_interpolation and

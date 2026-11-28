@@ -13,7 +13,7 @@ Port from the template (VerdantAI/us-outpost-31) rather than writing anew (D1).
 - [x] 2.0 The template's multiplayer settings as data (`stubby_core::multiplayer`: Steam lobby, port, tick, protocol id), by the user's request (claimed: Claude). The editor's Host/Join/Steam host runs and Jackdaw's multiplayer module come with 2.2, when they do something
 - [ ] 2.1 `stubby_net` service crate; lightyear and BEI forks added (`adding-a-dependency`: re-pin Bevy, lock drift, `deny.toml`); layering bans updated
 - [ ] 2.2 Host and join over UDP (`--host`, `--join`, the menu's Host and Join); the template's `Session` test harness
-- [ ] 2.3 Spike: player movement in the fixed step from BEI actions, stubby's controller vs `bevy_ahoy`; the user judges the feel (D5)
+- [x] 2.3 Spike: player movement in the fixed step from BEI actions, stubby's controller vs `bevy_ahoy`; the user judges the feel (D5) (claimed: Claude). **The user chose `bevy_ahoy`** (2026-11-27): `stubby_player::movement` replaces the per-frame controller, with tests for speeds (also at 4x simulation speed), one jump per press, crouch, solids vs markers, screens, and the ground collider
 - [ ] 2.4 Players replicated: own predicted, others interpolated; Omar's shadow body for others
 - [ ] 2.5 World config from the host; determinism test (two generations compare equal); seeded and authored entities paired by stable keys (D3)
 

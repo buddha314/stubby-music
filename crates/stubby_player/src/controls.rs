@@ -1,18 +1,20 @@
-//! Satisfactory-style first-person controls shared with Jackdaw Play.
+//! Satisfactory-style first-person controls shared with Jackdaw Play: look (per frame),
+//! the screens' keys and mouse capture. Moving is `crate::movement` (bevy_ahoy in the
+//! fixed step); the camera carrying [`Player`] follows the body it moves.
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use stubby_core::{CROUCH, GroundHeight, INVENTORY, JUMP, Screen, ScreenMode};
+use stubby_core::{GroundHeight, INVENTORY, Screen, ScreenMode};
 
-const EYE_HEIGHT: f32 = 1.65;
-const CROUCH_HEIGHT: f32 = 1.0;
+pub const EYE_HEIGHT: f32 = 1.65;
+pub const CROUCH_HEIGHT: f32 = 1.0;
 
+/// The camera the player sees through. `crate::movement` keeps it at the eye of the body
+/// it moves, and `feet` where that body stands.
 #[derive(Component)]
 pub struct Player {
-    feet: f32,
-    vertical_speed: f32,
-    grounded: bool,
+    pub(crate) feet: f32,
 }
 impl Player {
     /// The height of the ground under the player's feet.
@@ -27,12 +29,10 @@ impl Player {
                 stubby_core::OPENING_SPAWN_XZ.x,
                 stubby_core::OPENING_SPAWN_XZ.y,
             ),
-            vertical_speed: 0.,
-            grounded: true,
         }
     }
 }
-fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
+pub(crate) fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
     ground.at(x, z) + 0.035
 }
 pub fn spawn_transform(ground: &GroundHeight) -> Transform {
@@ -52,6 +52,7 @@ pub struct PlayerControlsPlugin;
 impl Plugin for PlayerControlsPlugin {
     fn build(&self, app: &mut App) {
         crate::compass::add(app);
+        crate::movement::add(app);
         app.init_resource::<GroundHeight>()
             .insert_resource(LookCapture(true))
             .init_resource::<ScreenMode>()
@@ -60,7 +61,7 @@ impl Plugin for PlayerControlsPlugin {
                 (
                     toggle_screens.in_set(stubby_core::ScreenInput),
                     capture_cursor.in_set(stubby_core::CursorCapture),
-                    move_player,
+                    look_around,
                 )
                     .chain(),
             );
@@ -118,100 +119,20 @@ pub fn capture_cursor(
         CursorGrabMode::None
     };
 }
-fn move_player(
-    // Real time: the simulation speed keys never speed up the player.
-    time: Res<Time<Real>>,
-    keys: Res<ButtonInput<KeyCode>>,
+/// Mouse look, every frame while the cursor is captured. The body moves where the camera
+/// faces (`crate::movement`).
+fn look_around(
     capture: Res<LookCapture>,
     mut motion: MessageReader<bevy::input::mouse::MouseMotion>,
-    mut players: Query<(&mut Transform, &mut Player)>,
-    ground: Res<GroundHeight>,
-    spatial: Option<avian3d::prelude::SpatialQuery>,
-    solids: Query<(), With<stubby_core::Solid>>,
+    mut players: Query<&mut Transform, With<Player>>,
 ) {
     let delta: Vec2 = motion.read().map(|event| event.delta).sum();
     if !capture.0 {
         return;
     }
-    for (mut transform, mut player) in &mut players {
+    for mut transform in &mut players {
         look(&mut transform, delta);
-        let before = transform.translation;
-        step(
-            &mut transform,
-            &mut player,
-            &keys,
-            &ground,
-            time.delta_secs().min(0.1),
-        );
-        // Solid things (boulders) stop the body: the step's horizontal move slides along
-        // them instead of passing through (the interim stop-and-slide, add-prefab-colliders).
-        if let Some(spatial) = &spatial {
-            let wanted = Vec3::new(
-                transform.translation.x - before.x,
-                0.,
-                transform.translation.z - before.z,
-            );
-            let body = Vec3::new(before.x, player.feet + BODY_CENTRE_M, before.z);
-            let moved = slide(spatial, &|e| solids.contains(e), body, wanted);
-            transform.translation.x = before.x + moved.x;
-            transform.translation.z = before.z + moved.z;
-        }
     }
-}
-
-/// The body that collides: a capsule this wide, centred this high above the feet, so a
-/// pebble under its foot does not stop it.
-const BODY_RADIUS_M: f32 = 0.3;
-const BODY_LENGTH_M: f32 = 1.0;
-const BODY_CENTRE_M: f32 = 0.95;
-/// Stop this short of a surface, so the next cast starts clear of it.
-const SKIN_M: f32 = 0.02;
-
-/// Move the body from `body` by `wanted` (horizontal), sliding along any solid it meets.
-/// Returns how far it actually moved.
-fn slide(
-    spatial: &avian3d::prelude::SpatialQuery,
-    solid: &dyn Fn(Entity) -> bool,
-    body: Vec3,
-    wanted: Vec3,
-) -> Vec3 {
-    use avian3d::prelude::{Collider, ShapeCastConfig, SpatialQueryFilter};
-    let shape = Collider::capsule(BODY_RADIUS_M, BODY_LENGTH_M);
-    let mut at = body;
-    let mut remaining = wanted;
-    for _ in 0..3 {
-        let length = remaining.length();
-        let Ok(direction) = Dir3::new(remaining) else {
-            break;
-        };
-        let config = ShapeCastConfig {
-            max_distance: length + SKIN_M,
-            ignore_origin_penetration: true,
-            ..ShapeCastConfig::DEFAULT
-        };
-        let Some(hit) = spatial.cast_shape_predicate(
-            &shape,
-            at,
-            Quat::IDENTITY,
-            direction,
-            &config,
-            &SpatialQueryFilter::default(),
-            solid,
-        ) else {
-            at += remaining;
-            break;
-        };
-        let travel = (hit.distance - SKIN_M).clamp(0., length);
-        at += *direction * travel;
-        // What is left of the move, along the surface it met.
-        let rest = remaining * (1. - travel / length);
-        let normal = Vec3::new(hit.normal1.x, 0., hit.normal1.z).normalize_or_zero();
-        remaining = rest - normal * rest.dot(normal).min(0.);
-        if remaining.length() < 1e-4 {
-            break;
-        }
-    }
-    at - body
 }
 fn look(transform: &mut Transform, delta: Vec2) {
     let (yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
@@ -221,59 +142,6 @@ fn look(transform: &mut Transform, delta: Vec2) {
         (pitch - delta.y * 0.003).clamp(-1.54, 1.54),
         0.,
     );
-}
-fn step(
-    transform: &mut Transform,
-    player: &mut Player,
-    keys: &ButtonInput<KeyCode>,
-    ground: &GroundHeight,
-    dt: f32,
-) {
-    let crouched = keys.pressed(CROUCH);
-    let speed = if crouched {
-        2.
-    } else if keys.pressed(KeyCode::ShiftLeft) {
-        8.
-    } else {
-        4.
-    };
-    let (yaw, _, _) = transform.rotation.to_euler(EulerRot::YXZ);
-    let mut input = Vec3::ZERO;
-    for (key, axis) in [
-        (KeyCode::KeyW, Vec3::NEG_Z),
-        (KeyCode::KeyS, Vec3::Z),
-        (KeyCode::KeyA, Vec3::NEG_X),
-        (KeyCode::KeyD, Vec3::X),
-    ] {
-        if keys.pressed(key) {
-            input += axis;
-        }
-    }
-    let direction = Quat::from_rotation_y(yaw) * input.normalize_or_zero();
-    if keys.just_pressed(JUMP) && player.grounded {
-        player.vertical_speed = 7.;
-        player.grounded = false;
-    }
-    // Bound simulation catch-up at the maximum 64× speed; substep for stable landing.
-    let mut remaining = dt.min(6.4);
-    while remaining > 0. {
-        let dt = remaining.min(1. / 120.);
-        remaining -= dt;
-        transform.translation += direction * speed * dt;
-        let ground = floor(ground, transform.translation.x, transform.translation.z);
-        if player.grounded {
-            player.feet = ground;
-        } else {
-            player.vertical_speed -= 20. * dt;
-            player.feet += player.vertical_speed * dt;
-            if player.feet <= ground {
-                player.feet = ground;
-                player.vertical_speed = 0.;
-                player.grounded = true;
-            }
-        }
-    }
-    transform.translation.y = player.feet + if crouched { CROUCH_HEIGHT } else { EYE_HEIGHT };
 }
 
 #[cfg(test)]
@@ -396,47 +264,6 @@ mod tests {
         assert!((crate::compass::offset(heading, 90.) - 15.).abs() < 0.001);
     }
 
-    #[test]
-    fn spawn_and_pitched_walking_stay_grounded() {
-        let mut t = spawn_transform(&GROUND);
-        let mut p = Player::on(&GROUND);
-        assert_eq!(t.translation.y, p.feet + EYE_HEIGHT);
-        look(&mut t, Vec2::new(0., 300.));
-        let mut keys = ButtonInput::default();
-        keys.press(KeyCode::KeyW);
-        for _ in 0..120 {
-            step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
-        }
-        let forward = spawn_transform(&GROUND).forward().as_vec3();
-        let expected = Vec3::new(0., 0., 6.) + forward * 8.;
-        assert!((t.translation.xz() - expected.xz()).length() < 0.001);
-        assert_eq!(
-            t.translation.y,
-            floor(&GROUND, t.translation.x, t.translation.z) + EYE_HEIGHT
-        );
-        assert!(p.grounded);
-    }
-    #[test]
-    fn jump_lands_without_auto_repeat_and_crouch_preserves_feet() {
-        let mut t = spawn_transform(&GROUND);
-        let mut p = Player::on(&GROUND);
-        let mut keys = ButtonInput::default();
-        keys.press(JUMP);
-        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
-        assert!(!p.grounded);
-        assert!(p.feet > floor(&GROUND, 0., 6.));
-        keys.clear();
-        for _ in 0..120 {
-            step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
-        }
-        assert!(p.grounded);
-        keys.press(CROUCH);
-        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
-        assert_eq!(t.translation.y, p.feet + CROUCH_HEIGHT);
-        keys.release(CROUCH);
-        step(&mut t, &mut p, &keys, &GROUND, 1. / 60.);
-        assert_eq!(t.translation.y, p.feet + EYE_HEIGHT);
-    }
     #[test]
     fn mouse_turns_heading_and_pitch_without_roll_or_flip() {
         let mut t = spawn_transform(&GROUND);

@@ -7,6 +7,7 @@ pub mod controls;
 pub mod flashlight;
 pub mod hand;
 pub mod interaction;
+pub mod movement;
 pub mod outline;
 pub mod recorder;
 pub mod shadow;
