@@ -127,7 +127,11 @@ impl Plugin for SessionPlugin {
         if server {
             app.add_plugins(ServerSessionPlugin);
         }
-        app.add_plugins((ClientSessionPlugin, PhysicsReplicationPlugin));
+        app.add_plugins((
+            ClientSessionPlugin,
+            PhysicsReplicationPlugin,
+            SharedEntitiesPlugin,
+        ));
         match mode {
             NetMode::Host { port } => {
                 app.add_systems(Startup, move |mut commands: Commands| {
@@ -213,6 +217,180 @@ fn transform_follows_position(
         }
     }
 }
+
+// --- Shared entities: the Replication bridge (design D3) --- //
+
+/// Marks an entity the host simulates and every peer shares. Every peer spawns its own
+/// copy of the world (the same seed and scene); the host's copy is replicated, and each
+/// client's copy hands its looks over to it (adoption) and goes. `interpolated` entities
+/// are shown smoothly; the others are predicted, so a client sees its own pushes at once.
+/// A reflected component: it can be attached in the editor.
+#[derive(Component, Reflect, Default, Clone, Copy, Debug, PartialEq)]
+#[reflect(Component, Default)]
+pub struct Shared {
+    pub interpolated: bool,
+}
+
+/// Pairs a shared entity with every peer's own copy of it. Authored entities take their
+/// scene id (`SceneNodeId`); generated ones a key from what generated them
+/// ([`NetKey::of`]), the same on every peer.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct NetKey(pub u64);
+
+impl NetKey {
+    /// A key from stable bytes (a placement's key, serialized): 64-bit FNV-1a, the same in
+    /// every process, unlike Rust's per-process hashers.
+    pub fn of(bytes: &[u8]) -> Self {
+        let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+        for &byte in bytes {
+            hash ^= u64::from(byte);
+            hash = hash.wrapping_mul(0x0100_0000_01b3);
+        }
+        Self(hash)
+    }
+}
+
+/// Shared entities: registered identically by every peer, in both roles.
+pub struct SharedEntitiesPlugin;
+
+impl Plugin for SharedEntitiesPlugin {
+    fn build(&self, app: &mut App) {
+        app.component::<NetKey>().replicate();
+        app.add_observer(key_scene_entities)
+            .add_observer(joined_a_host)
+            .add_systems(
+                PreUpdate,
+                (replicate_shared, hold_local_copies, adopt_local_copies),
+            );
+    }
+}
+
+/// Authored entities marked `Shared` take their scene id as their key.
+fn key_scene_entities(
+    added: On<Add<Shared>>,
+    ids: Query<&jackdaw_scene_types::SceneNodeId, Without<NetKey>>,
+    mut commands: Commands,
+) {
+    if let Ok(id) = ids.get(added.entity) {
+        commands.entity(added.entity).insert(NetKey(id.0));
+    }
+}
+
+/// Present once this process has joined someone else's server: from then on its own
+/// copies of shared entities wait for the host's. A host never gets it, so its own
+/// entities keep simulating (the template's bridge froze them on a host that also had the
+/// client role; found 2026-11-27).
+#[derive(Resource)]
+pub struct JoinedHost;
+
+fn joined_a_host(
+    added: On<Add<Connected>>,
+    remote_clients: Query<(), (With<lightyear::prelude::client::Client>, Without<LinkOf>)>,
+    mut commands: Commands,
+) {
+    if remote_clients.contains(added.entity) {
+        commands.insert_resource(JoinedHost);
+    }
+}
+
+/// On a running server, shared entities are replicated to every client.
+fn replicate_shared(
+    servers: Query<(), With<lightyear::prelude::server::Started>>,
+    shared: Query<(Entity, &Shared), (With<NetKey>, Without<Replicate>)>,
+    mut commands: Commands,
+) {
+    if servers.is_empty() {
+        return;
+    }
+    for (entity, shared) in &shared {
+        let mut entity = commands.entity(entity);
+        entity.insert(Replicate::to_clients(NetworkTarget::All));
+        if shared.interpolated {
+            entity.insert(InterpolationTarget::to_clients(NetworkTarget::All));
+        } else {
+            entity.insert(PredictionTarget::to_clients(NetworkTarget::All));
+        }
+    }
+}
+
+/// On a joined client, its own copy of a shared entity waits for the host's, without
+/// simulating.
+#[derive(Component)]
+struct LocalCopy;
+
+fn hold_local_copies(
+    joined: Option<Res<JoinedHost>>,
+    copies: Query<
+        Entity,
+        (
+            With<Shared>,
+            Without<LocalCopy>,
+            Without<lightyear::prelude::client::Remote>,
+        ),
+    >,
+    mut commands: Commands,
+) {
+    if joined.is_none() {
+        return;
+    }
+    for copy in &copies {
+        commands.entity(copy).insert((LocalCopy, RigidBodyDisabled));
+    }
+}
+
+/// The host's copy of an entity arrived: move this peer's copy's looks, collider and
+/// body onto it (keeping the host's state), and drop the copy. Components move by cloning:
+/// one that is not `Clone` (or reflect-clonable) is silently left behind with the copy. An interpolated body
+/// follows the host, so here it is kinematic.
+fn adopt_local_copies(
+    arrived: Query<
+        (Entity, &NetKey, Has<Interpolated>),
+        (With<lightyear::prelude::client::Remote>, Without<Adopted>),
+    >,
+    copies: Query<(Entity, &NetKey, Option<&Children>), With<LocalCopy>>,
+    mut commands: Commands,
+) {
+    for (replicated, key, interpolated) in &arrived {
+        let Some((copy, _, children)) = copies.iter().find(|(_, k, _)| *k == key) else {
+            continue;
+        };
+        commands
+            .entity(copy)
+            .clone_with_opt_out(replicated, |builder| {
+                // Deny exactly these, not the components requiring them too (the body
+                // and collider require Position and Transform).
+                builder.without_required_by_components(|builder| {
+                    builder.deny::<(
+                        // The host's state, and the bridge's own markers.
+                        (Position, Rotation, LinearVelocity, AngularVelocity),
+                        (
+                            Transform,
+                            GlobalTransform,
+                            NetKey,
+                            LocalCopy,
+                            RigidBodyDisabled,
+                        ),
+                        // Relationships point at the copy; cloning them would tie the
+                        // host's entity to it (despawning the copy would take it too).
+                        (ChildOf, Children, ColliderOf, RigidBodyColliders),
+                    )>();
+                });
+            });
+        // The copy's children (an authored model's meshes, say) move over.
+        for &child in children.into_iter().flatten() {
+            commands.entity(child).insert(ChildOf(replicated));
+        }
+        commands.entity(copy).despawn();
+        let mut replicated = commands.entity(replicated);
+        replicated.insert(Adopted);
+        if interpolated {
+            replicated.insert(RigidBody::Kinematic);
+        }
+    }
+}
+
+#[derive(Component)]
+struct Adopted;
 
 /// Present while lightyear re-simulates past ticks after a misprediction. One-off effects
 /// (sounds, particles, UI) must not fire then: the original tick already did. Take it as a
@@ -384,6 +562,14 @@ mod tests {
 
     fn mode(args: &[&str], fallback: NetMode) -> Result<NetMode, String> {
         NetMode::from_args(args.iter().map(|a| a.to_string()), fallback)
+    }
+
+    #[test]
+    fn keys_are_the_same_in_every_process() {
+        // FNV-1a's published test vectors: stable, not seeded per process.
+        assert_eq!(NetKey::of(b"").0, 0xcbf2_9ce4_8422_2325);
+        assert_eq!(NetKey::of(b"a").0, 0xaf63_dc4c_8601_ec8c);
+        assert_ne!(NetKey::of(b"cell 1"), NetKey::of(b"cell 2"));
     }
 
     #[test]

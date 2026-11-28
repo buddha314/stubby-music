@@ -36,8 +36,12 @@ The menus live in `stubby_game` (assembly and glue), drawn with `stubby_ui`.
 options) on every peer; the host sends its config when a client connects, and the client
 generates before it is shown the world (the loading screen covers it). Authored and
 seeded entities pair across peers by a stable key (Jackdaw's `SceneNodeId`; for seeded
-placements, the placement index), as the template's `NetKey` does. A determinism test
-generates the world twice in one process and compares the placements.
+placements, FNV-1a of the serialized `PlacementKey`, not its index, which shifts when a
+rule changes), as the template's `NetKey` does. A determinism test generates the world
+twice in one process and compares the placements and keys. **Built (2.5):** the host's
+config replicates as JSON (`HostWorld`); a client whose world differs restarts with the
+host's (`--world-config`) and rejoins, since a fresh process is the one sure way to
+generate another world. Entities to share are marked `stubby_net::Shared`.
 
 **D4 The host decides.** Collecting, building, crafting, machine configuration and
 inventory changes are requests from clients (lightyear messages) that the host checks

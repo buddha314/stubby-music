@@ -60,6 +60,7 @@ pub struct MenusPlugin;
 impl Plugin for MenusPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SettingsFrom(Screen::MainMenu))
+            .init_resource::<Notice>()
             .add_systems(Startup, (spawn_loading, spawn_main_menu, spawn_settings))
             .add_systems(
                 Update,
@@ -67,6 +68,7 @@ impl Plugin for MenusPlugin {
                     finish_loading,
                     menu_keys,
                     show_panels,
+                    show_notice,
                     show_values.run_if(resource_exists::<GraphicsSettings>),
                 ),
             );
@@ -140,11 +142,32 @@ fn menu_keys(
 #[derive(Component, Clone, Copy)]
 struct Panel(Screen);
 
+/// The main menu's address field.
+#[derive(Component)]
+struct JoinAddress;
+
+/// The main menu's message line (a mistyped address, say).
+#[derive(Component)]
+struct MenuNotice;
+
+/// What the main menu has to say.
+#[derive(Resource, Clone, Debug, Default)]
+pub struct Notice(pub String);
+
+fn show_notice(notice: Res<Notice>, mut lines: Query<&mut Text, With<MenuNotice>>) {
+    for mut line in &mut lines {
+        if line.0 != notice.0 {
+            line.0.clone_from(&notice.0);
+        }
+    }
+}
+
 /// What a button does.
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 enum Action {
     Play,
     Host,
+    Join,
     Settings,
     Quit,
     Back,
@@ -271,11 +294,40 @@ fn spawn_main_menu(mut commands: Commands) {
     commands.entity(column).with_children(|column| {
         button(column, Action::Play, "Play", 20.);
         button(column, Action::Host, "Host a Game", 20.);
-        column.spawn(text(
-            "Join: start with --join ADDRESS for now. Steam: coming.",
-            14.,
-            MUTED,
-        ));
+        // Join: the host's address (IP, or IP:port), then Join.
+        column
+            .spawn(Node {
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                column_gap: px(8),
+                ..default()
+            })
+            .with_children(|row| {
+                row.spawn((
+                    JoinAddress,
+                    bevy::ui_widgets::TextInput,
+                    bevy::text::EditableText::new("127.0.0.1"),
+                    // Focusable by click and Tab, with a visible cursor.
+                    bevy::input_focus::tab_navigation::TabIndex(0),
+                    bevy::text::TextCursorStyle::default(),
+                    TextFont {
+                        font_size: bevy::text::FontSize::Px(18.),
+                        ..default()
+                    },
+                    TextColor(INK),
+                    Node {
+                        flex_grow: 1.0,
+                        padding: UiRect::axes(px(10), px(8)),
+                        border: UiRect::all(px(1)),
+                        ..default()
+                    },
+                    BackgroundColor(BUTTON),
+                    BorderColor::all(EDGE),
+                ));
+                button(row, Action::Join, "Join", 18.);
+            });
+        column.spawn((text("", 14., AMBER), MenuNotice));
+        column.spawn(text("Host on Steam: coming.", 14., MUTED));
         button(column, Action::Settings, "Settings", 20.);
         button(column, Action::Quit, "Exit to Desktop", 20.);
     });
@@ -435,6 +487,8 @@ fn choose(
     mut audio: ResMut<AudioSettings>,
     mut exit: MessageWriter<AppExit>,
     mode: Option<Res<stubby_net::NetMode>>,
+    addresses: Query<&bevy::text::EditableText, With<JoinAddress>>,
+    mut notice: ResMut<Notice>,
     mut commands: Commands,
 ) {
     let Ok(&action) = actions.get(click.entity) else {
@@ -448,6 +502,26 @@ fn choose(
                 stubby_net::play_solo(&mut commands);
             }
             screens.close();
+        }
+        Action::Join if on(Screen::MainMenu) => {
+            let typed = addresses
+                .iter()
+                .next()
+                .map(|t| t.value().trim().to_string())
+                .unwrap_or_default();
+            if !mode.is_some_and(|m| m.is_networked()) {
+                notice.0 = "This launch cannot join a game.".into();
+            } else {
+                match stubby_net::parse_server(&typed) {
+                    Ok(server) => {
+                        info!("Joining {server}");
+                        stubby_net::join(&mut commands, server, stubby_net::random_client_id());
+                        notice.0.clear();
+                        screens.close();
+                    }
+                    Err(why) => notice.0 = why,
+                }
+            }
         }
         Action::Host if on(Screen::MainMenu) => {
             if mode.is_some_and(|m| m.is_networked()) {

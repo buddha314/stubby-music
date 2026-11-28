@@ -9245,6 +9245,7 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
+ "jackdaw_scene_types",
  "lightyear",
  "serde",
  "stubby_core",

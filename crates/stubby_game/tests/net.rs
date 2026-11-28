@@ -19,18 +19,29 @@ use stubby_core::{GroundHeight, LookCapture, ScreenMode};
 use stubby_game::{
     controls::Player,
     movement::{MoveBody, MoveControls, MovementPlugin, NetworkedMovement, Sprint},
-    multiplayer::{ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin},
+    multiplayer::{
+        ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin, WorldHandshakePlugin,
+        WorldMismatch,
+    },
     net::{
         self, NetMode, NetPlayer,
         lightyear::{crossbeam::CrossbeamIo, link::RecvLinkConditioner, prelude::*},
     },
+    world_generation::WorldConfig,
 };
 
 const SERVER_ADDR: SocketAddr = SocketAddr::new(core::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 5888);
 const TICK: Duration = Duration::from_micros(15_625); // 64 Hz
 
+/// The shipped world with `seed`.
+fn world(seed: u64) -> WorldConfig {
+    let mut config = WorldConfig::shipped();
+    config.seed = seed.to_string();
+    config
+}
+
 /// What every peer has: headless Bevy, networked physics, a camera to look through, and
-/// stubby's movement with the game's protocol.
+/// stubby's movement with the game's protocol. The world is seed 42 unless a test changes it.
 fn peer(mode: NetMode) -> App {
     let mut app = App::new();
     app.add_plugins((
@@ -46,7 +57,8 @@ fn peer(mode: NetMode) -> App {
     .init_resource::<GroundHeight>()
     .insert_resource(LookCapture(true))
     .init_resource::<ScreenMode>()
-    .insert_resource(NetworkedMovement);
+    .insert_resource(NetworkedMovement)
+    .insert_resource(world(42));
     let ground = GroundHeight::default();
     app.world_mut().spawn((
         Player::on(&ground),
@@ -71,7 +83,9 @@ impl Session {
         }
         server.add_plugins((
             net::PhysicsReplicationPlugin,
+            net::SharedEntitiesPlugin,
             ProtocolPlugin,
+            WorldHandshakePlugin,
             ServerPlayersPlugin,
             MovementPlugin,
         ));
@@ -79,14 +93,17 @@ impl Session {
     }
 
     /// A client app with the game's networking, before it connects.
-    fn client_app() -> App {
+    fn client_app(seed: u64) -> App {
         let mut client = peer(NetMode::Join {
             server: SERVER_ADDR,
         });
+        client.insert_resource(world(seed));
         client.add_plugins((
             net::ClientSessionPlugin,
             net::PhysicsReplicationPlugin,
+            net::SharedEntitiesPlugin,
             ProtocolPlugin,
+            WorldHandshakePlugin,
             ClientPlayersPlugin,
             MovementPlugin,
         ));
@@ -129,8 +146,12 @@ impl Session {
 
     /// A client joining over an in-process link, optionally laggy and lossy.
     fn join(&mut self, conditions: Option<LinkConditionerConfig>) -> usize {
+        self.join_with_seed(conditions, 42)
+    }
+
+    fn join_with_seed(&mut self, conditions: Option<LinkConditionerConfig>, seed: u64) -> usize {
         let id = self.clients.len();
-        let mut client = Self::client_app();
+        let mut client = Self::client_app(seed);
         let (client_io, server_io) = CrossbeamIo::new_pair();
         let link = || match &conditions {
             Some(c) => Link::default().with_conditioner(RecvLinkConditioner::new(c.clone())),
@@ -388,5 +409,142 @@ fn a_host_plays_on_its_own_server_while_a_client_joins() {
     assert!(
         Vec2::new(host_camera.x - host_at.x, host_camera.z - host_at.z).length() < 0.05,
         "the host's camera is at its body"
+    );
+}
+
+#[test]
+fn a_client_learns_the_hosts_world_and_notices_when_it_differs() {
+    let mut session = Session::new(false);
+    session.join(None); // seed 42, as the host
+    session.join_with_seed(None, 7);
+    joined(&mut session, 0);
+    joined(&mut session, 1);
+    session.until(3.0, "the host's world at the second client", |s| {
+        s.clients[1].world().contains_resource::<WorldMismatch>()
+    });
+    let mismatch = session.clients[1].world().resource::<WorldMismatch>();
+    assert_eq!(mismatch.host.seed, "42", "the host's world, to rejoin with");
+    assert!(
+        !session.clients[0]
+            .world()
+            .contains_resource::<WorldMismatch>(),
+        "the same world needs nothing"
+    );
+}
+
+/// Something only a peer's own copy has, to see that adoption moved it over. Adoption
+/// clones components, so it must be `Clone`: one that is not is silently left behind.
+#[derive(Component, Clone)]
+struct Looks;
+
+fn spawn_shared_cube(app: &mut App, interpolated: bool) {
+    app.world_mut().spawn((
+        net::Shared { interpolated },
+        net::NetKey(1),
+        Looks,
+        RigidBody::Dynamic,
+        Collider::cuboid(1.0, 1.0, 1.0),
+        Transform::from_xyz(3.0, 4.0, 0.0),
+    ));
+}
+
+#[test]
+fn a_shared_entity_is_simulated_by_the_host_and_adopted_by_clients() {
+    for interpolated in [false, true] {
+        let mut session = Session::new(false);
+        spawn_shared_cube(&mut session.server, interpolated);
+        let client = session.join(None);
+        spawn_shared_cube(&mut session.clients[client], interpolated);
+        joined(&mut session, client);
+        session.seconds(2.0); // it falls and lands
+
+        let world = session.clients[client].world_mut();
+        let cubes: Vec<(Vec3, bool, bool, Option<RigidBody>)> = world
+            .query::<(
+                &net::NetKey,
+                &Position,
+                Has<Looks>,
+                Has<Collider>,
+                Option<&RigidBody>,
+            )>()
+            .iter(world)
+            .map(|(_, p, looks, collider, body)| (p.0, looks, collider, body.copied()))
+            .collect();
+        assert_eq!(cubes.len(), 1, "one cube on the client, not two: {cubes:?}");
+        let (at, looks, collider, body) = cubes[0];
+        assert!(looks && collider, "the local copy's components moved over");
+        let expected = if interpolated {
+            RigidBody::Kinematic
+        } else {
+            RigidBody::Dynamic
+        };
+        assert_eq!(body, Some(expected));
+
+        let world = session.server.world_mut();
+        let on_server = world
+            .query_filtered::<&Position, With<net::NetKey>>()
+            .single(world)
+            .unwrap()
+            .0;
+        assert!(on_server.y < 1.5, "it fell on the host: {on_server:?}");
+        assert!(
+            at.distance(on_server) < 0.1,
+            "interpolated={interpolated}: client {at:?}, host {on_server:?}"
+        );
+    }
+}
+
+/// A host that also has the client role (the main menu's launch) keeps simulating its own
+/// shared entities: they are the original, not a copy waiting for a host.
+#[test]
+fn a_host_keeps_simulating_its_own_shared_entities() {
+    let mut session = Session::new(true);
+    spawn_shared_cube(&mut session.server, false);
+    session.until(3.0, "the host's own body", |s| {
+        local_body(&mut s.server).is_some()
+    });
+    session.join(None);
+    joined(&mut session, 0);
+    session.seconds(2.0);
+    let world = session.server.world_mut();
+    let (at, disabled) = world
+        .query_filtered::<(&Position, Has<RigidBodyDisabled>), With<net::NetKey>>()
+        .single(world)
+        .unwrap();
+    assert!(!disabled, "the host's own cube is not frozen");
+    assert!(at.0.y < 1.5, "it fell on the host: {:?}", at.0);
+}
+
+/// Every peer generates the world itself (design D3), so generation must be exact: the
+/// same configuration gives the same placements and the same keys, and another seed does
+/// not.
+#[test]
+fn the_same_world_generates_the_same_placements_and_keys() {
+    let layout = |seed: u64| {
+        world(seed)
+            .resolve_layout(&[])
+            .expect("the opening resolves")
+    };
+    let keys = |seed: u64| -> Vec<net::NetKey> {
+        layout(seed)
+            .placements
+            .iter()
+            .map(|p| net::NetKey::of(serde_json::to_string(&p.key).unwrap().as_bytes()))
+            .collect()
+    };
+    let (a, b) = (layout(42), layout(42));
+    assert!(!a.placements.is_empty(), "the opening places things");
+    assert_eq!(a, b, "two generations from one configuration agree");
+    assert_eq!(keys(42), keys(42), "and so do their keys");
+    let distinct: std::collections::HashSet<_> = keys(42).into_iter().collect();
+    assert_eq!(
+        distinct.len(),
+        a.placements.len(),
+        "every placement has its own key"
+    );
+    assert_ne!(
+        layout(42).placements,
+        layout(7).placements,
+        "another seed, another world"
     );
 }
