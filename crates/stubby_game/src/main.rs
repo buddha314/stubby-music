@@ -31,11 +31,25 @@ fn main() {
         });
     let mut app = App::new();
     // A plain launch opens the main menu (add-multiplayer-and-menus).
-    if stubby_game::menus::StartAtMenu::wanted(std::env::args()) {
+    let start_at_menu = stubby_game::menus::StartAtMenu::wanted(std::env::args());
+    if start_at_menu {
         app.insert_resource(stubby_game::menus::StartAtMenu);
     }
+    // `--host [PORT]` or `--join ADDR`; the menu loads both roles so it can start either.
+    use stubby_game::net::NetMode;
+    let fallback = if start_at_menu {
+        NetMode::Menu
+    } else {
+        NetMode::Offline
+    };
+    let mode = NetMode::from_args(std::env::args(), fallback).unwrap_or_else(|error| {
+        eprintln!("{error}");
+        std::process::exit(2);
+    });
+    app.insert_resource(mode);
     app.insert_resource(config)
         .add_plugins(default_plugins)
+        .add_plugins(stubby_game::net::physics_plugins(mode))
         .add_plugins(stubby_game::settings::SettingsPersistencePlugin)
         .add_plugins(stubby_game::DesertPlugin { seed })
         .add_plugins(stubby_game::audio::SynthAudioPlugin {

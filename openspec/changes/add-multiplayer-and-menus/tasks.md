@@ -11,10 +11,10 @@ Port from the template (VerdantAI/us-outpost-31) rather than writing anew (D1).
 
 ## 2. Networking core
 - [x] 2.0 The template's multiplayer settings as data (`stubby_core::multiplayer`: Steam lobby, port, tick, protocol id), by the user's request (claimed: Claude). The editor's Host/Join/Steam host runs and Jackdaw's multiplayer module come with 2.2, when they do something
-- [ ] 2.1 `stubby_net` service crate; lightyear and BEI forks added (`adding-a-dependency`: re-pin Bevy, lock drift, `deny.toml`); layering bans updated
-- [ ] 2.2 Host and join over UDP (`--host`, `--join`, the menu's Host and Join); the template's `Session` test harness
+- [x] 2.1 `stubby_net` service crate; lightyear and BEI forks added (`adding-a-dependency`: re-pin Bevy, lock drift, `deny.toml`); layering bans updated (claimed: Claude). `stubby_net` (service), lightyear and its forks (lock purely additive, Bevy unmoved), `deny.toml` layering and the chrono advisory
+- [x] 2.2 Host and join over UDP (`--host`, `--join`, the menu's Host and Join); the template's `Session` test harness (claimed: Claude). `--host`/`--join`, the menu's Play (a solo host) and Host, editor Host/Join runs; the template's `Session` harness in `crates/stubby_game/tests/net.rs`; checked over real UDP with two processes. The menu's Join (typing an address) is still to come
 - [x] 2.3 Spike: player movement in the fixed step from BEI actions, stubby's controller vs `bevy_ahoy`; the user judges the feel (D5) (claimed: Claude). **The user chose `bevy_ahoy`** (2026-11-27): `stubby_player::movement` replaces the per-frame controller, with tests for speeds (also at 4x simulation speed), one jump per press, crouch, solids vs markers, screens, and the ground collider
-- [ ] 2.4 Players replicated: own predicted, others interpolated; Omar's shadow body for others
+- [x] 2.4 Players replicated: own predicted, others interpolated; Omar's shadow body for others (claimed: Claude). The server spawns bodies (ring around the opening); a client completes its predicted body and the camera follows it; others are interpolated and drawn as a body-sized capsule until Omar's model exists. Found: an unbound action (Look) is never sent without lightyear's `InputMarker` (the template has the same latent bug)
 - [ ] 2.5 World config from the host; determinism test (two generations compare equal); seeded and authored entities paired by stable keys (D3)
 
 ## 3. Shared world state (host decides, D4)

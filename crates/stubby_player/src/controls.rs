@@ -32,7 +32,8 @@ impl Player {
         }
     }
 }
-pub(crate) fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
+/// Where feet rest on `ground` at (x, z): the ground plus the mud plates' 3.5 cm.
+pub fn floor(ground: &GroundHeight, x: f32, z: f32) -> f32 {
     ground.at(x, z) + 0.035
 }
 pub fn spawn_transform(ground: &GroundHeight) -> Transform {

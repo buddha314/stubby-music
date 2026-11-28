@@ -9,7 +9,7 @@ pub use bevy_stubby_audio as audio;
 pub use bevy_stubby_audio::module_ids;
 pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_generation};
 // The player system (stubby_player), under its old module names.
-pub use stubby_player::{controls, hand, interaction};
+pub use stubby_player::{controls, hand, interaction, movement};
 #[cfg(all(feature = "dev", feature = "spatial-audio"))]
 mod audio_developer;
 mod build;
@@ -20,6 +20,9 @@ pub mod designer;
 mod hud;
 mod inventory_screen;
 pub mod menus;
+pub mod multiplayer;
+/// The multiplayer session (`stubby_net`), for the binaries.
+pub use stubby_net as net;
 mod pause_menu;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
@@ -57,6 +60,8 @@ pub struct DesertPlugin {
 }
 impl Plugin for DesertPlugin {
     fn build(&self, app: &mut App) {
+        // Before the player's plugins: in a session it owns the movement context.
+        app.add_plugins(multiplayer::MultiplayerPlugin);
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,

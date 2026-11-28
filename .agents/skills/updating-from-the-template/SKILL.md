@@ -27,6 +27,8 @@ In a game repository (not the template), when the template has moved on.
 - Some template changes assume earlier ones; port in commit order when an area's patch will not apply.
 - When the shared list itself grows, the game's old `update_engine_tools.sh` copies only the files it knows (and its own new version): run it a second time (stubby-music, 2026-11-27).
 - A game may have changed a shared tool locally; `update_engine_tools.sh` overwrites it, so move that change to the template first (`sharing-tool-changes`).
+- When a feature is ported into a game, port its tests too and run them in the game's own starting state: stubby-music's turned camera exposed a networking bug the template's tests could not see.
+- **Games harden the template.** Anything a port exposes that is also true of the template (a bug, a test gap, a process lesson) is fixed in the template in the same round, with a test, and the lesson goes into the relevant skill. Then sync it back to the game.
 
 ## Done when
 `tools/ci_local.sh` passes, `.template-sync` names the new template commit, and the PR lists what came over and what was deliberately left out.

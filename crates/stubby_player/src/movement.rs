@@ -21,6 +21,7 @@ use bevy_ahoy::{
     CharacterControllerDerivedProps, CharacterControllerState, CharacterLook, prelude::*,
 };
 use bevy_enhanced_input::prelude::*;
+use serde::{Deserialize, Serialize};
 use stubby_core::{CROUCH, GroundHeight, JUMP, LookCapture, ScreenMode, Solid};
 
 use crate::controls::{CROUCH_HEIGHT, EYE_HEIGHT, Player, floor};
@@ -41,8 +42,10 @@ const BODY_HEIGHT: f32 = 1.8;
 const GROUND_SIZE_M: f32 = 1600.;
 const GROUND_SAMPLES: usize = 401;
 
-/// The input context the movement actions belong to: the body.
-#[derive(Component, Default)]
+/// The input context the movement actions belong to: every player's body. In a session it
+/// is also what marks a body as a player's, replicated with it (so it is serializable).
+#[derive(Component, Reflect, Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[reflect(Component, Default)]
 pub struct MoveControls;
 
 /// Hold to run.
@@ -50,19 +53,45 @@ pub struct MoveControls;
 #[action_output(bool)]
 pub struct Sprint;
 
-/// The body ahoy moves; `camera` is the [`Player`] that follows its eye.
+/// Where the player faces, `(yaw, pitch)` in radians: an input like the others, so in a
+/// session it travels with them and replays on rollback. Fed from the camera.
+#[derive(Debug, InputAction)]
+#[action_output(Vec2)]
+pub struct Look;
+
+/// The body this machine controls; `camera` is the [`Player`] that follows its eye. Only
+/// this body's actions are bound to the keys. Other players' bodies (in a session) have
+/// none: their inputs arrive over the network.
 #[derive(Component)]
 pub struct MoveBody {
     pub camera: Entity,
+}
+
+/// Present when a multiplayer session owns the movement context and spawns the bodies
+/// (`stubby_game::multiplayer` inserts it before this plugin builds). Offline, the plugin
+/// spawns the local player's body itself.
+#[derive(Resource, Default)]
+pub struct NetworkedMovement;
+
+/// Movement on its own (`PlayerControlsPlugin` adds it with the rest of the controls).
+pub struct MovementPlugin;
+
+impl Plugin for MovementPlugin {
+    fn build(&self, app: &mut App) {
+        add(app);
+    }
 }
 
 pub(crate) fn add(app: &mut App) {
     if !app.is_plugin_added::<EnhancedInputPlugin>() {
         app.add_plugins(EnhancedInputPlugin);
     }
-    app.add_plugins(AhoyPlugins::default())
-        .add_input_context::<MoveControls>()
-        .add_observer(spawn_body)
+    app.add_plugins(AhoyPlugins::default());
+    if !app.world().contains_resource::<NetworkedMovement>() {
+        app.add_input_context::<MoveControls>()
+            .add_observer(spawn_body);
+    }
+    app.add_observer(apply_look)
         .add_systems(Startup, spawn_ground_collider)
         // Before input is read, so a screen that just opened stops this frame's input.
         .add_systems(
@@ -70,11 +99,39 @@ pub(crate) fn add(app: &mut App) {
             switch_controls.before(EnhancedInputSystems::Update),
         )
         .add_systems(
+            PreUpdate,
+            bind_local_actions.before(EnhancedInputSystems::Update),
+        )
+        .add_systems(
             RunFixedMainLoop,
-            steer.in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
+            (feed_look, steer).in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
         )
         .add_systems(Update, follow_body);
 }
+
+/// What a body is: ahoy's controller tuned to stubby's feel, its collider, where it looks,
+/// and the input context its actions belong to. Spawned standing with its feet at `feet`.
+pub fn body(at: Vec2, feet: f32) -> impl Bundle {
+    (
+        body_parts(),
+        Transform::from_xyz(at.x, feet + BODY_HEIGHT / 2. + 0.05, at.y),
+    )
+}
+
+/// A body without a position: for a body that arrived over the network, which already
+/// has one.
+pub fn body_parts() -> impl Bundle {
+    (
+        MoveControls,
+        tuning(false, 1.),
+        RigidBody::Kinematic,
+        Collider::cylinder(BODY_RADIUS, BODY_HEIGHT),
+        CharacterLook::default(),
+    )
+}
+
+/// The body's collider size (radius, height), for drawing other players.
+pub const BODY_SIZE: (f32, f32) = (BODY_RADIUS, BODY_HEIGHT);
 
 /// ahoy's controller, tuned to stubby's feel at simulation speed `speed` (1 = real time)
 /// while walking or `running`.
@@ -110,46 +167,110 @@ fn tune(controller: &mut CharacterController, running: bool, speed: f32) {
     controller.jump_input_buffer = defaults.jump_input_buffer.mul_f32(s);
 }
 
-/// The movement actions on `context`: WASD and the left stick, Space, C, Shift.
-fn spawn_actions(commands: &mut Commands, context: Entity) {
-    commands
-        .spawn((
-            ActionOf::<MoveControls>::new(context),
-            Action::<Movement>::new(),
-            DeadZone::default(),
-        ))
-        .apply_scene(bsn! {
-            Bindings [
-                {bevy_enhanced_input::preset::cardinal::new(
-                    KeyCode::KeyW, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyA
-                )}
-                --
-                {bevy_enhanced_input::preset::axial::left_stick()}
-            ]
-        });
-    // One jump per press: ahoy jumps again for as long as jump fires, and stubby's jump
-    // never auto-repeated.
-    commands
-        .spawn((
-            ActionOf::<MoveControls>::new(context),
-            Action::<Jump>::new(),
-            Press::default(),
-        ))
-        .apply_scene(bsn! { Bindings [ Binding(JUMP) -- Binding(GamepadButton::South) ] });
-    commands
-        .spawn((
-            ActionOf::<MoveControls>::new(context),
-            Action::<Crouch>::new(),
-        ))
-        .apply_scene(bsn! { Bindings [ Binding(CROUCH) -- Binding(GamepadButton::East) ] });
-    commands
-        .spawn((
-            ActionOf::<MoveControls>::new(context),
-            Action::<Sprint>::new(),
-        ))
-        .apply_scene(
-            bsn! { Bindings [ Binding(KeyCode::ShiftLeft) -- Binding(GamepadButton::LeftThumb) ] },
-        );
+/// A body's movement actions, unbound: the machine that controls the body binds them
+/// ([`bind_local_actions`]). In a session the server spawns these.
+pub fn spawn_actions(commands: &mut Commands, context: Entity) {
+    commands.spawn((
+        ActionOf::<MoveControls>::new(context),
+        Action::<Movement>::new(),
+    ));
+    commands.spawn((
+        ActionOf::<MoveControls>::new(context),
+        Action::<Jump>::new(),
+    ));
+    commands.spawn((
+        ActionOf::<MoveControls>::new(context),
+        Action::<Crouch>::new(),
+    ));
+    commands.spawn((
+        ActionOf::<MoveControls>::new(context),
+        Action::<Sprint>::new(),
+    ));
+    commands.spawn((
+        ActionOf::<MoveControls>::new(context),
+        Action::<Look>::new(),
+    ));
+}
+
+/// The body this machine controls gets its keys: WASD and the left stick, Space (once per
+/// press: ahoy jumps for as long as jump fires, and stubby's never auto-repeated), C,
+/// Shift. `Look` has no keys: it is fed from the camera.
+#[allow(clippy::type_complexity)]
+fn bind_local_actions(
+    actions: Query<
+        (
+            Entity,
+            &ActionOf<MoveControls>,
+            Has<Action<Movement>>,
+            Has<Action<Jump>>,
+            Has<Action<Crouch>>,
+            Has<Action<Sprint>>,
+        ),
+        Without<Bindings>,
+    >,
+    local: Query<(), With<MoveBody>>,
+    mut commands: Commands,
+) {
+    for (action, of, movement, jump, crouch, sprint) in &actions {
+        if !local.contains(of.get()) {
+            continue;
+        }
+        let mut action = commands.entity(action);
+        if movement {
+            action.insert(DeadZone::default()).apply_scene(bsn! {
+                Bindings [
+                    {bevy_enhanced_input::preset::cardinal::new(
+                        KeyCode::KeyW, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyA
+                    )}
+                    --
+                    {bevy_enhanced_input::preset::axial::left_stick()}
+                ]
+            });
+        } else if jump {
+            action
+                .insert(Press::default())
+                .apply_scene(bsn! { Bindings [ Binding(JUMP) -- Binding(GamepadButton::South) ] });
+        } else if crouch {
+            action
+                .apply_scene(bsn! { Bindings [ Binding(CROUCH) -- Binding(GamepadButton::East) ] });
+        } else if sprint {
+            action.apply_scene(
+                bsn! { Bindings [ Binding(KeyCode::ShiftLeft) -- Binding(GamepadButton::LeftThumb) ] },
+            );
+        }
+    }
+}
+
+/// Before each frame's fixed steps: the camera's direction into the local body's `Look`,
+/// so it travels with that tick's inputs.
+fn feed_look(
+    cameras: Query<&Transform, With<Player>>,
+    bodies: Query<&MoveBody>,
+    looks: Query<(Entity, &ActionOf<MoveControls>), With<Action<Look>>>,
+    mut commands: Commands,
+) {
+    for (look, of) in &looks {
+        let Ok(body) = bodies.get(of.get()) else {
+            continue;
+        };
+        let Ok(camera) = cameras.get(body.camera) else {
+            continue;
+        };
+        let view = CharacterLook::from_quat(camera.rotation);
+        commands.entity(look).insert(ActionMock::new(
+            TriggerState::Fired,
+            Vec2::new(view.yaw, view.pitch),
+            MockSpan::Manual,
+        ));
+    }
+}
+
+/// Every tick, on every machine and in every replay: the body faces where its `Look` says.
+fn apply_look(look: On<Fire<Look>>, mut bodies: Query<&mut CharacterLook>) {
+    if let Ok(mut body) = bodies.get_mut(look.context) {
+        body.yaw = look.value.x;
+        body.pitch = look.value.y;
+    }
 }
 
 /// A player appeared: give it a body standing where it stands.
@@ -169,13 +290,7 @@ fn spawn_body(
         .spawn((
             Name::new("Player body"),
             MoveBody { camera },
-            MoveControls,
-            tuning(false, 1.),
-            RigidBody::Kinematic,
-            Collider::cylinder(BODY_RADIUS, BODY_HEIGHT),
-            CharacterLook::default(),
-            TransformInterpolation,
-            Transform::from_xyz(at.x, feet + BODY_HEIGHT / 2. + 0.05, at.z),
+            body(Vec2::new(at.x, at.z), feet),
         ))
         .id();
     spawn_actions(&mut commands, body);
@@ -216,24 +331,15 @@ fn switch_controls(
     }
 }
 
-/// Before the fixed steps: the body moves where the camera faces, Shift runs, and the
-/// tuning follows the simulation speed.
+/// Before the fixed steps, for every body: Shift runs, and the tuning follows the
+/// simulation speed.
 fn steer(
     virtual_time: Res<Time<Virtual>>,
-    cameras: Query<&Transform, With<Player>>,
     sprints: Query<(&ActionOf<MoveControls>, &Action<Sprint>)>,
-    mut bodies: Query<(
-        Entity,
-        &MoveBody,
-        &mut CharacterLook,
-        &mut CharacterController,
-    )>,
+    mut bodies: Query<(Entity, &mut CharacterController), With<MoveControls>>,
 ) {
     let speed = virtual_time.effective_speed();
-    for (entity, body, mut look, mut controller) in &mut bodies {
-        if let Ok(camera) = cameras.get(body.camera) {
-            *look = CharacterLook::from_quat(camera.rotation);
-        }
+    for (entity, mut controller) in &mut bodies {
         let running = sprints
             .iter()
             .any(|(of, sprint)| of.get() == entity && **sprint);
