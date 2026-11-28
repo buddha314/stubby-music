@@ -16,6 +16,15 @@ CATALOG_ID = {     # Blender asset catalogs (assets-src/blender/structures/city/
     "street": "6d0c4f1e-1a11-4c1b-9a01-c17c0000000e",
     "infrastructure": "6d0c4f1e-1a11-4c1b-9a01-c17c0000000f",
     "growth": "6d0c4f1e-1a11-4c1b-9a01-c17c00000010",
+    "retail": "6d0c4f1e-1a11-4c1b-9a01-c17c00000011",
+    "office": "6d0c4f1e-1a11-4c1b-9a01-c17c00000012",
+    "residential": "6d0c4f1e-1a11-4c1b-9a01-c17c00000013",
+    "balcony": "6d0c4f1e-1a11-4c1b-9a01-c17c00000014",
+    "dwelling": "6d0c4f1e-1a11-4c1b-9a01-c17c00000015",
+    "interior": "6d0c4f1e-1a11-4c1b-9a01-c17c00000016",
+    "access": "6d0c4f1e-1a11-4c1b-9a01-c17c00000017",
+    "communal": "6d0c4f1e-1a11-4c1b-9a01-c17c00000018",
+    "proxy": "6d0c4f1e-1a11-4c1b-9a01-c17c00000019",
 }
 CATALOG_PATH = {
     "foundation": "City/Foundation", "facade": "City/Facade", "floor": "City/Floor-And-Roof",
@@ -24,4 +33,9 @@ CATALOG_PATH = {
     "terrace": "City/Terrace", "rail": "City/Light-Rail", "civic": "City/Civic",
     "glow": "City/Luminous-Flora", "music": "City/Music-Staff", "street": "City/Street",
     "infrastructure": "City/Infrastructure", "growth": "City/Growth",
+    "retail": "City/Mixed-Use/Retail", "office": "City/Mixed-Use/Office",
+    "residential": "City/Residential/Facade", "balcony": "City/Residential/Balcony",
+    "dwelling": "City/Residential/Dwelling", "interior": "City/Residential/Interior",
+    "access": "City/Residential/Access", "communal": "City/Residential/Communal",
+    "proxy": "City/Residential/Distant",
 }

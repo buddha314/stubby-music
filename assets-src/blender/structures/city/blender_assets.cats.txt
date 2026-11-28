@@ -17,3 +17,12 @@ VERSION 1
 6d0c4f1e-1a11-4c1b-9a01-c17c0000000e:City/Street:City-Street
 6d0c4f1e-1a11-4c1b-9a01-c17c0000000f:City/Infrastructure:City-Infrastructure
 6d0c4f1e-1a11-4c1b-9a01-c17c00000010:City/Growth:City-Growth
+6d0c4f1e-1a11-4c1b-9a01-c17c00000011:City/Mixed-Use/Retail:City-Mixed-Use-Retail
+6d0c4f1e-1a11-4c1b-9a01-c17c00000012:City/Mixed-Use/Office:City-Mixed-Use-Office
+6d0c4f1e-1a11-4c1b-9a01-c17c00000013:City/Residential/Facade:City-Residential-Facade
+6d0c4f1e-1a11-4c1b-9a01-c17c00000014:City/Residential/Balcony:City-Residential-Balcony
+6d0c4f1e-1a11-4c1b-9a01-c17c00000015:City/Residential/Dwelling:City-Residential-Dwelling
+6d0c4f1e-1a11-4c1b-9a01-c17c00000016:City/Residential/Interior:City-Residential-Interior
+6d0c4f1e-1a11-4c1b-9a01-c17c00000017:City/Residential/Access:City-Residential-Access
+6d0c4f1e-1a11-4c1b-9a01-c17c00000018:City/Residential/Communal:City-Residential-Communal
+6d0c4f1e-1a11-4c1b-9a01-c17c00000019:City/Residential/Distant:City-Residential-Distant

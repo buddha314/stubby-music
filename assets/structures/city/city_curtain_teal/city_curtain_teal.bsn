@@ -1,0 +1,6 @@
+#"City Curtain Teal"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "structures/city/city_curtain_teal/city_curtain_teal.glb", scene_index: 0 }

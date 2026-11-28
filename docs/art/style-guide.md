@@ -129,6 +129,7 @@ been made once (2026-10-31, `accents[0]`).
 | Dancers (skin, draft) | Solar amber `#D89B54`, Clay coral `#C96D74`, Leaf teal `#4F9D88`, Dusk violet `#8878AB` |
 | Cyber-cob | Coat black `#1d1a1c`, Coat white `#e0d8c8`, Muzzle `#6e5a58`; mane cream in Bone `#cfc6b2`, hooves in Mud plate `#3e2f22`, leather in Cattail `#4a3222`, steel in Titanium, brass in Brass, fibres Cyan (dim) |
 | City (Phase 4, `docs/art/city-kit.md`) | Plaster `#d6c2a8`, Relief `#bba187`, Stone `#c9b9a3`, Stone dark `#9c8a74`, Clay `#a85b43`, Monument `#eadbd2`; Water `#2f8a84`, Bed `#5b7254`; Agave `#6f8f7a`, Bloom: Clay coral `#c96d74`; Bulb `#ecd8e3` for lanterns; flora glow in the bloomed accents, machines amber |
+| City homes (`docs/art/city-residential.md`) | Interior limewash `#e9dfcf`, Linen `#e8dcc6`; textiles in Coral `#c96d74`, Teal `#4f9d88`, Violet `#8878ab`, Ochre `#b8892f`, Verdigris `#3f7a6e`, Slate `#4b5a78`, Rust `#9c3b2a`; Railing `#2b2a2e`; Clay wash `#c79a7c`; warm Hearth light `#ffd2a1` (homes and shops; never the amber signal); Glass now `#b9d3cf` at alpha 0.18 |
 | Homestead | Door paint: Verdigris `#3f7a6e`; Canvas: Bone `#cfc6b2`; Rope: reed Blade dry `#8a7552`; Sawn wood: Heartwood `#8a7a62` |
 | Build (holograms) | Valid `#ffd39a`, Invalid `#ff5a46` |
 
@@ -296,6 +297,12 @@ Before an asset ships:
 - [ ] Colours from the palette; any new colour added here.
 
 ## Changelog
+
+- **2026-11-28** — The City, lived in: shops, offices and homes in mixed-use buildings
+  (`docs/art/city-residential.md`). Residential facades in two variants, balconies,
+  furniture and fabrics, interior sets behind windows, a glass spiral stair tower, roof
+  gardens; four building types from one generator. Domestic light is a pale hearth colour,
+  kept apart from the machine amber. City glass made clearer so rooms read through it.
 
 - **2026-11-28** — The City kit (Phase 4): 86 modular pieces on a 4 m grid in pale lime
   plaster, carved relief (strata, stepped mesas, ripples, sun rays: original motifs), grown
