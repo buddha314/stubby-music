@@ -1,0 +1,1079 @@
+// Asset review: the City residential kit's validation bay (create_city_mixed_bay.py):
+// shop and residents' door, an office floor, three home storeys (one furnished), the stair
+// tower and a roof garden, standing ahead of the spawn. Not a level.
+bevy_ecs::hierarchy::Children [
+    #"city_slab_4 0"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 1"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 2"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 3"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_entry 4"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_entry/city_res_entry.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_mailboxes 5"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_mailboxes/city_mailboxes.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 19.600000, y: 0.000000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_shop_cafe 6"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_shop_cafe/city_shop_cafe.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_awning_ochre 7"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_awning_ochre/city_awning_ochre.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_proxy_shop 8"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_shop/city_proxy_shop.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_bistro_set 9"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bistro_set/city_bistro_set.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 13.800000, y: 0.000000, z: -3.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.506448, z: 0.000000, w: -0.862270 } }
+    --
+    #"city_bistro_set 10"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bistro_set/city_bistro_set.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 13.800000, y: 0.000000, z: -1.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.618570, z: 0.000000, w: -0.785730 } }
+    --
+    #"city_facade_door 11"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_door/city_facade_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_office_service 12"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_service/city_office_service.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_shop_glazed 13"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_shop_glazed/city_shop_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_shop_glazed 14"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_shop_glazed/city_shop_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_blank 15"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_blank/city_facade_blank.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_door 16"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_door/city_facade_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_corner 17"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_facade_corner 18"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_corner 19"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_facade_corner 20"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_core_spiral 21"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_core_spiral/city_core_spiral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 0.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_lift 22"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_lift/city_lift.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.700000, y: 0.000000, z: 2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 23"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 24"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 25"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 26"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 4.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_office_glazed 27"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_glazed/city_office_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_sunshade_4 28"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_sunshade_4/city_sunshade_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_proxy_office 29"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_office/city_proxy_office.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_office_glazed 30"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_glazed/city_office_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_sunshade_4 31"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_sunshade_4/city_sunshade_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_workstation 32"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_workstation/city_workstation.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.600000, y: 4.000000, z: -2.900000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_workstation 33"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_workstation/city_workstation.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.600000, y: 4.000000, z: -1.100000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_pendant_lamp 34"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_pendant_lamp/city_pendant_lamp.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.200000, y: 7.700000, z: -2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_office_service 35"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_service/city_office_service.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_office_glazed 36"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_glazed/city_office_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_office 37"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_office/city_proxy_office.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_office_glazed 38"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_glazed/city_office_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_office_glazed 39"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_glazed/city_office_glazed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_office_service 40"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_office_service/city_office_service.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_door 41"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_door/city_facade_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_corner 42"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_facade_corner 43"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_corner 44"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_facade_corner 45"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_core_spiral 46"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_core_spiral/city_core_spiral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 4.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_lift 47"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_lift/city_lift.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.700000, y: 4.000000, z: 2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 48"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 49"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 50"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 51"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_slider 52"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_slider/city_res_slider.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_res_4 53"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_res_4/city_balcony_res_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_planter 54"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_planter/city_balcony_planter.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 14.450000, y: 9.050000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_shade_fabric 55"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_shade_fabric/city_shade_fabric.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_end 56"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_end/city_balcony_end.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -4.060000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_curtain_linen 57"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_linen/city_curtain_linen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.360000, y: 8.000000, z: -6.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_slider 58"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_slider/city_res_slider.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_res_4 59"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_res_4/city_balcony_res_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_chairs 60"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_chairs/city_balcony_chairs.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.200000, y: 8.000000, z: -2.800000 }, rotation: glam::Quat { x: 0.000000, y: 0.083974, z: 0.000000, w: -0.996468 } }
+    --
+    #"city_balcony_end 61"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_end/city_balcony_end.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -0.060000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_privacy 62"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_kitchen 63"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_kitchen/city_proxy_home_kitchen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_window_pair 64"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair/city_res_window_pair.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_living 65"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_living/city_proxy_home_living.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_coral 66"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_coral/city_curtain_coral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 8.000000, z: -1.100000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_coral 67"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_coral/city_curtain_coral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 8.000000, z: -2.900000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_window_pair 68"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair/city_res_window_pair.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_privacy 69"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_res_window_pair_b 70"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair_b/city_res_window_pair_b.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_door 71"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_door/city_res_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_corner 72"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_facade_corner 73"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_corner 74"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_facade_corner 75"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_core_spiral 76"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_core_spiral/city_core_spiral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_lift 77"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_lift/city_lift.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.700000, y: 8.000000, z: 2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 78"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 79"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 80"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 81"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_slider 82"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_slider/city_res_slider.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_res_4 83"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_res_4/city_balcony_res_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_chairs 84"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_chairs/city_balcony_chairs.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.200000, y: 12.000000, z: -6.800000 }, rotation: glam::Quat { x: 0.000000, y: 0.978499, z: 0.000000, w: -0.206251 } }
+    --
+    #"city_laundry 85"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_laundry/city_laundry.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.200000, y: 12.000000, z: -5.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_planter 86"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_planter/city_balcony_planter.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 14.450000, y: 13.050000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_privacy_screen 87"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_privacy_screen/city_privacy_screen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.200000, y: 12.000000, z: -4.050000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_curtain_coral 88"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_coral/city_curtain_coral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.360000, y: 12.000000, z: -6.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_proxy_home_bedroom 89"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_bedroom/city_proxy_home_bedroom.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_slider 90"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_slider/city_res_slider.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_res_4 91"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_res_4/city_balcony_res_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_chairs 92"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_chairs/city_balcony_chairs.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 15.200000, y: 12.000000, z: -2.800000 }, rotation: glam::Quat { x: 0.000000, y: 0.869505, z: 0.000000, w: 0.493924 } }
+    --
+    #"city_balcony_planter 93"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_planter/city_balcony_planter.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 14.450000, y: 13.050000, z: -2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_end 94"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_end/city_balcony_end.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -0.060000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_curtain_teal 95"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_teal/city_curtain_teal.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.360000, y: 12.000000, z: -2.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_proxy_home_kitchen 96"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_kitchen/city_proxy_home_kitchen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_window_pair_b 97"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair_b/city_res_window_pair_b.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_bedroom 98"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_bedroom/city_proxy_home_bedroom.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_teal 99"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_teal/city_curtain_teal.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 12.000000, z: -5.100000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_teal 100"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_teal/city_curtain_teal.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 12.000000, z: -6.900000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_privacy 101"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_kitchen 102"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_kitchen/city_proxy_home_kitchen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_privacy 103"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_window_pair_b 104"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair_b/city_res_window_pair_b.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_res_window_pair 105"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair/city_res_window_pair.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_door 106"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_door/city_res_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_corner 107"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_facade_corner 108"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_corner 109"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_facade_corner 110"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_core_spiral 111"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_core_spiral/city_core_spiral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 12.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_lift 112"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_lift/city_lift.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.700000, y: 12.000000, z: 2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 113"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 114"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 115"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_slab_4 116"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_slab_4/city_slab_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_privacy 117"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_proxy_home_living 118"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_living/city_proxy_home_living.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_loggia 119"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_loggia/city_res_loggia.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_balcony_chairs 120"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_balcony_chairs/city_balcony_chairs.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.900000, y: 16.000000, z: -1.400000 }, rotation: glam::Quat { x: 0.000000, y: 0.263988, z: 0.000000, w: -0.964526 } }
+    --
+    #"city_proxy_home_bedroom 121"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_bedroom/city_proxy_home_bedroom.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 17.600000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_res_door 122"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_door/city_res_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_living 123"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_living/city_proxy_home_living.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_window_pair_b 124"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair_b/city_res_window_pair_b.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_proxy_home_bedroom 125"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_proxy_home_bedroom/city_proxy_home_bedroom.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_linen 126"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_linen/city_curtain_linen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 16.000000, z: -1.100000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_curtain_linen 127"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_curtain_linen/city_curtain_linen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.640000, y: 16.000000, z: -2.900000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_res_window_pair_b 128"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair_b/city_res_window_pair_b.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_window_pair 129"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_window_pair/city_res_window_pair.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_res_privacy 130"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_privacy/city_res_privacy.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_res_door 131"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_res_door/city_res_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_facade_corner 132"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_facade_corner 133"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_facade_corner 134"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_facade_corner 135"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_facade_corner/city_facade_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_core_spiral 136"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_core_spiral/city_core_spiral.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 16.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_lift 137"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_lift/city_lift.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.700000, y: 16.000000, z: 2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_roof_planted_4 138"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_roof_planted_4/city_roof_planted_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_roof_planted_4 139"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_roof_planted_4/city_roof_planted_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_garden_deck 140"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_garden_deck/city_garden_deck.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_roof_cap_4 141"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_roof_cap_4/city_roof_cap_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_greenhouse 142"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_greenhouse/city_greenhouse.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_parapet_4 143"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_parapet_4 144"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_parapet_4 145"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 20.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_parapet_4 146"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_parapet_4 147"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_parapet_4 148"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_parapet_4 149"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_parapet_4 150"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_4/city_parapet_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_parapet_corner 151"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_corner/city_parapet_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_parapet_corner 152"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_corner/city_parapet_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_parapet_corner 153"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_corner/city_parapet_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_parapet_corner 154"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_parapet_corner/city_parapet_corner.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_roof_access 155"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_roof_access/city_roof_access.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 20.000000, z: -0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_room_floor_4 156"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_room_floor_4/city_room_floor_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_room_floor_4 157"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_room_floor_4/city_room_floor_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_room_floor_4 158"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_room_floor_4/city_room_floor_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_room_floor_4 159"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_room_floor_4/city_room_floor_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_partition_4 160"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_4/city_partition_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -7.925000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_partition_4 161"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_4/city_partition_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: -7.925000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_partition_4 162"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_4/city_partition_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: 0.075000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_partition_4 163"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_4/city_partition_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 8.000000, z: 0.075000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_partition_door 164"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_door/city_partition_door.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_partition_4 165"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_partition_4/city_partition_4.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 20.000000, y: 8.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_sofa 166"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_sofa/city_sofa.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 19.200000, y: 8.000000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_coffee_table 167"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_coffee_table/city_coffee_table.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.000000, y: 8.000000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_rug 168"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_rug/city_rug.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.200000, y: 8.000000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_floor_lamp 169"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_floor_lamp/city_floor_lamp.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 19.400000, y: 8.000000, z: -4.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_bookshelf 170"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bookshelf/city_bookshelf.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 19.600000, y: 8.000000, z: -7.500000 }, rotation: glam::Quat { x: 0.000000, y: 1.000000, z: 0.000000, w: 0.000000 } }
+    --
+    #"city_kitchen 171"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_kitchen/city_kitchen.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 23.400000, y: 8.000000, z: -2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_dining_set 172"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_dining_set/city_dining_set.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 21.600000, y: 8.000000, z: -2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_pendant_lamp 173"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_pendant_lamp/city_pendant_lamp.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 21.600000, y: 11.700000, z: -2.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_armchair 174"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_armchair/city_armchair.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 18.600000, y: 8.000000, z: -3.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.573576, z: 0.000000, w: 0.819152 } }
+    --
+    #"city_bookshelf 175"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bookshelf/city_bookshelf.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 19.600000, y: 8.000000, z: -0.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_bed 176"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bed/city_bed.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 22.600000, y: 8.000000, z: -6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: -0.707107 } }
+    --
+    #"city_paving_8 177"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 178"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 179"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 180"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: 0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 181"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 182"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -8.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 183"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 184"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 185"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 186"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: 0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 187"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 188"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 189"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 190"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 191"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 192"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: 0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 193"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 194"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 8.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 195"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 196"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 197"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 198"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 199"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 16.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 200"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 201"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 202"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 203"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: 0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 204"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 205"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 24.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 206"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: 24.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 207"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: 16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 208"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: 8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 209"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: 0.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 210"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: -8.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_paving_8 211"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_paving_8/city_paving_8.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 32.000000, y: 0.000000, z: -16.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+    --
+    #"city_tree 212"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_tree/city_tree.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 10.000000, y: 0.000000, z: 6.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.258819, z: 0.000000, w: 0.965926 } }
+    --
+    #"city_bench 213"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_bench/city_bench.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 11.000000, y: 0.000000, z: -4.000000 }, rotation: glam::Quat { x: 0.000000, y: 0.707107, z: 0.000000, w: 0.707107 } }
+    --
+    #"city_glow_bell 214"
+    jackdaw::prefab::components::IsA { source: "structures/city/city_glow_bell/city_glow_bell.bsn", deleted: [] }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 12.500000, y: 0.000000, z: -9.500000 }, rotation: glam::Quat { x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000 } }
+]

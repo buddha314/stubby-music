@@ -616,7 +616,8 @@ Several agents work in this repo at once. To avoid stepping on each other:
   **Claude (2026-11-27, by the user's request):** menus and multiplayer, `add-multiplayer-and-menus`
   (crates: `stubby_game` menus and settings, the coming `stubby_net` and `stubby_steam`).
   **Claude (2026-11-28, by the user's request):** the City kit, `add-city-kit` (art and asset
-  pipeline: `tools/blender/city_*.py`, `assets/structures/city/`; its crate tasks 5.x are Codex's).
+  pipeline: `tools/blender/city_*.py`, `assets/structures/city/`; its crate tasks 5.x are Codex's), and
+  its mixed-use homes, `add-city-residential` (2026-11-28).
   Update this line when you claim work.
 - **Opening composition (2026-11-16):** spawn at x=0, z=6, bearing 75 degrees,
   so the eastward sunrise is 15 degrees to the right (about 20 degrees at the

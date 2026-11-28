@@ -1,5 +1,11 @@
 # City kit: regenerating, browsing, snapping
 
+> **Residential expansion (2026-11-28):** 63 more pieces (priority `RES`) for shops, offices
+> and homes, the mixed-use generator `tools/blender/city_mixed.py`, the validation bay
+> (`tools/blender/create_city_mixed_bay.py`, scene `city_mixed_bay.bsn`) and a neighbourhood
+> in the district (about 4,900 placements now). Brief and delta manifest:
+> `docs/art/city-residential.md`. The commands below build them too.
+
 The Phase 4 City's modular kit: **86 pieces** (P0 47, P1 26, P2 13), a reference district
 built from them (2,356 placements of 76 pieces) and a modular test strip. Brief and rules:
 `docs/art/city-kit.md`. Prompt: `docs/art/prompts/city-kit.md`.
@@ -37,6 +43,9 @@ Then `python3 tools/check_asset_layout.py` and `python3 tools/jackdaw_lods.py --
 | `tools/blender/check_city_kit.py` | glTF validation, results written into each profile's `validation` |
 | `tools/blender/render_city_previews.py` | previews and sheets |
 | `tools/blender/create_city_district.py` | the district, test strip, cameras, lighting presets, Jackdaw review scene |
+| `tools/blender/city_build_res.py` | residential: retail, office, homes, balconies, dwelling shell, furniture, access, communal, proxies |
+| `tools/blender/city_layout.py`, `city_mixed.py` | placement layouts; the mixed-use building generator and furnished homes |
+| `tools/blender/create_city_mixed_bay.py` | the validation bay (build it before the district when the residential pieces change) |
 
 ## What it writes
 

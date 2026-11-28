@@ -31,7 +31,7 @@ DOCS = PROJECT / "docs/art/city-kit"
 def builders():
     from city_build_p0 import P0
     found = dict(P0)
-    for module in ("city_build_p1", "city_build_p2"):
+    for module in ("city_build_p1", "city_build_p2", "city_build_res"):
         try:
             found.update(__import__(module).__dict__[module.split("_")[-1].upper()])
         except ModuleNotFoundError:
