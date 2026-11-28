@@ -83,9 +83,11 @@ impl Plugin for RecipesPlugin {
         }
         app.add_message::<RulesReloaded>();
         app.init_resource::<PlayerInventory>()
+            .init_resource::<SourceLedger>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
             .add_message::<HarvestRequest>()
+            .add_message::<GrantHarvest>()
             .add_message::<ResourceCollected>()
             .add_message::<CraftRequest>()
             .add_message::<CraftCompleted>()
@@ -94,7 +96,7 @@ impl Plugin for RecipesPlugin {
             .add_message::<GoalReported>()
             .add_systems(
                 Update,
-                (apply_harvests, apply_crafts, apply_goals)
+                (apply_harvests, apply_grants, apply_crafts, apply_goals)
                     .chain()
                     .in_set(RecipesSystems),
             );
@@ -213,15 +215,18 @@ impl MachineRules {
 #[derive(Resource, Clone, Default)]
 pub struct AirRules(pub Vec<stubby_recipes::air::AirCleanerDefinition>);
 
-/// The player's items, harvest ledger and recipe book, plus the last feedback line.
-/// One player for now; machines with their own inventories come later.
+/// The player's items and recipe book, plus the last feedback line.
 #[derive(Resource, Default)]
 pub struct PlayerInventory {
     pub items: Inventory,
-    pub collected: HarvestLedger,
     pub book: RecipeBook,
     pub feedback: String,
 }
+
+/// Which of the world's sources are depleted, and when each returns. The world's, not a
+/// player's: in a shared world one player's harvest depletes the source for everyone.
+#[derive(Resource, Default, Clone, Debug)]
+pub struct SourceLedger(pub HarvestLedger);
 
 /// The goals (`goals.json`, with the rules they refer to) and the player's progress on
 /// them. Change it only through [`GoalRequest`], so every change is one atomic event.
@@ -247,6 +252,15 @@ pub struct GoalReported(pub GoalOutcome);
 pub struct HarvestRequest {
     pub source: SourceObject,
     pub now: ResourceTime,
+}
+
+/// Someone else decided a harvest for this player (the host of a shared world, which has
+/// already depleted the source): put `yields` in the inventory and the recipe book, and
+/// report it as [`ResourceCollected`], or [`InventoryFull`] with nothing added.
+#[derive(Message, Clone)]
+pub struct GrantHarvest {
+    pub instance: String,
+    pub yields: Vec<Stack>,
 }
 
 /// A harvest succeeded: the yields are in the inventory and the recipe book.
@@ -283,6 +297,7 @@ fn apply_harvests(
     mut requests: MessageReader<HarvestRequest>,
     catalog: Option<Res<RecipeCatalog>>,
     mut player: ResMut<PlayerInventory>,
+    mut ledger: ResMut<SourceLedger>,
     mut collected: MessageWriter<ResourceCollected>,
     mut full: MessageWriter<InventoryFull>,
 ) {
@@ -293,31 +308,72 @@ fn apply_harvests(
     for request in requests.read() {
         let PlayerInventory {
             items,
-            collected: ledger,
             book,
             feedback,
         } = &mut *player;
         let mut source = request.source.clone();
         match catalog
             .0
-            .harvest_source_at(&mut source, items, ledger, request.now)
+            .harvest_source_at(&mut source, items, &mut ledger.0, request.now)
         {
             Ok(yields) => {
-                for stack in &yields {
-                    book.discover(&stack.item);
-                }
-                *feedback = format!(
-                    "Collected {}. Available as recipe ingredients.",
-                    yields
-                        .iter()
-                        .map(|stack| format!("{} x {}", stack.quantity, stack.item))
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                );
-                collected.write(ResourceCollected {
-                    instance: source.instance_id().into(),
+                collected.write(report_harvest(
+                    book,
+                    feedback,
+                    source.instance_id().into(),
                     yields,
-                });
+                ));
+            }
+            Err(RecipeError::InventoryFull(item)) => {
+                feedback.clear();
+                full.write(InventoryFull { item });
+            }
+            Err(error) => *feedback = error.to_string(),
+        }
+    }
+}
+
+/// A harvest's yields are known (and in the items): learn them, say so, and report it.
+fn report_harvest(
+    book: &mut RecipeBook,
+    feedback: &mut String,
+    instance: String,
+    yields: Vec<Stack>,
+) -> ResourceCollected {
+    for stack in &yields {
+        book.discover(&stack.item);
+    }
+    *feedback = format!(
+        "Collected {}. Available as recipe ingredients.",
+        yields
+            .iter()
+            .map(|stack| format!("{} x {}", stack.quantity, stack.item))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    ResourceCollected { instance, yields }
+}
+
+fn apply_grants(
+    mut grants: MessageReader<GrantHarvest>,
+    mut player: ResMut<PlayerInventory>,
+    mut collected: MessageWriter<ResourceCollected>,
+    mut full: MessageWriter<InventoryFull>,
+) {
+    for grant in grants.read() {
+        let PlayerInventory {
+            items,
+            book,
+            feedback,
+        } = &mut *player;
+        match items.grant(&grant.yields) {
+            Ok(()) => {
+                collected.write(report_harvest(
+                    book,
+                    feedback,
+                    grant.instance.clone(),
+                    grant.yields.clone(),
+                ));
             }
             Err(RecipeError::InventoryFull(item)) => {
                 feedback.clear();
@@ -434,6 +490,45 @@ mod tests {
             .drain()
             .collect();
         assert_eq!(collected.len(), 1);
+    }
+
+    #[test]
+    fn a_granted_harvest_fills_the_inventory_without_touching_the_ledger() {
+        let mut app = App::new();
+        app.add_plugins(RecipesPlugin::default());
+        let before = app
+            .world()
+            .resource::<PlayerInventory>()
+            .items
+            .quantity("square_wave");
+        app.world_mut().write_message(GrantHarvest {
+            instance: "lightning_bug-3".into(),
+            yields: vec![Stack {
+                item: "square_wave".into(),
+                quantity: 2,
+            }],
+        });
+        app.update();
+        let player = app.world().resource::<PlayerInventory>();
+        assert_eq!(player.items.quantity("square_wave"), before + 2);
+        assert!(player.book.knows("square_wave"));
+        assert!(
+            !app.world()
+                .resource::<SourceLedger>()
+                .0
+                .collected("lightning_bug-3"),
+            "the host keeps the ledger; a grant only delivers"
+        );
+        let collected: Vec<_> = app
+            .world_mut()
+            .resource_mut::<Messages<ResourceCollected>>()
+            .drain()
+            .collect();
+        assert_eq!(
+            collected.len(),
+            1,
+            "reported like a local harvest (cues, the book)"
+        );
     }
 
     #[test]

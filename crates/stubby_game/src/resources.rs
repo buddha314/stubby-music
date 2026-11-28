@@ -5,8 +5,8 @@ use stubby_recipes::SignalUse;
 // The crafting system is the `bevy_stubby_recipes` plugin; these names stay importable
 // from here so the rest of the game is unchanged.
 pub use super::recipes_plugin::{
-    CraftCompleted, CraftRequest, HarvestRequest, MineNode, PlayerInventory, RecipeCatalog,
-    RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode,
+    CraftCompleted, CraftRequest, GrantHarvest, HarvestRequest, MineNode, PlayerInventory,
+    RecipeCatalog, RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode, SourceLedger,
 };
 
 /// The opening's placed lightning bug, as a source (`lightning_bug-<index>`).
@@ -40,6 +40,11 @@ struct RecipeBookView {
     open: bool,
 }
 
+/// Where the game asks to harvest (`HarvestRequest`): after it, before `RecipesSystems`,
+/// a shared world's client takes its requests to the host.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CollectRequests;
+
 pub struct ResourceRecipesPlugin;
 impl Plugin for ResourceRecipesPlugin {
     fn build(&self, app: &mut App) {
@@ -58,8 +63,13 @@ impl Plugin for ResourceRecipesPlugin {
                     pickups_interactable
                         .after(stubby_core::PrefabBinding)
                         .before(super::interaction::InteractionTargeting),
-                    (replenish_nodes, collect_nearby)
+                    // A joined client's sources return when the host says so.
+                    (
+                        replenish_nodes.run_if(not(resource_exists::<stubby_net::JoinedHost>)),
+                        collect_nearby,
+                    )
                         .chain()
+                        .in_set(CollectRequests)
                         .after(stubby_core::PrefabBinding)
                         .after(stubby_core::MachineInteractionSet)
                         .before(RecipesSystems),
@@ -410,7 +420,7 @@ pub fn resource_time(calendar: &stubby_world::calendar::Calendar) -> stubby_reci
 fn replenish_nodes(
     calendar: Res<super::calendar::Calendar>,
     catalog: Option<Res<RecipeCatalog>>,
-    mut player: ResMut<PlayerInventory>,
+    mut ledger: ResMut<super::recipes_plugin::SourceLedger>,
     mut nodes: Query<&mut ResourceNode>,
 ) {
     let Some(catalog) = catalog else {
@@ -423,7 +433,7 @@ fn replenish_nodes(
         let mut source = node.source_object();
         if catalog
             .0
-            .replenish_source(&mut source, &mut player.collected, resource_time(&calendar))
+            .replenish_source(&mut source, &mut ledger.0, resource_time(&calendar))
         {
             node.collected = false;
         }
@@ -474,13 +484,14 @@ mod tests {
     fn night_return_restores_existing_pickup_without_free_items() {
         let catalog = stubby_recipes::shipped_catalog().unwrap();
         let mut player = PlayerInventory::default();
+        let mut ledger = super::super::recipes_plugin::SourceLedger::default();
         let mut node = lightning_bug_node(0);
         let mut source = node.source_object();
         catalog
             .harvest_source_at(
                 &mut source,
                 &mut player.items,
-                &mut player.collected,
+                &mut ledger.0,
                 stubby_recipes::ResourceTime::default(),
             )
             .unwrap();
@@ -494,6 +505,7 @@ mod tests {
             ))
             .insert_resource(RecipeCatalog(catalog))
             .insert_resource(player)
+            .insert_resource(ledger)
             .insert_resource(time)
             .init_resource::<super::super::calendar::Calendar>()
             .add_systems(Update, replenish_nodes);
