@@ -43,6 +43,9 @@ pub enum NetMode {
     Host { port: u16 },
     /// Connect to a host.
     Join { server: SocketAddr },
+    /// Play over Steam: host a lobby, or join one (now, or when an invite is accepted).
+    /// Both roles are loaded, as an invite may make this player either.
+    Steam { host: bool, lobby: Option<u64> },
 }
 
 impl NetMode {
@@ -73,6 +76,29 @@ impl NetMode {
                         .ok_or("--join needs an address, e.g. 127.0.0.1")?;
                     mode = NetMode::Join {
                         server: parse_server(&addr)?,
+                    };
+                }
+                "--steam" => {
+                    mode = NetMode::Steam {
+                        host: false,
+                        lobby: None,
+                    }
+                }
+                "--steam-host" => {
+                    mode = NetMode::Steam {
+                        host: true,
+                        lobby: None,
+                    }
+                }
+                // Steam launches the game with this when an invite is accepted.
+                "+connect_lobby" => {
+                    let id = args.next().ok_or("+connect_lobby needs a lobby id")?;
+                    let lobby = id
+                        .parse()
+                        .map_err(|_| format!("+connect_lobby: `{id}` is not a lobby id"))?;
+                    mode = NetMode::Steam {
+                        host: false,
+                        lobby: Some(lobby),
                     };
                 }
                 _ => {}
@@ -121,7 +147,7 @@ impl Plugin for SessionPlugin {
             .get_resource_or_insert_with(NetMode::default);
         let server = match mode {
             NetMode::Offline => return,
-            NetMode::Host { .. } | NetMode::Menu => true,
+            NetMode::Host { .. } | NetMode::Menu | NetMode::Steam { .. } => true,
             NetMode::Join { .. } => false,
         };
         if server {
@@ -603,6 +629,21 @@ mod tests {
                 server: "127.0.0.1:5888".parse().unwrap()
             })
         );
+        assert_eq!(
+            mode(&["stubby", "--steam-host"], NetMode::Menu),
+            Ok(NetMode::Steam {
+                host: true,
+                lobby: None
+            })
+        );
+        assert_eq!(
+            mode(&["stubby", "+connect_lobby", "109775241"], NetMode::Menu),
+            Ok(NetMode::Steam {
+                host: false,
+                lobby: Some(109_775_241)
+            })
+        );
+        assert!(mode(&["stubby", "+connect_lobby", "x"], NetMode::Menu).is_err());
         assert!(mode(&["stubby", "--join", "nowhere"], NetMode::Menu).is_err());
         assert!(mode(&["stubby", "--host", "x"], NetMode::Menu).is_err());
     }

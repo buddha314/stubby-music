@@ -7,7 +7,7 @@
 # [bans]: crate layering (split-game-into-systems).
 #
 #   cores     stubby_audio, stubby_rack, stubby_recipes, stubby_economy (never Bevy; see tools/ci_local.sh)
-#   services  stubby_core, stubby_ui, bevy_stubby_audio, stubby_net
+#   services  stubby_core, stubby_ui, bevy_stubby_audio, stubby_net, stubby_steam
 #   systems   bevy_stubby_rack, bevy_stubby_recipes, stubby_player, stubby_life,
 #             stubby_world, stubby_streams
 #   game      stubby_game, stubby_jackdaw
@@ -37,6 +37,7 @@ deny = [
     { crate = "stubby_economy", wrappers = ["stubby_game", "stubby_jackdaw", "stubby_settlement"], reason = "settlement economy core" },
     { crate = "stubby_core", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_net", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
     { crate = "stubby_net", wrappers = ["stubby_game", "stubby_jackdaw"], reason = "the multiplayer session; only the game's glue says what systems replicate (add-multiplayer-and-menus)" },
+    { crate = "stubby_steam", wrappers = ["stubby_game"], reason = "Steam lobbies and invites (Bevy-free); only the game's multiplayer glue starts sessions on them (add-multiplayer-and-menus 5.1)" },
     { crate = "stubby_ui", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
     { crate = "bevy_stubby_audio", wrappers = ["bevy_stubby_rack", "bevy_stubby_recipes", "stubby_player", "stubby_life", "stubby_world", "stubby_streams", "stubby_game", "stubby_jackdaw"], reason = "services are used by systems and the game, never by cores" },
 ]
@@ -49,6 +50,8 @@ ignore = [
     { id = "RUSTSEC-2026-0192", reason = "unmaintained, reached through Bevy; no safe upgrade" },
     # chrono, unmaintained (not a vulnerability), reached through lightyear; no safe upgrade.
     { id = "RUSTSEC-2026-0543", reason = "chrono, unmaintained, reached through lightyear; no safe upgrade" },
+    # paste, unmaintained (not a vulnerability), reached through steamworks; as the template.
+    { id = "RUSTSEC-2024-0436", reason = "paste, unmaintained, reached through steamworks; no safe upgrade" },
 ]
 
 [licenses]

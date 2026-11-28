@@ -36,6 +36,19 @@ cargo run
 The workspace defaults to the `stubby_jackdaw` game package. To enable development
 features, use `cargo run --features dev`.
 
+It opens at the main menu. To play together (add-multiplayer-and-menus):
+
+```sh
+cargo run -- --host                    # host over UDP (port 5888); or Host a Game in the menu
+cargo run -- --join 192.168.1.20       # join that host; or type its address in the menu
+cargo run -- --steam-host              # host a Steam lobby; the invite dialog opens
+cargo run -- --steam                   # play, and join when you accept a friend's invite
+cargo run -- --no-steam                # the menu without touching Steam (for checks)
+```
+
+A plain launch starts Steam if it is running (as Valve's test app 480, Spacewar, until
+stubby has its own app), so the menu's Host on Steam works and invites join.
+
 To save a preview after shader warmup, append
 `--screenshot=/tmp/stubby-desert-preview.png` to the game arguments.
 

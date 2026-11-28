@@ -1,0 +1,12 @@
+[package]
+name = "stubby_steam"
+version = "0.1.0"
+edition.workspace = true
+description = "Steam without Bevy: lobbies, invites, rich presence and the build check (from the us-outpost-31 template's outpost_steam)"
+license = "MIT"
+publish = false
+
+# A platform service (split-game-into-systems): Bevy-free; stubby_game's multiplayer glue
+# runs lightyear's Steam transport on what it reports.
+[dependencies]
+steamworks.workspace = true

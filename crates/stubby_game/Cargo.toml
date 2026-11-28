@@ -23,6 +23,7 @@ bevy_stubby_audio = { path = "../bevy_stubby_audio" }
 stubby_player = { path = "../stubby_player" }
 # Multiplayer: the session (stubby_net), and ahoy's types the glue registers for rollback.
 stubby_net = { path = "../stubby_net" }
+stubby_steam = { path = "../stubby_steam" }
 bevy_ahoy.workspace = true
 bevy_enhanced_input.workspace = true
 stubby_life = { path = "../stubby_life" }

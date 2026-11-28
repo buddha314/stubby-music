@@ -18,6 +18,7 @@ pub mod inventory;
 pub mod joining;
 pub mod music;
 pub mod racks;
+pub mod steam;
 pub mod streams;
 pub mod time;
 use bevy::{ecs::relationship::Relationship, prelude::*};
@@ -67,12 +68,16 @@ impl Plugin for MultiplayerPlugin {
                 time::TimePlugin,
                 joining::JoiningPlugin,
                 music::MusicPlugin,
+                steam::SteamPlugin,
             ))
             .add_systems(
                 Update,
                 rejoin_with_hosts_world.run_if(resource_added::<WorldMismatch>),
             );
-        if matches!(mode, NetMode::Host { .. } | NetMode::Menu) {
+        if matches!(
+            mode,
+            NetMode::Host { .. } | NetMode::Menu | NetMode::Steam { .. }
+        ) {
             app.add_plugins(ServerPlayersPlugin);
         }
     }
@@ -158,10 +163,19 @@ fn check_world(
 
 /// Regenerate the host's world by starting afresh with its configuration and rejoining:
 /// a fresh process is the one sure way to build a different world.
-fn rejoin_with_hosts_world(mismatch: Res<WorldMismatch>, mut exit: MessageWriter<AppExit>) {
-    let Some(server) = mismatch.server else {
-        error!("The host's world differs, and its address is unknown: cannot rejoin");
-        return;
+fn rejoin_with_hosts_world(
+    mismatch: Res<WorldMismatch>,
+    steam: Option<Res<steam::SteamSession>>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    // Over UDP, by the host's address; over Steam, by its lobby.
+    let target = match (mismatch.server, steam::rejoin_lobby(steam.as_deref())) {
+        (_, Some(lobby)) => Rejoin::Lobby(lobby),
+        (Some(server), None) => Rejoin::Server(server),
+        (None, None) => {
+            error!("The host's world differs, and how to reach it is unknown: cannot rejoin");
+            return;
+        }
     };
     let path = std::env::temp_dir().join(format!("stubby-host-world-{}.json", std::process::id()));
     if let Err(error) = mismatch.host.write(&path) {
@@ -171,12 +185,12 @@ fn rejoin_with_hosts_world(mismatch: Res<WorldMismatch>, mut exit: MessageWriter
         );
         return;
     }
-    let args = rejoin_args(std::env::args().skip(1), &path, server);
+    let args = rejoin_args(std::env::args().skip(1), &path, target);
     match std::env::current_exe()
         .and_then(|exe| std::process::Command::new(exe).args(&args).spawn())
     {
         Ok(_) => {
-            info!("Rejoining {server} with the host's world");
+            info!("Rejoining {target:?} with the host's world");
             exit.write(AppExit::Success);
         }
         Err(error) => error!("Could not restart to rejoin: {error}"),
@@ -185,15 +199,22 @@ fn rejoin_with_hosts_world(mismatch: Res<WorldMismatch>, mut exit: MessageWriter
 
 /// The arguments to rejoin `server` with the world saved at `world`: this run's own, less
 /// whatever chose the world or the session.
+/// Where to rejoin the host: its address (UDP) or its Steam lobby.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Rejoin {
+    Server(core::net::SocketAddr),
+    Lobby(u64),
+}
+
 pub fn rejoin_args(
     args: impl IntoIterator<Item = String>,
     world: &std::path::Path,
-    server: core::net::SocketAddr,
+    target: Rejoin,
 ) -> Vec<String> {
     let mut kept: Vec<String> = Vec::new();
     let mut args = args.into_iter().peekable();
     while let Some(arg) = args.next() {
-        if arg == "--join" || arg == "--host" {
+        if arg == "--join" || arg == "--host" || arg == "+connect_lobby" {
             // Their value (an address or port), if one follows, goes too.
             if args.peek().is_some_and(|next| !next.starts_with("--")) {
                 args.next();
@@ -203,14 +224,24 @@ pub fn rejoin_args(
         if ["--seed=", "--scene=", "--world-config="]
             .iter()
             .any(|flag| arg.starts_with(flag))
+            || arg == "--steam"
+            || arg == "--steam-host"
         {
             continue;
         }
         kept.push(arg);
     }
     kept.push(format!("--world-config={}", world.display()));
-    kept.push("--join".into());
-    kept.push(server.to_string());
+    match target {
+        Rejoin::Server(server) => {
+            kept.push("--join".into());
+            kept.push(server.to_string());
+        }
+        Rejoin::Lobby(lobby) => {
+            kept.push("+connect_lobby".into());
+            kept.push(lobby.to_string());
+        }
+    }
     kept
 }
 
@@ -374,6 +405,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn rejoining_over_steam_goes_back_to_the_lobby() {
+        let args = ["--steam", "+connect_lobby", "42", "--seed=7"].map(String::from);
+        let got = rejoin_args(args, std::path::Path::new("/tmp/w.json"), Rejoin::Lobby(42));
+        assert_eq!(got, ["--world-config=/tmp/w.json", "+connect_lobby", "42"]);
+    }
+
+    #[test]
     fn rejoining_keeps_this_runs_flags_and_takes_the_hosts_world() {
         let args = [
             "--seed=7",
@@ -384,7 +422,11 @@ mod tests {
         ]
         .map(String::from);
         let server: core::net::SocketAddr = "10.0.0.2:5888".parse().unwrap();
-        let got = rejoin_args(args, std::path::Path::new("/tmp/w.json"), server);
+        let got = rejoin_args(
+            args,
+            std::path::Path::new("/tmp/w.json"),
+            Rejoin::Server(server),
+        );
         assert_eq!(
             got,
             [
