@@ -192,6 +192,13 @@ pub enum Command {
         bus: Bus,
         volume: f32,
     },
+    /// Shift the master clock by this many samples: every master-locked clock reads the
+    /// engine's sample counter plus it, so two engines started apart agree on their beats
+    /// (a shared world's peers; add-multiplayer-and-menus 4.2). Changing it moves every
+    /// clock's phase at once. Event times stay on the engine's own counter.
+    SetMasterOffset {
+        samples: i64,
+    },
 }
 
 /// Where a sound is heard from, for the player's volume settings. Every sound passes

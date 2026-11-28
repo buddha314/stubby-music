@@ -541,6 +541,8 @@ pub(crate) type EventMailbox = Arc<Mutex<Vec<(ModuleId, rtrb::Consumer<Event>)>>
 pub(crate) struct ClockConfig {
     pub module: ModuleId,
     pub mailbox: EventMailbox,
+    /// The engine's master offset (`Command::SetMasterOffset`), shared by every clock.
+    pub master_offset: std::sync::Arc<std::sync::atomic::AtomicI64>,
 }
 
 impl AudioNode for ClockNode {
@@ -563,6 +565,7 @@ impl AudioNode for ClockNode {
             module: config.module,
             events: producer,
             clock: MasterLockedClock::new(cx.stream_info.sample_rate.get(), self.bpm),
+            master_offset: config.master_offset.clone(),
         })
     }
 }
@@ -572,6 +575,7 @@ struct ClockProc {
     events: rtrb::Producer<Event>,
     /// Locked to the 1 BPM master on the engine's sample counter (`lock-clocks-to-master`).
     clock: MasterLockedClock,
+    master_offset: std::sync::Arc<std::sync::atomic::AtomicI64>,
 }
 
 impl AudioNodeProcessor for ClockProc {
@@ -593,12 +597,17 @@ impl AudioNodeProcessor for ClockProc {
             return ProcessStatus::ClearAllOutputs;
         };
         let block_start = info.clock_samples.0.max(0) as u64;
+        let offset = self
+            .master_offset
+            .load(std::sync::atomic::Ordering::Relaxed);
         for (i, (g, p)) in gate.iter_mut().zip(phase.iter_mut()).enumerate() {
             let sample = block_start + i as u64;
-            let (_, beat_phase) = self.clock.at(sample);
+            // The master's sample: the engine's, shifted to agree with other engines.
+            let master = sample.saturating_add_signed(offset);
+            let (_, beat_phase) = self.clock.at(master);
             *p = beat_phase;
             *g = if beat_phase < 0.5 { GATE_HIGH } else { 0. };
-            if self.clock.tick_at(sample) {
+            if self.clock.tick_at(master) {
                 let _ = self.events.push(Event::ClockTick {
                     module: self.module,
                     sample_time: sample,

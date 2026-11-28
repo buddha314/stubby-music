@@ -71,8 +71,10 @@ world's calendar alone (physics at 1x) is possible later if wanted.
 **D7 Music together.** Each peer runs its own `stubby_audio` engine (audio never
 crosses the network). Rack configurations are data and replicate. Clocks follow the
 host: the host sends its clock's beat phase against lightyear's synchronized tick, and
-clients steer their engine's tempo to it, so everyone hears the same bar. How tightly
-is an open question (below).
+clients shift their engine's master clock to it, so everyone hears the same bar.
+**Built (4.2):** a master offset added to every master-locked clock's sample counter
+(not a tempo change: clocks derive their beat from the counter), corrected when the
+smoothed error passes 15 ms; about 5 ms apart in steady play.
 
 **D8 Screens in stubby's style.** The template's screen logic (states, loading, settings
 persistence, lobby) on `ScreenMode`, drawn like the existing pause menu (amber on dark,

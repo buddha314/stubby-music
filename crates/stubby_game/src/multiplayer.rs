@@ -16,6 +16,7 @@ pub mod building;
 pub mod collecting;
 pub mod inventory;
 pub mod joining;
+pub mod music;
 pub mod racks;
 pub mod streams;
 pub mod time;
@@ -65,6 +66,7 @@ impl Plugin for MultiplayerPlugin {
                 racks::RacksPlugin,
                 time::TimePlugin,
                 joining::JoiningPlugin,
+                music::MusicPlugin,
             ))
             .add_systems(
                 Update,

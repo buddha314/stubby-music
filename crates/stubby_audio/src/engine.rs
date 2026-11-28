@@ -132,6 +132,8 @@ pub struct Engine {
     omg_geometry: AcousticSceneGeometry,
     pending_params: HashMap<(ModuleId, &'static str), f32>,
     mailbox: EventMailbox,
+    /// Added to the sample counter by every master-locked clock (`Command::SetMasterOffset`).
+    master_offset: std::sync::Arc<std::sync::atomic::AtomicI64>,
     event_rings: Vec<(ModuleId, rtrb::Consumer<Event>)>,
     /// Removed modules still fading out: node, and the audio-clock frame after
     /// which it can be deleted.
@@ -303,6 +305,7 @@ impl Engine {
             omg_geometry: AcousticSceneGeometry::default(),
             pending_params: HashMap::new(),
             mailbox: EventMailbox::default(),
+            master_offset: Default::default(),
             event_rings: Vec::new(),
             retiring: Vec::new(),
             samples: HashMap::new(),
@@ -415,6 +418,11 @@ impl Engine {
             Command::AddModule { id, kind } => self.add_module(id, kind),
             Command::PlaySample { sample, gain } => self.play_sample(sample, gain),
             Command::SetBusVolume { bus, volume } => self.set_bus_volume(bus, volume),
+            Command::SetMasterOffset { samples } => {
+                self.master_offset
+                    .store(samples, std::sync::atomic::Ordering::Relaxed);
+                Ok(())
+            }
             Command::RemoveModule { id } => self.remove_module(id),
             Command::SetEmitter {
                 output,
@@ -659,6 +667,7 @@ impl Engine {
                 let config = ClockConfig {
                     module: id,
                     mailbox: self.mailbox.clone(),
+                    master_offset: self.master_offset.clone(),
                 };
                 (
                     self.cx.add_node(state, Some(config)),
@@ -683,6 +692,7 @@ impl Engine {
                 let config = ClockConfig {
                     module: id,
                     mailbox: self.mailbox.clone(),
+                    master_offset: self.master_offset.clone(),
                 };
                 let node = RandomClockNode {
                     seed,
@@ -741,6 +751,7 @@ impl Engine {
                 let config = ClockConfig {
                     module: id,
                     mailbox: self.mailbox.clone(),
+                    master_offset: self.master_offset.clone(),
                 };
                 (
                     self.cx.add_node(state, Some(config)),

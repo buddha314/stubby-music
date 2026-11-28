@@ -123,12 +123,36 @@ fn read_world_level(synth: Res<Synth>, mut level: ResMut<WorldLevel>) {
     level.set_if_neq(WorldLevel { peak_db });
 }
 
-fn read_master_clock(synth: Res<Synth>, mut clock: ResMut<MasterClock>) {
+/// The master clock's shift, in seconds (`Command::SetMasterOffset`, in samples): what a
+/// shared world's client adds so its beats are the host's. The master clock includes it.
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq)]
+pub struct MasterOffset(pub f64);
+
+fn read_master_clock(synth: Res<Synth>, offset: Res<MasterOffset>, mut clock: ResMut<MasterClock>) {
     clock.beats = synth.thread.as_ref().and_then(|thread| {
         let rate = thread.sample_rate()? as f64;
-        let samples = thread.sample_position(Instant::now())?;
+        let samples = thread.sample_position(Instant::now())? + offset.0 * rate;
         Some(samples / rate / 60. * MASTER_BPM)
     });
+}
+
+/// A changed master offset goes to the engine.
+fn send_master_offset(synth: Res<Synth>, offset: Res<MasterOffset>) {
+    if offset.is_changed()
+        && let Some(rate) = sample_rate(&synth)
+    {
+        synth.send(Command::SetMasterOffset {
+            samples: (offset.0 * f64::from(rate)).round() as i64,
+        });
+    }
+}
+
+/// The engine's sample rate, once it runs.
+pub fn sample_rate(synth: &Synth) -> Option<u32> {
+    synth
+        .thread
+        .as_ref()
+        .and_then(|thread| thread.sample_rate())
 }
 
 /// A sequencer moved to `step` (0-based). `at` is when that step is heard; light its
@@ -168,6 +192,7 @@ impl Plugin for SynthAudioPlugin {
         .add_message::<ClockTick>()
         .add_message::<StepTick>()
         .init_resource::<MasterClock>()
+        .init_resource::<MasterOffset>()
         .init_resource::<WorldLevel>()
         .add_systems(
             PreUpdate,
@@ -177,7 +202,7 @@ impl Plugin for SynthAudioPlugin {
                 read_world_level,
             ),
         )
-        .add_systems(Update, toggle_demo)
+        .add_systems(Update, (toggle_demo, send_master_offset))
         .add_systems(Last, commit_to_engine);
         if self.demo {
             app.add_systems(Startup, |mut synth: ResMut<Synth>| {
