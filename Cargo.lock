@@ -562,6 +562,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "avian_pickup"
+version = "0.7.0"
+source = "git+https://github.com/buddha314/avian_pickup?branch=bevy-main#e4bd47c4a58f9a23a96db03c6615ce429c88be4c"
+dependencies = [
+ "avian3d",
+ "bevy_app",
+ "bevy_ecs 0.20.0-dev",
+ "bevy_log",
+ "bevy_math",
+ "bevy_platform 0.20.0-dev",
+ "bevy_reflect 0.20.0-dev",
+ "bevy_shape",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_utils 0.20.0-dev",
+ "rand 0.10.2",
+]
+
+[[package]]
 name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -632,6 +651,27 @@ dependencies = [
  "bevy_ecs 0.20.0-dev",
  "bevy_reflect 0.20.0-dev",
  "serde",
+]
+
+[[package]]
+name = "bevy_ahoy"
+version = "0.3.0"
+source = "git+https://github.com/buddha314/bevy_ahoy?branch=bevy-main#6ddf18715e1e2074429335cfc17f81fc877b9ffa"
+dependencies = [
+ "avian3d",
+ "avian_pickup",
+ "bevy_app",
+ "bevy_derive",
+ "bevy_ecs 0.20.0-dev",
+ "bevy_enhanced_input",
+ "bevy_math",
+ "bevy_reflect 0.20.0-dev",
+ "bevy_shape",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_utils 0.20.0-dev",
+ "getrandom 0.4.3",
+ "tracing",
 ]
 
 [[package]]
@@ -1096,6 +1136,28 @@ source = "git+https://github.com/bevyengine/bevy?branch=main#526f9e40253348a52a0
 dependencies = [
  "bevy_macro_utils 0.20.0-dev",
  "encase_derive_impl",
+]
+
+[[package]]
+name = "bevy_enhanced_input"
+version = "0.27.2"
+source = "git+https://github.com/buddha314/bevy_enhanced_input?branch=bevy-main#9e6edb340caacaa705e9cbf0d9d22e41e41d3151"
+dependencies = [
+ "bevy",
+ "bevy_enhanced_input_macros",
+ "bitflags 2.13.1",
+ "smallvec",
+ "variadics_please 2.0.0",
+]
+
+[[package]]
+name = "bevy_enhanced_input_macros"
+version = "0.27.0"
+source = "git+https://github.com/buddha314/bevy_enhanced_input?branch=bevy-main#9e6edb340caacaa705e9cbf0d9d22e41e41d3151"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -3762,9 +3824,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi 6.0.0",
  "rand_core 0.10.1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -7013,6 +7077,8 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
+ "bevy_ahoy",
+ "bevy_enhanced_input",
  "bevy_mod_outline",
  "bevy_stubby_audio",
  "serde",

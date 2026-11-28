@@ -46,10 +46,11 @@ Clients show their own request at once only where a wrong guess is harmless (the
 animation, a build hologram), never for inventory.
 
 **D5 Players.** Movement inputs become BEI actions read in the fixed step, so lightyear
-can send them and replay them on rollback; the controller's feel (speeds, slide, step)
-is kept, moved from per-frame to the fixed step. Whether to keep stubby's controller in
-the fixed step or move to `bevy_ahoy` (as the template did) is decided by a spike
-(task 2.3): keep the feel, prefer the existing crate if it can match it.
+can send them and replay them on rollback. **Decided (user, 2026-11-27, after the spike
+in 2.3): `bevy_ahoy`**, as the template uses it, tuned to stubby's speeds and jump
+(`stubby_player::movement`). The ground is a heightfield sampled from `GroundHeight` over
+the whole world; the simulation-speed keys scale ahoy's tuning so the player moves in real
+time. The per-frame controller is gone.
 
 **D6 Time.** Simulation time and the calendar are the host's and replicate; clients do
 not advance them. The simulation-speed keys work only on the host.
