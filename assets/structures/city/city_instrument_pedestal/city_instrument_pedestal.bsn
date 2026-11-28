@@ -1,0 +1,6 @@
+#"City Instrument Pedestal"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "structures/city/city_instrument_pedestal/city_instrument_pedestal.glb", scene_index: 0 }

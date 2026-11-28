@@ -83,6 +83,48 @@
     25.0
    ],
    "cull_metres": 150.0
+  },
+  {
+   "models": "structures/city/city_tree/city_tree.glb",
+   "handover_metres": [
+    40.0
+   ],
+   "cull_metres": 400.0
+  },
+  {
+   "models": "structures/city/city_shrub/city_shrub.glb",
+   "handover_metres": [
+    25.0
+   ],
+   "cull_metres": 200.0
+  },
+  {
+   "models": "structures/city/city_agave/city_agave.glb",
+   "handover_metres": [
+    20.0
+   ],
+   "cull_metres": 150.0
+  },
+  {
+   "models": "structures/city/city_grass/city_grass.glb",
+   "handover_metres": [
+    15.0
+   ],
+   "cull_metres": 100.0
+  },
+  {
+   "models": "structures/city/city_vine_strip/city_vine_strip.glb",
+   "handover_metres": [
+    30.0
+   ],
+   "cull_metres": 250.0
+  },
+  {
+   "models": "structures/city/city_monument/city_monument.glb",
+   "handover_metres": [
+    150.0
+   ],
+   "cull_metres": 2000.0
   }
  ]
 }

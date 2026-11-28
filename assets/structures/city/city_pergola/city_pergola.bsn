@@ -1,0 +1,6 @@
+#"City Pergola"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "structures/city/city_pergola/city_pergola.glb", scene_index: 0 }
