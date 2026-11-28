@@ -18,6 +18,7 @@
 //! Bevy version), so it must not use `crate::` paths. Its Bevy version is selected
 //! by the workspace's shared Jackdaw pin; the core never depends on Bevy.
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use stubby_recipes::{
     Catalog, GoalEvent, GoalOutcome, GoalProgress, HarvestLedger, Inventory, RecipeBook,
     RecipeError, ResourceTime, Rules, SourceObject, Stack,
@@ -84,10 +85,11 @@ impl Plugin for RecipesPlugin {
         app.add_message::<RulesReloaded>();
         app.init_resource::<PlayerInventory>()
             .init_resource::<SourceLedger>()
+            .init_resource::<SharedStorage>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
             .add_message::<HarvestRequest>()
-            .add_message::<GrantHarvest>()
+            .add_message::<StorageRequest>()
             .add_message::<ResourceCollected>()
             .add_message::<CraftRequest>()
             .add_message::<CraftCompleted>()
@@ -96,12 +98,22 @@ impl Plugin for RecipesPlugin {
             .add_message::<GoalReported>()
             .add_systems(
                 Update,
-                (apply_harvests, apply_grants, apply_crafts, apply_goals)
+                (
+                    (apply_harvests, apply_storage, apply_crafts)
+                        .run_if(not(resource_exists::<DecidedElsewhere>)),
+                    apply_goals,
+                )
                     .chain()
                     .in_set(RecipesSystems),
             );
     }
 }
+
+/// Harvests, crafts and storage moves are another peer's to decide (a shared world's
+/// host): the requests are left for the game to send on, and results arrive as the
+/// usual messages. Goals still run here.
+#[derive(Resource, Default)]
+pub struct DecidedElsewhere;
 
 /// The plugin's systems. Send requests before it; read results after it.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -254,13 +266,53 @@ pub struct HarvestRequest {
     pub now: ResourceTime,
 }
 
-/// Someone else decided a harvest for this player (the host of a shared world, which has
-/// already depleted the source): put `yields` in the inventory and the recipe book, and
-/// report it as [`ResourceCollected`], or [`InventoryFull`] with nothing added.
-#[derive(Message, Clone)]
-pub struct GrantHarvest {
-    pub instance: String,
-    pub yields: Vec<Stack>,
+/// The settlement's storage: one store every player shares (design D4 of
+/// add-multiplayer-and-menus: in a shared world the host keeps it). The world's, like
+/// [`SourceLedger`].
+#[derive(Resource, Clone, Debug, PartialEq)]
+pub struct SharedStorage(pub Inventory);
+impl Default for SharedStorage {
+    fn default() -> Self {
+        Self(Inventory::with_boxes(stubby_recipes::STORAGE_BOXES))
+    }
+}
+
+/// Move items between the player's inventory and the shared storage, all or nothing.
+#[derive(Message, Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum StorageRequest {
+    /// From the player's inventory into storage.
+    Store { item: String, quantity: u32 },
+    /// From storage into the player's inventory.
+    Take { item: String, quantity: u32 },
+}
+
+impl StorageRequest {
+    /// Apply it to a player's inventory and the storage: the feedback line on success,
+    /// or why nothing moved.
+    pub fn apply(&self, player: &mut Inventory, storage: &mut Inventory) -> Result<String, String> {
+        let (item, quantity, result, done) = match self {
+            Self::Store { item, quantity } => (
+                item,
+                quantity,
+                player.transfer(storage, item, *quantity),
+                "Stored",
+            ),
+            Self::Take { item, quantity } => (
+                item,
+                quantity,
+                storage.transfer(player, item, *quantity),
+                "Took",
+            ),
+        };
+        match result {
+            Ok(()) => Ok(format!("{done} {quantity} x {item}.")),
+            Err(RecipeError::InventoryFull(_)) => Err(match self {
+                Self::Store { .. } => "The storage is full.".into(),
+                Self::Take { .. } => "Your inventory is full.".into(),
+            }),
+            Err(error) => Err(error.to_string()),
+        }
+    }
 }
 
 /// A harvest succeeded: the yields are in the inventory and the recipe book.
@@ -334,7 +386,8 @@ fn apply_harvests(
 }
 
 /// A harvest's yields are known (and in the items): learn them, say so, and report it.
-fn report_harvest(
+/// A shared world's client calls it when the host reports its harvest.
+pub fn report_harvest(
     book: &mut RecipeBook,
     feedback: &mut String,
     instance: String,
@@ -354,33 +407,55 @@ fn report_harvest(
     ResourceCollected { instance, yields }
 }
 
-fn apply_grants(
-    mut grants: MessageReader<GrantHarvest>,
+fn apply_storage(
+    mut requests: MessageReader<StorageRequest>,
     mut player: ResMut<PlayerInventory>,
-    mut collected: MessageWriter<ResourceCollected>,
-    mut full: MessageWriter<InventoryFull>,
+    mut storage: ResMut<SharedStorage>,
 ) {
-    for grant in grants.read() {
+    for request in requests.read() {
         let PlayerInventory {
-            items,
-            book,
-            feedback,
+            items, feedback, ..
         } = &mut *player;
-        match items.grant(&grant.yields) {
-            Ok(()) => {
-                collected.write(report_harvest(
-                    book,
-                    feedback,
-                    grant.instance.clone(),
-                    grant.yields.clone(),
-                ));
+        *feedback = match request.apply(items, &mut storage.0) {
+            Ok(done) | Err(done) => done,
+        };
+    }
+}
+
+/// Craft `recipe` at `bpm` from `items`, learning what it makes: the completed craft and
+/// the feedback line, or why nothing was made (the inventory unchanged). The rules every
+/// peer that decides crafts uses.
+pub fn craft(
+    catalog: &Catalog,
+    recipe: &str,
+    bpm: Option<f32>,
+    items: &mut Inventory,
+    book: &mut RecipeBook,
+) -> Result<(CraftCompleted, String), String> {
+    match catalog.craft_at(recipe, items, bpm) {
+        Ok(outputs) => {
+            // What you have made, you know (add-item-found-condition).
+            for stack in &outputs {
+                book.discover(&stack.item);
             }
-            Err(RecipeError::InventoryFull(item)) => {
-                feedback.clear();
-                full.write(InventoryFull { item });
-            }
-            Err(error) => *feedback = error.to_string(),
+            let name = catalog
+                .recipes()
+                .find(|known| known.id == recipe)
+                .map_or(recipe, |known| known.name.as_str());
+            Ok((
+                CraftCompleted {
+                    recipe: recipe.into(),
+                    outputs,
+                },
+                format!("Crafted {name}."),
+            ))
         }
+        Err(RecipeError::MissingIngredient {
+            item,
+            needed,
+            available,
+        }) => Err(format!("Need {needed} {item}; have {available}.")),
+        Err(error) => Err(error.to_string()),
     }
 }
 
@@ -395,34 +470,17 @@ fn apply_crafts(
         return;
     };
     for request in requests.read() {
-        match catalog
-            .0
-            .craft_at(&request.recipe, &mut player.items, request.bpm)
-        {
-            Ok(outputs) => {
-                // What you have made, you know (add-item-found-condition).
-                for stack in &outputs {
-                    player.book.discover(&stack.item);
-                }
-                let name = catalog
-                    .0
-                    .recipes()
-                    .find(|recipe| recipe.id == request.recipe)
-                    .map_or(request.recipe.as_str(), |recipe| recipe.name.as_str());
-                player.feedback = format!("Crafted {name}.");
-                completed.write(CraftCompleted {
-                    recipe: request.recipe.clone(),
-                    outputs,
-                });
+        let PlayerInventory {
+            items,
+            book,
+            feedback,
+        } = &mut *player;
+        match craft(&catalog.0, &request.recipe, request.bpm, items, book) {
+            Ok((done, said)) => {
+                *feedback = said;
+                completed.write(done);
             }
-            Err(RecipeError::MissingIngredient {
-                item,
-                needed,
-                available,
-            }) => {
-                player.feedback = format!("Need {needed} {item}; have {available}.");
-            }
-            Err(error) => player.feedback = error.to_string(),
+            Err(said) => *feedback = said,
         }
     }
 }
@@ -493,41 +551,51 @@ mod tests {
     }
 
     #[test]
-    fn a_granted_harvest_fills_the_inventory_without_touching_the_ledger() {
+    fn storage_requests_move_items_all_or_nothing() {
         let mut app = App::new();
         app.add_plugins(RecipesPlugin::default());
-        let before = app
-            .world()
-            .resource::<PlayerInventory>()
+        let held = |app: &App| {
+            app.world()
+                .resource::<PlayerInventory>()
+                .items
+                .quantity("square_wave")
+        };
+        let stored = |app: &App| {
+            app.world()
+                .resource::<SharedStorage>()
+                .0
+                .quantity("square_wave")
+        };
+        app.world_mut()
+            .resource_mut::<PlayerInventory>()
             .items
-            .quantity("square_wave");
-        app.world_mut().write_message(GrantHarvest {
-            instance: "lightning_bug-3".into(),
-            yields: vec![Stack {
+            .grant(&[Stack {
                 item: "square_wave".into(),
-                quantity: 2,
-            }],
+                quantity: 3,
+            }])
+            .unwrap();
+        let before = held(&app);
+        app.world_mut().write_message(StorageRequest::Store {
+            item: "square_wave".into(),
+            quantity: 2,
         });
         app.update();
-        let player = app.world().resource::<PlayerInventory>();
-        assert_eq!(player.items.quantity("square_wave"), before + 2);
-        assert!(player.book.knows("square_wave"));
-        assert!(
-            !app.world()
-                .resource::<SourceLedger>()
-                .0
-                .collected("lightning_bug-3"),
-            "the host keeps the ledger; a grant only delivers"
-        );
-        let collected: Vec<_> = app
-            .world_mut()
-            .resource_mut::<Messages<ResourceCollected>>()
-            .drain()
-            .collect();
+        assert_eq!((held(&app), stored(&app)), (before - 2, 2));
+        app.world_mut().write_message(StorageRequest::Take {
+            item: "square_wave".into(),
+            quantity: 5,
+        });
+        app.update();
         assert_eq!(
-            collected.len(),
-            1,
-            "reported like a local harvest (cues, the book)"
+            (held(&app), stored(&app)),
+            (before - 2, 2),
+            "too few stored: nothing moves"
+        );
+        assert!(
+            app.world()
+                .resource::<PlayerInventory>()
+                .feedback
+                .contains("need 5")
         );
     }
 
@@ -627,7 +695,7 @@ impl stubby_core::Stock for PlayerInventory {
             .collect()
     }
     fn box_count(&self) -> usize {
-        stubby_recipes::INVENTORY_BOXES as usize
+        self.items.box_count() as usize
     }
     fn take(&mut self, item: &str, count: u32) -> bool {
         self.items.take(item, count).is_ok()

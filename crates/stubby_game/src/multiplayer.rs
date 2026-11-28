@@ -13,6 +13,7 @@
 //! The session itself is `stubby_net`. Offline (`NetMode::Offline`) none of this runs.
 
 pub mod collecting;
+pub mod inventory;
 use bevy::{ecs::relationship::Relationship, prelude::*};
 use bevy_ahoy::{CharacterControllerState, CharacterLook, input::AccumulatedInput, prelude::*};
 use bevy_enhanced_input::prelude::{Action, ActionOf};
@@ -53,6 +54,7 @@ impl Plugin for MultiplayerPlugin {
                 ClientPlayersPlugin,
                 WorldHandshakePlugin,
                 collecting::CollectingPlugin,
+                inventory::InventoriesPlugin,
             ))
             .add_systems(
                 Update,

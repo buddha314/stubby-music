@@ -7,7 +7,8 @@
 //! What they check: a joining client gets its own body, predicted and bound to its keys;
 //! its inputs move the server's copy and prediction agrees, also over a laggy, lossy link;
 //! a host plays on its own server and each sees the other's body; the host's world and
-//! shared entities reach clients; collecting goes through the host (3.1).
+//! shared entities reach clients; collecting goes through the host (3.1); the host keeps
+//! each player's inventory and the shared storage (3.2).
 
 use core::net::{Ipv4Addr, SocketAddr};
 use std::time::{Duration, Instant};
@@ -22,15 +23,17 @@ use stubby_game::{
     movement::{MoveBody, MoveControls, MovementPlugin, NetworkedMovement, Sprint},
     multiplayer::{
         ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin, WorldHandshakePlugin,
-        WorldMismatch, collecting::CollectingPlugin,
+        WorldMismatch,
+        collecting::CollectingPlugin,
+        inventory::{InventoriesPlugin, Pack},
     },
     net::{
         self, NetMode, NetPlayer,
         lightyear::{crossbeam::CrossbeamIo, link::RecvLinkConditioner, prelude::*},
     },
     resources::{
-        HarvestRequest, PlayerInventory, RecipesPlugin, ResourceNode, SourceLedger,
-        lightning_bug_node,
+        CraftCompleted, CraftRequest, HarvestRequest, PlayerInventory, RecipesPlugin, ResourceNode,
+        SharedStorage, SourceLedger, StorageRequest, lightning_bug_node,
     },
     world_generation::WorldConfig,
 };
@@ -95,6 +98,7 @@ impl Session {
             MovementPlugin,
             RecipesPlugin::default(),
             CollectingPlugin,
+            InventoriesPlugin,
         ));
         server
     }
@@ -115,6 +119,7 @@ impl Session {
             MovementPlugin,
             RecipesPlugin::default(),
             CollectingPlugin,
+            InventoriesPlugin,
         ));
         client.finish();
         client.cleanup();
@@ -651,4 +656,190 @@ fn a_client_collects_through_the_host() {
     session.until(3.0, "the bug back at every client", |s| {
         !bug(&mut s.clients[0], 0).collected && !bug(&mut s.clients[late], 0).collected
     });
+}
+
+/// The client's pack, on the host.
+fn pack_on_host(session: &mut Session, client: usize) -> Entity {
+    let world = session.clients[client].world_mut();
+    let me = world
+        .query_filtered::<&LocalId, With<client::Client>>()
+        .single(world)
+        .unwrap()
+        .0;
+    let world = session.server.world_mut();
+    world
+        .query::<(Entity, &Pack)>()
+        .iter(world)
+        .find(|(_, pack)| pack.owner == me)
+        .map(|(e, _)| e)
+        .expect("the host keeps the client's pack")
+}
+
+fn held(app: &App, item: &str) -> u32 {
+    app.world()
+        .resource::<PlayerInventory>()
+        .items
+        .quantity(item)
+}
+
+fn stored(app: &App, item: &str) -> u32 {
+    app.world().resource::<SharedStorage>().0.quantity(item)
+}
+
+/// Each player carries their own inventory, kept by the host and seen only by its owner;
+/// storage is one, shared, and only the host moves things in and out of it (3.2).
+#[test]
+fn the_host_keeps_each_inventory_and_the_shared_storage() {
+    let mut session = Session::new(true);
+    let (a, b) = (session.join(None), session.join(None));
+    joined(&mut session, a);
+    joined(&mut session, b);
+    session.seconds(0.5);
+    for client in [a, b] {
+        let world = session.clients[client].world_mut();
+        let packs = world.query::<&Pack>().iter(world).count();
+        assert_eq!(packs, 1, "a client sees its own pack, no one else's");
+    }
+
+    // The host gives A three square waves (a harvest, say): A sees them.
+    let pack = pack_on_host(&mut session, a);
+    let before = held(&session.clients[a], "square_wave");
+    session
+        .server
+        .world_mut()
+        .get_mut::<Pack>(pack)
+        .unwrap()
+        .items
+        .grant(&[stubby_recipes::Stack {
+            item: "square_wave".into(),
+            quantity: 3,
+        }])
+        .unwrap();
+    session.until(3.0, "A's new square waves", |s| {
+        held(&s.clients[a], "square_wave") == before + 3
+    });
+
+    // A stores two: everyone sees them in storage.
+    session.clients[a]
+        .world_mut()
+        .write_message(StorageRequest::Store {
+            item: "square_wave".into(),
+            quantity: 2,
+        });
+    session.until(3.0, "the stored square waves everywhere", |s| {
+        stored(&s.server, "square_wave") == 2
+            && stored(&s.clients[a], "square_wave") == 2
+            && stored(&s.clients[b], "square_wave") == 2
+            && held(&s.clients[a], "square_wave") == before + 1
+    });
+
+    // B takes one; the host's own player takes the other.
+    session.clients[b]
+        .world_mut()
+        .write_message(StorageRequest::Take {
+            item: "square_wave".into(),
+            quantity: 1,
+        });
+    session
+        .server
+        .world_mut()
+        .write_message(StorageRequest::Take {
+            item: "square_wave".into(),
+            quantity: 1,
+        });
+    session.until(3.0, "the storage emptied by B and the host", |s| {
+        stored(&s.clients[a], "square_wave") == 0
+            && held(&s.clients[b], "square_wave") == 1
+            && held(&s.server, "square_wave") == 1
+    });
+
+    // Taking what is not there is refused, and nothing moves.
+    session.clients[a]
+        .world_mut()
+        .write_message(StorageRequest::Take {
+            item: "square_wave".into(),
+            quantity: 5,
+        });
+    session.until(3.0, "the host's refusal at A", |s| {
+        s.clients[a]
+            .world()
+            .resource::<PlayerInventory>()
+            .feedback
+            .contains("need 5")
+    });
+    assert_eq!(held(&session.clients[a], "square_wave"), before + 1);
+    assert_eq!(stored(&session.server, "square_wave"), 0);
+}
+
+/// Crafts reported at a peer.
+#[derive(Resource, Default)]
+struct Crafts(usize);
+
+fn count_crafts(mut done: MessageReader<CraftCompleted>, mut crafts: ResMut<Crafts>) {
+    crafts.0 += done.read().count();
+}
+
+/// A client's craft is the host's: it is made from the client's pack on the host.
+#[test]
+fn a_client_crafts_from_the_pack_the_host_keeps() {
+    let mut session = Session::new(false);
+    session.join(None);
+    joined(&mut session, 0);
+    let catalog = stubby_recipes::rules::shipped_catalog().unwrap();
+    let recipe = catalog.recipes().next().unwrap().clone();
+    let bpm = recipe.bpm.map(|range| (range.min + range.max) as f32 / 2.0);
+    let pack = pack_on_host(&mut session, 0);
+    session
+        .server
+        .world_mut()
+        .get_mut::<Pack>(pack)
+        .unwrap()
+        .items
+        .grant(&recipe.inputs)
+        .unwrap();
+    let output = recipe.outputs[0].item.clone();
+    session.until(3.0, "the ingredients at the client", |s| {
+        recipe
+            .inputs
+            .iter()
+            .all(|stack| held(&s.clients[0], &stack.item) >= stack.quantity)
+    });
+    let before = held(&session.clients[0], &output);
+    let host_before = held(&session.server, &output);
+    session.clients[0]
+        .init_resource::<Crafts>()
+        .add_systems(Update, count_crafts);
+
+    session.clients[0].world_mut().write_message(CraftRequest {
+        recipe: recipe.id.clone(),
+        bpm,
+    });
+    session.until(3.0, "the craft at the client", |s| {
+        held(&s.clients[0], &output) == before + recipe.outputs[0].quantity
+    });
+    let on_host = session.server.world().get::<Pack>(pack).unwrap();
+    assert_eq!(
+        on_host.items.quantity(&output),
+        before + recipe.outputs[0].quantity,
+        "made on the host, from the pack it keeps"
+    );
+    assert_eq!(
+        held(&session.server, &output),
+        host_before,
+        "not in the host player's own inventory"
+    );
+    session.seconds(0.5);
+    assert_eq!(
+        session.clients[0].world().resource::<Crafts>().0,
+        1,
+        "one craft, the host's: the client does not also craft locally"
+    );
+    assert!(
+        session.clients[0]
+            .world()
+            .resource::<PlayerInventory>()
+            .feedback
+            .starts_with("Crafted"),
+        "the host's word reaches the player"
+    );
 }

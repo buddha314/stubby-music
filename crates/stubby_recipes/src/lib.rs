@@ -213,12 +213,48 @@ pub enum RecipeError {
 pub const INVENTORY_BOXES: u32 = 16;
 /// How many of one kind of item a box holds.
 pub const BOX_STACK: u32 = 100;
+/// Boxes in the settlement's shared storage: three players' worth, until storage is
+/// something built (then each store sets its own).
+pub const STORAGE_BOXES: u32 = 48;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+/// Items in boxes: a player's (16 boxes) or a store's. Serializable as is: a shared
+/// world sends it, and every field is always written.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Inventory {
     quantities: BTreeMap<String, u32>,
+    boxes: u32,
+}
+impl Default for Inventory {
+    fn default() -> Self {
+        Self::with_boxes(INVENTORY_BOXES)
+    }
 }
 impl Inventory {
+    /// An empty inventory of `boxes` boxes.
+    pub fn with_boxes(boxes: u32) -> Self {
+        Self {
+            quantities: BTreeMap::new(),
+            boxes,
+        }
+    }
+    /// How many boxes it has.
+    pub fn box_count(&self) -> u32 {
+        self.boxes
+    }
+    /// Move `quantity` of `item` into `to`, all or nothing: both stay as they were when
+    /// this one has too few or `to` has no room.
+    pub fn transfer(
+        &mut self,
+        to: &mut Inventory,
+        item: &str,
+        quantity: u32,
+    ) -> Result<(), RecipeError> {
+        let (mut from, mut into) = (self.clone(), to.clone());
+        from.take(item, quantity)?;
+        into.add(item, quantity)?;
+        (*self, *to) = (from, into);
+        Ok(())
+    }
     pub fn quantity(&self, item: &str) -> u32 {
         self.quantities.get(item).copied().unwrap_or(0)
     }
@@ -283,7 +319,7 @@ impl Inventory {
             .checked_add(quantity)
             .ok_or_else(|| RecipeError::InventoryOverflow(item.into()))?;
         let before = self.quantity(item).div_ceil(BOX_STACK);
-        if self.boxes_used() - before + count.div_ceil(BOX_STACK) > INVENTORY_BOXES {
+        if self.boxes_used() - before + count.div_ceil(BOX_STACK) > self.boxes {
             return Err(RecipeError::InventoryFull(item.into()));
         }
         self.quantities.insert(item.into(), count);
@@ -314,7 +350,7 @@ impl HarvestLedger {
 }
 
 /// Learning an ingredient survives consuming its inventory quantity in a recipe.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecipeBook {
     discovered: BTreeSet<String>,
 }
@@ -717,6 +753,43 @@ impl Catalog {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_transfer_moves_all_or_nothing() {
+        let square = |n| Stack {
+            item: "square_wave".into(),
+            quantity: n,
+        };
+        let mut pack = Inventory::default();
+        pack.grant(&[square(3)]).unwrap();
+        let mut store = Inventory::with_boxes(1);
+        pack.transfer(&mut store, "square_wave", 2).unwrap();
+        assert_eq!(
+            (pack.quantity("square_wave"), store.quantity("square_wave")),
+            (1, 2)
+        );
+        // Too few: nothing moves.
+        assert!(pack.transfer(&mut store, "square_wave", 5).is_err());
+        assert_eq!(
+            (pack.quantity("square_wave"), store.quantity("square_wave")),
+            (1, 2)
+        );
+        // No room (one box, full of something else): nothing moves.
+        let mut full = Inventory::with_boxes(1);
+        full.grant(&[Stack {
+            item: "reed".into(),
+            quantity: 1,
+        }])
+        .unwrap();
+        assert!(matches!(
+            pack.transfer(&mut full, "square_wave", 1),
+            Err(RecipeError::InventoryFull(_))
+        ));
+        assert_eq!(pack.quantity("square_wave"), 1);
+        // Round-trips through serde, as a shared world sends it.
+        let json = serde_json::to_string(&store).unwrap();
+        assert_eq!(serde_json::from_str::<Inventory>(&json).unwrap(), store);
+    }
+
     use super::*;
     #[test]
     fn a_tempo_bound_recipe_is_made_only_at_its_tempo() {
