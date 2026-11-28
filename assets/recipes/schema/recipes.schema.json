@@ -49,6 +49,20 @@
         "max"
       ]
     },
+    "ByHand": {
+      "description": "How long a recipe takes by hand: the bench's progress bar fills over `seconds`, in\nquarter-second steps (add-crafting-durations D1).",
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": "number",
+          "format": "float"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "seconds"
+      ]
+    },
     "RecipeDefinition": {
       "type": "object",
       "properties": {
@@ -57,6 +71,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/BpmRange"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "by_hand": {
+          "description": "Made by hand at a bench, taking this long (add-crafting-durations). None: at once.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ByHand"
             },
             {
               "type": "null"

@@ -87,6 +87,54 @@ pub mod style {
     }
 }
 
+/// A progress bar in the HUD style (add-crafting-durations 2.1): a dark track holding an
+/// amber fill. `fill` goes on the fill, whose width [`show_progress`] sets.
+pub fn progress_bar(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    width: f32,
+    fill: impl Bundle,
+) {
+    parent
+        .spawn((
+            Node {
+                width: px(width),
+                height: px(10),
+                border: UiRect::all(px(1)),
+                ..default()
+            },
+            BackgroundColor(style::TILE),
+            BorderColor::all(style::EDGE),
+            Pickable::IGNORE,
+        ))
+        .with_children(|track| {
+            track.spawn((
+                fill,
+                Node {
+                    width: percent(0),
+                    height: percent(100),
+                    ..default()
+                },
+                BackgroundColor(style::AMBER),
+                Pickable::IGNORE,
+            ));
+        });
+}
+
+/// Show `done` of `total` on a progress bar's fill, in whole `step`s when given (a hand
+/// craft fills in quarter seconds).
+pub fn show_progress(fill: &mut Node, done: f32, total: f32, step: Option<f32>) {
+    let done = step.map_or(done, |step| (done / step).floor() * step);
+    let fraction = if total > 0. {
+        (done / total).clamp(0., 1.)
+    } else {
+        0.
+    };
+    let width = percent(fraction * 100.);
+    if fill.width != width {
+        fill.width = width;
+    }
+}
+
 fn text(value: impl Into<String>, size: f32, color: Color) -> impl Bundle {
     (
         Text::new(value),

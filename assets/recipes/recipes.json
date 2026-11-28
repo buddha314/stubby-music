@@ -28,6 +28,9 @@
       "bpm": {
         "min": 96,
         "max": 144
+      },
+      "by_hand": {
+        "seconds": 0.75
       }
     }
   ]

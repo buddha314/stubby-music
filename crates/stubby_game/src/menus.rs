@@ -281,7 +281,7 @@ fn spawn_loading(mut commands: Commands) {
     let column = panel(&mut commands, Screen::Loading, "STUBBY", "");
     commands
         .entity(column)
-        .with_child(text("Waking the desert…", 18., MUTED));
+        .with_child(text("Waking the desert...", 18., MUTED));
 }
 
 fn spawn_main_menu(mut commands: Commands) {

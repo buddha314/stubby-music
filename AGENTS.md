@@ -798,7 +798,10 @@ equivalent of an iron ore node, so the player does not pick it up.
   segment keeps it (`OnSegment`) and goes with it, refunded. **Crafting**: E at a burning campfire opens
   the crafting screen (Satisfactory's Craft Bench, `stubby_game::crafting_screen`): any
   machine carrying `stubby_core::CraftBench` is a bench; its RACK tab opens the rack, and
-  each `CraftRequest` carries the tempo the bench hears
+  each `CraftRequest` carries the tempo the bench hears and the bench. A recipe with
+  `by_hand` is **timed**: its bar fills while CRAFT is held (or Space latches it), in
+  quarter-second steps, and makes one when full (`add-crafting-durations`). On-screen
+  text is ASCII: the default font lacks the rest (`tests/ui_text.rs`)
   (`add-reed-water-purifier` D4, D6). Until it exists every stream stays mud
   (`LaidStream.clarity` 0).
 - **Reeds are the stream's ingredient**: **6 reeds build one stream segment**, and reeds

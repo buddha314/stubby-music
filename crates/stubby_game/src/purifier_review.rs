@@ -427,6 +427,7 @@ fn script(
                 crafts.write(bevy_stubby_recipes::CraftRequest {
                     recipe: "craft_reed_water_purifier".into(),
                     bpm: Some(TEMPO),
+                    bench: None,
                 });
                 script.since = now;
             } else if waited > 0.3 {

@@ -63,7 +63,8 @@ like the rack screen's layout:
 - right, the selected recipe: input tiles with `have / need` (amber when enough), an
   arrow, and the output tile with its count;
 - under it, a craft button: click crafts one, holding repeats, and the count shows
-  `x N`;
+  `x N`; a recipe made by hand (`by_hand`) fills a progress bar instead, and makes one
+  when it is full (`add-crafting-durations`, 2026-11-27);
 - a pin button that adds the recipe to the To-Do List (`GoalEvent::Pin`).
 
 Crafting is instant for now. Satisfactory's bench takes time while the button is held.

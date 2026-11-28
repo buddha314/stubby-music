@@ -572,6 +572,16 @@ pub fn validate(definition: &CatalogDefinition) -> Vec<RulesError> {
         }
     }
     for recipe in &definition.recipes {
+        if let Some(hand) = recipe.by_hand
+            && !(hand.seconds.is_finite() && hand.seconds > 0.)
+        {
+            errors.push(RulesError::new(
+                RECIPES,
+                &recipe.id,
+                "by_hand",
+                format!("{} s: a hand craft takes a positive time", hand.seconds),
+            ));
+        }
         stacks(&mut errors, RECIPES, &recipe.id, "inputs", &recipe.inputs);
         stacks(&mut errors, RECIPES, &recipe.id, "outputs", &recipe.outputs);
         if let Some(range) = recipe.bpm
