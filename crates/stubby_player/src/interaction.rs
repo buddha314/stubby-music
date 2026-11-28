@@ -51,6 +51,7 @@ fn spawn_marker(commands: &mut Commands, owner: Entity) {
         Collider::sphere(MARKER_RADIUS_M),
         Sensor,
         Transform::default(),
+        Position::default(),
     ));
     commands.entity(owner).insert(HasMarker);
 }
@@ -64,15 +65,24 @@ fn mark(mut commands: Commands, owners: Query<Entity, (With<Interactable>, Witho
 }
 
 /// Markers follow their owners' world position; a marker whose owner is gone goes too.
+/// Physics' `Position` is set as well as `Transform`: a networked session runs avian
+/// without its transform sync (lightyear owns positions there), so a marker moved only by
+/// `Transform` stayed where it spawned and E found nothing (2026-11-28, the user: "cannot
+/// collect reed or bug" after Play).
 fn follow(
     mut commands: Commands,
-    mut markers: Query<(Entity, &ReachMarker, &mut Transform)>,
+    mut markers: Query<(Entity, &ReachMarker, &mut Transform, Option<&mut Position>)>,
     owners: Query<&GlobalTransform>,
 ) {
-    for (marker, ReachMarker { owner }, mut transform) in &mut markers {
+    for (marker, ReachMarker { owner }, mut transform, position) in &mut markers {
         match owners.get(*owner) {
             Ok(at) if at.translation().is_finite() => {
                 transform.translation = at.translation();
+                if let Some(mut position) = position
+                    && position.0 != at.translation()
+                {
+                    position.0 = at.translation();
+                }
             }
             Ok(_) => {}
             Err(_) => commands.entity(marker).despawn(),
@@ -178,6 +188,38 @@ mod tests {
         // Nothing in the cone: the nearest.
         assert_eq!(pick(&[(40., 2.0, shell), (35., 1.5, reed)]), reed);
         assert_eq!(pick(&[]), InteractTarget::None);
+    }
+
+    /// A networked session runs avian without its transform sync: the markers must still
+    /// be where their owners are (2026-11-28: E found nothing after the menu's Play).
+    #[test]
+    fn a_target_is_found_with_networked_physics() {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, TransformPlugin, AssetPlugin::default()))
+            .init_asset::<Mesh>()
+            .add_plugins(
+                PhysicsPlugins::default()
+                    .build()
+                    .disable::<PhysicsTransformPlugin>()
+                    .disable::<PhysicsInterpolationPlugin>(),
+            )
+            .add_plugins(InteractionPlugin)
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+                16,
+            )));
+        app.world_mut()
+            .spawn((Camera3d::default(), Transform::from_xyz(20., 1.6, 0.)));
+        app.finish();
+        app.cleanup();
+        let reed = app
+            .world_mut()
+            .spawn((Interactable::Pickup, Transform::from_xyz(21., 0.5, 0.)))
+            .id();
+        settle(&mut app);
+        assert_eq!(
+            *app.world().resource::<InteractTarget>(),
+            InteractTarget::Pickup(reed)
+        );
     }
 
     #[test]
