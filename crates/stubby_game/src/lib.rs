@@ -25,6 +25,7 @@ mod storage_screen;
 /// The multiplayer session (`stubby_net`), for the binaries.
 pub use stubby_net as net;
 mod pause_menu;
+pub mod saves;
 // The rack system (bevy_stubby_rack), under its old module names.
 pub use bevy_stubby_rack::{machine_config, rack, synth_modules};
 pub mod glue;
@@ -99,6 +100,7 @@ impl Plugin for DesertPlugin {
             goals_hub::GoalsHubPlugin,
             goal_banner::GoalBannerPlugin,
             pause_menu::PauseMenuPlugin,
+            saves::SavesPlugin,
             (settings::SettingsPlugin, menus::MenusPlugin),
             build::BuildPlugin,
             campfire::CampfirePlugin,

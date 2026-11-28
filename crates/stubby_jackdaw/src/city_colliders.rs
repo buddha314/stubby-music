@@ -10,9 +10,10 @@
 //! and their acoustic extras already reach Steam Audio through `prefab_presentation`. So this
 //! reads the placed model's `GltfSource` path directly.
 //!
-//! Shapes marked `walkable` (paving, decks, slabs, bridges, stairs) are left out: the
-//! controller cannot stand on a collider yet (add-prefab-colliders), so a deck would be a
-//! wall. Only walls, piers, columns, kerbs and furniture-sized solids block.
+//! Walkable shapes (paving, decks, slabs, bridges; stairs and ramps as tilted slabs) are
+//! solid too: the player's body (bevy_ahoy) stands on colliders as it does on the ground's
+//! heightfield, so a raised City is walked on, not through (add-save-slots: the City save
+//! opens standing on its promenade).
 use avian3d::prelude::{Collider, RigidBody};
 use bevy::prelude::*;
 use jackdaw_runtime::GltfSource;
@@ -63,7 +64,7 @@ fn number(value: &serde_json::Value, key: &str) -> Option<f32> {
     value.get(key)?.as_f64().map(|v| v as f32)
 }
 
-/// The blocking shapes of every model in the colliders file; walkable ones are skipped.
+/// Every model's shapes in the colliders file: walls block, walkable ones are stood on.
 fn parse(text: &str) -> HashMap<String, Vec<Shape>> {
     let Ok(doc) = serde_json::from_str::<serde_json::Value>(text) else {
         return HashMap::new();
@@ -78,7 +79,6 @@ fn parse(text: &str) -> HashMap<String, Vec<Shape>> {
             .and_then(|c| c.as_array())
             .into_iter()
             .flatten()
-            .filter(|c| !c.get("walkable").and_then(|w| w.as_bool()).unwrap_or(false))
             .filter_map(|c| {
                 let t = c.get("translation")?.as_array()?;
                 let translation = Vec3::new(
@@ -161,9 +161,9 @@ mod tests {
         ))
         .unwrap();
         let shapes = parse(&text);
-        // A facade bay is a wall; paving is walkable and stays out; a door bay keeps its piers.
+        // A facade bay is a wall; paving is a floor; a door bay keeps its piers, not its door.
         assert!(shapes.contains_key("structures/city/city_facade_window/city_facade_window.glb"));
-        assert!(!shapes.contains_key("structures/city/city_paving_4/city_paving_4.glb"));
+        assert!(shapes.contains_key("structures/city/city_paving_4/city_paving_4.glb"));
         let door = &shapes["structures/city/city_facade_door/city_facade_door.glb"];
         assert_eq!(door.len(), 3);
         assert!(

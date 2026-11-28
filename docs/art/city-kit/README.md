@@ -115,8 +115,11 @@ is a flat PBR colour, with 1 to 9 material slots per piece. FPS has not been mea
 
 - **Scenery, not placeables.** City pieces are not bridged to `PlacedAsset` (it stalled
   the district's first frame past 20 s). Acoustics reach Steam Audio through node extras;
-  walls are solid via `crates/stubby_jackdaw/src/city_colliders.rs`; decks, bridges and
-  stairs are not walkable yet (`add-prefab-colliders`).
+  every collider shape is solid via `crates/stubby_jackdaw/src/city_colliders.rs`, so walls
+  block and paving, decks, bridges and stairs are stood on.
+- **A saved game opens in the City**: `--load=city_neighbourhood`, or Continue on the main
+  menu (`add-save-slots`). Its scene, `world/asset_reviews/city_neighbourhood.bsn`, is cut
+  from the district by `create_city_district.py`, which also writes the save.
 - **The whole district is over frame budget**: about 82,000 entities at 30-35 fps with dips
   (one building holds 60). See `add-city-kit` task 5.5.
 - **No canal cut in the ground** (see *Reviewing in the game*).

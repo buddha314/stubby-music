@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "The City",
+  "scene": "world/asset_reviews/city_neighbourhood.bsn",
+  "seed": "42",
+  "seeded_layout": false,
+  "player": {
+    "feet": [
+      46.0,
+      2.3,
+      6.0
+    ],
+    "yaw_degrees": -15.0,
+    "pitch_degrees": 0.0
+  },
+  "calendar_seconds": 2610.0,
+  "saved_at": 0
+}

@@ -109,6 +109,11 @@ pub(crate) fn add(app: &mut App) {
         .add_systems(Update, follow_body);
 }
 
+/// Where a body's centre goes to stand with its feet at `feet` (a restored save).
+pub fn body_centre(feet: Vec3) -> Vec3 {
+    Vec3::new(feet.x, feet.y + BODY_HEIGHT / 2. + 0.05, feet.z)
+}
+
 /// What a body is: ahoy's controller tuned to stubby's feel, its collider, where it looks,
 /// and the input context its actions belong to. Spawned standing with its feet at `feet`.
 pub fn body(at: Vec2, feet: f32) -> impl Bundle {
