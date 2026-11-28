@@ -28,6 +28,7 @@ use stubby_game::{
         building::BuildingPlugin,
         collecting::CollectingPlugin,
         inventory::{InventoriesPlugin, Pack},
+        racks::{Racks, RacksPlugin},
         streams::StreamsPlugin,
     },
     net::{
@@ -43,6 +44,15 @@ use stubby_game::{
 
 const SERVER_ADDR: SocketAddr = SocketAddr::new(core::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 5888);
 const TICK: Duration = Duration::from_micros(15_625); // 64 Hz
+
+fn campfire_profiles() -> stubby_game::machine_config::Profiles {
+    let asset: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../assets/structures/campfire/asset.json"
+    ))
+    .unwrap();
+    let config = serde_json::from_value(asset["configure"].clone()).unwrap();
+    std::collections::HashMap::from([("campfire".to_owned(), config)]).into()
+}
 
 /// The shipped world with `seed`.
 fn world(seed: u64) -> WorldConfig {
@@ -73,6 +83,8 @@ fn peer(mode: NetMode) -> App {
     .init_asset::<Font>()
     // A segment costs 6 reeds, as the rules say.
     .insert_resource(stubby_streams::SegmentCost(vec![("reed".into(), 6)]))
+    // The campfire's rack, as its asset describes it.
+    .insert_resource(campfire_profiles())
     .init_resource::<GroundHeight>()
     .insert_resource(LookCapture(true))
     .init_resource::<ScreenMode>()
@@ -112,6 +124,7 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
+            RacksPlugin,
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
@@ -137,6 +150,7 @@ impl Session {
             InventoriesPlugin,
             BuildingPlugin,
             StreamsPlugin,
+            RacksPlugin,
             // The stream tools, which lay locally unless the host decides.
             stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
@@ -907,9 +921,41 @@ fn a_client_crafts_from_the_pack_the_host_keeps() {
         .init_resource::<Crafts>()
         .add_systems(Update, count_crafts);
 
+    // At the bench, but its fire is out on the host: refused.
     session.clients[0].world_mut().write_message(CraftRequest {
         recipe: recipe.id.clone(),
         bpm,
+        bench: Some("campfire-built-1".into()),
+    });
+    session.until(3.0, "the refusal at a cold bench", |s| {
+        s.clients[0]
+            .world()
+            .resource::<PlayerInventory>()
+            .feedback
+            .contains("fire is out")
+    });
+    // Lit on the host, at a tempo in range: made at the host's tempo, whatever the client
+    // reports (here, none).
+    let fire = {
+        let world = session.server.world_mut();
+        world
+            .query::<(Entity, &PlacedAsset)>()
+            .iter(world)
+            .find(|(_, p)| p.instance == "campfire-built-1")
+            .unwrap()
+            .0
+    };
+    session.server.world_mut().entity_mut(fire).insert((
+        stubby_core::CraftBench,
+        stubby_core::AssetClock {
+            engine: stubby_audio::ModuleId(0),
+            clock: 0,
+            bpm: bpm.unwrap_or(120.),
+        },
+    ));
+    session.clients[0].world_mut().write_message(CraftRequest {
+        recipe: recipe.id.clone(),
+        bpm: None,
         bench: Some("campfire-built-1".into()),
     });
     session.until(3.0, "the craft at the client", |s| {
@@ -1102,4 +1148,145 @@ fn streams_are_laid_and_dismantled_through_the_host() {
         reeds - 18,
         "one segment back"
     );
+}
+
+/// The campfire's rack, on one peer.
+fn spawn_campfire(app: &mut App, at: Vec3) -> Entity {
+    app.world_mut()
+        .spawn((
+            PlacedAsset {
+                asset: "campfire".into(),
+                model: String::new(),
+                instance: "campfire-1".into(),
+            },
+            Transform::from_translation(at),
+            stubby_game::rack::RackState::default(),
+            stubby_game::rack::RackKnobs::default(),
+            bevy_stubby_rack::samples::RackSamples::default(),
+        ))
+        .id()
+}
+
+fn rack(app: &mut App) -> bevy_stubby_rack::record::RackRecord {
+    let world = app.world_mut();
+    let (state, knobs, samples) = world
+        .query::<(
+            &stubby_game::rack::RackState,
+            &stubby_game::rack::RackKnobs,
+            &bevy_stubby_rack::samples::RackSamples,
+        )>()
+        .single(world)
+        .unwrap();
+    bevy_stubby_rack::record::RackRecord::of(state, knobs, Some(samples))
+}
+
+/// Anyone may configure any machine's rack (3.5): a client's edit, made on its own screen,
+/// is the host's to charge (the snail shell, a patch cable) and apply, everyone (a late
+/// joiner too) gets it, and taking a module out is refused and put back.
+#[test]
+fn a_rack_configured_by_a_client_is_everyones() {
+    let mut session = Session::new(false);
+    let a = session.join(None);
+    let body = joined(&mut session, a);
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host) + Vec3::X * 2.;
+    let fire = spawn_campfire(&mut session.clients[a], at);
+    spawn_campfire(&mut session.server, at);
+    let pack = pack_on_host(&mut session, a);
+    session
+        .server
+        .world_mut()
+        .get_mut::<Pack>(pack)
+        .unwrap()
+        .items
+        .grant(&[stubby_recipes::Stack {
+            item: "snail_shell".into(),
+            quantity: 1,
+        }])
+        .unwrap();
+    session.until(3.0, "A's snail shell", |s| {
+        held(&s.clients[a], "snail_shell") == 1
+    });
+    let cables = held(&session.clients[a], "patch_cable");
+
+    // A opens the rack, mounts the shell as a sequencer, patches the clock to it, sets a
+    // gate, and closes it.
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .open = Some(stubby_core::Screen::MachineConfiguration(fire));
+    session.frames(2);
+    {
+        let world = session.clients[a].world_mut();
+        let mut player = world.remove_resource::<PlayerInventory>().unwrap();
+        let mut entity = world.entity_mut(fire);
+        let mut state = entity.get_mut::<stubby_game::rack::RackState>().unwrap();
+        assert!(state.mount(&mut player, "seq", "snail_shell", "snail_sequencer"));
+        assert!(player.items.take("patch_cable", 1).is_ok());
+        let jack = |place: &str, port: &str| stubby_game::machine_config::JackRef {
+            place: place.into(),
+            port: port.into(),
+        };
+        state
+            .own
+            .push((jack("clock", "gate"), jack("seq", "clock")));
+        entity
+            .get_mut::<stubby_game::rack::RackKnobs>()
+            .unwrap()
+            .0
+            .insert(("seq".into(), "gate_2".into()), 1.);
+        world.insert_resource(player);
+    }
+    session.frames(2);
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .close();
+    let configured = rack(&mut session.clients[a]);
+    session.until(3.0, "the rack at the host", |s| {
+        rack(&mut s.server) == configured
+    });
+    session.until(3.0, "the host's charge at A", |s| {
+        held(&s.clients[a], "snail_shell") == 0 && held(&s.clients[a], "patch_cable") == cables - 1
+    });
+
+    // A late joiner hears the same rack.
+    let late = session.join(None);
+    joined(&mut session, late);
+    spawn_campfire(&mut session.clients[late], at);
+    session.until(3.0, "the rack at the late joiner", |s| {
+        rack(&mut s.clients[late]) == configured
+    });
+    assert_eq!(
+        session.clients[late]
+            .world_mut()
+            .query::<&Racks>()
+            .iter(session.clients[late].world())
+            .count(),
+        1
+    );
+
+    // Taking the module out is refused, and the rack is put back.
+    session.clients[a]
+        .world_mut()
+        .resource_mut::<ScreenMode>()
+        .open = Some(stubby_core::Screen::MachineConfiguration(fire));
+    session.frames(2);
+    session.clients[a]
+        .world_mut()
+        .get_mut::<stubby_game::rack::RackState>(fire)
+        .unwrap()
+        .mounted
+        .clear();
+    session.until(3.0, "the refusal at A", |s| {
+        s.clients[a]
+            .world()
+            .resource::<PlayerInventory>()
+            .feedback
+            .contains("cannot be taken out")
+    });
+    session.until(3.0, "the rack put back at A", |s| {
+        rack(&mut s.clients[a]) == configured
+    });
+    assert_eq!(rack(&mut session.server), configured);
 }

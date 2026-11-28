@@ -196,7 +196,12 @@ fn serve_crafts(
     remotes: Query<&RemoteId>,
     mut packs: Query<&mut Pack>,
     bodies: Query<(&ControlledBy, &avian3d::prelude::Position), With<NetPlayer>>,
-    benches: Query<(&stubby_core::PlacedAsset, &GlobalTransform)>,
+    benches: Query<(
+        &stubby_core::PlacedAsset,
+        &GlobalTransform,
+        Has<stubby_core::CraftBench>,
+        Option<&stubby_core::AssetClock>,
+    )>,
     catalog: Option<Res<RecipeCatalog>>,
 ) {
     let Some(catalog) = catalog else {
@@ -204,27 +209,31 @@ fn serve_crafts(
     };
     for (link, mut receiver, mut crafted, mut says) in &mut links {
         for Craft { recipe, bpm, bench } in receiver.receive() {
-            // Crafting is at a bench, in reach.
+            // Crafting is at a bench, in reach, and burning here too (its rack is shared,
+            // 3.5): it is made at the tempo the bench hears here, not as reported.
+            let _ = bpm;
             let at = bodies
                 .iter()
                 .find(|(owner, _)| owner.owner == link)
                 .map(|(_, position)| position.0);
-            let near = bench.as_ref().zip(at).is_some_and(|(bench, at)| {
-                benches.iter().any(|(placed, place)| {
+            let bench = bench.as_ref().zip(at).and_then(|(bench, at)| {
+                benches.iter().find(|(placed, place, ..)| {
                     placed.instance == *bench && place.translation().distance(at) <= BENCH_REACH
                 })
             });
-            if !near {
+            let Some((_, _, burning, clock)) = bench else {
                 says.send::<HostChannel>(HostSays::Line("Too far from the bench.".into()));
                 continue;
+            };
+            if !burning {
+                says.send::<HostChannel>(HostSays::Line("The fire is out.".into()));
+                continue;
             }
+            let bpm = clock.map(|clock| clock.bpm);
             let Some(mut pack) = pack_of(link, &remotes, &mut packs) else {
                 continue;
             };
             let Pack { items, book, .. } = &mut *pack;
-            // The tempo is still the client's: the host checks it against its own bench
-            // once rack configurations (which light the fire and set its clock) are
-            // shared (3.5).
             match crate::recipes_plugin::craft(&catalog.0, &recipe, bpm, items, book) {
                 Ok((done, line)) => {
                     crafted.send::<HostChannel>(Crafted {

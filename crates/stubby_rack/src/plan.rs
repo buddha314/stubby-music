@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashMap};
 use stubby_audio::{Command, ModuleId, ModuleKind, PortRef};
 
 /// A panel jack on a rack: the place holding the module, and the module's jack.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, serde::Serialize)]
 pub struct Jack {
     pub place: String,
     pub port: String,

@@ -15,6 +15,7 @@
 pub mod building;
 pub mod collecting;
 pub mod inventory;
+pub mod racks;
 pub mod streams;
 use bevy::{ecs::relationship::Relationship, prelude::*};
 use bevy_ahoy::{CharacterControllerState, CharacterLook, input::AccumulatedInput, prelude::*};
@@ -59,6 +60,7 @@ impl Plugin for MultiplayerPlugin {
                 inventory::InventoriesPlugin,
                 building::BuildingPlugin,
                 streams::StreamsPlugin,
+                racks::RacksPlugin,
             ))
             .add_systems(
                 Update,
