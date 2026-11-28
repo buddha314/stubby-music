@@ -1,0 +1,5159 @@
+{
+ "city_agave": {
+  "model": "structures/city/city_agave/city_agave.glb#Scene0",
+  "size_metres": {
+   "width": 1.57,
+   "depth": 1.614,
+   "height": 0.742
+  },
+  "bounds_blender": {
+   "min": [
+    -0.8,
+    -0.801,
+    -0.048
+   ],
+   "max": [
+    0.77,
+    0.813,
+    0.694
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 192,
+   "far": 24
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_balcony": {
+  "model": "structures/city/city_balcony/city_balcony.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 1.66,
+   "height": 2.392
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -1.55,
+    -1.363
+   ],
+   "max": [
+    4.0,
+    0.11,
+    1.029
+   ]
+  },
+  "connectors": {
+   "facade": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.0,
+     -1.3,
+     0.92
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_1": {
+    "position": [
+     3.0,
+     -1.3,
+     0.92
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Vine_front": {
+    "position": [
+     2.0,
+     -1.5,
+     0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 224
+  },
+  "catalog": "City/Terrace",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_bench": {
+  "model": "structures/city/city_bench/city_bench.glb#Scene0",
+  "size_metres": {
+   "width": 2.0,
+   "depth": 0.485,
+   "height": 0.46
+  },
+  "bounds_blender": {
+   "min": [
+    -1.0,
+    -0.24,
+    0.0
+   ],
+   "max": [
+    1.0,
+    0.245,
+    0.46
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Seat": {
+    "position": [
+     0.0,
+     0.0,
+     0.46
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   }
+  },
+  "triangles": {
+   "near": 168
+  },
+  "catalog": "City/Street",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_bollard": {
+  "model": "structures/city/city_bollard/city_bollard.glb#Scene0",
+  "size_metres": {
+   "width": 0.32,
+   "depth": 0.32,
+   "height": 1.09
+  },
+  "bounds_blender": {
+   "min": [
+    -0.16,
+    -0.16,
+    0.0
+   ],
+   "max": [
+    0.16,
+    0.16,
+    1.09
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 384
+  },
+  "catalog": "City/Street",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_bridge_abutment": {
+  "model": "structures/city/city_bridge_abutment/city_bridge_abutment.glb#Scene0",
+  "size_metres": {
+   "width": 5.5,
+   "depth": 1.85,
+   "height": 0.76
+  },
+  "bounds_blender": {
+   "min": [
+    -0.75,
+    -2.5,
+    0.0
+   ],
+   "max": [
+    4.75,
+    -0.65,
+    0.76
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_L": {
+    "position": [
+     -0.35,
+     -2.0,
+     0.76
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_R": {
+    "position": [
+     4.35,
+     -2.0,
+     0.76
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   }
+  },
+  "triangles": {
+   "near": 60
+  },
+  "catalog": "City/Footbridge",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_bank_4": {
+  "model": "structures/city/city_canal_bank_4/city_canal_bank_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.1,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    4.0,
+    0.1,
+    0.12
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Reeds_0": {
+    "position": [
+     2.0,
+     0.5,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "reeds"
+   },
+   "Plant_0": {
+    "position": [
+     2.0,
+     -2.2,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   }
+  },
+  "triangles": {
+   "near": 72
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_bank_8": {
+  "model": "structures/city/city_canal_bank_8/city_canal_bank_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 4.1,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    8.0,
+    0.1,
+    0.12
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     8.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Reeds_0": {
+    "position": [
+     2.0,
+     0.5,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "reeds"
+   },
+   "Plant_0": {
+    "position": [
+     2.0,
+     -2.2,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   },
+   "Reeds_1": {
+    "position": [
+     6.0,
+     0.5,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "reeds"
+   },
+   "Plant_1": {
+    "position": [
+     6.0,
+     -2.2,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   }
+  },
+  "triangles": {
+   "near": 72
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_corner_inner": {
+  "model": "structures/city/city_canal_corner_inner/city_canal_corner_inner.glb#Scene0",
+  "size_metres": {
+   "width": 4.1,
+   "depth": 4.1,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    4.1,
+    0.1,
+    0.12
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.5,
+     -1.5,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   }
+  },
+  "triangles": {
+   "near": 36
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_corner_outer": {
+  "model": "structures/city/city_canal_corner_outer/city_canal_corner_outer.glb#Scene0",
+  "size_metres": {
+   "width": 4.1,
+   "depth": 4.1,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    4.1,
+    0.1,
+    0.12
+   ]
+  },
+  "connectors": {
+   "bank_x": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "bank_y": {
+    "position": [
+     4.0,
+     -4.0,
+     0
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.6,
+     -2.0,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   }
+  },
+  "triangles": {
+   "near": 196
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_end": {
+  "model": "structures/city/city_canal_end/city_canal_end.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 4.47,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    8.0,
+    0.47,
+    0.12
+   ]
+  },
+  "connectors": {
+   "bank_start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "bank_end": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "stream": {
+    "position": [
+     4,
+     -4.0,
+     0
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Inflow": {
+    "position": [
+     4.0,
+     -4.0,
+     -0.2
+    ],
+    "rotation_z": 0,
+    "accepts": "stream"
+   },
+   "Audio_spill": {
+    "position": [
+     4.0,
+     0.3,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 546
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_steps": {
+  "model": "structures/city/city_canal_steps/city_canal_steps.glb#Scene0",
+  "size_metres": {
+   "width": 4.04,
+   "depth": 4.1,
+   "height": 2.32
+  },
+  "bounds_blender": {
+   "min": [
+    -0.02,
+    -4.0,
+    -2.2
+   ],
+   "max": [
+    4.02,
+    0.1,
+    0.12
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Reeds_0": {
+    "position": [
+     0.8,
+     0.6,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "reeds"
+   },
+   "Seat": {
+    "position": [
+     2.0,
+     -0.6,
+     -0.75
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   }
+  },
+  "triangles": {
+   "near": 100
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_water_4": {
+  "model": "structures/city/city_canal_water_4/city_canal_water_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 1.3
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -2.2
+   ],
+   "max": [
+    4.0,
+    4.0,
+    -0.9
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 14
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_canal_water_8": {
+  "model": "structures/city/city_canal_water_8/city_canal_water_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 8.0,
+   "height": 1.3
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -2.2
+   ],
+   "max": [
+    8.0,
+    8.0,
+    -0.9
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 14
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_column": {
+  "model": "structures/city/city_column/city_column.glb#Scene0",
+  "size_metres": {
+   "width": 0.72,
+   "depth": 0.72,
+   "height": 3.7
+  },
+  "bounds_blender": {
+   "min": [
+    -0.36,
+    -0.36,
+    0.0
+   ],
+   "max": [
+    0.36,
+    0.36,
+    3.7
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 220
+  },
+  "catalog": "City/Outdoor-Hallway",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_curb_4": {
+  "model": "structures/city/city_curb_4/city_curb_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.32,
+   "height": 0.47
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.32,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    0.0,
+    0.17
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 24
+  },
+  "catalog": "City/Foundation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_curb_corner": {
+  "model": "structures/city/city_curb_corner/city_curb_corner.glb#Scene0",
+  "size_metres": {
+   "width": 0.321,
+   "depth": 0.321,
+   "height": 0.47
+  },
+  "bounds_blender": {
+   "min": [
+    -0.321,
+    -0.321,
+    -0.3
+   ],
+   "max": [
+    0.0,
+    0.0,
+    0.17
+   ]
+  },
+  "connectors": {
+   "x": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "y": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 56
+  },
+  "catalog": "City/Foundation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_arcade": {
+  "model": "structures/city/city_facade_arcade/city_facade_arcade.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.48,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.08,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     -0.1,
+     3.7
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 236
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_blank": {
+  "model": "structures/city/city_facade_blank/city_facade_blank.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.856,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.456,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     -0.1,
+     3.7
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 400
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_corner": {
+  "model": "structures/city/city_facade_corner/city_facade_corner.glb#Scene0",
+  "size_metres": {
+   "width": 1.16,
+   "depth": 1.16,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    -0.38,
+    -0.38,
+    0.0
+   ],
+   "max": [
+    0.78,
+    0.78,
+    4.0
+   ]
+  },
+  "connectors": {
+   "run_x": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "run_y": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 108
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_door": {
+  "model": "structures/city/city_facade_door/city_facade_door.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.856,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.456,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Door": {
+    "position": [
+     2.0,
+     -0.1,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "door"
+   }
+  },
+  "triangles": {
+   "near": 444
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_end": {
+  "model": "structures/city/city_facade_end/city_facade_end.glb#Scene0",
+  "size_metres": {
+   "width": 0.9,
+   "depth": 0.96,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    -0.45,
+    -0.28,
+    0.0
+   ],
+   "max": [
+    0.45,
+    0.68,
+    4.0
+   ]
+  },
+  "connectors": {
+   "run": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 132
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_green_b": {
+  "model": "structures/city/city_facade_green_b/city_facade_green_b.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.78,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.38,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.0,
+     -0.18,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_1": {
+    "position": [
+     1.7,
+     -0.18,
+     1.52
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_2": {
+    "position": [
+     2.4,
+     -0.18,
+     2.32
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_3": {
+    "position": [
+     1.0,
+     -0.18,
+     3.12
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   }
+  },
+  "triangles": {
+   "near": 156
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_window": {
+  "model": "structures/city/city_facade_window/city_facade_window.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.9,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.5,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_sill": {
+    "position": [
+     2.0,
+     -0.32,
+     0.8
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   }
+  },
+  "triangles": {
+   "near": 416
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_facade_window_b": {
+  "model": "structures/city/city_facade_window_b/city_facade_window_b.glb#Scene0",
+  "size_metres": {
+   "width": 4.02,
+   "depth": 1.0,
+   "height": 4.016
+  },
+  "bounds_blender": {
+   "min": [
+    -0.02,
+    -0.6,
+    -0.007
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.009
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.2,
+     -0.3,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_1": {
+    "position": [
+     2.9,
+     -0.3,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   }
+  },
+  "triangles": {
+   "near": 180
+  },
+  "catalog": "City/Facade",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_footbridge_8": {
+  "model": "structures/city/city_footbridge_8/city_footbridge_8.glb#Scene0",
+  "size_metres": {
+   "width": 4.06,
+   "depth": 9.315,
+   "height": 2.409
+  },
+  "bounds_blender": {
+   "min": [
+    -0.03,
+    -0.658,
+    -0.6
+   ],
+   "max": [
+    4.03,
+    8.658,
+    1.809
+   ]
+  },
+  "connectors": {
+   "near_bank": {
+    "position": [
+     0,
+     -0.65,
+     0.12
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   },
+   "far_bank": {
+    "position": [
+     0,
+     8.65,
+     0.12
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Audio_crossing": {
+    "position": [
+     2.0,
+     4.0,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 2224
+  },
+  "catalog": "City/Footbridge",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_footbridge_planted_8": {
+  "model": "structures/city/city_footbridge_planted_8/city_footbridge_planted_8.glb#Scene0",
+  "size_metres": {
+   "width": 4.7,
+   "depth": 9.315,
+   "height": 2.409
+  },
+  "bounds_blender": {
+   "min": [
+    -0.35,
+    -0.658,
+    -0.6
+   ],
+   "max": [
+    4.35,
+    8.658,
+    1.809
+   ]
+  },
+  "connectors": {
+   "near_bank": {
+    "position": [
+     0,
+     -0.65,
+     0.12
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   },
+   "far_bank": {
+    "position": [
+     0,
+     8.65,
+     0.12
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_L0": {
+    "position": [
+     -0.18,
+     1.094,
+     1.283
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_L1": {
+    "position": [
+     -0.18,
+     3.419,
+     1.538
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_L2": {
+    "position": [
+     -0.18,
+     5.744,
+     1.449
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Vine_L": {
+    "position": [
+     -0.35,
+     4.0,
+     1.32
+    ],
+    "rotation_z": 1.5708,
+    "accepts": "vine"
+   },
+   "Plant_R0": {
+    "position": [
+     4.17,
+     1.094,
+     1.283
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_R1": {
+    "position": [
+     4.17,
+     3.419,
+     1.538
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_R2": {
+    "position": [
+     4.17,
+     5.744,
+     1.449
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Vine_R": {
+    "position": [
+     4.35,
+     4.0,
+     1.32
+    ],
+    "rotation_z": -1.5708,
+    "accepts": "vine"
+   },
+   "Audio_crossing": {
+    "position": [
+     2.0,
+     4.0,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 2624
+  },
+  "catalog": "City/Footbridge",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_fountain": {
+  "model": "structures/city/city_fountain/city_fountain.glb#Scene0",
+  "size_metres": {
+   "width": 6.16,
+   "depth": 6.16,
+   "height": 0.85
+  },
+  "bounds_blender": {
+   "min": [
+    -3.08,
+    -3.08,
+    -0.1
+   ],
+   "max": [
+    3.08,
+    3.08,
+    0.75
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Audio_water": {
+    "position": [
+     0,
+     0,
+     0.5
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   },
+   "Seat": {
+    "position": [
+     0.0,
+     -3.0,
+     0.56
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   }
+  },
+  "triangles": {
+   "near": 1036
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_gallery_display_wall": {
+  "model": "structures/city/city_gallery_display_wall/city_gallery_display_wall.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.945,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.545,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.4,
+    4.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Display_0": {
+    "position": [
+     2.0,
+     0.26,
+     1.85
+    ],
+    "rotation_z": 0,
+    "accepts": "display"
+   }
+  },
+  "triangles": {
+   "near": 448
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_gallery_entrance": {
+  "model": "structures/city/city_gallery_entrance/city_gallery_entrance.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 3.2,
+   "height": 11.6
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -1.2,
+    0.0
+   ],
+   "max": [
+    8.0,
+    2.0,
+    11.6
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Door": {
+    "position": [
+     4.0,
+     0.6,
+     0.6
+    ],
+    "rotation_z": 0,
+    "accepts": "door"
+   },
+   "Name_panel": {
+    "position": [
+     4.0,
+     0.24,
+     7.25
+    ],
+    "rotation_z": 0,
+    "accepts": "sign"
+   },
+   "Plant_L": {
+    "position": [
+     1.0,
+     -0.3,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   },
+   "Plant_R": {
+    "position": [
+     7.0,
+     -0.3,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   }
+  },
+  "triangles": {
+   "near": 548
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_gallery_plinth": {
+  "model": "structures/city/city_gallery_plinth/city_gallery_plinth.glb#Scene0",
+  "size_metres": {
+   "width": 1.2,
+   "depth": 1.22,
+   "height": 0.9
+  },
+  "bounds_blender": {
+   "min": [
+    -0.6,
+    -0.62,
+    0.0
+   ],
+   "max": [
+    0.6,
+    0.6,
+    0.9
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Exhibit": {
+    "position": [
+     0,
+     0,
+     0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "exhibit"
+   }
+  },
+  "triangles": {
+   "near": 144
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_garden_deck": {
+  "model": "structures/city/city_garden_deck/city_garden_deck.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 1.02
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.72
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     0.7,
+     0.35,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_1": {
+    "position": [
+     2.0,
+     0.35,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_2": {
+    "position": [
+     3.3,
+     0.35,
+     0.72
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Vine_front": {
+    "position": [
+     2.0,
+     0.0,
+     0.7
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   },
+   "Seat": {
+    "position": [
+     2.0,
+     2.5,
+     0.08
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   }
+  },
+  "triangles": {
+   "near": 156
+  },
+  "catalog": "City/Terrace",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_glow_bell": {
+  "model": "structures/city/city_glow_bell/city_glow_bell.glb#Scene0",
+  "size_metres": {
+   "width": 1.289,
+   "depth": 1.261,
+   "height": 1.862
+  },
+  "bounds_blender": {
+   "min": [
+    -0.583,
+    -0.712,
+    -0.003
+   ],
+   "max": [
+    0.705,
+    0.549,
+    1.859
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 806
+  },
+  "catalog": "City/Luminous-Flora",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_glow_motes": {
+  "model": "structures/city/city_glow_motes/city_glow_motes.glb#Scene0",
+  "size_metres": {
+   "width": 2.684,
+   "depth": 2.78,
+   "height": 1.882
+  },
+  "bounds_blender": {
+   "min": [
+    -1.217,
+    -1.319,
+    0.518
+   ],
+   "max": [
+    1.468,
+    1.461,
+    2.399
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Mote_0": {
+    "position": [
+     0.653,
+     1.267,
+     0.628
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_1": {
+    "position": [
+     1.36,
+     -1.061,
+     0.862
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_2": {
+    "position": [
+     -0.061,
+     -1.212,
+     0.883
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_3": {
+    "position": [
+     0.221,
+     0.765,
+     2.067
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_4": {
+    "position": [
+     -1.11,
+     0.984,
+     1.097
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_5": {
+    "position": [
+     0.469,
+     0.772,
+     1.112
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_6": {
+    "position": [
+     0.419,
+     1.189,
+     2.004
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_7": {
+    "position": [
+     -0.524,
+     1.353,
+     2.265
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   },
+   "Mote_8": {
+    "position": [
+     0.616,
+     -0.237,
+     2.289
+    ],
+    "rotation_z": 0,
+    "accepts": "mote"
+   }
+  },
+  "triangles": {
+   "near": 1872
+  },
+  "catalog": "City/Luminous-Flora",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_glow_tendril": {
+  "model": "structures/city/city_glow_tendril/city_glow_tendril.glb#Scene0",
+  "size_metres": {
+   "width": 1.187,
+   "depth": 0.236,
+   "height": 1.619
+  },
+  "bounds_blender": {
+   "min": [
+    -0.616,
+    -0.118,
+    -1.613
+   ],
+   "max": [
+    0.571,
+    0.118,
+    0.006
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 2168
+  },
+  "catalog": "City/Luminous-Flora",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_glow_vein_leaf": {
+  "model": "structures/city/city_glow_vein_leaf/city_glow_vein_leaf.glb#Scene0",
+  "size_metres": {
+   "width": 1.384,
+   "depth": 0.9,
+   "height": 1.006
+  },
+  "bounds_blender": {
+   "min": [
+    -0.034,
+    -0.45,
+    -0.003
+   ],
+   "max": [
+    1.35,
+    0.45,
+    1.003
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 458
+  },
+  "catalog": "City/Luminous-Flora",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_grass": {
+  "model": "structures/city/city_grass/city_grass.glb#Scene0",
+  "size_metres": {
+   "width": 0.896,
+   "depth": 0.97,
+   "height": 0.602
+  },
+  "bounds_blender": {
+   "min": [
+    -0.472,
+    -0.488,
+    0.0
+   ],
+   "max": [
+    0.425,
+    0.482,
+    0.602
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 288,
+   "far": 20
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_greenery_established": {
+  "model": "structures/city/city_greenery_established/city_greenery_established.glb#Scene0",
+  "size_metres": {
+   "width": 3.833,
+   "depth": 0.091,
+   "height": 2.581
+  },
+  "bounds_blender": {
+   "min": [
+    -0.02,
+    -0.11,
+    -0.001
+   ],
+   "max": [
+    3.813,
+    -0.019,
+    2.58
+   ]
+  },
+  "connectors": {
+   "facade": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 252
+  },
+  "catalog": "City/Growth",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_greenery_lush": {
+  "model": "structures/city/city_greenery_lush/city_greenery_lush.glb#Scene0",
+  "size_metres": {
+   "width": 4.156,
+   "depth": 0.143,
+   "height": 3.767
+  },
+  "bounds_blender": {
+   "min": [
+    -0.056,
+    -0.163,
+    -0.001
+   ],
+   "max": [
+    4.1,
+    -0.019,
+    3.766
+   ]
+  },
+  "connectors": {
+   "facade": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 668
+  },
+  "catalog": "City/Growth",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_greenery_sprout": {
+  "model": "structures/city/city_greenery_sprout/city_greenery_sprout.glb#Scene0",
+  "size_metres": {
+   "width": 3.194,
+   "depth": 0.091,
+   "height": 1.611
+  },
+  "bounds_blender": {
+   "min": [
+    0.494,
+    -0.11,
+    -0.001
+   ],
+   "max": [
+    3.687,
+    -0.019,
+    1.609
+   ]
+  },
+  "connectors": {
+   "facade": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 102
+  },
+  "catalog": "City/Growth",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_guardrail_4": {
+  "model": "structures/city/city_guardrail_4/city_guardrail_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.087,
+   "height": 1.125
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.008,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.095,
+    1.125
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 96
+  },
+  "catalog": "City/Vertical-Circulation",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_hall_rib": {
+  "model": "structures/city/city_hall_rib/city_hall_rib.glb#Scene0",
+  "size_metres": {
+   "width": 10.2,
+   "depth": 1.2,
+   "height": 12.215
+  },
+  "bounds_blender": {
+   "min": [
+    -5.1,
+    -0.6,
+    -0.017
+   ],
+   "max": [
+    5.1,
+    0.6,
+    12.198
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 296
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_hall_seating": {
+  "model": "structures/city/city_hall_seating/city_hall_seating.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 3.6,
+   "height": 1.86
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": [
+    8.0,
+    3.6,
+    1.86
+   ]
+  },
+  "connectors": {
+   "left": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "right": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Seat_0_0": {
+    "position": [
+     1.0,
+     0.3,
+     0.51
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_0_1": {
+    "position": [
+     3.0,
+     0.3,
+     0.51
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_0_2": {
+    "position": [
+     5.0,
+     0.3,
+     0.51
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_0_3": {
+    "position": [
+     7.0,
+     0.3,
+     0.51
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_1_0": {
+    "position": [
+     1.0,
+     1.2,
+     0.96
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_1_1": {
+    "position": [
+     3.0,
+     1.2,
+     0.96
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_1_2": {
+    "position": [
+     5.0,
+     1.2,
+     0.96
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_1_3": {
+    "position": [
+     7.0,
+     1.2,
+     0.96
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_2_0": {
+    "position": [
+     1.0,
+     2.1,
+     1.41
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_2_1": {
+    "position": [
+     3.0,
+     2.1,
+     1.41
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_2_2": {
+    "position": [
+     5.0,
+     2.1,
+     1.41
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_2_3": {
+    "position": [
+     7.0,
+     2.1,
+     1.41
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_3_0": {
+    "position": [
+     1.0,
+     3.0,
+     1.86
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_3_1": {
+    "position": [
+     3.0,
+     3.0,
+     1.86
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_3_2": {
+    "position": [
+     5.0,
+     3.0,
+     1.86
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Seat_3_3": {
+    "position": [
+     7.0,
+     3.0,
+     1.86
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   }
+  },
+  "triangles": {
+   "near": 84
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_hall_shell": {
+  "model": "structures/city/city_hall_shell/city_hall_shell.glb#Scene0",
+  "size_metres": {
+   "width": 22.0,
+   "depth": 10.492,
+   "height": 14.342
+  },
+  "bounds_blender": {
+   "min": [
+    -11.0,
+    -0.169,
+    -0.014
+   ],
+   "max": [
+    11.0,
+    10.323,
+    14.328
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Audio_hall": {
+    "position": [
+     0.0,
+     4.0,
+     3.0
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 4552
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_hall_stage": {
+  "model": "structures/city/city_hall_stage/city_hall_stage.glb#Scene0",
+  "size_metres": {
+   "width": 18.4,
+   "depth": 8.03,
+   "height": 1.172
+  },
+  "bounds_blender": {
+   "min": [
+    -9.2,
+    -0.03,
+    0.0
+   ],
+   "max": [
+    9.2,
+    8.0,
+    1.172
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Stage_centre": {
+    "position": [
+     0.0,
+     3.5,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "performer"
+   },
+   "Recording_source": {
+    "position": [
+     0.0,
+     5.0,
+     2.2
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   },
+   "Instrument_0": {
+    "position": [
+     -5.0,
+     4.5,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "instrument"
+   },
+   "Instrument_1": {
+    "position": [
+     -2.0,
+     4.5,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "instrument"
+   },
+   "Instrument_2": {
+    "position": [
+     2.0,
+     4.5,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "instrument"
+   },
+   "Instrument_3": {
+    "position": [
+     5.0,
+     4.5,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "instrument"
+   }
+  },
+  "triangles": {
+   "near": 3162
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_instrument_pedestal": {
+  "model": "structures/city/city_instrument_pedestal/city_instrument_pedestal.glb#Scene0",
+  "size_metres": {
+   "width": 0.84,
+   "depth": 0.768,
+   "height": 1.2
+  },
+  "bounds_blender": {
+   "min": [
+    -0.42,
+    -0.468,
+    0.0
+   ],
+   "max": [
+    0.42,
+    0.3,
+    1.2
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Interact": {
+    "position": [
+     0.0,
+     -0.6,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "interact"
+   },
+   "Audio_source": {
+    "position": [
+     0.0,
+     0.0,
+     1.2
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   },
+   "Rack": {
+    "position": [
+     0.0,
+     -0.06,
+     1.1
+    ],
+    "rotation_z": 0,
+    "accepts": "rack"
+   }
+  },
+  "triangles": {
+   "near": 282
+  },
+  "catalog": "City/Street",
+  "priority": "P2",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_lift": {
+  "model": "structures/city/city_lift/city_lift.glb#Scene0",
+  "size_metres": {
+   "width": 2.71,
+   "depth": 2.658,
+   "height": 4.0
+  },
+  "bounds_blender": {
+   "min": [
+    -1.26,
+    -1.398,
+    0.0
+   ],
+   "max": [
+    1.45,
+    1.26,
+    4.0
+   ]
+  },
+  "connectors": {
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Interact": {
+    "position": [
+     0.0,
+     -1.4,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "interact"
+   },
+   "Car": {
+    "position": [
+     0.0,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "lift_car"
+   }
+  },
+  "triangles": {
+   "near": 352
+  },
+  "catalog": "City/Vertical-Circulation",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_monument": {
+  "model": "structures/city/city_monument/city_monument.glb#Scene0",
+  "size_metres": {
+   "width": 12.026,
+   "depth": 12.212,
+   "height": 28.0
+  },
+  "bounds_blender": {
+   "min": [
+    -5.826,
+    -6.106,
+    0.0
+   ],
+   "max": [
+    6.2,
+    6.106,
+    28.0
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 1100,
+   "far": 60
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_monument_base": {
+  "model": "structures/city/city_monument_base/city_monument_base.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 8.02,
+   "height": 0.9
+  },
+  "bounds_blender": {
+   "min": [
+    -4.0,
+    -4.02,
+    0.0
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.9
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Top": {
+    "position": [
+     0,
+     0,
+     0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "monument"
+   }
+  },
+  "triangles": {
+   "near": 192
+  },
+  "catalog": "City/Civic",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_mud_relic": {
+  "model": "structures/city/city_mud_relic/city_mud_relic.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 4.0,
+   "height": 0.6
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.5
+   ],
+   "max": [
+    8.0,
+    4.0,
+    0.1
+   ]
+  },
+  "connectors": {
+   "upstream": {
+    "position": [
+     4,
+     0,
+     0
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   },
+   "downstream": {
+    "position": [
+     4,
+     4.0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Stream_in": {
+    "position": [
+     4.0,
+     0.0,
+     -0.3
+    ],
+    "rotation_z": 0,
+    "accepts": "stream"
+   },
+   "Stream_out": {
+    "position": [
+     4.0,
+     4.0,
+     -0.3
+    ],
+    "rotation_z": 0,
+    "accepts": "stream"
+   },
+   "Plant_0": {
+    "position": [
+     1.5,
+     2.0,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   },
+   "Plant_1": {
+    "position": [
+     6.5,
+     2.0,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   }
+  },
+  "triangles": {
+   "near": 296
+  },
+  "catalog": "City/Canal",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_parapet_4": {
+  "model": "structures/city/city_parapet_4/city_parapet_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.966,
+   "height": 1.18
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.506,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.46,
+    1.18
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     -0.08,
+     1.18
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 44
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_parapet_corner": {
+  "model": "structures/city/city_parapet_corner/city_parapet_corner.glb#Scene0",
+  "size_metres": {
+   "width": 1.0,
+   "depth": 1.0,
+   "height": 1.68
+  },
+  "bounds_blender": {
+   "min": [
+    -0.3,
+    -0.3,
+    0.0
+   ],
+   "max": [
+    0.7,
+    0.7,
+    1.68
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 108
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_parapet_step_4": {
+  "model": "structures/city/city_parapet_step_4/city_parapet_step_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.52,
+   "height": 1.98
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.06,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.46,
+    1.98
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 356
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_paving_4": {
+  "model": "structures/city/city_paving_4/city_paving_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 0.3
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.0
+   ]
+  },
+  "connectors": {
+   "east": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "north": {
+    "position": [
+     0,
+     4.0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 12
+  },
+  "catalog": "City/Foundation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_paving_8": {
+  "model": "structures/city/city_paving_8/city_paving_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 8.0,
+   "height": 0.31
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    8.0,
+    8.0,
+    0.01
+   ]
+  },
+  "connectors": {
+   "east": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "north": {
+    "position": [
+     0,
+     8,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 24
+  },
+  "catalog": "City/Foundation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_pergola": {
+  "model": "structures/city/city_pergola/city_pergola.glb#Scene0",
+  "size_metres": {
+   "width": 3.863,
+   "depth": 3.8,
+   "height": 3.239
+  },
+  "bounds_blender": {
+   "min": [
+    0.069,
+    0.1,
+    -0.002
+   ],
+   "max": [
+    3.932,
+    3.9,
+    3.237
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     2.0,
+     3.1
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   },
+   "Plant_0": {
+    "position": [
+     0.6,
+     0.3,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Plant_1": {
+    "position": [
+     4.0,
+     3.7,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   }
+  },
+  "triangles": {
+   "near": 348
+  },
+  "catalog": "City/Terrace",
+  "priority": "P1",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_pipe_4": {
+  "model": "structures/city/city_pipe_4/city_pipe_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.32,
+   "height": 0.446
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.16,
+    0.0
+   ],
+   "max": [
+    4.0,
+    0.16,
+    0.446
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0.3
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0.3
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 196
+  },
+  "catalog": "City/Infrastructure",
+  "priority": "P2",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_planter_4": {
+  "model": "structures/city/city_planter_4/city_planter_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 1.02,
+   "height": 0.52
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.02,
+    0.0
+   ],
+   "max": [
+    4.0,
+    1.0,
+    0.52
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     0.5,
+     0.5,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_1": {
+    "position": [
+     1.5,
+     0.5,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   },
+   "Plant_2": {
+    "position": [
+     2.5,
+     0.5,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_3": {
+    "position": [
+     3.5,
+     0.5,
+     0.52
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   }
+  },
+  "triangles": {
+   "near": 132
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_plaza_steps_4": {
+  "model": "structures/city/city_plaza_steps_4/city_plaza_steps_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 2.0,
+   "height": 1.305
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    2.0,
+    1.005
+   ]
+  },
+  "connectors": {
+   "bottom": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     0,
+     -1,
+     0
+    ]
+   },
+   "top": {
+    "position": [
+     0,
+     2,
+     1
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 108
+  },
+  "catalog": "City/Foundation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_pump_house": {
+  "model": "structures/city/city_pump_house/city_pump_house.glb#Scene0",
+  "size_metres": {
+   "width": 4.242,
+   "depth": 3.4,
+   "height": 3.6
+  },
+  "bounds_blender": {
+   "min": [
+    -2.542,
+    -1.7,
+    -0.3
+   ],
+   "max": [
+    1.7,
+    1.7,
+    3.3
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Interact": {
+    "position": [
+     0.0,
+     -1.9,
+     1.0
+    ],
+    "rotation_z": 0,
+    "accepts": "interact"
+   },
+   "Audio_source": {
+    "position": [
+     0.0,
+     0.0,
+     1.5
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   },
+   "Plant_roof": {
+    "position": [
+     0.0,
+     0.0,
+     3.3
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   }
+  },
+  "triangles": {
+   "near": 504
+  },
+  "catalog": "City/Infrastructure",
+  "priority": "P2",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_canopy_8": {
+  "model": "structures/city/city_rail_canopy_8/city_rail_canopy_8.glb#Scene0",
+  "size_metres": {
+   "width": 7.9,
+   "depth": 2.878,
+   "height": 3.746
+  },
+  "bounds_blender": {
+   "min": [
+    0.1,
+    1.8,
+    0.342
+   ],
+   "max": [
+    8.0,
+    4.678,
+    4.089
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 188
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_car": {
+  "model": "structures/city/city_rail_car/city_rail_car.glb#Scene0",
+  "size_metres": {
+   "width": 12.192,
+   "depth": 2.7,
+   "height": 3.29
+  },
+  "bounds_blender": {
+   "min": [
+    -6.096,
+    -1.35,
+    0.05
+   ],
+   "max": [
+    6.096,
+    1.35,
+    3.34
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Door_R": {
+    "position": [
+     0.0,
+     -1.35,
+     0.45
+    ],
+    "rotation_z": 0,
+    "accepts": "door"
+   },
+   "Door_L": {
+    "position": [
+     0.0,
+     1.35,
+     0.45
+    ],
+    "rotation_z": 0,
+    "accepts": "door"
+   },
+   "Audio_car": {
+    "position": [
+     0,
+     0,
+     1.5
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 1352
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_curve": {
+  "model": "structures/city/city_rail_curve/city_rail_curve.glb#Scene0",
+  "size_metres": {
+   "width": 8.266,
+   "depth": 4.601,
+   "height": 1.25
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -1.6,
+    -0.9
+   ],
+   "max": [
+    8.266,
+    3.001,
+    0.35
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     7.654,
+     1.522,
+     0
+    ],
+    "direction": [
+     0.924,
+     0.383,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 380
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_pier": {
+  "model": "structures/city/city_rail_pier/city_rail_pier.glb#Scene0",
+  "size_metres": {
+   "width": 1.84,
+   "depth": 2.84,
+   "height": 6.75
+  },
+  "bounds_blender": {
+   "min": [
+    -0.92,
+    -1.44,
+    0.0
+   ],
+   "max": [
+    0.92,
+    1.4,
+    6.75
+   ]
+  },
+  "connectors": {
+   "guideway": {
+    "position": [
+     0,
+     0,
+     7.65
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     0.9,
+     0.0,
+     0.0
+    ],
+    "rotation_z": 0,
+    "accepts": "vine_climber"
+   }
+  },
+  "triangles": {
+   "near": 338
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_platform_8": {
+  "model": "structures/city/city_rail_platform_8/city_rail_platform_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 3.05,
+   "height": 1.77
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    1.7,
+    -0.9
+   ],
+   "max": [
+    8.0,
+    4.75,
+    0.87
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     2.0,
+     4.42,
+     0.87
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_1": {
+    "position": [
+     6.0,
+     4.42,
+     0.87
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Wait": {
+    "position": [
+     2.0,
+     3.0,
+     0.35
+    ],
+    "rotation_z": 0,
+    "accepts": "seat"
+   },
+   "Audio_station": {
+    "position": [
+     4.0,
+     3.2,
+     2.0
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 96
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_rail_track_8": {
+  "model": "structures/city/city_rail_track_8/city_rail_track_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 3.2,
+   "height": 1.25
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -1.6,
+    -0.9
+   ],
+   "max": [
+    8.0,
+    1.6,
+    0.35
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 72
+  },
+  "catalog": "City/Light-Rail",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_ramp_8": {
+  "model": "structures/city/city_ramp_8/city_ramp_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.0,
+   "depth": 2.4,
+   "height": 0.7
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.2,
+    0.0
+   ],
+   "max": [
+    8.0,
+    2.2,
+    0.7
+   ]
+  },
+  "connectors": {
+   "bottom": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "top": {
+    "position": [
+     8,
+     0,
+     0.5
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 32
+  },
+  "catalog": "City/Vertical-Circulation",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_roof_cap_4": {
+  "model": "structures/city/city_roof_cap_4/city_roof_cap_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 0.38
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.08
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 36
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_roof_planted_4": {
+  "model": "structures/city/city_roof_planted_4/city_roof_planted_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 0.8
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.5
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_0": {
+    "position": [
+     1.1,
+     1.1,
+     0.5
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_1": {
+    "position": [
+     2.9,
+     1.2,
+     0.5
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_2": {
+    "position": [
+     1.3,
+     2.9,
+     0.5
+    ],
+    "rotation_z": 0,
+    "accepts": "shrub"
+   },
+   "Plant_3": {
+    "position": [
+     2.8,
+     2.8,
+     0.5
+    ],
+    "rotation_z": 0,
+    "accepts": "tree"
+   }
+  },
+  "triangles": {
+   "near": 192
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_shade_sail": {
+  "model": "structures/city/city_shade_sail/city_shade_sail.glb#Scene0",
+  "size_metres": {
+   "width": 6.343,
+   "depth": 5.511,
+   "height": 4.462
+  },
+  "bounds_blender": {
+   "min": [
+    -3.17,
+    -1.858,
+    -0.007
+   ],
+   "max": [
+    3.173,
+    3.653,
+    4.454
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 108
+  },
+  "catalog": "City/Street",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_shrub": {
+  "model": "structures/city/city_shrub/city_shrub.glb#Scene0",
+  "size_metres": {
+   "width": 1.233,
+   "depth": 1.402,
+   "height": 1.283
+  },
+  "bounds_blender": {
+   "min": [
+    -0.588,
+    -0.702,
+    -0.016
+   ],
+   "max": [
+    0.645,
+    0.701,
+    1.267
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 528,
+   "far": 42
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "camp",
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_sign": {
+  "model": "structures/city/city_sign/city_sign.glb#Scene0",
+  "size_metres": {
+   "width": 0.8,
+   "depth": 0.27,
+   "height": 2.2
+  },
+  "bounds_blender": {
+   "min": [
+    -0.4,
+    -0.15,
+    0.0
+   ],
+   "max": [
+    0.4,
+    0.12,
+    2.2
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Sign_face": {
+    "position": [
+     0.0,
+     -0.15,
+     1.5
+    ],
+    "rotation_z": 0,
+    "accepts": "sign"
+   }
+  },
+  "triangles": {
+   "near": 140
+  },
+  "catalog": "City/Street",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_skybridge_8": {
+  "model": "structures/city/city_skybridge_8/city_skybridge_8.glb#Scene0",
+  "size_metres": {
+   "width": 8.049,
+   "depth": 3.7,
+   "height": 4.33
+  },
+  "bounds_blender": {
+   "min": [
+    -0.025,
+    -0.35,
+    -1.1
+   ],
+   "max": [
+    8.025,
+    3.35,
+    3.23
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_L": {
+    "position": [
+     4.0,
+     -0.35,
+     0.4
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   },
+   "Vine_R": {
+    "position": [
+     4.0,
+     3.35,
+     0.4
+    ],
+    "rotation_z": 3.1416,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 780
+  },
+  "catalog": "City/Terrace",
+  "priority": "P1",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_slab_4": {
+  "model": "structures/city/city_slab_4/city_slab_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 4.0,
+   "height": 0.3
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    -0.3
+   ],
+   "max": [
+    4.0,
+    4.0,
+    0.0
+   ]
+  },
+  "connectors": {
+   "east": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "north": {
+    "position": [
+     0,
+     4.0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 12
+  },
+  "catalog": "City/Floor-And-Roof",
+  "priority": "P0",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_solar_canopy": {
+  "model": "structures/city/city_solar_canopy/city_solar_canopy.glb#Scene0",
+  "size_metres": {
+   "width": 4.523,
+   "depth": 4.755,
+   "height": 5.32
+  },
+  "bounds_blender": {
+   "min": [
+    -2.023,
+    -2.378,
+    0.0
+   ],
+   "max": [
+    2.5,
+    2.378,
+    5.32
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 268
+  },
+  "catalog": "City/Infrastructure",
+  "priority": "P2",
+  "phases": [
+   "town",
+   "city"
+  ]
+ },
+ "city_staff_4": {
+  "model": "structures/city/city_staff_4/city_staff_4.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 0.797,
+   "height": 0.077
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.399,
+    0.111
+   ],
+   "max": [
+    4.0,
+    0.399,
+    0.189
+   ]
+  },
+  "connectors": {
+   "upstream": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "downstream": {
+    "position": [
+     4,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Note_0": {
+    "position": [
+     0.5,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_1": {
+    "position": [
+     1.5,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_2": {
+    "position": [
+     2.5,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_3": {
+    "position": [
+     3.5,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Bar_0": {
+    "position": [
+     0.0,
+     0.0,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "bar"
+   }
+  },
+  "triangles": {
+   "near": 460
+  },
+  "catalog": "City/Music-Staff",
+  "priority": "P1",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_staff_curve": {
+  "model": "structures/city/city_staff_curve/city_staff_curve.glb#Scene0",
+  "size_metres": {
+   "width": 4.401,
+   "depth": 4.401,
+   "height": 0.077
+  },
+  "bounds_blender": {
+   "min": [
+    -0.003,
+    -0.399,
+    0.111
+   ],
+   "max": [
+    4.399,
+    4.003,
+    0.189
+   ]
+  },
+  "connectors": {
+   "upstream": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "downstream": {
+    "position": [
+     4.0,
+     4.0,
+     0
+    ],
+    "direction": [
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Note_0": {
+    "position": [
+     0.522,
+     0.034,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_1": {
+    "position": [
+     1.531,
+     0.304,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_2": {
+    "position": [
+     2.435,
+     0.827,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_3": {
+    "position": [
+     3.173,
+     1.565,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_4": {
+    "position": [
+     3.696,
+     2.469,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   },
+   "Note_5": {
+    "position": [
+     3.966,
+     3.478,
+     0.15
+    ],
+    "rotation_z": 0,
+    "accepts": "note"
+   }
+  },
+  "triangles": {
+   "near": 1260
+  },
+  "catalog": "City/Music-Staff",
+  "priority": "P1",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_stair_flight": {
+  "model": "structures/city/city_stair_flight/city_stair_flight.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 2.0,
+   "height": 2.005
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": [
+    4.0,
+    2.0,
+    2.005
+   ]
+  },
+  "connectors": {
+   "bottom": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "top": {
+    "position": [
+     4,
+     0,
+     2
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 204
+  },
+  "catalog": "City/Vertical-Circulation",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_stair_landing": {
+  "model": "structures/city/city_stair_landing/city_stair_landing.glb#Scene0",
+  "size_metres": {
+   "width": 2.08,
+   "depth": 4.08,
+   "height": 2.0
+  },
+  "bounds_blender": {
+   "min": [
+    -0.04,
+    -0.04,
+    0.0
+   ],
+   "max": [
+    2.04,
+    4.04,
+    2.0
+   ]
+  },
+  "connectors": {
+   "flight_up": {
+    "position": [
+     0,
+     0,
+     2
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   },
+   "flight_down": {
+    "position": [
+     0,
+     2,
+     2
+    ],
+    "direction": [
+     -1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 24
+  },
+  "catalog": "City/Vertical-Circulation",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_tree": {
+  "model": "structures/city/city_tree/city_tree.glb#Scene0",
+  "size_metres": {
+   "width": 5.835,
+   "depth": 5.299,
+   "height": 6.611
+  },
+  "bounds_blender": {
+   "min": [
+    -2.909,
+    -2.804,
+    -0.012
+   ],
+   "max": [
+    2.926,
+    2.496,
+    6.599
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 604,
+   "far": 80
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_tree_sapling": {
+  "model": "structures/city/city_tree_sapling/city_tree_sapling.glb#Scene0",
+  "size_metres": {
+   "width": 1.017,
+   "depth": 1.34,
+   "height": 2.598
+  },
+  "bounds_blender": {
+   "min": [
+    -0.517,
+    -0.543,
+    -0.001
+   ],
+   "max": [
+    0.5,
+    0.797,
+    2.597
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 212
+  },
+  "catalog": "City/Growth",
+  "priority": "P2",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_vine_strip": {
+  "model": "structures/city/city_vine_strip/city_vine_strip.glb#Scene0",
+  "size_metres": {
+   "width": 4.174,
+   "depth": 0.24,
+   "height": 2.756
+  },
+  "bounds_blender": {
+   "min": [
+    -0.124,
+    -0.26,
+    -2.756
+   ],
+   "max": [
+    4.05,
+    -0.02,
+    0.0
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {},
+  "triangles": {
+   "near": 264,
+   "far": 12
+  },
+  "catalog": "City/Planting",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_walk_bay": {
+  "model": "structures/city/city_walk_bay/city_walk_bay.glb#Scene0",
+  "size_metres": {
+   "width": 4.01,
+   "depth": 3.08,
+   "height": 4.15
+  },
+  "bounds_blender": {
+   "min": [
+    -0.01,
+    -0.08,
+    -0.45
+   ],
+   "max": [
+    4.0,
+    3.0,
+    3.7
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "above": {
+    "position": [
+     0,
+     0,
+     4.0
+    ],
+    "direction": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     0.05,
+     3.4
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 256
+  },
+  "catalog": "City/Outdoor-Hallway",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_walk_end": {
+  "model": "structures/city/city_walk_end/city_walk_end.glb#Scene0",
+  "size_metres": {
+   "width": 0.72,
+   "depth": 3.01,
+   "height": 3.7
+  },
+  "bounds_blender": {
+   "min": [
+    -0.36,
+    -0.01,
+    0.0
+   ],
+   "max": [
+    0.36,
+    3.0,
+    3.7
+   ]
+  },
+  "connectors": {},
+  "sockets": {},
+  "triangles": {
+   "near": 304
+  },
+  "catalog": "City/Outdoor-Hallway",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_walk_open": {
+  "model": "structures/city/city_walk_open/city_walk_open.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 3.06,
+   "height": 3.987
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.06,
+    -0.45
+   ],
+   "max": [
+    4.0,
+    3.0,
+    3.537
+   ]
+  },
+  "connectors": {
+   "start": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   },
+   "end": {
+    "position": [
+     4.0,
+     0,
+     0
+    ],
+    "direction": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "sockets": {
+   "Vine_top": {
+    "position": [
+     2.0,
+     1.5,
+     3.4
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 272
+  },
+  "catalog": "City/Outdoor-Hallway",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_walk_roof": {
+  "model": "structures/city/city_walk_roof/city_walk_roof.glb#Scene0",
+  "size_metres": {
+   "width": 4.0,
+   "depth": 3.1,
+   "height": 0.66
+  },
+  "bounds_blender": {
+   "min": [
+    0.0,
+    -0.1,
+    3.7
+   ],
+   "max": [
+    4.0,
+    3.0,
+    4.36
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Plant_lip": {
+    "position": [
+     2.0,
+     0.15,
+     4.36
+    ],
+    "rotation_z": 0,
+    "accepts": "small"
+   },
+   "Vine_top": {
+    "position": [
+     2.0,
+     -0.12,
+     4.0
+    ],
+    "rotation_z": 0,
+    "accepts": "vine"
+   }
+  },
+  "triangles": {
+   "near": 36
+  },
+  "catalog": "City/Outdoor-Hallway",
+  "priority": "P0",
+  "phases": [
+   "village",
+   "town",
+   "city"
+  ]
+ },
+ "city_water_gate": {
+  "model": "structures/city/city_water_gate/city_water_gate.glb#Scene0",
+  "size_metres": {
+   "width": 1.388,
+   "depth": 9.4,
+   "height": 5.938
+  },
+  "bounds_blender": {
+   "min": [
+    -0.05,
+    -0.7,
+    -2.0
+   ],
+   "max": [
+    1.338,
+    8.7,
+    3.938
+   ]
+  },
+  "connectors": {},
+  "sockets": {
+   "Interact": {
+    "position": [
+     1.6,
+     -0.2,
+     1.2
+    ],
+    "rotation_z": 0,
+    "accepts": "interact"
+   },
+   "Audio_source": {
+    "position": [
+     0.6,
+     4.0,
+     -0.9
+    ],
+    "rotation_z": 0,
+    "accepts": "audio"
+   }
+  },
+  "triangles": {
+   "near": 566
+  },
+  "catalog": "City/Infrastructure",
+  "priority": "P2",
+  "phases": [
+   "town",
+   "city"
+  ]
+ }
+}

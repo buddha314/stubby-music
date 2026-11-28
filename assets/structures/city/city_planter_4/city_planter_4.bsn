@@ -1,0 +1,6 @@
+#"City Planter 4"
+jackdaw::prefab::components::Prefab
+jackdaw::prefab::components::PrefabEntityId(0)
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Visible
+jackdaw_scene_types::types::GltfSource { path: "structures/city/city_planter_4/city_planter_4.glb", scene_index: 0 }
