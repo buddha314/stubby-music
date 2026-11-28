@@ -61,8 +61,12 @@ in 2.3): `bevy_ahoy`**, as the template uses it, tuned to stubby's speeds and ju
 the whole world; the simulation-speed keys scale ahoy's tuning so the player moves in real
 time. The per-frame controller is gone.
 
-**D6 Time.** Simulation time and the calendar are the host's and replicate; clients do
-not advance them. The simulation-speed keys work only on the host.
+**D6 Time.** The calendar is the host's and replicates; clients keep theirs close to
+it. **Revised 2026-11-28:** in company time runs at 1x and the speed keys are off; they
+work in a world of one. lightyear sets Bevy's virtual-time speed on every networked peer
+for its timeline sync, so a sped-up host would drag its clients' timelines along; the
+world's speed is the game's own `SimSpeed`, which the calendar reads. Speeding a shared
+world's calendar alone (physics at 1x) is possible later if wanted.
 
 **D7 Music together.** Each peer runs its own `stubby_audio` engine (audio never
 crosses the network). Rack configurations are data and replicate. Clocks follow the

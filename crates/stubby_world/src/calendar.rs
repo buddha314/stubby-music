@@ -30,6 +30,7 @@ pub struct CalendarPlugin;
 impl Plugin for CalendarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Calendar>()
+            .init_resource::<stubby_core::SimSpeed>()
             .register_type::<Calendar>()
             .insert_resource(sky_profile().brightness)
             .insert_resource(crate::lighting::LightingKeys::shipped())
@@ -38,11 +39,23 @@ impl Plugin for CalendarPlugin {
             .add_systems(Startup, setup_sun)
             .add_systems(
                 PreUpdate,
+                company_runs_at_one.run_if(resource_added::<stubby_core::InCompany>),
+            )
+            .add_systems(
+                PreUpdate,
                 advance
                     .in_set(CalendarAdvance)
                     .after(bevy_stubby_audio::MasterClockRead),
             )
-            .add_systems(Update, (speed_controls, move_sun).chain());
+            .add_systems(
+                Update,
+                (
+                    // Speeding time is for one: in company it runs at 1x.
+                    speed_controls.run_if(not(resource_exists::<stubby_core::InCompany>)),
+                    move_sun,
+                )
+                    .chain(),
+            );
     }
 }
 /// The sky's authored settings (`assets/lighting/sky.json`).
@@ -67,7 +80,12 @@ pub fn sky_profile() -> SkyProfile {
 }
 /// The game opens at the authored solar hour (06:30, above the dawn ridges), with a frame cap.
 /// PreStartup, so reviews that set the clock at Startup win.
-fn open_at_authored_time(mut calendar: ResMut<Calendar>, mut time: ResMut<Time<Virtual>>) {
+fn open_at_authored_time(
+    mut calendar: ResMut<Calendar>,
+    mut time: ResMut<Time<Virtual>>,
+    mut sim: ResMut<stubby_core::SimSpeed>,
+) {
+    sim.0 = 1.;
     calendar.elapsed =
         std::time::Duration::from_secs_f32(seconds_at_solar_hour(sky_profile().opening_solar_hour));
     set_speed(&mut time, 1.);
@@ -88,6 +106,7 @@ pub fn seconds_at_solar_hour(hour: f32) -> f32 {
 /// Bevy's virtual time, which `set_speed` scales and caps the same way.
 pub fn advance(
     time: Res<Time<Virtual>>,
+    sim: Option<Res<stubby_core::SimSpeed>>,
     master: Option<Res<bevy_stubby_audio::MasterClock>>,
     mut last: Local<Option<f64>>,
     mut calendar: ResMut<Calendar>,
@@ -101,17 +120,31 @@ pub fn advance(
             let speed = if time.is_paused() {
                 0.
             } else {
-                time.relative_speed_f64()
+                f64::from(sim.map_or(1., |sim| sim.0))
             };
             std::time::Duration::from_secs_f64(heard.min(MAX_REAL_STEP as f64) * speed)
         }
         None => {
             *last = None;
-            time.delta()
+            // Virtual time, at the world's speed: offline they are one; in a session
+            // lightyear sets the virtual time's speed, so it is rescaled.
+            let virtual_speed = time.relative_speed();
+            let world_speed = sim.as_ref().map_or(virtual_speed, |sim| sim.0);
+            if virtual_speed > 0. && (world_speed - virtual_speed).abs() > 1e-3 {
+                time.delta().mul_f32(world_speed / virtual_speed)
+            } else {
+                time.delta()
+            }
         }
     };
     calendar.elapsed = calendar.elapsed.saturating_add(step);
 }
+/// Company arrived: time slows to 1x.
+fn company_runs_at_one(mut time: ResMut<Time<Virtual>>, mut sim: ResMut<stubby_core::SimSpeed>) {
+    set_speed(&mut time, 1.);
+    sim.0 = 1.;
+}
+
 /// A frame advances the calendar by at most this much real time times the speed, so a
 /// hitch never skips a stretch of day (or a night boundary).
 const MAX_REAL_STEP: f32 = 0.1;
@@ -120,15 +153,23 @@ pub fn set_speed(time: &mut Time<Virtual>, speed: f32) {
     time.set_relative_speed(speed);
 }
 /// Speed keys, ignored while a screen (inventory, a rack) owns the keyboard.
+/// The speed keys set the world's speed (`SimSpeed`) and Bevy's virtual time. Offline the
+/// virtual time keeps it, so physics speeds up too; in a session lightyear sets the
+/// virtual time's speed itself (its timeline sync), so there only the calendar speeds up.
 fn speed_controls(
     keys: Res<ButtonInput<KeyCode>>,
     screens: Option<Res<stubby_core::ScreenMode>>,
     mut time: ResMut<Time<Virtual>>,
+    mut sim: ResMut<stubby_core::SimSpeed>,
 ) {
     if screens.is_some_and(|screens| screens.open.is_some()) {
         return;
     }
-    let current = time.relative_speed();
+    let current = sim.0;
+    let mut set_speed = |time: &mut Time<Virtual>, speed: f32| {
+        set_speed(time, speed);
+        sim.0 = speed;
+    };
     if keys.just_pressed(KeyCode::BracketRight) {
         set_speed(
             &mut time,
@@ -384,6 +425,7 @@ mod tests {
     fn controls_change_virtual_speed_and_reset() {
         let mut app = App::new();
         app.init_resource::<Time<Virtual>>()
+            .init_resource::<stubby_core::SimSpeed>()
             .init_resource::<ButtonInput<KeyCode>>()
             .add_systems(Update, speed_controls);
         for (key, expected) in [
@@ -473,6 +515,7 @@ mod tests {
     fn screens_own_the_speed_keys_and_hitches_are_capped() {
         let mut app = App::new();
         app.init_resource::<Time<Virtual>>()
+            .init_resource::<stubby_core::SimSpeed>()
             .init_resource::<ButtonInput<KeyCode>>()
             .insert_resource(stubby_core::ScreenMode {
                 open: Some(stubby_core::Screen::Inventory),
@@ -508,6 +551,7 @@ mod tests {
         assert!((elapsed(&app) - 0.1).abs() < 1e-6);
         // At 64x, a two-second hitch on the clock advances at most 6.4 s.
         set_speed(&mut app.world_mut().resource_mut::<Time<Virtual>>(), 64.);
+        app.insert_resource(stubby_core::SimSpeed(64.));
         set(&mut app, 10. + 1. / 600. + 2. / 60.);
         app.update();
         assert!((elapsed(&app) - 6.5).abs() < 1e-6);

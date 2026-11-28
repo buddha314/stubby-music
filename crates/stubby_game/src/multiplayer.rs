@@ -15,8 +15,10 @@
 pub mod building;
 pub mod collecting;
 pub mod inventory;
+pub mod joining;
 pub mod racks;
 pub mod streams;
+pub mod time;
 use bevy::{ecs::relationship::Relationship, prelude::*};
 use bevy_ahoy::{CharacterControllerState, CharacterLook, input::AccumulatedInput, prelude::*};
 use bevy_enhanced_input::prelude::{Action, ActionOf};
@@ -61,6 +63,8 @@ impl Plugin for MultiplayerPlugin {
                 building::BuildingPlugin,
                 streams::StreamsPlugin,
                 racks::RacksPlugin,
+                time::TimePlugin,
+                joining::JoiningPlugin,
             ))
             .add_systems(
                 Update,

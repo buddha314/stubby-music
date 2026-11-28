@@ -65,7 +65,10 @@ impl Plugin for MenusPlugin {
             .add_systems(
                 Update,
                 (
-                    finish_loading,
+                    // A join's loading screen ends when the host's world is in.
+                    finish_loading.run_if(not(resource_exists::<
+                        crate::multiplayer::joining::CatchingUp,
+                    >)),
                     menu_keys,
                     show_panels,
                     show_notice,

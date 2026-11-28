@@ -69,6 +69,21 @@ impl Screen {
 #[derive(Resource, Default)]
 pub struct DecidedElsewhere;
 
+/// How fast the world runs (the speed keys): what the calendar reads. Offline Bevy's
+/// virtual time runs at it too; in a session lightyear sets the virtual time's speed itself
+/// (its timeline sync), so the game keeps its own here. In company it is 1.
+#[derive(Resource, Clone, Copy, Debug, PartialEq)]
+pub struct SimSpeed(pub f32);
+impl Default for SimSpeed {
+    fn default() -> Self {
+        Self(1.)
+    }
+}
+
+/// Another player shares this world: time runs at 1x and the speed keys are off.
+#[derive(Resource, Default)]
+pub struct InCompany;
+
 /// On a machine: E opens its crafting screen instead of its rack (a lit campfire,
 /// add-campfire-craft-bench D1). The rack stays reachable from that screen.
 #[derive(Component, Debug, Clone, Copy, Default)]
