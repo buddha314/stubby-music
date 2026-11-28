@@ -2098,7 +2098,7 @@ fn clear_feedback_on_open<S: Stock>(
 }
 
 /// Every cable is this item, from the player's inventory.
-const PATCH_CABLE: &str = "patch_cable";
+use crate::record::PATCH_CABLE;
 
 fn direction(mounted: &HashMap<String, String>, j: &JackRef) -> Option<bool> {
     RACK_MODULES.jack_is_output(mounted.get(&j.place)?, &j.port)
