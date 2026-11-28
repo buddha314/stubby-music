@@ -112,11 +112,7 @@ impl Plugin for RecipesPlugin {
     }
 }
 
-/// Harvests, crafts and storage moves are another peer's to decide (a shared world's
-/// host): the requests are left for the game to send on, and results arrive as the
-/// usual messages. Goals still run here.
-#[derive(Resource, Default)]
-pub struct DecidedElsewhere;
+pub use stubby_core::DecidedElsewhere;
 
 /// The plugin's systems. Send requests before it; read results after it.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]

@@ -29,17 +29,18 @@ use bevy::{
     world_serialization::{WorldAssetRoot, WorldInstanceReady},
 };
 use bevy_stubby_audio::{ClockTick, Synth};
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::time::Instant;
 use stubby_audio::{Command, ListenerPose};
-use stubby_core::ScreenMode;
 use stubby_core::{
     AssetClock, AssetPart, AssetState, HudCamera, LookCapture, MachineVoice, PlacedAsset, Stock,
     StreamInlet,
 };
+use stubby_core::{DecidedElsewhere, ScreenMode};
 
 mod dismantle;
-pub use dismantle::{Dismantle, DismantleMode, pick_segment};
+pub use dismantle::{Dismantle, DismantleMode, dismantle_segment, pick_segment, segment_cost};
 
 const SEGMENT_LENGTH: f32 = 4.0;
 /// How far from a port the aim may be to pick it.
@@ -94,7 +95,8 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                         .in_set(StreamSystems::Input),
                     (
                         plan::<S>,
-                        lay::<S>,
+                        lay,
+                        apply_lays::<S>.run_if(not(resource_exists::<DecidedElsewhere>)),
                         show_hologram,
                         show_ports,
                         show_cost::<S>,
@@ -106,6 +108,7 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                     .before(stubby_core::CursorCapture),
             )
             .add_message::<Dismantle>()
+            .add_message::<LayRequest>()
             .init_resource::<dismantle::DismantleMode>()
             .add_systems(Startup, dismantle::spawn_dismantle_ui)
             .add_message::<LayerNote>()
@@ -113,7 +116,8 @@ impl<S: Stock> Plugin for StreamBuildPlugin<S> {
                 Update,
                 (
                     dismantle::dismantle_input,
-                    dismantle::apply_dismantles::<S>,
+                    dismantle::apply_dismantles::<S>
+                        .run_if(not(resource_exists::<DecidedElsewhere>)),
                     dismantle::show_dismantle,
                     resolve_sources,
                     emit_bars.run_if(resource_exists::<Messages<ClockTick>>),
@@ -191,6 +195,11 @@ impl LaidStream {
     /// A stable key for segment `k` of this stream: its path's control points and its
     /// index along that path. Dismantling elsewhere respawns a stream as pieces that keep
     /// both, so what sits on a segment (a dam, ripple pools) finds it again by this key.
+    /// This stream's own key: its first segment's. Every peer gives it the same one.
+    pub fn key(&self) -> u64 {
+        self.segment_key(self.first)
+    }
+
     pub fn segment_key(&self, k: u32) -> u64 {
         let path = self
             .path
@@ -327,7 +336,7 @@ enum Kind {
 #[derive(Component)]
 struct TemplateRoot(Kind);
 #[derive(Resource, Default)]
-struct Templates {
+pub struct Templates {
     segment: Vec<Piece>,
     hologram: Vec<Piece>,
     /// The hologram's materials tinted per state: (valid, invalid) for each piece.
@@ -554,7 +563,11 @@ impl Path {
         let p1 = p0 + from.dir * reach / 3.;
         let d1 = end.unwrap_or_else(|| (p3 - p1).normalize_or(from.dir));
         let p2 = p3 - d1 * reach / 3.;
-        let points = [p0, p1, p2, p3];
+        Self::from_points([p0, p1, p2, p3])
+    }
+    /// The path through these control points (another peer's stream, sent as them).
+    pub fn from_points(points: [Vec3; 4]) -> Self {
+        let p0 = points[0];
         let mut table = vec![(0., 0.)];
         let mut last = p0;
         let mut length = 0.;
@@ -868,17 +881,8 @@ fn plan<S: Stock>(
     });
 }
 
-#[allow(clippy::too_many_arguments)]
-fn lay<S: Stock>(
-    mut commands: Commands,
-    mut build: ResMut<StreamBuild>,
-    templates: Res<Templates>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    cost: Res<SegmentCost>,
-    mut inventory: Option<ResMut<S>>,
-    mut burblers: Query<(Entity, &PlacedAsset, &mut AssetState)>,
-    mut streams: Query<&mut LaidStream>,
-) {
+/// A click lays the plan: asked of whoever decides (here, or a shared world's host).
+fn lay(mut build: ResMut<StreamBuild>, mut requests: MessageWriter<LayRequest>) {
     if !build.active || !build.click {
         return;
     }
@@ -889,52 +893,224 @@ fn lay<S: Stock>(
     let Some(plan) = build.plan.clone().filter(|plan| plan.valid) else {
         return;
     };
-    let Some(inventory) = inventory.as_mut() else {
-        return;
-    };
-    if templates.segment.is_empty() || !affordable(&cost, inventory.as_ref(), plan.segments) {
-        return;
+    requests.write(LayRequest {
+        path: plan.path,
+        segments: plan.segments,
+        upstream: anchor.owner,
+        joins: plan.joins.is_some(),
+    });
+    // Laying on from the new end waits for it (`apply_lays` anchors it, here).
+    build.anchor = None;
+}
+
+/// Lay a stream of `segments` along `path` from `upstream`'s port. `joins`: it flows into
+/// another stream, so its own end is not free.
+#[derive(Message, Clone, Debug)]
+pub struct LayRequest {
+    pub path: Path,
+    pub segments: u32,
+    pub upstream: PortOwner,
+    pub joins: bool,
+}
+
+/// What one lay of `segments` costs, as stacks.
+pub fn lay_cost(cost: &SegmentCost, segments: u32) -> Vec<(String, u32)> {
+    cost.0
+        .iter()
+        .map(|(item, count)| (item.clone(), count * segments))
+        .collect()
+}
+
+/// Whether a plan's shape will do: long enough, its segments as its length gives them,
+/// and no bend too tight for the banks.
+pub fn plan_is_sound(path: &Path, segments: u32) -> bool {
+    let length = path.length();
+    segments == ((length / SEGMENT_LENGTH).round() as u32).max(1)
+        && (SEGMENT_LENGTH * 0.75..=MAX_PLAN + SEGMENT_LENGTH).contains(&length)
+        && path.min_radius() >= MIN_RADIUS
+}
+
+/// Whether `owner`'s port is free to lay from: a burbler with no stream yet, or a stream
+/// whose end is free.
+pub fn port_is_free(
+    owner: PortOwner,
+    burblers: &Query<&mut AssetState>,
+    streams: &Query<(Entity, &mut LaidStream)>,
+) -> bool {
+    match owner {
+        PortOwner::Burbler(burbler) => burblers
+            .get(burbler)
+            .is_ok_and(|state| !state.stream_connected),
+        PortOwner::Stream(stream) => streams.get(stream).is_ok_and(|(_, s)| !s.end_used),
     }
-    for (item, count) in &cost.0 {
-        inventory.take(item, count * plan.segments);
-    }
-    let span = plan.path.length() / plan.segments as f32;
-    let start = match anchor.owner {
+}
+
+/// Lay what was paid for: spawn it and take its upstream's port. Its end port.
+pub fn lay_stream(
+    commands: &mut Commands,
+    templates: &Templates,
+    meshes: &mut Assets<Mesh>,
+    request: &LayRequest,
+    burblers: &mut Query<&mut AssetState>,
+    streams: &mut Query<(Entity, &mut LaidStream)>,
+) -> Port {
+    let span = request.path.length() / request.segments as f32;
+    let start = match request.upstream {
         PortOwner::Burbler(_) => 0.,
         PortOwner::Stream(entity) => streams
             .get(entity)
-            .map_or(0., |upstream| upstream.start + upstream.length()),
+            .map_or(0., |(_, upstream)| upstream.start + upstream.length()),
     };
     let (_, end) = spawn_stream(
-        &mut commands,
-        &templates,
-        &mut meshes,
+        commands,
+        templates,
+        meshes,
         StreamPart {
-            path: plan.path.clone(),
+            path: request.path.clone(),
             span,
             first: 0,
-            last: plan.segments - 1,
-            upstream: Some(anchor.owner),
+            last: request.segments - 1,
+            upstream: Some(request.upstream),
             start,
             // A stream that flows into another has no free end.
-            end_used: plan.joins.is_some(),
+            end_used: request.joins,
         },
     );
-    match anchor.owner {
+    match request.upstream {
         PortOwner::Burbler(entity) => {
-            if let Ok((_, _, mut state)) = burblers.get_mut(entity) {
+            if let Ok(mut state) = burblers.get_mut(entity) {
                 state.stream_connected = true;
             }
         }
         PortOwner::Stream(entity) => {
-            if let Ok(mut laid) = streams.get_mut(entity) {
+            if let Ok((_, mut laid)) = streams.get_mut(entity) {
                 laid.end_used = true;
             }
         }
     }
-    // Keep extending from the new end, like dragging on from a conveyor's end; a stream
-    // that joined another is finished, as a belt plugged into an input.
-    build.anchor = plan.joins.is_none().then_some(end);
+    end
+}
+
+/// Lays decided here: pay from the stock, lay, and keep laying on from the new end, like
+/// dragging on from a conveyor's end (a stream that joined another is finished).
+#[allow(clippy::too_many_arguments)]
+fn apply_lays<S: Stock>(
+    mut commands: Commands,
+    mut requests: MessageReader<LayRequest>,
+    mut build: ResMut<StreamBuild>,
+    templates: Res<Templates>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    cost: Res<SegmentCost>,
+    mut inventory: Option<ResMut<S>>,
+    mut burblers: Query<&mut AssetState>,
+    mut streams: Query<(Entity, &mut LaidStream)>,
+) {
+    for request in requests.read() {
+        let Some(inventory) = inventory.as_mut() else {
+            return;
+        };
+        if templates.segment.is_empty()
+            || !port_is_free(request.upstream, &burblers, &streams)
+            || !affordable(&cost, inventory.as_ref(), request.segments)
+        {
+            continue;
+        }
+        for (item, count) in lay_cost(&cost, request.segments) {
+            inventory.take(&item, count);
+        }
+        let end = lay_stream(
+            &mut commands,
+            &templates,
+            &mut meshes,
+            request,
+            &mut burblers,
+            &mut streams,
+        );
+        build.anchor = (!request.joins).then_some(end);
+    }
+}
+
+// --- Another peer's streams (a shared world): records to rebuild them from --- //
+
+/// A laid stream as another peer rebuilds it: its path's control points and what part of
+/// it this is, and what it is laid from, named so every peer finds the same thing.
+#[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct StreamRecord {
+    pub points: [[f32; 3]; 4],
+    pub span: f32,
+    pub first: u32,
+    pub last: u32,
+    pub upstream: Option<UpstreamRecord>,
+    pub start: f32,
+    pub end_used: bool,
+}
+
+/// What a stream is laid from: a burbler, by its placed instance, or a stream, by its
+/// [`LaidStream::key`].
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UpstreamRecord {
+    Burbler(String),
+    Stream(u64),
+}
+
+impl StreamRecord {
+    /// The record of `laid`, naming its upstream as every peer can find it.
+    pub fn of(laid: &LaidStream, upstream: Option<UpstreamRecord>) -> Self {
+        Self {
+            points: laid.path.points.map(|p| p.to_array()),
+            span: laid.span,
+            first: laid.first,
+            last: laid.last,
+            upstream,
+            start: laid.start,
+            end_used: laid.end_used,
+        }
+    }
+}
+
+/// Name `owner` as every peer can find it.
+pub fn upstream_record(
+    owner: PortOwner,
+    placed: &Query<&PlacedAsset>,
+    streams: &Query<&LaidStream>,
+) -> Option<UpstreamRecord> {
+    match owner {
+        PortOwner::Burbler(entity) => placed
+            .get(entity)
+            .ok()
+            .map(|p| UpstreamRecord::Burbler(p.instance.clone())),
+        PortOwner::Stream(entity) => streams
+            .get(entity)
+            .ok()
+            .map(|s| UpstreamRecord::Stream(s.key())),
+    }
+}
+
+/// Build the stream `record` describes onto `stream` (its meshes and `LaidStream`), laid
+/// from `upstream` (found here from the record's name).
+pub fn rebuild_stream(
+    commands: &mut Commands,
+    templates: &Templates,
+    meshes: &mut Assets<Mesh>,
+    stream: Entity,
+    record: &StreamRecord,
+    upstream: Option<PortOwner>,
+) {
+    build_stream(
+        commands,
+        templates,
+        meshes,
+        stream,
+        StreamPart {
+            path: Path::from_points(record.points.map(Vec3::from_array)),
+            span: record.span,
+            first: record.first,
+            last: record.last,
+            upstream,
+            start: record.start,
+            end_used: record.end_used,
+        },
+    );
 }
 
 /// Arc positions of the water mesh's vertices, measured along the whole stream chain.
@@ -960,6 +1136,20 @@ fn spawn_stream(
     meshes: &mut Assets<Mesh>,
     part: StreamPart,
 ) -> (Entity, Port) {
+    let stream = commands.spawn_empty().id();
+    let end = build_stream(commands, templates, meshes, stream, part);
+    (stream, end)
+}
+
+/// Build a laid stream onto `stream`: its name and place, bent segment meshes and
+/// `LaidStream`. Its end port.
+fn build_stream(
+    commands: &mut Commands,
+    templates: &Templates,
+    meshes: &mut Assets<Mesh>,
+    stream: Entity,
+    part: StreamPart,
+) -> Port {
     let StreamPart {
         path,
         span,
@@ -969,13 +1159,11 @@ fn spawn_stream(
         start,
         end_used,
     } = part;
-    let stream = commands
-        .spawn((
-            Name::new("Mud stream"),
-            Transform::default(),
-            Visibility::default(),
-        ))
-        .id();
+    commands.entity(stream).insert((
+        Name::new("Mud stream"),
+        Transform::default(),
+        Visibility::default(),
+    ));
     let mut end_halo = Vec::new();
     for k in first..=last {
         for piece in &templates.segment {
@@ -1037,7 +1225,7 @@ fn spawn_stream(
         start,
         clarity: 0.,
     });
-    (stream, end)
+    end
 }
 
 /// Each stream's source is the burbler its `upstream` chain reaches, if any: a part cut

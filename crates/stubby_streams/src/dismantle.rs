@@ -287,6 +287,11 @@ fn refund<S: Stock>(stock: &mut S, cost: &SegmentCost) -> bool {
     true
 }
 
+/// What dismantling one segment gives back.
+pub fn segment_cost(cost: &SegmentCost) -> Vec<(String, u32)> {
+    cost.0.clone()
+}
+
 #[allow(clippy::too_many_arguments)] // The split touches streams, burblers, meshes and stock.
 pub(crate) fn apply_dismantles<S: Stock>(
     mut commands: Commands,
@@ -310,69 +315,100 @@ pub(crate) fn apply_dismantles<S: Stock>(
         if !refund(stock.as_mut(), &cost) {
             continue;
         }
-        let (path, span, first, last) = (old.path.clone(), old.span, old.first, old.last);
-        let (upstream, start, end_used) = (old.upstream, old.start, old.end_used);
-        let fed: Vec<Entity> = streams
-            .iter()
-            .filter(|(_, other)| other.upstream == Some(PortOwner::Stream(stream)))
-            .map(|(entity, _)| entity)
-            .collect();
-        let downstream = (k < last).then(|| {
-            spawn_stream(
-                &mut commands,
-                &templates,
-                &mut meshes,
-                StreamPart {
-                    path: path.clone(),
-                    span,
-                    first: k + 1,
-                    last,
-                    upstream: None,
-                    start: start + (k + 1 - first) as f32 * span,
-                    end_used,
-                },
-            )
-            .0
-        });
-        // Streams laid on from the old end now hang off the cut-off part (or nothing).
-        for entity in fed {
-            if let Ok((_, mut child)) = streams.get_mut(entity) {
-                child.upstream = downstream.map(PortOwner::Stream);
-            }
-        }
-        if k > first {
-            spawn_stream(
-                &mut commands,
-                &templates,
-                &mut meshes,
-                StreamPart {
-                    path,
-                    span,
-                    first,
-                    last: k - 1,
-                    upstream,
-                    start,
-                    end_used: false,
-                },
-            );
-        } else {
-            match upstream {
-                Some(PortOwner::Burbler(burbler)) => {
-                    if let Ok(mut state) = burblers.get_mut(burbler) {
-                        state.stream_connected = false;
-                    }
-                }
-                Some(PortOwner::Stream(entity)) => {
-                    if let Ok((_, mut up)) = streams.get_mut(entity) {
-                        up.end_used = false;
-                    }
-                }
-                None => {}
-            }
-        }
-        commands.entity(stream).despawn();
+        dismantle_segment(
+            &mut commands,
+            &templates,
+            &mut meshes,
+            &mut burblers,
+            &mut streams,
+            stream,
+            k,
+        );
         gone.push(stream);
     }
+}
+
+/// Remove segment `k` of `stream` (already refunded): the stream splits around the gap.
+/// The part upstream keeps its source and gets a free end at the gap; the part downstream,
+/// and everything laid on from it, is cut off. Removing the first segment frees the port it
+/// was laid from. `false` (nothing done) for a segment the stream does not have.
+pub fn dismantle_segment(
+    commands: &mut Commands,
+    templates: &Templates,
+    meshes: &mut Assets<Mesh>,
+    burblers: &mut Query<&mut AssetState>,
+    streams: &mut Query<(Entity, &mut LaidStream)>,
+    stream: Entity,
+    k: u32,
+) -> bool {
+    let Ok((_, old)) = streams.get(stream) else {
+        return false;
+    };
+    if k < old.first || k > old.last {
+        return false;
+    }
+    let (path, span, first, last) = (old.path.clone(), old.span, old.first, old.last);
+    let (upstream, start, end_used) = (old.upstream, old.start, old.end_used);
+    let fed: Vec<Entity> = streams
+        .iter()
+        .filter(|(_, other)| other.upstream == Some(PortOwner::Stream(stream)))
+        .map(|(entity, _)| entity)
+        .collect();
+    let downstream = (k < last).then(|| {
+        spawn_stream(
+            commands,
+            templates,
+            meshes,
+            StreamPart {
+                path: path.clone(),
+                span,
+                first: k + 1,
+                last,
+                upstream: None,
+                start: start + (k + 1 - first) as f32 * span,
+                end_used,
+            },
+        )
+        .0
+    });
+    // Streams laid on from the old end now hang off the cut-off part (or nothing).
+    for entity in fed {
+        if let Ok((_, mut child)) = streams.get_mut(entity) {
+            child.upstream = downstream.map(PortOwner::Stream);
+        }
+    }
+    if k > first {
+        spawn_stream(
+            commands,
+            templates,
+            meshes,
+            StreamPart {
+                path,
+                span,
+                first,
+                last: k - 1,
+                upstream,
+                start,
+                end_used: false,
+            },
+        );
+    } else {
+        match upstream {
+            Some(PortOwner::Burbler(burbler)) => {
+                if let Ok(mut state) = burblers.get_mut(burbler) {
+                    state.stream_connected = false;
+                }
+            }
+            Some(PortOwner::Stream(entity)) => {
+                if let Ok((_, mut up)) = streams.get_mut(entity) {
+                    up.end_used = false;
+                }
+            }
+            None => {}
+        }
+    }
+    commands.entity(stream).despawn();
+    true
 }
 
 #[cfg(test)]

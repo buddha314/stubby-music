@@ -62,6 +62,13 @@ impl Screen {
     }
 }
 
+/// What changes the shared world (harvests, crafts, storage, building, laying and
+/// dismantling streams) is another peer's to decide: a shared world's host. Systems that
+/// would apply such a request here leave it for the game to send on; results arrive as
+/// the usual messages and replicated state.
+#[derive(Resource, Default)]
+pub struct DecidedElsewhere;
+
 /// On a machine: E opens its crafting screen instead of its rack (a lit campfire,
 /// add-campfire-craft-bench D1). The rack stays reachable from that screen.
 #[derive(Component, Debug, Clone, Copy, Default)]
