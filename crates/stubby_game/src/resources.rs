@@ -5,8 +5,9 @@ use stubby_recipes::SignalUse;
 // The crafting system is the `bevy_stubby_recipes` plugin; these names stay importable
 // from here so the rest of the game is unchanged.
 pub use super::recipes_plugin::{
-    CraftCompleted, CraftRequest, GrantHarvest, HarvestRequest, MineNode, PlayerInventory,
-    RecipeCatalog, RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode, SourceLedger,
+    CraftCompleted, CraftRequest, HarvestRequest, MineNode, PlayerInventory, RecipeCatalog,
+    RecipesPlugin, RecipesSystems, ResourceCollected, ResourceNode, SharedStorage, SourceLedger,
+    StorageRequest,
 };
 
 /// The opening's placed lightning bug, as a source (`lightning_bug-<index>`).

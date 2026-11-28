@@ -10,3 +10,5 @@ stubby_recipes = { path = "../stubby_recipes" }
 stubby_core = { path = "../stubby_core" }
 bevy.workspace = true
 bevy.features = ["std", "bevy_log"]
+# Storage requests travel in a shared world.
+serde = { version = "~1.0", features = ["derive"] }

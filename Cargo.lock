@@ -2548,6 +2548,7 @@ name = "bevy_stubby_recipes"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "serde",
  "stubby_core",
  "stubby_recipes",
 ]

@@ -1,6 +1,7 @@
 //! Collecting in a shared world (task 3.1, design D4): the host decides. A joined
 //! client's harvest becomes a request to the host, which checks the player can reach an
-//! available source, depletes it in the world's ledger, and sends the yields back. Which
+//! available source, depletes it in the world's ledger, and puts the yields in that
+//! player's pack (`inventory`), reporting the harvest to it. Which
 //! sources are depleted replicates to everyone, late joiners included; sources return on
 //! the host's clock.
 use std::collections::HashMap;
@@ -14,9 +15,10 @@ use stubby_net::{
 };
 use stubby_recipes::{HarvestLedger, Stack};
 
+use super::inventory::{HostSays, Pack, pack_of};
 use crate::resources::{
-    CollectRequests, GrantHarvest, HarvestRequest, PlayerInventory, RecipeCatalog, RecipesSystems,
-    ResourceNode, SourceLedger, resource_time,
+    CollectRequests, HarvestRequest, PlayerInventory, RecipeCatalog, RecipesSystems,
+    ResourceCollected, ResourceNode, SourceLedger, resource_time,
 };
 
 /// How far from a player's body the host accepts a harvest: the game's 3 m reach, plus
@@ -30,7 +32,7 @@ pub struct Collect {
     pub instance: String,
 }
 
-/// The host harvested `instance` for this client: these are its yields.
+/// The host harvested `instance` for this client: these yields are in its pack.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Collected {
     pub instance: String,
@@ -73,7 +75,7 @@ impl Plugin for CollectingPlugin {
 /// flight is not repeated (E is held to collect), and one whose yields would not fit is
 /// refused here, as a local harvest would be.
 fn ask_the_host(
-    mut requests: ResMut<Messages<HarvestRequest>>,
+    mut requests: MessageReader<HarvestRequest>,
     catalog: Option<Res<RecipeCatalog>>,
     player: Res<PlayerInventory>,
     mut full: MessageWriter<crate::recipes_plugin::InventoryFull>,
@@ -87,7 +89,7 @@ fn ask_the_host(
         requests.clear();
         return;
     };
-    for request in requests.drain() {
+    for request in requests.read() {
         let instance = request.source.instance_id().to_string();
         if pending.contains_key(&instance) {
             continue;
@@ -110,17 +112,19 @@ fn ask_the_host(
     }
 }
 
-/// The host's yields arrive: into the inventory, as a harvest of this player's own.
+/// The host's harvest for this player: reported as one of its own (sounds, the book,
+/// the feedback line). The items arrive with the pack.
 fn receive_yields(
     mut receivers: Query<&mut MessageReceiver<Collected>, (With<client::Client>, Without<LinkOf>)>,
-    mut grants: MessageWriter<GrantHarvest>,
+    mut player: ResMut<PlayerInventory>,
+    mut collected: MessageWriter<ResourceCollected>,
 ) {
     for mut receiver in &mut receivers {
-        for collected in receiver.receive() {
-            grants.write(GrantHarvest {
-                instance: collected.instance,
-                yields: collected.yields,
-            });
+        for Collected { instance, yields } in receiver.receive() {
+            let PlayerInventory { book, feedback, .. } = &mut *player;
+            collected.write(crate::recipes_plugin::report_harvest(
+                book, feedback, instance, yields,
+            ));
         }
     }
 }
@@ -161,18 +165,22 @@ fn publish_depletion(_started: On<Add<Started>>, mut commands: Commands) {
     ));
 }
 
-/// A client's harvest: allowed if its body is within reach of an available source. The
-/// source is depleted for everyone and the yields go to that client alone.
-#[allow(clippy::type_complexity)]
+/// A client's harvest: allowed if its body is within reach of an available source and
+/// its pack has room. The source is depleted for everyone and the yields go into that
+/// client's pack.
+#[allow(clippy::type_complexity, clippy::too_many_arguments)]
 fn serve_collects(
     mut links: Query<
         (
             Entity,
             &mut MessageReceiver<Collect>,
             &mut MessageSender<Collected>,
+            &mut MessageSender<HostSays>,
         ),
         With<server::ClientOf>,
     >,
+    remotes: Query<&RemoteId>,
+    mut packs: Query<&mut Pack>,
     bodies: Query<(&ControlledBy, &Position), With<NetPlayer>>,
     mut nodes: Query<(&mut ResourceNode, &GlobalTransform)>,
     catalog: Option<Res<RecipeCatalog>>,
@@ -183,7 +191,7 @@ fn serve_collects(
         return;
     };
     let now = calendar.map(|c| resource_time(&c)).unwrap_or_default();
-    for (link, mut receiver, mut sender) in &mut links {
+    for (link, mut receiver, mut sender, mut says) in &mut links {
         let requests: Vec<Collect> = receiver.receive().collect();
         if requests.is_empty() {
             continue;
@@ -205,17 +213,25 @@ fn serve_collects(
             if node.collected || place.translation().distance(at) > HOST_REACH {
                 continue;
             }
-            // The world's ledger decides; the yields are the client's (its inventory
-            // checked the room before asking).
+            let Some(mut pack) = pack_of(link, &remotes, &mut packs) else {
+                continue;
+            };
+            // The world's ledger and the player's pack, by the single-player rules.
             let mut source = node.source_object();
-            let mut scratch = stubby_recipes::Inventory::default();
+            let Pack { items, book, .. } = &mut *pack;
             match catalog
                 .0
-                .harvest_source_at(&mut source, &mut scratch, &mut ledger.0, now)
+                .harvest_source_at(&mut source, items, &mut ledger.0, now)
             {
                 Ok(yields) => {
+                    for stack in &yields {
+                        book.discover(&stack.item);
+                    }
                     node.collected = true;
                     sender.send::<HostChannel>(Collected { instance, yields });
+                }
+                Err(stubby_recipes::RecipeError::InventoryFull(item)) => {
+                    says.send::<HostChannel>(HostSays::Full(item));
                 }
                 Err(error) => debug!("Refused {instance}: {error}"),
             }
