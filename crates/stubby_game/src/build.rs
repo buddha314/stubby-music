@@ -26,6 +26,8 @@ pub struct BuildPlugin;
 impl Plugin for BuildPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Placing>()
+            .init_resource::<BuiltCount>()
+            .add_message::<BuildRequest>()
             .add_systems(Startup, spawn_menu)
             .add_systems(
                 Update,
@@ -33,6 +35,9 @@ impl Plugin for BuildPlugin {
                     open_menu.before(StreamSystems::Input),
                     show_menu,
                     place.after(StreamSystems::Input),
+                    apply_builds.after(place).run_if(not(resource_exists::<
+                        bevy_stubby_recipes::DecidedElsewhere,
+                    >)),
                     tint_hologram,
                 ),
             );
@@ -46,7 +51,6 @@ pub struct Placing {
     /// The hologram, and which buildable it shows.
     ghost: Option<(Entity, String)>,
     valid: bool,
-    built: u32,
 }
 
 #[derive(Component)]
@@ -337,7 +341,7 @@ fn place(
     mut ghosts: Query<&mut Transform, With<Ghost>>,
     streams: Query<(Entity, &stubby_streams::LaidStream)>,
     rules: Option<Res<bevy_stubby_recipes::MachineRules>>,
-    mut goals: MessageWriter<bevy_stubby_recipes::GoalRequest>,
+    mut requests: MessageWriter<BuildRequest>,
 ) {
     if screens.open.is_some() || keys.just_pressed(KeyCode::Escape) {
         placing.active = None;
@@ -429,33 +433,182 @@ fn place(
             shortfall_notice(&buildable.name, &cost, &player.items, catalog.as_deref());
         return;
     }
-    if !placeable || player.items.take_stacks(&cost).is_err() {
+    if !placeable {
         return;
     }
-    placing.built += 1;
-    // Every buildable built meets its `built` goal condition (the opening's campfire).
-    goals.write(bevy_stubby_recipes::GoalRequest(
-        stubby_recipes::GoalEvent::ConditionMet(stubby_recipes::Condition::Built {
-            buildable: buildable.id.clone(),
-        }),
-    ));
-    let mut built = commands.spawn((
-        Name::new(buildable.name.clone()),
+    requests.write(BuildRequest {
+        buildable: buildable.id.clone(),
         place,
+        segment: on.map(|on| on.segment),
+    });
+}
+
+/// Ask to build `buildable` at `place` (across segment `segment` of a laid stream, for a
+/// buildable placed so). Built where its decider is: here, or a shared world's host.
+#[derive(Message, Clone, Debug, PartialEq)]
+pub struct BuildRequest {
+    pub buildable: String,
+    pub place: Transform,
+    pub segment: Option<u64>,
+}
+
+/// What was built, and where: every built thing carries it, so a peer that did not build
+/// it (a shared world's client) can show it. Its model, name and place follow from it.
+#[derive(Component, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct Built {
+    pub buildable: String,
+    pub instance: String,
+    pub translation: [f32; 3],
+    pub rotation: [f32; 4],
+    /// The stream segment it sits across, by key.
+    pub segment: Option<u64>,
+}
+
+impl Built {
+    pub fn place(&self) -> Transform {
+        Transform::from_translation(self.translation.into())
+            .with_rotation(Quat::from_array(self.rotation))
+    }
+}
+
+/// How many things have been built here: each built thing's instance is
+/// `<buildable>-built-<n>`, unique in the world because one peer counts.
+#[derive(Resource, Default)]
+pub struct BuiltCount(pub u32);
+
+/// Take `buildable`'s cost from `items`: its rule, or what it is short of.
+pub fn pay_for(
+    catalog: &RecipeCatalog,
+    buildable: &str,
+    items: &mut stubby_recipes::Inventory,
+) -> Result<stubby_recipes::BuildableDefinition, String> {
+    let Some(definition) = catalog.0.buildable(buildable).cloned() else {
+        return Err(format!("Nothing called {buildable} can be built."));
+    };
+    if definition.model.is_none() {
+        return Err(format!("{} is laid, not placed.", definition.name));
+    }
+    let cost = catalog.0.build_cost(buildable, 1).unwrap_or_default();
+    if items.take_stacks(&cost).is_err() {
+        return Err(shortfall_notice(
+            &definition.name,
+            &cost,
+            items,
+            Some(catalog),
+        ));
+    }
+    Ok(definition)
+}
+
+/// Build what was paid for: the next instance, its record, and what shows it.
+pub fn spawn_built(
+    commands: &mut Commands,
+    server: &AssetServer,
+    count: &mut BuiltCount,
+    definition: &stubby_recipes::BuildableDefinition,
+    place: Transform,
+    on: Option<OnSegment>,
+) -> Entity {
+    count.0 += 1;
+    let built = Built {
+        buildable: definition.id.clone(),
+        instance: format!("{}-built-{}", definition.id, count.0),
+        translation: place.translation.into(),
+        rotation: place.rotation.to_array(),
+        segment: on.map(|on| on.segment),
+    };
+    let mut entity = commands.spawn((built_looks(server, definition, &built), built));
+    if let Some(on) = on {
+        entity.insert(on);
+    }
+    entity.id()
+}
+
+/// What shows a built thing and makes it what it is (its model and placed asset).
+pub fn built_looks(
+    server: &AssetServer,
+    definition: &stubby_recipes::BuildableDefinition,
+    built: &Built,
+) -> impl Bundle + use<> {
+    let model = definition.model.clone().unwrap_or_default();
+    (
+        Name::new(definition.name.clone()),
+        built.place(),
         Visibility::default(),
         WorldAssetRoot(server.load(format!("{model}#Scene0"))),
         PlacedAsset {
-            asset: buildable.id.clone(),
+            asset: definition.id.clone(),
             model,
-            instance: format!("{}-built-{}", buildable.id, placing.built),
+            instance: built.instance.clone(),
         },
-    ));
-    if let Some(on) = on {
-        built.insert(on);
+    )
+}
+
+/// The stream segment with this key, as something across it sits on it.
+pub fn segment_on(
+    key: u64,
+    at: Vec3,
+    streams: &Query<(Entity, &stubby_streams::LaidStream)>,
+) -> Option<OnSegment> {
+    streams
+        .iter()
+        .find(|(_, laid)| (laid.first..=laid.last).any(|k| laid.segment_key(k) == key))
+        .map(|(stream, laid)| OnSegment::of(stream, laid, at))
+}
+
+/// Builds decided here: pay, build, and meet the `built` goal.
+#[allow(clippy::too_many_arguments)]
+fn apply_builds(
+    mut requests: MessageReader<BuildRequest>,
+    mut commands: Commands,
+    server: Option<Res<AssetServer>>,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut player: ResMut<PlayerInventory>,
+    mut count: ResMut<BuiltCount>,
+    streams: Query<(Entity, &stubby_streams::LaidStream)>,
+    mut goals: MessageWriter<bevy_stubby_recipes::GoalRequest>,
+) {
+    let (Some(server), Some(catalog)) = (server, catalog) else {
+        requests.clear();
+        return;
+    };
+    for request in requests.read() {
+        let on = request
+            .segment
+            .and_then(|key| segment_on(key, request.place.translation, &streams));
+        if request.segment.is_some() && on.is_none() {
+            continue;
+        }
+        let definition = match pay_for(&catalog, &request.buildable, &mut player.items) {
+            Ok(definition) => definition,
+            Err(said) => {
+                player.feedback = said;
+                continue;
+            }
+        };
+        spawn_built(
+            &mut commands,
+            &server,
+            &mut count,
+            &definition,
+            request.place,
+            on,
+        );
+        // Every buildable built meets its `built` goal condition (the opening's campfire).
+        goals.write(built_goal(&definition.id));
+        if let Some(hint) = &definition.built_hint {
+            player.feedback = hint.clone();
+        }
     }
-    if let Some(hint) = &buildable.built_hint {
-        player.feedback = hint.clone();
-    }
+}
+
+/// The goal event a build meets.
+pub fn built_goal(buildable: &str) -> bevy_stubby_recipes::GoalRequest {
+    bevy_stubby_recipes::GoalRequest(stubby_recipes::GoalEvent::ConditionMet(
+        stubby_recipes::Condition::Built {
+            buildable: buildable.into(),
+        },
+    ))
 }
 
 /// The hologram's parts take the hologram material, amber when it can be built and red

@@ -85,7 +85,6 @@ impl Plugin for RecipesPlugin {
         app.add_message::<RulesReloaded>();
         app.init_resource::<PlayerInventory>()
             .init_resource::<SourceLedger>()
-            .init_resource::<SharedStorage>()
             .register_type::<ResourceNode>()
             .register_type::<MineNode>()
             .add_message::<HarvestRequest>()
@@ -105,15 +104,15 @@ impl Plugin for RecipesPlugin {
                 )
                     .chain()
                     .in_set(RecipesSystems),
+            )
+            .add_systems(
+                Update,
+                stock_built_stores.run_if(not(resource_exists::<DecidedElsewhere>)),
             );
     }
 }
 
-/// Harvests, crafts and storage moves are another peer's to decide (a shared world's
-/// host): the requests are left for the game to send on, and results arrive as the
-/// usual messages. Goals still run here.
-#[derive(Resource, Default)]
-pub struct DecidedElsewhere;
+pub use stubby_core::DecidedElsewhere;
 
 /// The plugin's systems. Send requests before it; read results after it.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -266,50 +265,55 @@ pub struct HarvestRequest {
     pub now: ResourceTime,
 }
 
-/// The settlement's storage: one store every player shares (design D4 of
-/// add-multiplayer-and-menus: in a shared world the host keeps it). The world's, like
-/// [`SourceLedger`].
-#[derive(Resource, Clone, Debug, PartialEq)]
-pub struct SharedStorage(pub Inventory);
-impl Default for SharedStorage {
-    fn default() -> Self {
-        Self(Inventory::with_boxes(stubby_recipes::STORAGE_BOXES))
-    }
+/// A store (a built storage barrel): boxes any player may put things in and take them
+/// from. In a shared world the host keeps its contents and they replicate.
+#[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Store(pub Inventory);
+
+/// Which way a storage request moves items.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StorageMove {
+    /// From the player's inventory into the store.
+    Store,
+    /// From the store into the player's inventory.
+    Take,
 }
 
-/// Move items between the player's inventory and the shared storage, all or nothing.
+/// Move items between the player's inventory and a store, all or nothing. The store is
+/// named by its placed instance (the same on every peer).
 #[derive(Message, Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum StorageRequest {
-    /// From the player's inventory into storage.
-    Store { item: String, quantity: u32 },
-    /// From storage into the player's inventory.
-    Take { item: String, quantity: u32 },
+pub struct StorageRequest {
+    pub store: String,
+    pub item: String,
+    pub quantity: u32,
+    pub direction: StorageMove,
 }
 
 impl StorageRequest {
     /// Apply it to a player's inventory and the storage: the feedback line on success,
     /// or why nothing moved.
-    pub fn apply(&self, player: &mut Inventory, storage: &mut Inventory) -> Result<String, String> {
-        let (item, quantity, result, done) = match self {
-            Self::Store { item, quantity } => (
-                item,
-                quantity,
-                player.transfer(storage, item, *quantity),
+    pub fn apply(&self, player: &mut Inventory, store: &mut Inventory) -> Result<String, String> {
+        let Self {
+            item,
+            quantity,
+            direction,
+            ..
+        } = self;
+        let (result, done, full) = match direction {
+            StorageMove::Store => (
+                player.transfer(store, item, *quantity),
                 "Stored",
+                "The barrel is full.",
             ),
-            Self::Take { item, quantity } => (
-                item,
-                quantity,
-                storage.transfer(player, item, *quantity),
+            StorageMove::Take => (
+                store.transfer(player, item, *quantity),
                 "Took",
+                "Your inventory is full.",
             ),
         };
         match result {
             Ok(()) => Ok(format!("{done} {quantity} x {item}.")),
-            Err(RecipeError::InventoryFull(_)) => Err(match self {
-                Self::Store { .. } => "The storage is full.".into(),
-                Self::Take { .. } => "Your inventory is full.".into(),
-            }),
+            Err(RecipeError::InventoryFull(_)) => Err(full.into()),
             Err(error) => Err(error.to_string()),
         }
     }
@@ -410,15 +414,48 @@ pub fn report_harvest(
 fn apply_storage(
     mut requests: MessageReader<StorageRequest>,
     mut player: ResMut<PlayerInventory>,
-    mut storage: ResMut<SharedStorage>,
+    mut stores: Query<(&stubby_core::PlacedAsset, &mut Store)>,
 ) {
     for request in requests.read() {
+        let Some((_, mut store)) = stores
+            .iter_mut()
+            .find(|(at, _)| at.instance == request.store)
+        else {
+            continue;
+        };
         let PlayerInventory {
             items, feedback, ..
         } = &mut *player;
-        *feedback = match request.apply(items, &mut storage.0) {
+        *feedback = match request.apply(items, &mut store.0) {
             Ok(done) | Err(done) => done,
         };
+    }
+}
+
+/// A built store (its buildable has `store_boxes`) starts empty. Not where another peer
+/// decides: there the store arrives with its contents.
+#[allow(clippy::type_complexity)]
+fn stock_built_stores(
+    built: Query<
+        (Entity, &stubby_core::PlacedAsset),
+        (Added<stubby_core::PlacedAsset>, Without<Store>),
+    >,
+    catalog: Option<Res<RecipeCatalog>>,
+    mut commands: Commands,
+) {
+    let Some(catalog) = catalog else {
+        return;
+    };
+    for (entity, placed) in &built {
+        if let Some(boxes) = catalog
+            .0
+            .buildable(&placed.asset)
+            .and_then(|b| b.store_boxes)
+        {
+            commands
+                .entity(entity)
+                .insert(Store(Inventory::with_boxes(boxes)));
+        }
     }
 }
 
@@ -551,9 +588,23 @@ mod tests {
     }
 
     #[test]
-    fn storage_requests_move_items_all_or_nothing() {
+    fn a_built_barrel_is_a_store_and_requests_move_items_all_or_nothing() {
         let mut app = App::new();
         app.add_plugins(RecipesPlugin::default());
+        let barrel = app
+            .world_mut()
+            .spawn(stubby_core::PlacedAsset {
+                asset: "storage_barrel".into(),
+                model: String::new(),
+                instance: "storage_barrel-built-1".into(),
+            })
+            .id();
+        app.update();
+        assert_eq!(
+            app.world().get::<Store>(barrel).map(|s| s.0.box_count()),
+            Some(24),
+            "built, it is a store of its rule's boxes"
+        );
         let held = |app: &App| {
             app.world()
                 .resource::<PlayerInventory>()
@@ -562,7 +613,8 @@ mod tests {
         };
         let stored = |app: &App| {
             app.world()
-                .resource::<SharedStorage>()
+                .get::<Store>(barrel)
+                .unwrap()
                 .0
                 .quantity("square_wave")
         };
@@ -575,16 +627,17 @@ mod tests {
             }])
             .unwrap();
         let before = held(&app);
-        app.world_mut().write_message(StorageRequest::Store {
+        let request = |direction, quantity| StorageRequest {
+            store: "storage_barrel-built-1".into(),
             item: "square_wave".into(),
-            quantity: 2,
-        });
+            quantity,
+            direction,
+        };
+        app.world_mut()
+            .write_message(request(StorageMove::Store, 2));
         app.update();
         assert_eq!((held(&app), stored(&app)), (before - 2, 2));
-        app.world_mut().write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 5,
-        });
+        app.world_mut().write_message(request(StorageMove::Take, 5));
         app.update();
         assert_eq!(
             (held(&app), stored(&app)),

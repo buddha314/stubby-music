@@ -1,8 +1,9 @@
 //! Inventories in a shared world (task 3.2, design D4 and open question 1): each player
-//! carries their own, and the settlement's storage is shared. The host keeps both. A
+//! carries their own, and storage barrels (built, 3.3) are shared. The host keeps both. A
 //! client's inventory is its `Pack` on the host, replicated to that client alone and
-//! mirrored into its `PlayerInventory`; storage replicates to everyone. Crafting and
-//! storage moves are requests the host checks by the same rules a single player uses.
+//! mirrored into its `PlayerInventory`; a barrel's `Store` replicates with it to everyone.
+//! Crafting and storage moves are requests the host checks by the same rules a single
+//! player uses.
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use stubby_net::{
@@ -13,8 +14,12 @@ use stubby_recipes::{Inventory, RecipeBook, Stack};
 
 use crate::recipes_plugin::{
     CraftCompleted, CraftRequest, DecidedElsewhere, InventoryFull, PlayerInventory, RecipeCatalog,
-    SharedStorage, StorageRequest,
+    StorageRequest, Store,
 };
+
+/// How far from a barrel the host lets a player use it: the game's 3 m reach, plus room
+/// for the body's height and a moment's lag.
+pub const STORE_REACH: f32 = 4.5;
 
 /// A remote player's inventory and recipe book, kept by the host.
 #[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -43,10 +48,6 @@ impl Pack {
         pack
     }
 }
-
-/// The settlement's storage, replicated to everyone.
-#[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Storage(pub Inventory);
 
 /// A client asks to move items between its pack and the storage.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -88,27 +89,19 @@ impl Plugin for InventoriesPlugin {
         app.register_message::<HostSays>()
             .add_direction(NetworkDirection::ServerToClient);
         app.component::<Pack>().replicate();
-        app.component::<Storage>().replicate();
-        app.add_observer(give_packs)
-            .add_observer(publish_storage)
-            .add_systems(
-                Update,
+        app.component::<Store>().replicate();
+        app.add_observer(give_packs).add_systems(
+            Update,
+            (
+                (serve_stashes, serve_crafts),
                 (
-                    (serve_stashes, serve_crafts, share_storage).chain(),
-                    (
-                        defer_to_host.run_if(resource_added::<JoinedHost>),
-                        (
-                            ask_to_stash,
-                            ask_to_craft,
-                            hear_the_host,
-                            follow_pack,
-                            follow_storage,
-                        ),
-                    )
-                        .chain()
-                        .run_if(resource_exists::<JoinedHost>),
-                ),
-            );
+                    defer_to_host.run_if(resource_added::<JoinedHost>),
+                    (ask_to_stash, ask_to_craft, hear_the_host, follow_pack),
+                )
+                    .chain()
+                    .run_if(resource_exists::<JoinedHost>),
+            ),
+        );
     }
 }
 
@@ -136,14 +129,6 @@ fn give_packs(
     ));
 }
 
-fn publish_storage(_: On<Add<Started>>, storage: Res<SharedStorage>, mut commands: Commands) {
-    commands.spawn((
-        Name::new("Shared storage"),
-        Storage(storage.0.clone()),
-        Replicate::to_clients(NetworkTarget::All),
-    ));
-}
-
 /// The pack of whoever is on `link`.
 pub fn pack_of<'a>(
     link: Entity,
@@ -154,6 +139,7 @@ pub fn pack_of<'a>(
     packs.iter_mut().find(|pack| pack.owner == peer)
 }
 
+/// A client's storage move: allowed if its body is within reach of the barrel.
 fn serve_stashes(
     mut links: Query<(
         Entity,
@@ -162,14 +148,32 @@ fn serve_stashes(
     )>,
     remotes: Query<&RemoteId>,
     mut packs: Query<&mut Pack>,
-    mut storage: ResMut<SharedStorage>,
+    bodies: Query<(&ControlledBy, &avian3d::prelude::Position), With<NetPlayer>>,
+    mut stores: Query<(&stubby_core::PlacedAsset, &GlobalTransform, &mut Store)>,
 ) {
     for (link, mut receiver, mut says) in &mut links {
         for Stash(request) in receiver.receive() {
+            let Some(at) = bodies
+                .iter()
+                .find(|(owner, _)| owner.owner == link)
+                .map(|(_, position)| position.0)
+            else {
+                continue;
+            };
+            let Some((_, place, mut store)) = stores
+                .iter_mut()
+                .find(|(placed, ..)| placed.instance == request.store)
+            else {
+                continue;
+            };
+            if place.translation().distance(at) > STORE_REACH {
+                says.send::<HostChannel>(HostSays::Line("Too far from the barrel.".into()));
+                continue;
+            }
             let Some(mut pack) = pack_of(link, &remotes, &mut packs) else {
                 continue;
             };
-            let (Ok(line) | Err(line)) = request.apply(&mut pack.items, &mut storage.0);
+            let (Ok(line) | Err(line)) = request.apply(&mut pack.items, &mut store.0);
             says.send::<HostChannel>(HostSays::Line(line));
         }
     }
@@ -207,18 +211,6 @@ fn serve_crafts(
                 }
                 Err(line) => says.send::<HostChannel>(HostSays::Line(line)),
             }
-        }
-    }
-}
-
-/// The storage changed: everyone sees it.
-fn share_storage(storage: Res<SharedStorage>, mut shared: Query<&mut Storage>) {
-    if !storage.is_changed() {
-        return;
-    }
-    for mut shared in &mut shared {
-        if shared.0 != storage.0 {
-            shared.0.clone_from(&storage.0);
         }
     }
 }
@@ -291,17 +283,6 @@ fn follow_pack(packs: Query<Ref<Pack>, With<client::Remote>>, mut player: ResMut
         if pack.is_changed() {
             player.items.clone_from(&pack.items);
             player.book.clone_from(&pack.book);
-        }
-    }
-}
-
-fn follow_storage(
-    shared: Query<Ref<Storage>, With<client::Remote>>,
-    mut storage: ResMut<SharedStorage>,
-) {
-    for shared in &shared {
-        if shared.is_changed() {
-            storage.0.clone_from(&shared.0);
         }
     }
 }

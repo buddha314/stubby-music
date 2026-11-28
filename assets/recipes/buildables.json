@@ -29,6 +29,20 @@
       "built_hint": "Built a purifier. Patch and tune it, and the water below clears."
     },
     {
+      "id": "storage_barrel",
+      "name": "Storage barrel",
+      "cost": [
+        {
+          "item": "reed",
+          "quantity": 15
+        }
+      ],
+      "model": "props/homestead/homestead_barrel/homestead_barrel.glb",
+      "placement": "ground",
+      "built_hint": "E opens the barrel. Anyone may store things in it and take them out.",
+      "store_boxes": 24
+    },
+    {
       "id": "stream_segment",
       "name": "Stream segment",
       "cost": [

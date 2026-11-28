@@ -12,7 +12,7 @@ pub use stubby_world::{WorldSeed, calendar, export, prefab_presentation, world_g
 pub use stubby_player::{controls, hand, interaction, movement};
 #[cfg(all(feature = "dev", feature = "spatial-audio"))]
 mod audio_developer;
-mod build;
+pub mod build;
 mod campfire;
 mod collectibles;
 mod crafting_screen;
@@ -21,6 +21,7 @@ mod hud;
 mod inventory_screen;
 pub mod menus;
 pub mod multiplayer;
+mod storage_screen;
 /// The multiplayer session (`stubby_net`), for the binaries.
 pub use stubby_net as net;
 mod pause_menu;
@@ -65,7 +66,10 @@ impl Plugin for DesertPlugin {
         app.add_plugins((
             pulse::LightningBugPlugin { seed: self.seed },
             resources::ResourceRecipesPlugin,
-            inventory_screen::InventoryScreenPlugin,
+            (
+                inventory_screen::InventoryScreenPlugin,
+                storage_screen::StorageScreenPlugin,
+            ),
             hand::HandPlugin,
             rack::RackPlugin::<resources::PlayerInventory>::default(),
             (

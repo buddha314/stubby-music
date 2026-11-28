@@ -47,7 +47,12 @@ generate another world. Entities to share are marked `stubby_net::Shared`.
 inventory changes are requests from clients (lightyear messages) that the host checks
 against the same rules (`stubby_recipes`, `buildables`) and applies; results replicate.
 Clients show their own request at once only where a wrong guess is harmless (the hand
-animation, a build hologram), never for inventory.
+animation, a build hologram), never for inventory. **Built (3.1–3.3):** requests travel on `stubby_net::HostChannel`;
+systems that would apply one locally stand aside under `stubby_core::DecidedElsewhere`.
+What is built or laid carries a small serializable record (`Built`, `StreamRecord`)
+that replicates, and every peer shows it from the record and simulates it locally, as
+every peer generates the world (D3). Each player's inventory is a `Pack` on the host,
+replicated to its owner alone; storage is built barrels (`Store`), which anyone may use.
 
 **D5 Players.** Movement inputs become BEI actions read in the fixed step, so lightyear
 can send them and replay them on rollback. **Decided (user, 2026-11-27, after the spike

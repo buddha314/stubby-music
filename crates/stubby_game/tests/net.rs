@@ -17,15 +17,18 @@ use avian3d::prelude::*;
 use bevy::{ecs::relationship::Relationship, prelude::*, state::app::StatesPlugin};
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
-use stubby_core::{GroundHeight, LookCapture, ScreenMode};
+use stubby_core::{GroundHeight, LookCapture, PlacedAsset, ScreenMode};
 use stubby_game::{
+    build::BuildRequest,
     controls::Player,
     movement::{MoveBody, MoveControls, MovementPlugin, NetworkedMovement, Sprint},
     multiplayer::{
         ClientPlayersPlugin, ProtocolPlugin, ServerPlayersPlugin, WorldHandshakePlugin,
         WorldMismatch,
+        building::BuildingPlugin,
         collecting::CollectingPlugin,
         inventory::{InventoriesPlugin, Pack},
+        streams::StreamsPlugin,
     },
     net::{
         self, NetMode, NetPlayer,
@@ -33,7 +36,7 @@ use stubby_game::{
     },
     resources::{
         CraftCompleted, CraftRequest, HarvestRequest, PlayerInventory, RecipesPlugin, ResourceNode,
-        SharedStorage, SourceLedger, StorageRequest, lightning_bug_node,
+        SourceLedger, StorageMove, StorageRequest, Store, lightning_bug_node,
     },
     world_generation::WorldConfig,
 };
@@ -62,6 +65,14 @@ fn peer(mode: NetMode) -> App {
         bevy::scene::ScenePlugin,
         net::physics_plugins(mode),
     ))
+    // Built things load their model as a world asset.
+    .init_asset::<bevy::world_serialization::WorldAsset>()
+    // The stream tools' icons, materials and labels.
+    .init_asset::<Image>()
+    .init_asset::<StandardMaterial>()
+    .init_asset::<Font>()
+    // A segment costs 6 reeds, as the rules say.
+    .insert_resource(stubby_streams::SegmentCost(vec![("reed".into(), 6)]))
     .init_resource::<GroundHeight>()
     .insert_resource(LookCapture(true))
     .init_resource::<ScreenMode>()
@@ -99,6 +110,10 @@ impl Session {
             RecipesPlugin::default(),
             CollectingPlugin,
             InventoriesPlugin,
+            BuildingPlugin,
+            StreamsPlugin,
+            // The stream tools, which lay locally unless the host decides.
+            stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
         server
     }
@@ -120,6 +135,10 @@ impl Session {
             RecipesPlugin::default(),
             CollectingPlugin,
             InventoriesPlugin,
+            BuildingPlugin,
+            StreamsPlugin,
+            // The stream tools, which lay locally unless the host decides.
+            stubby_streams::StreamBuildPlugin::<PlayerInventory>::default(),
         ));
         client.finish();
         client.cleanup();
@@ -682,17 +701,40 @@ fn held(app: &App, item: &str) -> u32 {
         .quantity(item)
 }
 
-fn stored(app: &App, item: &str) -> u32 {
-    app.world().resource::<SharedStorage>().0.quantity(item)
+/// The barrel a test builds, everywhere.
+fn barrel(app: &mut App) -> Option<(Entity, String)> {
+    let world = app.world_mut();
+    world
+        .query::<(Entity, &PlacedAsset, Has<Store>)>()
+        .iter(world)
+        .find(|(_, placed, store)| placed.asset == "storage_barrel" && *store)
+        .map(|(e, placed, _)| (e, placed.instance.clone()))
 }
 
-/// Each player carries their own inventory, kept by the host and seen only by its owner;
-/// storage is one, shared, and only the host moves things in and out of it (3.2).
+fn stored(app: &mut App, item: &str) -> u32 {
+    barrel(app).map_or(0, |(e, _)| {
+        app.world().get::<Store>(e).unwrap().0.quantity(item)
+    })
+}
+
+fn moving(store: &str, direction: StorageMove, quantity: u32) -> StorageRequest {
+    StorageRequest {
+        store: store.into(),
+        item: "square_wave".into(),
+        quantity,
+        direction,
+    }
+}
+
+/// Each player carries their own inventory, kept by the host and seen only by its owner.
+/// A client builds a storage barrel through the host (paid from its pack, shown to
+/// everyone, a late joiner too), and anyone may store in it and take from it; the host
+/// decides every move (3.2, 3.3).
 #[test]
-fn the_host_keeps_each_inventory_and_the_shared_storage() {
+fn a_built_barrel_is_shared_storage_the_host_keeps() {
     let mut session = Session::new(true);
     let (a, b) = (session.join(None), session.join(None));
-    joined(&mut session, a);
+    let body = joined(&mut session, a);
     joined(&mut session, b);
     session.seconds(0.5);
     for client in [a, b] {
@@ -700,6 +742,27 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
         let packs = world.query::<&Pack>().iter(world).count();
         assert_eq!(packs, 1, "a client sees its own pack, no one else's");
     }
+
+    // A builds a barrel beside itself, paid with its reeds.
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host) + Vec3::X * 2.0;
+    let reeds = held(&session.clients[a], "reed");
+    session.clients[a].world_mut().write_message(BuildRequest {
+        buildable: "storage_barrel".into(),
+        place: Transform::from_translation(at),
+        segment: None,
+    });
+    session.until(3.0, "the barrel everywhere", |s| {
+        barrel(&mut s.server).is_some()
+            && barrel(&mut s.clients[a]).is_some()
+            && barrel(&mut s.clients[b]).is_some()
+    });
+    assert_eq!(
+        held(&session.clients[a], "reed"),
+        reeds - 15,
+        "paid from A's pack"
+    );
+    let (_, store) = barrel(&mut session.server).unwrap();
 
     // The host gives A three square waves (a harvest, say): A sees them.
     let pack = pack_on_host(&mut session, a);
@@ -719,47 +782,47 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
         held(&s.clients[a], "square_wave") == before + 3
     });
 
-    // A stores two: everyone sees them in storage.
+    // A stores two: everyone sees them in the barrel.
     session.clients[a]
         .world_mut()
-        .write_message(StorageRequest::Store {
-            item: "square_wave".into(),
-            quantity: 2,
-        });
+        .write_message(moving(&store, StorageMove::Store, 2));
     session.until(3.0, "the stored square waves everywhere", |s| {
-        stored(&s.server, "square_wave") == 2
-            && stored(&s.clients[a], "square_wave") == 2
-            && stored(&s.clients[b], "square_wave") == 2
+        stored(&mut s.server, "square_wave") == 2
+            && stored(&mut s.clients[a], "square_wave") == 2
+            && stored(&mut s.clients[b], "square_wave") == 2
             && held(&s.clients[a], "square_wave") == before + 1
     });
 
-    // B takes one; the host's own player takes the other.
-    session.clients[b]
-        .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 1,
-        });
+    // The host's own player takes one. B, sent off 15 m on the host, is out of reach:
+    // refused.
+    let b_body = local_body(&mut session.clients[b]).unwrap();
+    let b_on_host = server_body(&mut session.server, peer_of(&session.clients[b], b_body));
     session
         .server
         .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 1,
-        });
-    session.until(3.0, "the storage emptied by B and the host", |s| {
-        stored(&s.clients[a], "square_wave") == 0
-            && held(&s.clients[b], "square_wave") == 1
-            && held(&s.server, "square_wave") == 1
+        .get_mut::<Position>(b_on_host)
+        .unwrap()
+        .0 += Vec3::NEG_X * 15.0;
+    session
+        .server
+        .world_mut()
+        .write_message(moving(&store, StorageMove::Take, 1));
+    session.clients[b]
+        .world_mut()
+        .write_message(moving(&store, StorageMove::Take, 1));
+    session.until(3.0, "the host's take, and B's refusal", |s| {
+        stored(&mut s.clients[a], "square_wave") == 1
+            && s.clients[b]
+                .world()
+                .resource::<PlayerInventory>()
+                .feedback
+                .contains("Too far")
     });
 
     // Taking what is not there is refused, and nothing moves.
     session.clients[a]
         .world_mut()
-        .write_message(StorageRequest::Take {
-            item: "square_wave".into(),
-            quantity: 5,
-        });
+        .write_message(moving(&store, StorageMove::Take, 5));
     session.until(3.0, "the host's refusal at A", |s| {
         s.clients[a]
             .world()
@@ -768,7 +831,14 @@ fn the_host_keeps_each_inventory_and_the_shared_storage() {
             .contains("need 5")
     });
     assert_eq!(held(&session.clients[a], "square_wave"), before + 1);
-    assert_eq!(stored(&session.server, "square_wave"), 0);
+    assert_eq!(stored(&mut session.server, "square_wave"), 1);
+
+    // A late joiner finds the barrel and what is in it.
+    let late = session.join(None);
+    joined(&mut session, late);
+    session.until(3.0, "the barrel at a late joiner", |s| {
+        stored(&mut s.clients[late], "square_wave") == 1
+    });
 }
 
 /// Crafts reported at a peer.
@@ -841,5 +911,167 @@ fn a_client_crafts_from_the_pack_the_host_keeps() {
             .feedback
             .starts_with("Crafted"),
         "the host's word reaches the player"
+    );
+}
+
+/// The opening's burbler, on one peer.
+fn spawn_burbler(app: &mut App, at: Vec3) {
+    app.world_mut().spawn((
+        PlacedAsset {
+            asset: "mudpit_burbler".into(),
+            model: String::new(),
+            instance: "mudpit_burbler-1".into(),
+        },
+        stubby_core::AssetState::default(),
+        Transform::from_translation(at),
+    ));
+}
+
+fn burbler(app: &mut App) -> (Entity, bool) {
+    let world = app.world_mut();
+    world
+        .query::<(Entity, &PlacedAsset, &stubby_core::AssetState)>()
+        .iter(world)
+        .find(|(_, p, _)| p.asset == "mudpit_burbler")
+        .map(|(e, _, s)| (e, s.stream_connected))
+        .unwrap()
+}
+
+/// The streams on a peer: (key, first, last, laid from a burbler, laid from a stream,
+/// end used), in key order.
+fn streams(app: &mut App) -> Vec<(u64, u32, u32, bool, bool, bool)> {
+    let world = app.world_mut();
+    let mut found: Vec<_> = world
+        .query::<&stubby_streams::LaidStream>()
+        .iter(world)
+        .map(|s| {
+            (
+                s.key(),
+                s.first,
+                s.last,
+                matches!(s.upstream, Some(stubby_streams::PortOwner::Burbler(_))),
+                matches!(s.upstream, Some(stubby_streams::PortOwner::Stream(_))),
+                s.end_used,
+            )
+        })
+        .collect();
+    found.sort();
+    found
+}
+
+fn straight(from: Vec3, to: Vec3) -> stubby_streams::Path {
+    stubby_streams::Path::from_points([from, from.lerp(to, 1. / 3.), from.lerp(to, 2. / 3.), to])
+}
+
+/// Streams are laid and dismantled through the host (3.3): paid from and refunded to the
+/// player's pack, laid on from a burbler and from a stream's end, the same on every peer
+/// (a late joiner too), and split by a dismantle everywhere.
+#[test]
+fn streams_are_laid_and_dismantled_through_the_host() {
+    let mut session = Session::new(false);
+    let a = session.join(None);
+    let body = joined(&mut session, a);
+    let on_host = server_body(&mut session.server, peer_of(&session.clients[a], body));
+    let at = position(&session.server, on_host) + Vec3::X;
+    for app in [&mut session.server, &mut session.clients[a]] {
+        spawn_burbler(app, at);
+    }
+    let reeds = held(&session.clients[a], "reed");
+
+    // Two segments from the burbler, then two more from that stream's end.
+    let (from_burbler, _) = burbler(&mut session.clients[a]);
+    session.clients[a]
+        .world_mut()
+        .write_message(stubby_streams::LayRequest {
+            path: straight(at, at + Vec3::X * 8.),
+            segments: 2,
+            upstream: stubby_streams::PortOwner::Burbler(from_burbler),
+            joins: false,
+        });
+    session.until(3.0, "the first stream at A", |s| {
+        streams(&mut s.clients[a]).len() == 1
+    });
+    let first = {
+        let world = session.clients[a].world_mut();
+        world
+            .query_filtered::<Entity, With<stubby_streams::LaidStream>>()
+            .single(world)
+            .unwrap()
+    };
+    session.clients[a]
+        .world_mut()
+        .write_message(stubby_streams::LayRequest {
+            path: straight(at + Vec3::X * 8., at + Vec3::X * 16.),
+            segments: 2,
+            upstream: stubby_streams::PortOwner::Stream(first),
+            joins: false,
+        });
+    session.until(3.0, "both streams at A", |s| {
+        streams(&mut s.clients[a]).len() == 2
+    });
+    session.seconds(0.3);
+    let laid = streams(&mut session.server);
+    assert_eq!(
+        streams(&mut session.clients[a]),
+        laid,
+        "A's streams are the host's"
+    );
+    assert_eq!(
+        laid.iter().filter(|s| s.3).count(),
+        1,
+        "one from the burbler"
+    );
+    assert_eq!(laid.iter().filter(|s| s.4).count(), 1, "one from a stream");
+    assert_eq!(
+        laid.iter().filter(|s| s.5).count(),
+        1,
+        "the first's end is used"
+    );
+    assert!(burbler(&mut session.server).1 && burbler(&mut session.clients[a]).1);
+    assert_eq!(
+        held(&session.clients[a], "reed"),
+        reeds - 24,
+        "four segments from A's pack"
+    );
+
+    // A late joiner sees them as they are.
+    let late = session.join(None);
+    joined(&mut session, late);
+    spawn_burbler(&mut session.clients[late], at);
+    session.until(3.0, "the streams at the late joiner", |s| {
+        streams(&mut s.clients[late]) == laid
+    });
+    assert!(
+        burbler(&mut session.clients[late]).1,
+        "its burbler is taken"
+    );
+
+    // A dismantles the first stream's first segment: the burbler is free, the rest of
+    // that stream is cut off, and A gets its reeds back.
+    session.clients[a]
+        .world_mut()
+        .write_message(stubby_streams::Dismantle {
+            stream: first,
+            segment: 0,
+        });
+    session.until(3.0, "the dismantle everywhere", |s| {
+        !burbler(&mut s.server).1
+            && !burbler(&mut s.clients[a]).1
+            && !burbler(&mut s.clients[late]).1
+            && streams(&mut s.clients[late]).iter().all(|s| !s.3)
+    });
+    session.seconds(0.3);
+    let split = streams(&mut session.server);
+    assert_eq!(
+        split.len(),
+        2,
+        "the cut-off part and the stream laid from it"
+    );
+    assert_eq!(streams(&mut session.clients[a]), split);
+    assert_eq!(streams(&mut session.clients[late]), split);
+    assert_eq!(
+        held(&session.clients[a], "reed"),
+        reeds - 18,
+        "one segment back"
     );
 }
